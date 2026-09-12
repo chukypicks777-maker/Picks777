@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     region: oregon
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -14,4 +14,12 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: MASTER_ADMIN_CODE
-        value: DeportePicks
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: OPENROUTER_MODEL
+        sync: false

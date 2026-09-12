@@ -3,3 +3,15 @@ node_modules
 dist
 tools/cloudflared.exe
 *.log
+**/.env
+**/.env.*
+**/.ssh
+**/.gnupg
+**/*.pem
+**/*.key
+**/*credentials*
+Dockerfile.secrets
+server/data
+scripts
+tests
+test-e2e.js

@@ -7,5 +7,5 @@ export const LEAGUES_DATA = [
   { id: 'italia', name: 'Serie A', flag: '🇮🇹' },
   { id: 'francia', name: 'Ligue 1', flag: '🇫🇷' },
   { id: 'mls', name: 'MLS', flag: '🇺🇸' },
-  { id: 'leagues_cup', name: 'Leagues Cup / Copas', flag: '🌎' },
+  { id: 'leagues_cup', name: 'Leagues Cup', flag: '🌎' },
 ];

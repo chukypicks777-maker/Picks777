@@ -67,8 +67,8 @@
 
 ### 6. 👑 Sistema de Acceso VIP y Panel de Administración (Owner)
 
-#### Clave Maestra del Dueño / Propietario:
-> Código: `DeportePicks`
+#### Acceso del propietario
+Configura `MASTER_ADMIN_CODE` en las variables de entorno (por defecto `DeportePicks`). Al ingresar este código en la pantalla de login, el sistema inicia sesión con rol `Owner` y da acceso completo al panel de administración para generar códigos por lote, consultar activaciones y revocar accesos.
 
 #### Funcionalidades del Panel Owner:
 1. **Generador Masivo de Códigos Aleatorios**:
@@ -146,7 +146,8 @@ docker run -p 5000:5000 deportepicks-ai
 
 ---
 
-## 🔑 Accesos Rápidos de Prueba
-* **Owner / Administrador**: `DeportePicks`
-* **Usuario VIP (30 Días)**: `VIP-PREMIUM-777`
-* **Usuario Pro (60 Días)**: `PRO-SOCCER-2026`
+## Configuración Vercel y producción
+
+Variables solo del servidor (nunca `VITE_*`): `MASTER_ADMIN_CODE` aleatorio de 32–128 caracteres, `SESSION_SECRET` independiente de al menos 32 caracteres, `UPSTASH_REDIS_REST_URL` HTTPS y `UPSTASH_REDIS_REST_TOKEN`. Redis es obligatorio en toda producción. OpenRouter es opcional: `OPENROUTER_API_KEY` y `OPENROUTER_MODEL`; el modelo se comprueba en el catálogo y no se sustituye por otro de pago.
+
+Configura valores separados para Preview y Production. No compartas Redis ni credenciales productivas con pruebas. Usa HTTPS para cookies Secure. Confirma rotación de credenciales, conectividad, pruebas y aprobación del responsable antes de promover una preview. Véase `VALIDATION.md`.

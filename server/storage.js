@@ -1,267 +1,94 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DATA_DIR = path.join(__dirname, 'data');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
-
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-// Initial Database Template
-const INITIAL_DB = {
-  codes: [
-    {
-      code: "VIP-PREMIUM-777",
-      durationDays: 30,
-      isClaimed: false,
-      claimedAt: null,
-      expiresAt: null,
-      createdAt: new Date().toISOString(),
-      label: "Demo VIP Inicial"
-    },
-    {
-      code: "PRO-SOCCER-2026",
-      durationDays: 60,
-      isClaimed: false,
-      claimedAt: null,
-      expiresAt: null,
-      createdAt: new Date().toISOString(),
-      label: "Acceso Pro 60 Días"
-    },
-    {
-      code: "PARLAY-GOLD-99",
-      durationDays: 15,
-      isClaimed: false,
-      claimedAt: null,
-      expiresAt: null,
-      createdAt: new Date().toISOString(),
-      label: "Pase Quincenal"
-    }
-  ],
-  aiCache: {},
-  settings: {
-    selectedModel: "z-ai/glm-5.2:free",
-    openRouterApiKey: process.env.OPENROUTER_API_KEY || "",
-    autoAiSync: true,
-    lastSync: new Date().toISOString()
-  },
-  customMatches: []
-};
-
-class StorageManager {
-  constructor() {
-    this.init();
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { randomBytes } from 'node:crypto';
+import { redisConfigured, redisCommand } from './services/dataCache.js';
+const KEY = 'picks:v2:access';
+const clean = code => String(code || '').trim().toUpperCase();
+const initial = () => ({ codes: [] });
+export class StorageManager {
+  constructor(file = path.resolve('server/data/access-v2.json')) { this.file = file; this.queue = Promise.resolve(); }
+  async loadRaw() {
+    if (redisConfigured()) return await redisCommand('GET', KEY);
+    try { return await fs.readFile(this.file, 'utf8'); }
+    catch (error) { if (error.code === 'ENOENT') return null; throw error; }
   }
-
-  init() {
-    if (!fs.existsSync(DB_FILE)) {
-      this.save(INITIAL_DB);
-    }
-  }
-
-  load() {
-    try {
-      if (!fs.existsSync(DB_FILE)) {
-        this.save(INITIAL_DB);
-        return INITIAL_DB;
+  async load() { const raw = await this.loadRaw(); return raw ? JSON.parse(raw) : initial(); }
+  async transaction(change) {
+    if (redisConfigured()) {
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const raw = await this.loadRaw();
+        const db = raw ? JSON.parse(raw) : initial();
+        const result = change(db);
+        const script = "local old=redis.call('GET',KEYS[1]); if (not old and ARGV[1]=='') or old==ARGV[1] then redis.call('SET',KEYS[1],ARGV[2]); return 1 end; return 0";
+        if (await redisCommand('EVAL', script, 1, KEY, raw || '', JSON.stringify(db))) return result;
       }
-      const data = fs.readFileSync(DB_FILE, 'utf-8');
-      return JSON.parse(data);
-    } catch (e) {
-      console.error('Error reading database file, returning default:', e);
-      return INITIAL_DB;
+      throw new Error('Almacenamiento ocupado. Reintenta la operación.');
     }
+    const operation = this.queue.then(async () => {
+      const db = await this.load();
+      const result = change(db);
+      await fs.mkdir(path.dirname(this.file), { recursive: true });
+      const temporary = `${this.file}.tmp`;
+      await fs.writeFile(temporary, JSON.stringify(db), 'utf8');
+      await fs.rename(temporary, this.file);
+      return result;
+    });
+    this.queue = operation.catch(() => {});
+    return operation;
   }
-
-  save(data) {
-    try {
-      fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
-      return true;
-    } catch (e) {
-      console.error('Error writing to database:', e);
-      return false;
-    }
+  async getCodes() { return (await this.load()).codes; }
+  async getCode(code) { return (await this.getCodes()).find(c => c.code === clean(code)); }
+  entry(code, durationDays, label) {
+    if (!/^[A-Z0-9-]{6,64}$/.test(clean(code))) throw new Error('Usa de 6 a 64 letras, números o guiones.');
+    if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 1000) throw new Error('La duración debe ser de 1 a 1000 días.');
+    return { code: clean(code), durationDays, label: String(label || '').slice(0, 100), createdAt: new Date().toISOString(), isClaimed: false, claimedAt: null, expiresAt: null, devices: [] };
   }
-
-  // --- ACCESS CODES METHODS ---
-  getCodes() {
-    const db = this.load();
-    return db.codes || [];
+  async createCode({ code, durationDays = 30, label }) {
+    const entry = this.entry(code, durationDays, label);
+    return this.transaction(db => {
+      if (db.codes.some(c => c.code === entry.code)) throw new Error('El código ya existe.');
+      if (db.codes.length >= 10000) throw new Error('Límite de 10.000 códigos alcanzado.');
+      db.codes.unshift(entry); return entry;
+    });
   }
-
-  getCode(codeString) {
-    const db = this.load();
-    return (db.codes || []).find(c => c.code.toUpperCase() === codeString.trim().toUpperCase());
-  }
-
-  createCode({ code, durationDays = 30, label = 'VIP Code' }) {
-    const db = this.load();
-    const existing = db.codes.find(c => c.code.toUpperCase() === code.toUpperCase());
-    if (existing) {
-      throw new Error('El código ya existe.');
-    }
-    const newEntry = {
-      code: code.toUpperCase().trim(),
-      durationDays: parseInt(durationDays, 10) || 30,
-      isClaimed: false,
-      claimedAt: null,
-      expiresAt: null,
-      createdAt: new Date().toISOString(),
-      label
-    };
-    db.codes.unshift(newEntry);
-    this.save(db);
-    return newEntry;
-  }
-
-  generateBatchCodes({ count = 10, durationDays = 30, prefix = 'VIP' }) {
-    const db = this.load();
-    const created = [];
-    const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-    for (let i = 0; i < count; i++) {
-      let code;
-      let attempts = 0;
-      do {
-        let randomPart = '';
-        for (let j = 0; j < 8; j++) {
-          randomPart += characters.charAt(Math.floor(Math.random() * characters.length));
-        }
-        // Format: VIP-ABCD-1234
-        code = `${prefix}-${randomPart.slice(0, 4)}-${randomPart.slice(4)}`.toUpperCase();
-        attempts++;
-      } while (db.codes.some(c => c.code === code) && attempts < 100);
-
-      const entry = {
-        code,
-        durationDays: parseInt(durationDays, 10) || 30,
-        isClaimed: false,
-        claimedAt: null,
-        expiresAt: null,
-        createdAt: new Date().toISOString(),
-        label: `Lote ${prefix} (${durationDays}d)`
-      };
-
-      db.codes.unshift(entry);
-      created.push(entry);
-    }
-
-    this.save(db);
-    return created;
-  }
-
-  claimCode(codeString, username = '') {
-    const db = this.load();
-    const clean = codeString.trim().toUpperCase();
-    const index = db.codes.findIndex(c => c.code === clean);
-    if (index === -1) return { success: false, message: 'Código no encontrado o inválido.' };
-
-    const item = db.codes[index];
-
-    // If already claimed, check if still valid
-    if (item.isClaimed) {
-      const expiresAtDate = new Date(item.expiresAt);
-      const now = new Date();
-      if (now > expiresAtDate) {
-        return { success: false, message: 'Este código VIP ha expirado.', expired: true };
+  async generateBatchCodes({ count = 30, durationDays = 30, prefix = 'VIP' }) {
+    if (!Number.isInteger(count) || count < 1 || count > 200 || !/^[A-Za-z0-9]{1,12}$/.test(prefix)) throw new Error('Cantidad (1–200) o prefijo inválido.');
+    this.entry(`${prefix}-CHECK`, durationDays, '');
+    return this.transaction(db => {
+      if (db.codes.length + count > 10000) throw new Error('Límite de códigos alcanzado.');
+      const existing = new Set(db.codes.map(c => c.code));
+      const created = [];
+      while (created.length < count) {
+        const code = `${prefix}-${randomBytes(8).toString('hex')}`.toUpperCase();
+        if (existing.has(code)) continue;
+        existing.add(code);
+        created.push(this.entry(code, durationDays, `Lote ${prefix}`));
       }
-      return {
-        success: true,
-        alreadyClaimed: true,
-        code: item.code,
-        durationDays: item.durationDays,
-        claimedAt: item.claimedAt,
-        expiresAt: item.expiresAt,
-        claimedBy: item.claimedBy || username || 'Usuario VIP',
-        daysRemaining: Math.ceil((expiresAtDate - now) / (1000 * 60 * 60 * 24))
-      };
-    }
-
-    // First time claiming: activate duration
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + item.durationDays * 24 * 60 * 60 * 1000).toISOString();
-
-    item.isClaimed = true;
-    item.claimedAt = now.toISOString();
-    item.expiresAt = expiresAt;
-    item.claimedBy = username?.trim() || 'Usuario VIP';
-
-    db.codes[index] = item;
-    this.save(db);
-
-    return {
-      success: true,
-      alreadyClaimed: false,
-      code: item.code,
-      durationDays: item.durationDays,
-      claimedAt: item.claimedAt,
-      expiresAt: item.expiresAt,
-      claimedBy: item.claimedBy,
-      daysRemaining: item.durationDays
-    };
+      db.codes.unshift(...created); return created;
+    });
   }
-
-  deleteCode(codeString) {
-    const db = this.load();
-    const clean = codeString.trim().toUpperCase();
-    db.codes = db.codes.filter(c => c.code !== clean);
-    this.save(db);
-    return true;
+  async claimCode(code, username = '', deviceId = '') {
+    return this.transaction(db => {
+      const item = db.codes.find(c => c.code === clean(code));
+      if (!item) return { success: false, message: 'Código inválido.' };
+      const now = Date.now();
+      if (item.revoked || (item.expiresAt && Date.parse(item.expiresAt) <= now)) return { success: false, expired: true, message: 'Código vencido o revocado.' };
+      const alreadyClaimed = item.isClaimed;
+      if (!alreadyClaimed) {
+        item.isClaimed = true;
+        item.claimedAt = new Date(now).toISOString();
+        item.expiresAt = new Date(now + item.durationDays * 86400000).toISOString();
+        item.claimedBy = String(username).trim().slice(0, 80) || 'Usuario VIP';
+      }
+      item.devices ||= [];
+      if (deviceId && !item.devices.includes(deviceId)) {
+        if (item.devices.length >= 100) return { success: false, message: 'Límite de dispositivos alcanzado para este código.' };
+        item.devices.push(deviceId);
+      }
+      return { ...item, devices: undefined, deviceCount: item.devices.length, success: true, alreadyClaimed, daysRemaining: Math.ceil((Date.parse(item.expiresAt) - now) / 86400000) };
+    });
   }
-
-  revokeCode(codeString) {
-    const db = this.load();
-    const clean = codeString.trim().toUpperCase();
-    const item = db.codes.find(c => c.code === clean);
-    if (item) {
-      item.isClaimed = true;
-      item.expiresAt = new Date(Date.now() - 1000).toISOString(); // Expired now
-      this.save(db);
-      return true;
-    }
-    return false;
-  }
-
-  // --- AI CACHE METHODS ---
-  getCachedAnalysis(matchId) {
-    const db = this.load();
-    return db.aiCache ? db.aiCache[matchId] : null;
-  }
-
-  saveCachedAnalysis(matchId, analysisData) {
-    const db = this.load();
-    if (!db.aiCache) db.aiCache = {};
-    db.aiCache[matchId] = {
-      ...analysisData,
-      cachedAt: new Date().toISOString()
-    };
-    this.save(db);
-  }
-
-  clearAiCache() {
-    const db = this.load();
-    db.aiCache = {};
-    this.save(db);
-    return true;
-  }
-
-  // --- SETTINGS METHODS ---
-  getSettings() {
-    const db = this.load();
-    return db.settings || {};
-  }
-
-  updateSettings(newSettings) {
-    const db = this.load();
-    db.settings = { ...db.settings, ...newSettings };
-    this.save(db);
-    return db.settings;
-  }
+  async deleteCode(code) { return this.transaction(db => { db.codes = db.codes.filter(c => c.code !== clean(code)); return true; }); }
+  async revokeCode(code) { return this.transaction(db => { const c = db.codes.find(c => c.code === clean(code)); if (c) { c.revoked = true; c.expiresAt = new Date().toISOString(); } return Boolean(c); }); }
 }
-
 export const storage = new StorageManager();

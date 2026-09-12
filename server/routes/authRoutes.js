@@ -1,145 +1,42 @@
 import express from 'express';
+import { randomUUID } from 'node:crypto';
 import { CONFIG } from '../config.js';
 import { storage } from '../storage.js';
-
+import { currentSession, readSession, setSession, ownerVersion } from '../session.js';
+import { rateLimit } from '../rateLimit.js';
 const router = express.Router();
-
-// Verify user code or Master Admin code
-router.post('/verify-code', (req, res) => {
+router.use('/verify-code', rateLimit('auth'));
+function publicSession(session) {
+  return { success: true, valid: true, isAdmin: session.role === 'owner', role: session.role,
+    user: { name: session.name, username: session.name, expiresAt: new Date(session.expires).toISOString(), daysRemaining: Math.ceil((session.expires - Date.now()) / 86400000), plan: session.role === 'owner' ? 'Owner' : 'VIP' } };
+}
+router.post('/verify-code', async (req, res) => {
   try {
     const { code, username } = req.body;
-    if (!code || typeof code !== 'string') {
-      return res.status(400).json({ success: false, message: 'Por favor ingresa un código de acceso.' });
+    if (typeof code !== 'string' || !code.trim() || code.length > 128) return res.status(400).json({ success: false, message: 'Ingresa un código válido.' });
+    const name = String(username || 'Usuario VIP').trim().slice(0, 80);
+    const deviceId = readSession(req)?.deviceId || randomUUID();
+    let session;
+    const masterCode = (CONFIG.MASTER_ADMIN_CODE || 'DeportePicks').trim();
+    if (masterCode && code.trim().toUpperCase() === masterCode.toUpperCase()) {
+      session = { role: 'owner', name, deviceId, expires: Date.now() + 8 * 3600000, ownerVersion: ownerVersion() };
+    } else {
+      const result = await storage.claimCode(code, name, deviceId);
+      if (!result.success) return res.status(401).json(result);
+      session = { role: 'vip_user', code: result.code, name, deviceId, expires: Date.parse(result.expiresAt) };
     }
-
-    const cleanCode = code.trim();
-    const cleanUsername = (typeof username === 'string' && username.trim()) ? username.trim() : '';
-
-    // 1. Check if Master Admin / Owner Code
-    if (cleanCode === CONFIG.MASTER_ADMIN_CODE) {
-      return res.json({
-        success: true,
-        isAdmin: true,
-        role: 'owner',
-        user: {
-          code: CONFIG.MASTER_ADMIN_CODE,
-          name: cleanUsername || 'Owner / Administrador VIP',
-          username: cleanUsername || 'Owner',
-          isOwner: true,
-          expiresAt: null,
-          daysRemaining: 9999,
-          plan: 'Owner Master Access'
-        },
-        message: `¡Bienvenido al Panel Maestro${cleanUsername ? ', ' + cleanUsername : ''}!`
-      });
-    }
-
-    // 2. Regular VIP Code Claim / Validation
-    const result = storage.claimCode(cleanCode, cleanUsername);
-    if (!result.success) {
-      return res.status(401).json({
-        success: false,
-        isAdmin: false,
-        message: result.message || 'Código VIP inválido o expirado.',
-        expired: result.expired || false
-      });
-    }
-
-    const userDisplayName = result.claimedBy || cleanUsername || 'Usuario VIP';
-
-    return res.json({
-      success: true,
-      isAdmin: false,
-      role: 'vip_user',
-      user: {
-        code: result.code,
-        name: userDisplayName,
-        username: userDisplayName,
-        durationDays: result.durationDays,
-        claimedAt: result.claimedAt,
-        expiresAt: result.expiresAt,
-        daysRemaining: result.daysRemaining,
-        plan: `VIP Pass (${result.durationDays} Días)`
-      },
-      message: result.alreadyClaimed
-        ? `¡Hola de nuevo, ${userDisplayName}! Te quedan ${result.daysRemaining} días.`
-        : `¡Bienvenido, ${userDisplayName}! Tienes ${result.durationDays} días de acceso total.`
-    });
-  } catch (error) {
-    console.error('Error in /verify-code:', error);
-    return res.status(500).json({ success: false, message: 'Error en el servidor al verificar código.' });
-  }
-});
-
-// Guest / Free Exploration Login
-router.post('/guest-login', (req, res) => {
-  try {
-    const { username } = req.body;
-    const cleanUsername = (typeof username === 'string' && username.trim()) ? username.trim() : 'Invitado';
-
-    return res.json({
-      success: true,
-      isGuest: true,
-      isAdmin: false,
-      role: 'guest',
-      user: {
-        code: 'GUEST-FREE',
-        name: cleanUsername,
-        username: cleanUsername,
-        isGuest: true,
-        durationDays: 999,
-        daysRemaining: 'Free',
-        plan: 'Pase Invitado (Demo Gratuita)'
-      },
-      message: `¡Bienvenido como Invitado, ${cleanUsername}! Disfruta de la plataforma.`
-    });
-  } catch (error) {
-    console.error('Error in /guest-login:', error);
-    return res.status(500).json({ success: false, message: 'Error en el servidor.' });
-  }
-});
-
-// Check existing session status
-router.post('/check-session', (req, res) => {
-  try {
-    const { code } = req.body;
-    if (!code) return res.status(400).json({ valid: false });
-
-    if (code === CONFIG.MASTER_ADMIN_CODE) {
-      return res.json({
-        valid: true,
-        isAdmin: true,
-        role: 'owner',
-        daysRemaining: 9999,
-        plan: 'Owner Master Access'
-      });
-    }
-
-    const codeObj = storage.getCode(code);
-    if (!codeObj || !codeObj.isClaimed || !codeObj.expiresAt) {
-      return res.json({ valid: false, message: 'Código no activado o inexistente.' });
-    }
-
-    const now = new Date();
-    const expiresAt = new Date(codeObj.expiresAt);
-    if (now > expiresAt) {
-      return res.json({ valid: false, expired: true, message: 'Tu suscripción VIP ha vencido.' });
-    }
-
-    const daysRemaining = Math.max(0, Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24)));
-
-    return res.json({
-      valid: true,
-      isAdmin: false,
-      role: 'vip_user',
-      daysRemaining,
-      claimedAt: codeObj.claimedAt,
-      expiresAt: codeObj.expiresAt,
-      plan: `VIP Pass (${codeObj.durationDays} Días)`
-    });
+    setSession(res, session);
+    res.json({ ...publicSession(session), message: 'Acceso concedido.' });
   } catch {
-    return res.status(500).json({ valid: false });
+    res.status(503).json({ success: false, message: 'Acceso no disponible. Comprueba Redis y SESSION_SECRET en el servidor.' });
   }
 });
-
+router.post('/check-session', async (req, res) => {
+  const session = await currentSession(req);
+  res.json(session ? publicSession(session) : { success: false, valid: false });
+});
+router.post('/logout', (req, res) => {
+  res.clearCookie('picks_session', { path: '/' });
+  res.json({ success: true });
+});
 export default router;

@@ -1,277 +1,182 @@
-import axios from 'axios';
+import { createHash } from 'node:crypto';
 import { CONFIG } from '../config.js';
-import { storage } from '../storage.js';
+import { cachedData, fetchJson } from './dataCache.js';
 
-export async function generateAiMatchReport(match, forceRefresh = false) {
-  // Check cache first if not forced
-  if (!forceRefresh) {
-    const cached = storage.getCachedAnalysis(match.id);
-    if (cached) {
-      return {
-        ...cached,
-        isCached: true
-      };
+export async function availableModels() {
+  return cachedData('openrouter:models', 3600, async () => {
+    try {
+      const data = await fetchJson(`${CONFIG.OPENROUTER_BASE_URL}/models`);
+      if (!Array.isArray(data?.data)) return [];
+      return data.data.map(m => ({ id: m.id, name: m.name }));
+    } catch {
+      return [];
+    }
+  });
+}
+
+const FALLBACK_MODELS = [
+  'z-ai/glm-5.2:free',
+  'openrouter/free',
+  'inclusionai/ling-3.0-flash-vl:free',
+  'liquid/lfm-2.5-2.6b:free',
+  'nex-agi/nex-n2.5-mini:free',
+  'nvidia/nemotron-3.5-lightning:free'
+];
+
+export async function generateAiMatchReport(match, options = {}) {
+  const facts = [
+    `Partido: ${match.homeTeam.name} vs ${match.awayTeam.name}. Competición: ${match.leagueName}. Inicio: ${match.kickoff}. Estado ESPN: ${match.status}.`,
+    `Enfrentamientos directos (H2H) registrados: ${match.h2h?.length || 0} partidos.`
+  ];
+  for (const team of [match.homeTeam, match.awayTeam]) {
+    if (team.gamesPlayed !== null) {
+      facts.push(`${team.name}: ${team.gamesPlayed} PJ, ${team.goalsFor ?? 'N/D'} GF, ${team.goalsAgainst ?? 'N/D'} GC, ${team.points ?? 'N/D'} pts, posición ${team.position ?? 'N/D'}, racha: ${team.form?.join('-') || 'N/D'}.`);
     }
   }
+  if (match.model) {
+    facts.push(`Modelo Poisson: Victoria Local ${match.probabilities.homeWin?.toFixed(1)}%, Empate ${match.probabilities.draw?.toFixed(1)}%, Victoria Visitante ${match.probabilities.awayWin?.toFixed(1)}%.`);
+    facts.push(`Goles estimados: Ambos Anotan ${match.probabilities.bttsYes?.toFixed(1)}%, Más de 2.5 ${match.probabilities.over25?.toFixed(1)}%, Menos de 2.5 ${match.probabilities.under25?.toFixed(1)}%.`);
+    facts.push(`Goles esperados (xG lambda/mu): Local ${match.model.expectedGoals?.home?.toFixed(2)}, Visitante ${match.model.expectedGoals?.away?.toFixed(2)}.`);
+  } else if (match.probabilities?.homeWin) {
+    facts.push(`Probabilidades implícitas del mercado: 1: ${match.probabilities.homeWin?.toFixed(1)}% | X: ${match.probabilities.draw?.toFixed(1)}% | 2: ${match.probabilities.awayWin?.toFixed(1)}%${match.probabilities.over25 ? ` | Over 2.5: ${match.probabilities.over25?.toFixed(1)}%` : ''}.`);
+  }
+  if (match.h2h?.length) {
+    const h2hSummaries = match.h2h.slice(0, 5).map(h => `${h.date.slice(0, 10)}: ${h.home} ${h.score} ${h.away}`).join('; ');
+    facts.push(`Últimos H2H directos: ${h2hSummaries}.`);
+  }
+  if (match.odds?.homeWin) {
+    facts.push(`Cuotas publicadas: 1: ${match.odds.homeWin} | X: ${match.odds.draw} | 2: ${match.odds.awayWin}${match.odds.over25 ? ` | Over 2.5: ${match.odds.over25} | Under 2.5: ${match.odds.under25}` : ''}. Proveedor: ${match.oddsProvider || 'Mercado oficial'}.`);
+  }
 
-  const settings = storage.getSettings();
-  const apiKey = settings.openRouterApiKey || CONFIG.OPENROUTER_API_KEY;
-  const modelsToTry = [
-    settings.selectedModel || CONFIG.DEFAULT_MODEL,
-    ...CONFIG.FALLBACK_MODELS
+  const baseline = {
+    modelUsed: null,
+    aiAvailable: false,
+    generatedAt: new Date().toISOString(),
+    source: match.source,
+    sourceUrl: match.sourceUrl,
+    dataFetchedAt: match.fetchedAt,
+    probabilities: match.probabilities,
+    predictedScore: match.model?.predictedScore ?? null,
+    topPick: match.aiPick,
+    valueBet: null,
+    cornerAnalysis: null,
+    bttsPrediction: null,
+    overUnderPrediction: null,
+    summaryVerdict: null,
+    facts,
+    narrativeAnalysis: facts.join('\n\n'),
+    limitations: 'Las apuestas conllevan riesgo. Las estimaciones son análisis cuantitativos y tácticos basados en datos reales de la temporada y forma reciente, no certezas matemáticas.'
+  };
+
+  if (!CONFIG.OPENROUTER_API_KEY) {
+    return {
+      ...baseline,
+      aiStatus: 'OPENROUTER_API_KEY no configurada. Se muestran únicamente datos y cálculos estadísticos.'
+    };
+  }
+
+  const candidateModels = [
+    CONFIG.DEFAULT_MODEL,
+    ...FALLBACK_MODELS.filter(m => m !== CONFIG.DEFAULT_MODEL)
   ];
 
-  const currentDate = new Date().toLocaleDateString('es-ES', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-
-  const h2hMatches = match.h2h || [];
-  const h2hText = h2hMatches.map((h, i) => 
-    `   ${i + 1}. [${h.date} - ${h.competition || 'Torneo'}] ${h.home} ${h.score} ${h.away} | Ganador: ${h.winner} | BTTS: ${h.btts ? 'SÍ' : 'NO'} | Córners: ${h.totalCorners || 'N/A'} | Tarjetas: ${h.yellowCards || 'N/A'} | Faltas: ${h.totalFouls || 'N/A'}`
-  ).join('\n');
-
-  const h2hBttsCount = h2hMatches.filter(h => h.btts).length;
-  const h2hCornersAvg = h2hMatches.length ? (h2hMatches.reduce((acc, h) => acc + (h.totalCorners || 0), 0) / h2hMatches.length).toFixed(1) : 10.5;
-
-  const prompt = `
-Eres el analista de apuestas de fútbol con IA más avanzado y prestigioso del mundo (estilo Jarvis Bet / MasterCuota / Bloomberg de Apuestas).
-Fecha actual de análisis: ${currentDate}. La información y el contexto deben ser actuales y precisos.
-
-Por favor genera un informe predictivo y cuantitativo ULTRA-PROFESIONAL, RIGUROSO y DE ALTA PRECISIÓN para el siguiente partido de fútbol:
-
---- INFORMACIÓN DEL PARTIDO ---
-Torneo: ${match.leagueName} (${match.leagueFlag})
-Partido: ${match.homeTeam.name} (Local) vs ${match.awayTeam.name} (Visitante)
-Estadio: ${match.venue}
-Árbitro: ${match.referee}
-Posiciones en Tabla: ${match.homeTeam.name} (#${match.homeTeam.position} - ${match.homeTeam.points} pts, Goles: ${match.homeTeam.goalsFor}:${match.homeTeam.goalsAgainst}) vs ${match.awayTeam.name} (#${match.awayTeam.position} - ${match.awayTeam.points} pts, Goles: ${match.awayTeam.goalsFor}:${match.awayTeam.goalsAgainst})
-Forma reciente últimos 5: ${match.homeTeam.name} [${match.homeTeam.form.join('-')}] | ${match.awayTeam.name} [${match.awayTeam.form.join('-')}]
-Estadísticas de Corners: Local promedia ${match.homeTeam.avgCorners} córners | Visitante promedia ${match.awayTeam.avgCorners} córners (Suma estimada: ${(match.homeTeam.avgCorners + match.awayTeam.avgCorners).toFixed(1)})
-Tarjetas y Faltas: Local comete ${match.homeTeam.avgFouls} faltas (${match.homeTeam.avgYellowCards} amarillas/juego) | Visitante comete ${match.awayTeam.avgFouls} faltas (${match.awayTeam.avgYellowCards} amarillas/juego)
-Ambos Anotan (BTTS Histórico): Local ${match.homeTeam.bttsRate}% | Visitante ${match.awayTeam.bttsRate}%
-Over 2.5 Goles: Local ${match.homeTeam.over25Rate}% | Visitante ${match.awayTeam.over25Rate}%
-Jugadores Clave: Local [${match.homeTeam.keyPlayers.join(', ')}] vs Visitante [${match.awayTeam.keyPlayers.join(', ')}]
-Cuotas del Mercado: Local 1 (${match.odds.homeWin}) | Empate X (${match.odds.draw}) | Visitante 2 (${match.odds.awayWin}) | Over 2.5 (${match.odds.over25}) | BTTS Sí (${match.odds.bttsYes})
-
---- HISTORIAL CARA A CARA (ÚLTIMOS ${h2hMatches.length} PARTIDOS DIRECTOS) ---
-${h2hText}
-Resumen H2H: BTTS ocurrió en ${h2hBttsCount} de ${h2hMatches.length} partidos (${h2hMatches.length ? Math.round((h2hBttsCount / h2hMatches.length) * 100) : 0}%). Promedio de córners en H2H: ${h2hCornersAvg}.
-
-INSTRUCCIÓN: Responde ÚNICAMENTE en formato JSON válido, sin bloques de código extra ni texto adicional fuera del JSON. El JSON debe tener exactamente esta estructura:
-
+  const systemPrompt = `Eres el analista cuantitativo y táctico de DEPORTEPICKS AI VIP.
+Responde siempre en español. No uses introducciones ni explicaciones fuera del JSON.
+Devuelve EXCLUSIVAMENTE un objeto JSON válido con esta estructura exacta:
 {
-  "predictedScore": "2 - 1",
-  "probabilities": {
-    "homeWin": 55,
-    "draw": 26,
-    "awayWin": 19,
-    "bttsYes": 65,
-    "bttsNo": 35,
-    "over15": 85,
-    "over25": 62,
-    "under25": 38,
-    "over35": 35,
-    "cornerOver95": 60,
-    "confidence": 88
-  },
-  "topPick": {
-    "type": "💎 Pick Banquero Principal",
-    "selection": "Real Madrid Gana + Más de 1.5 Goles",
-    "odds": 1.95,
-    "units": 3.5,
-    "confidence": "88% (Muy Alta)",
-    "risk": "Bajo",
-    "market": "1X2 + Goles"
-  },
-  "secondaryPick": {
-    "type": "⚡ Pick de Valor",
-    "selection": "Ambos Anotan: SÍ",
-    "odds": 1.70,
-    "units": 2.5,
-    "confidence": "82%",
-    "risk": "Moderado",
-    "market": "BTTS"
-  },
-  "cornerPick": {
-    "type": "🚩 Pick de Tiros de Esquina",
-    "selection": "Más de 9.5 Corners Totales",
-    "odds": 1.85,
-    "confidence": "80%"
-  },
-  "parlayLegRecommendation": {
-    "selection": "Real Madrid Gana o Empata (1X)",
-    "odds": 1.25,
-    "safetyScore": 95,
-    "rationale": "Base sumamente segura para combinadas."
-  },
-  "narrativeAnalysis": "Análisis táctico y estadístico de 3 o 4 párrafos que explique con números por qué este pronóstico tiene alto valor, las debilidades del rival, las transiciones y la probabilidad matemática.",
-  "tacticalKeypoints": [
-    "Punto clave táctico 1 con estadística",
-    "Punto clave táctico 2 con estadística",
-    "Punto clave táctico 3 con estadística"
-  ],
-  "cornersAnalysis": "Detalle analítico sobre la generación y concesión de tiros de esquina de ambos clubes.",
-  "cardsAnalysis": "Evaluación de faltas, rigor del árbitro y probabilidad de tarjetas."
-}
-`;
+  "predictedScore": "Marcador proyectado ej: 2 - 1",
+  "tacticalAnalysis": "Análisis táctico profundo en español evaluando transiciones, virtudes ofensivas, debilidades defensivas y balance.",
+  "topPick": "Selección recomendada principal ej: Real Madrid gana",
+  "topStake": "3/5 Unidades",
+  "valueBet": "Selección con cuota de valor estadístico",
+  "cornersAnalysis": "Proyección y análisis del volumen de córners según juego por bandas.",
+  "bttsAnalysis": "Ambos Anotan: Sí o No con argumento clave."
+}`;
 
-  // Try AI models in sequence
-  for (const model of modelsToTry) {
-    try {
-      console.log(`[AI Service] Attempting prediction with model: ${model}...`);
-      const response = await axios.post(
-        `${CONFIG.OPENROUTER_BASE_URL}/chat/completions`,
-        {
-          model,
-          messages: [
-            {
-              role: 'system',
-              content: 'Eres un motor de inteligencia artificial para pronósticos deportivos de alta fidelidad. Siempre devuelves JSON puro y exacto.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 1500
-        },
-        {
+  const userPrompt = `Analiza este partido de fútbol con los datos oficiales actuales:
+${facts.join('\n')}
+
+Devuelve el JSON del informe institucional.`;
+
+  const fingerprint = createHash('sha256').update(JSON.stringify({ id: match.id, facts, force: options.forceRefresh ? Date.now() : 0 })).digest('hex');
+  const cacheKey = `ai:${fingerprint}`;
+
+  return cachedData(cacheKey, 600, async () => {
+    for (const model of candidateModels) {
+      try {
+        const response = await fetch(`${CONFIG.OPENROUTER_BASE_URL}/chat/completions`, {
+          method: 'POST',
+          signal: AbortSignal.timeout(10000),
           headers: {
-            'Authorization': `Bearer ${apiKey}`,
+            Authorization: `Bearer ${CONFIG.OPENROUTER_API_KEY}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': CONFIG.APP_URL,
+            'HTTP-Referer': 'https://deportepicks.vip',
             'X-Title': CONFIG.APP_NAME
           },
-          timeout: 20000
-        }
-      );
+          body: JSON.stringify({
+            model,
+            temperature: 0.2,
+            max_tokens: 2500,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt }
+            ]
+          })
+        });
 
-      const content = response.data?.choices?.[0]?.message?.content;
-      if (content) {
-        const parsed = cleanAndParseJson(content);
-        if (parsed && (parsed.topPick || parsed.predictedScore)) {
-          const result = {
-            ...parsed,
-            modelUsed: model,
-            generatedAt: new Date().toISOString(),
-            isCached: false
-          };
-          storage.saveCachedAnalysis(match.id, result);
-          return result;
-        }
+        if (!response.ok) continue;
+        const data = await response.json();
+        const rawContent = data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.reasoning || '';
+        const cleaned = rawContent.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) continue;
+
+        let parsed;
+        try { parsed = JSON.parse(jsonMatch[0]); } catch { continue; }
+        if (!parsed.tacticalAnalysis) continue;
+
+        const topPickText = typeof parsed.topPick === 'string'
+          ? parsed.topPick
+          : (parsed.topPick?.selection || match.aiPick?.selection || null);
+
+        const topPickCandidate = topPickText ? {
+          selection: topPickText,
+          market: parsed.topPick?.market || match.aiPick?.market || '1X2 / Mercado Principal',
+          odds: Number(parsed.topPick?.odds) || match.aiPick?.odds || 1.85,
+          probability: Number(parsed.topPick?.probability) || match.aiPick?.probability || 65,
+          stake: parsed.topStake || parsed.topPick?.stake || '3/5 Unidades',
+          rationale: parsed.topPick?.rationale || topPickText
+        } : (match.aiPick || null);
+
+        const valueBetCandidate = parsed.valueBet
+          ? (typeof parsed.valueBet === 'string' ? { selection: parsed.valueBet, odds: 2.10, rationale: parsed.valueBet } : parsed.valueBet)
+          : null;
+
+        return {
+          ...baseline,
+          modelUsed: data.model || model,
+          aiAvailable: true,
+          aiStatus: `Informe generado por IA (${data.model || model}) en tiempo real.`,
+          generatedAt: new Date().toISOString(),
+          predictedScore: parsed.predictedScore || match.model?.predictedScore || null,
+          tacticalAnalysis: parsed.tacticalAnalysis,
+          narrativeAnalysis: parsed.tacticalAnalysis,
+          topPick: topPickCandidate,
+          valueBet: valueBetCandidate,
+          cornerAnalysis: parsed.cornersAnalysis || parsed.cornerAnalysis || null,
+          bttsPrediction: parsed.bttsAnalysis ? { prediction: parsed.bttsAnalysis, rationale: parsed.bttsAnalysis } : (parsed.bttsPrediction || null),
+          overUnderPrediction: parsed.overUnderPrediction || null,
+          summaryVerdict: parsed.summaryVerdict || null
+        };
+      } catch {
+        // Continue to next candidate model in cascade
       }
-    } catch (err) {
-      console.warn(`[AI Service] Model ${model} failed:`, err.response?.data?.error?.message || err.message);
-    }
-  }
-
-  // Fallback: Advanced Quantitative Algorithmic Engine (Poisson & Dixon-Coles xG simulation)
-  console.log(`[AI Service] Using Statistical Algorithmic Engine fallback for match ${match.id}`);
-  const algoReport = {
-    ...generateAlgorithmicReport(match),
-    modelUsed: 'DeepPicks Quantum Neural Engine v4.2',
-    generatedAt: new Date().toISOString(),
-    isCached: false
-  };
-  storage.saveCachedAnalysis(match.id, algoReport);
-  return algoReport;
-}
-
-function cleanAndParseJson(raw) {
-  try {
-    if (!raw) return null;
-    // 1. Remove thinking tags from reasoning models
-    let clean = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-
-    // 2. Remove markdown code fence blocks
-    if (clean.startsWith('```json')) {
-      clean = clean.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    } else if (clean.startsWith('```')) {
-      clean = clean.replace(/^```\s*/, '').replace(/\s*```$/, '');
     }
 
-    // 3. Extract outermost JSON { ... }
-    const firstBrace = clean.indexOf('{');
-    const lastBrace = clean.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      const jsonSnippet = clean.slice(firstBrace, lastBrace + 1);
-      return JSON.parse(jsonSnippet);
-    }
-
-    return JSON.parse(clean);
-  } catch {
-    return null;
-  }
-}
-
-// Highly detailed Quantitative Football Model
-function generateAlgorithmicReport(match) {
-  const home = match.homeTeam;
-  const away = match.awayTeam;
-
-  const homeWinProb = match.probabilities?.homeWin || 52;
-  const drawProb = match.probabilities?.draw || 26;
-  const awayWinProb = match.probabilities?.awayWin || 22;
-  const bttsProb = match.probabilities?.bttsYes || Math.round((home.bttsRate + away.bttsRate) / 2);
-  const over25Prob = match.probabilities?.over25 || Math.round((home.over25Rate + away.over25Rate) / 2);
-  const totalCornersExpected = (home.avgCorners + away.avgCorners).toFixed(1);
-
-  return {
-    predictedScore: match.aiPick?.predictedScore || `${homeWinProb > awayWinProb ? '2' : '1'} - ${bttsProb > 55 ? '1' : '0'}`,
-    probabilities: {
-      homeWin: homeWinProb,
-      draw: drawProb,
-      awayWin: awayWinProb,
-      bttsYes: bttsProb,
-      bttsNo: 100 - bttsProb,
-      over15: Math.min(95, over25Prob + 22),
-      over25: over25Prob,
-      under25: 100 - over25Prob,
-      over35: Math.max(15, over25Prob - 28),
-      cornerOver95: match.probabilities?.cornerOver95 || 62,
-      confidence: match.probabilities?.confidence || 88
-    },
-    topPick: {
-      type: match.aiPick?.type || "💎 Pick Algorítmico Cuantitativo",
-      selection: match.aiPick?.selection || `${home.name} Victoria Directa o Empate (1X)`,
-      odds: match.aiPick?.odds || 1.85,
-      units: match.aiPick?.units || 3.5,
-      confidence: `${match.probabilities?.confidence || 88}% (Alta Probabilidad)`,
-      risk: match.aiPick?.risk || "Bajo",
-      market: "Mercado Principal"
-    },
-    secondaryPick: {
-      type: "⚡ Pick de Valor (Goles)",
-      selection: bttsProb > 55 ? "Ambos Equipos Anotan (BTTS: SÍ)" : "Más de 1.5 Goles Totales",
-      odds: bttsProb > 55 ? (match.odds?.bttsYes || 1.75) : 1.35,
-      units: 2.5,
-      confidence: `${Math.max(bttsProb, 80)}%`,
-      risk: "Moderado",
-      market: "Goles"
-    },
-    cornerPick: {
-      type: "🚩 Mercado de Corners",
-      selection: `Más de 8.5 Corners Totales (${totalCornersExpected} prom.)`,
-      odds: match.odds?.over95Corners || 1.80,
-      confidence: "82%"
-    },
-    parlayLegRecommendation: {
-      selection: homeWinProb >= awayWinProb ? `${home.shortName || home.name} o Empate (1X)` : `${away.shortName || away.name} +1.5 Hándicap`,
-      odds: 1.28,
-      safetyScore: 92,
-      rationale: "Filtro de seguridad alto para acumular en parlay."
-    },
-    narrativeAnalysis: `${match.homeTeam.name} llega con un rendimiento de ${home.form.filter(f=>f==='W').length} victorias en sus últimos 5 encuentros, mostrando una eficacia goleadora de ${(home.goalsFor/15).toFixed(1)} goles por 90 minutos. Por su parte, ${match.awayTeam.name} promedia ${away.avgCorners} córners y una tasa de Ambos Anotan del ${away.bttsRate}%. El modelo detecta una asimetría táctica en los duelos individuales por bandas y un xG combinado superior a 2.65 goles.`,
-    tacticalKeypoints: [
-      `Dominio territorial de ${home.name} en campo rival con ${home.avgCorners} córners por partido.`,
-      `Alta frecuencia de anotación en segundas partes (${bttsProb}% probabilidad de gol de ambos).`,
-      `Rigor arbitral de ${match.referee} con promedio de ${((home.avgFouls + away.avgFouls)/2).toFixed(1)} faltas por encuentro.`
-    ],
-    cornersAnalysis: `Generación esperada de ${totalCornersExpected} tiros de esquina totales. ${home.name} promedia ${home.avgCorners} a favor como local.`,
-    cardsAnalysis: `Índice de faltas proyectado en ${Math.round(home.avgFouls + away.avgFouls)} faltas. Tendencia de más de 3.5 tarjetas amarillas totales.`
-  };
+    return {
+      ...baseline,
+      aiStatus: 'Informe estadístico cuantitativo (Poisson y métricas de temporada). Motor de IA en respaldo temporal.',
+      narrativeAnalysis: facts.join('\n\n')
+    };
+  });
 }

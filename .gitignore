@@ -29,3 +29,6 @@ dist-ssr
 tools/cloudflared.exe
 *.exe
 server/services/footballDataService.mock.js
+server/data/access-v2.json
+server/data/access-v2.json.tmp
+.vercel/

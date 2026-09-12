@@ -2,7 +2,7 @@
 
 export function formatOdds(decimalOdds, format = 'decimal') {
   const num = parseFloat(decimalOdds);
-  if (isNaN(num) || num <= 1.0) return '1.00';
+  if (!Number.isFinite(num) || num <= 1.0) return 'N/D';
 
   switch (format) {
     case 'american': {

@@ -1,109 +1,51 @@
-import React from 'react';
+import { isFresh } from '../utils/api';
+import { useClock } from '../utils/clock';
+import { Radio } from 'lucide-react';
 
-export default function LiveTicker({ matches = [] }) {
-  const dynamicItems = React.useMemo(() => {
-    if (!matches || matches.length === 0) {
-      return [
-        { type: 'LIVE', minute: "68'", match: "Real Madrid 2 - 1 Atlético Madrid", pick: "Prob. Victoria Local 78%", corners: "11 Corners" },
-        { type: 'LIVE', minute: "34'", match: "Arsenal 1 - 0 Chelsea", pick: "Over 8.5 Corners Activo", corners: "Corners: 4-2" },
-        { type: 'FT', minute: "FT", match: "Pachuca 3 - 1 Toluca", pick: "Pick Acertado: Ambos Anotan + Over 2.5 @ 1.85", corners: "Finalizado" },
-        { type: 'PARLAY', minute: "TOP", match: "Parlay Banquero del Día", pick: "Cuota 2.66x (3 Selecciones Verificadas)", corners: "Seguridad 92%" }
-      ];
-    }
-
-    const items = [];
-
-    // 1. Live Matches first
-    const liveMatches = matches.filter(m => m.status === 'LIVE');
-    liveMatches.forEach(m => {
-      items.push({
-        type: 'LIVE',
-        minute: m.liveMinute || "LIVE",
-        match: `${m.homeTeam.name} ${m.liveScore?.home ?? 0} - ${m.liveScore?.away ?? 0} ${m.awayTeam.name}`,
-        pick: `Pick IA: ${m.aiPick?.selection || 'En Juego'}`,
-        corners: `${m.leagueName}`
-      });
-    });
-
-    // 2. Upcoming matches today / tomorrow
-    const upcoming = matches.filter(m => m.status === 'SCHEDULED').slice(0, 6);
-    upcoming.forEach(m => {
-      const timeStr = new Date(m.kickoff).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-      items.push({
-        type: 'PRE',
-        minute: timeStr,
-        match: `${m.homeTeam.name} vs ${m.awayTeam.name}`,
-        pick: `Pick: ${m.aiPick?.selection || 'Ver Pronóstico'}`,
-        corners: m.leagueName
-      });
-    });
-
-    // 3. Banker Parlay Banner
-    items.push({
-      type: 'PARLAY',
-      minute: 'AI VIP',
-      match: 'Parlay Banquero Cuantitativo del Día',
-      pick: 'Filtrado por Poisson & xG (Cuota Verificada)',
-      corners: 'Seguridad Alta'
-    });
-
-    // 4. Recently finished matches
-    const finished = matches.filter(m => m.status === 'FINISHED').slice(0, 4);
-    finished.forEach(m => {
-      items.push({
-        type: 'FT',
-        minute: 'FT',
-        match: `${m.homeTeam.name} ${m.finalScore?.home ?? 0} - ${m.finalScore?.away ?? 0} ${m.awayTeam.name}`,
-        pick: m.aiPick?.settlement === 'WON' ? '✅ Pronóstico Acertado' : `Pick: ${m.aiPick?.selection}`,
-        corners: m.leagueName
-      });
-    });
-
-    return items;
-  }, [matches]);
-
-  const tickerItems = dynamicItems;
+export default function LiveTicker({ matches = [], onSelectMatch }) {
+  const now = useClock();
+  const live = matches.filter(m => m.status === 'LIVE' && isFresh(m, now));
 
   return (
-    <div className="w-full bg-[#080b11] border-b border-white/5 py-1.5 px-4 overflow-hidden relative select-none">
-      <div className="flex items-center space-x-8 animate-ticker whitespace-nowrap text-xs font-mono hover:[animation-play-state:paused]">
-        {[...tickerItems, ...tickerItems].map((item, idx) => (
-          <div key={idx} className="inline-flex items-center space-x-2 text-slate-300">
-            
-            {/* Status indicator */}
-            {item.type === 'LIVE' ? (
-              <span className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
-                <span>LIVE {item.minute}</span>
-              </span>
-            ) : item.type === 'FT' ? (
-              <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
-                FT
-              </span>
-            ) : item.type === 'PARLAY' ? (
-              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold">
-                PARLAY
-              </span>
-            ) : (
-              <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-white/10 text-[10px] font-bold">
-                {item.minute}
-              </span>
-            )}
+    <section aria-label="Marcadores en vivo" className="border-b border-rose-500/20 bg-gradient-to-r from-rose-950/30 via-[#0d121c] to-rose-950/30 px-4 py-2.5 overflow-x-auto no-scrollbar scrollbar-none">
+      <div className="flex items-center gap-6 text-xs whitespace-nowrap max-w-7xl mx-auto">
+        <div className="flex items-center gap-2 text-rose-400 font-bold uppercase tracking-wider text-[11px] shrink-0">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+          </span>
+          <Radio size={13} className="animate-pulse" />
+          <span>VIVO ({live.length})</span>
+        </div>
 
-            {/* Match info */}
-            <span className="font-semibold text-white font-sans text-xs">
-              {item.match}
-            </span>
-
-            {/* Pick detail */}
-            <span className="text-slate-400 text-xs font-sans">
-              • {item.pick}
-            </span>
-
-            <span className="text-slate-700 mx-2">•</span>
+        {live.length ? (
+          <div className="flex items-center gap-6">
+            {live.map(m => (
+              <button
+                key={m.id}
+                onClick={() => onSelectMatch?.(m)}
+                className="inline-flex items-center gap-2.5 px-3 py-1 rounded-lg bg-white/5 border border-white/10 hover:border-rose-500/40 hover:bg-rose-500/10 transition-all cursor-pointer text-left shrink-0"
+              >
+                <span className="text-[10px] font-mono font-bold text-rose-400 bg-rose-500/20 px-1.5 py-0.5 rounded">
+                  {m.liveMinute || 'EN JUEGO'}
+                </span>
+                <span className="text-slate-300 font-medium">{m.homeTeam.shortName || m.homeTeam.name}</span>
+                <strong className="font-mono text-sm text-white px-1 bg-black/40 rounded">
+                  {m.liveScore.home ?? 0} - {m.liveScore.away ?? 0}
+                </strong>
+                <span className="text-slate-300 font-medium">{m.awayTeam.shortName || m.awayTeam.name}</span>
+                <span className="text-[10px] text-slate-500">{m.leagueFlag}</span>
+              </button>
+            ))}
           </div>
-        ))}
+        ) : (
+          <p className="text-slate-400 text-xs flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+            Sin partidos en juego ahora · Todos los horarios y próximos encuentros disponibles a continuación.
+          </p>
+        )}
       </div>
-    </div>
+    </section>
   );
 }
+
