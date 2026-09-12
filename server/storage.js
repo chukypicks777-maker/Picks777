@@ -5,8 +5,9 @@ import { redisConfigured, redisCommand } from './services/dataCache.js';
 const KEY = 'picks:v2:access';
 const clean = code => String(code || '').trim().toUpperCase();
 const initial = () => ({ codes: [] });
+const defaultStorageFile = () => (process.env.VERCEL ? path.join('/tmp', 'access-v2.json') : path.resolve('server/data/access-v2.json'));
 export class StorageManager {
-  constructor(file = path.resolve('server/data/access-v2.json')) { this.file = file; this.queue = Promise.resolve(); }
+  constructor(file = defaultStorageFile()) { this.file = file; this.queue = Promise.resolve(); }
   async loadRaw() {
     if (redisConfigured()) return await redisCommand('GET', KEY);
     try { return await fs.readFile(this.file, 'utf8'); }

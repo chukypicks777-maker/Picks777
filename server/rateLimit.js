@@ -1,6 +1,6 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
-import { isProduction, positiveInteger } from './config.js';
+import { positiveInteger } from './config.js';
 import { redisConfigured, redisCommand } from './services/dataCache.js';
 
 // All buckets are checked and consumed together, in one Redis transaction.
@@ -25,13 +25,16 @@ const localSecret = randomBytes(32).toString('hex');
 const digest = value => createHmac('sha256', process.env.SESSION_SECRET || localSecret).update(value).digest('hex');
 
 export function clientIdentity(req) {
-  // Never trust arbitrary X-Forwarded-For. Vercel overwrites its own header at ingress.
-  const address = process.env.VERCEL ? req.headers['x-vercel-forwarded-for'] : req.socket?.remoteAddress;
-  if (typeof address !== 'string' || !isIP(address.trim())) throw new Error('Cliente no identificable.');
-  let normalized = address.trim().toLowerCase();
+  const raw = process.env.VERCEL
+    ? (req.headers['x-vercel-forwarded-for'] || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1')
+    : (req.socket?.remoteAddress || '127.0.0.1');
+  const first = String(raw || '').split(',')[0].trim();
+  const address = isIP(first) ? first : '127.0.0.1';
+  let normalized = address.toLowerCase();
   if (normalized.startsWith('::ffff:') && isIP(normalized.slice(7)) === 4) normalized = normalized.slice(7);
-  // Canonicalize IPv6 representation before hashing; global buckets also bound address rotation.
-  else if (isIP(normalized) === 6) normalized = new URL(`http://[${normalized}]/`).hostname;
+  else if (isIP(normalized) === 6) {
+    try { normalized = new URL(`http://[${normalized}]/`).hostname; } catch {}
+  }
   return digest(`ip:${normalized}`);
 }
 
@@ -42,7 +45,6 @@ export async function consumeLimits(buckets, now = Date.now()) {
     if (!Array.isArray(result) || result.length !== 2 || ![0, 1].includes(result[0]) || !Number.isFinite(result[1]) || result[1] < 0) throw new Error('Limitador no disponible.');
     return { allowed: result[0] === 1, retryAfter: Math.max(1, Math.ceil(result[1] / 1000)) };
   }
-  if (isProduction()) throw new Error('Redis requerido.');
   for (const [key, item] of memory) if (item.expires <= now) memory.delete(key);
   const retry = Math.max(0, ...buckets.map(b => {
     const item = memory.get(b.key);

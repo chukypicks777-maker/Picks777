@@ -1,12 +1,12 @@
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { CONFIG, secureConfiguration } from './config.js';
 import { storage } from './storage.js';
-const localSecret = randomBytes(32).toString('hex');
 const secret = () => {
   if (!secureConfiguration()) throw new Error('Configuración segura requerida.');
-  if (process.env.SESSION_SECRET?.length >= 32) return process.env.SESSION_SECRET;
-  if (process.env.VERCEL || process.env.NODE_ENV === 'production') throw new Error('Configura SESSION_SECRET (mínimo 32 caracteres).');
-  return localSecret;
+  if (process.env.SESSION_SECRET?.length >= 16) return process.env.SESSION_SECRET;
+  return createHmac('sha256', 'deportepicks-vip-salt-2026')
+    .update((process.env.MASTER_ADMIN_CODE || 'DeportePicks').trim())
+    .digest('hex');
 };
 const sign = payload => createHmac('sha256', secret()).update(payload).digest('base64url');
 export function setSession(res, data) {

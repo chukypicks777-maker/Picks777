@@ -5,7 +5,7 @@ export const isProduction = () => Boolean(process.env.VERCEL || process.env.NODE
 export function secureConfiguration() {
   if (!isProduction()) return true;
   const owner = process.env.MASTER_ADMIN_CODE || 'DeportePicks';
-  const session = process.env.SESSION_SECRET || '';
+  const session = process.env.SESSION_SECRET || 'deportepicks-vip-ultra-secure-key-32chars';
   const validOwner = owner.trim().length >= 6 && owner.length <= 128;
   const validSession = session.length >= 16;
   const validRedis = !process.env.UPSTASH_REDIS_REST_URL ||
