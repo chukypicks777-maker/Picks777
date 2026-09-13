@@ -21,7 +21,7 @@ export const CONFIG = {
   PORT: process.env.PORT || 5000,
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
   OPENROUTER_BASE_URL: 'https://openrouter.ai/api/v1',
-  DEFAULT_MODEL: process.env.OPENROUTER_MODEL || 'liquid/lfm-2.5-2.6b:free',
+  DEFAULT_MODEL: process.env.OPENROUTER_MODEL || 'openrouter/free',
   MASTER_ADMIN_CODE: process.env.MASTER_ADMIN_CODE || 'DeportePicks',
   APP_NAME: 'DeportePicks AI VIP'
 };

@@ -31,20 +31,20 @@ export default function MatchCard({ match, onOpenModal, onAddToParlay, oddsForma
       {/* Teams and Scores */}
       <div className="space-y-3 py-1">
         {[match.homeTeam, match.awayTeam].map((team, i) => (
-          <div key={team.id} className="flex items-center justify-between gap-3">
+          <div key={team?.id || i} className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              {team.logo ? (
+              {team?.logo ? (
                 <img src={team.logo} alt="" loading="lazy" className="w-7 h-7 object-contain shrink-0" />
               ) : (
                 <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold shrink-0">
-                  {team.name?.slice(0, 2).toUpperCase()}
+                  {team?.name?.slice(0, 2).toUpperCase() || 'EQ'}
                 </div>
               )}
-              <h3 className="font-semibold text-sm truncate text-white">{team.name}</h3>
+              <h3 className="font-semibold text-sm truncate text-white">{team?.name || 'Equipo'}</h3>
             </div>
             {(isLive || isFinished) && (
               <strong className="font-mono text-xl text-white px-2 py-0.5 bg-black/40 rounded border border-white/10 shrink-0">
-                {match.liveScore[i ? 'away' : 'home'] ?? 0}
+                {match.liveScore?.[i ? 'away' : 'home'] ?? 0}
               </strong>
             )}
           </div>
@@ -70,10 +70,10 @@ export default function MatchCard({ match, onOpenModal, onAddToParlay, oddsForma
           <div key={key} className="rounded-lg bg-white/[0.04] p-2 border border-white/5 hover:border-white/10 transition-colors">
             <span className="block text-[11px] text-slate-400 font-medium">{label}</span>
             <strong className="font-mono text-sm text-sky-200 mt-0.5 block">
-              {formatOdds(match.odds[key], oddsFormat)}
+              {formatOdds(match.odds?.[key], oddsFormat)}
             </strong>
             <span className="block text-[10px] text-slate-500 mt-0.5">
-              {percent(match.probabilities[key])}
+              {percent(match.probabilities?.[key])}
             </span>
           </div>
         ))}

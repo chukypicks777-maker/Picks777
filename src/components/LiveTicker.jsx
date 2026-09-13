@@ -29,11 +29,11 @@ export default function LiveTicker({ matches = [], onSelectMatch }) {
                 <span className="text-[10px] font-mono font-bold text-rose-400 bg-rose-500/20 px-1.5 py-0.5 rounded">
                   {m.liveMinute || 'EN JUEGO'}
                 </span>
-                <span className="text-slate-300 font-medium">{m.homeTeam.shortName || m.homeTeam.name}</span>
+                <span className="text-slate-300 font-medium">{m.homeTeam?.shortName || m.homeTeam?.name || 'Local'}</span>
                 <strong className="font-mono text-sm text-white px-1 bg-black/40 rounded">
-                  {m.liveScore.home ?? 0} - {m.liveScore.away ?? 0}
+                  {m.liveScore?.home ?? 0} - {m.liveScore?.away ?? 0}
                 </strong>
-                <span className="text-slate-300 font-medium">{m.awayTeam.shortName || m.awayTeam.name}</span>
+                <span className="text-slate-300 font-medium">{m.awayTeam?.shortName || m.awayTeam?.name || 'Visitante'}</span>
                 <span className="text-[10px] text-slate-500">{m.leagueFlag}</span>
               </button>
             ))}

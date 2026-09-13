@@ -452,19 +452,25 @@ export default function MatchDetailModal({ match, onClose, onAddToParlay, oddsFo
           <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/10 text-xs text-slate-300">
             {detail.model?.limitations || 'Distribución cuantitativa de probabilidades de marcador exacto calculada por el algoritmo de Poisson.'}
           </div>
-          <div className="grid sm:grid-cols-2 gap-2.5">
-            {detail.model?.scoreDistribution.map(s => (
-              <div key={s.score} className="metric flex justify-between items-center py-2.5 px-4">
-                <strong className="font-mono text-lg text-sky-300">{s.score}</strong>
-                <span className="font-mono text-sm text-slate-300 bg-white/5 px-2 py-0.5 rounded">
-                  {percent(s.probability)}
-                </span>
-              </div>
-            ))}
-          </div>
+          {(detail.model?.scoreDistribution || []).length > 0 ? (
+            <div className="grid sm:grid-cols-2 gap-2.5">
+              {detail.model.scoreDistribution.map(s => (
+                <div key={s.score} className="metric flex justify-between items-center py-2.5 px-4">
+                  <strong className="font-mono text-lg text-sky-300">{s.score}</strong>
+                  <span className="font-mono text-sm text-slate-300 bg-white/5 px-2 py-0.5 rounded">
+                    {percent(s.probability)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/10 text-center text-xs text-slate-400">
+              Matriz Poisson disponible para partidos programados con datos estadísticos de temporada completos. Para partidos en vivo o copas, consulta la pestaña de Análisis IA.
+            </div>
+          )}
           {detail.model && (
             <p className="text-xs text-slate-500 mt-2">
-              Muestra evaluada: {detail.model.sampleSize.home} partidos {detail.homeTeam.name} / {detail.model.sampleSize.away} partidos {detail.awayTeam.name}.
+              Muestra evaluada: {detail.model.sampleSize?.home ?? 0} partidos {detail.homeTeam?.name || 'Local'} / {detail.model.sampleSize?.away ?? 0} partidos {detail.awayTeam?.name || 'Visitante'}.
             </p>
           )}
         </div>

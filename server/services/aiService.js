@@ -15,11 +15,12 @@ export async function availableModels() {
 }
 
 const FALLBACK_MODELS = [
-  'liquid/lfm-2.5-2.6b:free',
   'openrouter/free',
+  'liquid/lfm-2.5-2.6b:free',
   'nex-agi/nex-n2.5-mini:free',
-  'inclusionai/ling-3.0-flash-vl:free',
-  'z-ai/glm-5.2:free'
+  'nex-agi/nex-n2.5-pro:free',
+  'inclusionai/ling-3.0-flash-fin:free',
+  'inclusionai/ling-3.0-flash-vl:free'
 ];
 
 export async function generateAiMatchReport(match, options = {}) {
