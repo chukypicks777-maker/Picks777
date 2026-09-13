@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Component, useCallback, useEffect, useState } from 'react';
 import { Activity, RefreshCw, Search } from 'lucide-react';
 import AuthGateModal from './components/AuthGateModal';
 import Navbar from './components/Navbar';
@@ -11,6 +11,36 @@ import AdminDashboardModal from './components/AdminDashboardModal';
 import ParlayBuilderDrawer from './components/ParlayPanel';
 import { api } from './utils/api';
 import { ClockContext } from './utils/clock';
+
+class ErrorBoundary extends Component {
+  state = { hasError: false, error: null };
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+          <div className="metric max-w-md w-full p-6 text-center space-y-4">
+            <h3 className="font-bold text-lg text-rose-300">Aviso del sistema</h3>
+            <p className="text-xs text-slate-300">
+              {this.state.error?.message || 'Error temporal al abrir el partido. Intenta de nuevo.'}
+            </p>
+            <button
+              className="primary text-xs mx-auto py-2 px-4"
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                this.props.onReset?.();
+              }}
+            >
+              Cerrar y continuar
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const saved = (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
 export default function App() {
   const [auth, setAuth] = useState(null);
@@ -131,7 +161,9 @@ export default function App() {
       <p className="text-xs text-slate-500 leading-relaxed mt-8">{feed.notice} Las probabilidades son estimaciones experimentales, no precisión histórica. La moneda solo cambia la unidad del simulador; no convierte divisas.</p>
     </main>
     <footer className="border-t border-white/10 p-6 text-center text-xs text-slate-500">DEPORTEPICKS · Solo +18 · No aceptamos apuestas ni pagos. Puedes perder todo lo apostado. Juega con responsabilidad.</footer>
-    {selected && <MatchDetailModal key={selected.id} match={selected} onClose={() => setSelected(null)} onAddToParlay={addLeg} oddsFormat={oddsFormat} />}
+    <ErrorBoundary onReset={() => setSelected(null)}>
+      {selected && <MatchDetailModal key={selected.id} match={selected} onClose={() => setSelected(null)} onAddToParlay={addLeg} oddsFormat={oddsFormat} />}
+    </ErrorBoundary>
     {modal === 'stats' && <StatsCenterModal onClose={() => setModal(null)} />}
     {modal === 'admin' && auth.isAdmin && <AdminDashboardModal onClose={() => setModal(null)} />}
     {modal === 'parlay' && <ParlayBuilderDrawer isOpen onClose={() => setModal(null)} legs={legs} onRemoveLeg={index => setLegs(previous => previous.filter((_, i) => i !== index))} onClearAll={() => setLegs([])} onLoadDailyBanker={daily} currency={currency} oddsFormat={oddsFormat} />}

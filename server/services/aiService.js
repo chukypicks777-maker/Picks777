@@ -15,12 +15,11 @@ export async function availableModels() {
 }
 
 const FALLBACK_MODELS = [
-  'z-ai/glm-5.2:free',
-  'openrouter/free',
-  'inclusionai/ling-3.0-flash-vl:free',
   'liquid/lfm-2.5-2.6b:free',
+  'openrouter/free',
   'nex-agi/nex-n2.5-mini:free',
-  'nvidia/nemotron-3.5-lightning:free'
+  'inclusionai/ling-3.0-flash-vl:free',
+  'z-ai/glm-5.2:free'
 ];
 
 export async function generateAiMatchReport(match, options = {}) {
@@ -106,7 +105,7 @@ Devuelve el JSON del informe institucional.`;
       try {
         const response = await fetch(`${CONFIG.OPENROUTER_BASE_URL}/chat/completions`, {
           method: 'POST',
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(9000),
           headers: {
             Authorization: `Bearer ${CONFIG.OPENROUTER_API_KEY}`,
             'Content-Type': 'application/json',
@@ -127,13 +126,40 @@ Devuelve el JSON del informe institucional.`;
         if (!response.ok) continue;
         const data = await response.json();
         const rawContent = data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.reasoning || '';
-        const cleaned = rawContent.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
-        const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) continue;
+        let jsonString = rawContent;
+        const fenceMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+        if (fenceMatch) {
+          jsonString = fenceMatch[1];
+        } else {
+          const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+          if (jsonMatch) jsonString = jsonMatch[0];
+        }
 
         let parsed;
-        try { parsed = JSON.parse(jsonMatch[0]); } catch { continue; }
+        try { parsed = JSON.parse(jsonString.trim()); } catch { continue; }
         if (!parsed.tacticalAnalysis) continue;
+
+        const formatScore = val => {
+          if (!val) return null;
+          if (typeof val === 'string') return val;
+          if (typeof val === 'object') {
+            if (val.summary) return String(val.summary);
+            if (val.home != null && val.away != null) return `${val.home} - ${val.away}`;
+          }
+          return String(val);
+        };
+
+        const formatText = val => {
+          if (!val) return '';
+          if (typeof val === 'string') return val;
+          if (typeof val === 'object') {
+            return Object.values(val).map(v => typeof v === 'string' ? v : JSON.stringify(v)).join('\n\n');
+          }
+          return String(val);
+        };
+
+        const tacticalText = formatText(parsed.tacticalAnalysis);
+        if (!tacticalText) continue;
 
         const topPickText = typeof parsed.topPick === 'string'
           ? parsed.topPick
@@ -152,19 +178,22 @@ Devuelve el JSON del informe institucional.`;
           ? (typeof parsed.valueBet === 'string' ? { selection: parsed.valueBet, odds: 2.10, rationale: parsed.valueBet } : parsed.valueBet)
           : null;
 
+        const cornerRaw = parsed.cornersAnalysis || parsed.cornerAnalysis || null;
+        const cornerAnalysis = cornerRaw ? (typeof cornerRaw === 'string' ? cornerRaw : (cornerRaw.summary || JSON.stringify(cornerRaw))) : null;
+
         return {
           ...baseline,
           modelUsed: data.model || model,
           aiAvailable: true,
           aiStatus: `Informe generado por IA (${data.model || model}) en tiempo real.`,
           generatedAt: new Date().toISOString(),
-          predictedScore: parsed.predictedScore || match.model?.predictedScore || null,
-          tacticalAnalysis: parsed.tacticalAnalysis,
-          narrativeAnalysis: parsed.tacticalAnalysis,
+          predictedScore: formatScore(parsed.predictedScore) || match.model?.predictedScore || null,
+          tacticalAnalysis: tacticalText,
+          narrativeAnalysis: tacticalText,
           topPick: topPickCandidate,
           valueBet: valueBetCandidate,
-          cornerAnalysis: parsed.cornersAnalysis || parsed.cornerAnalysis || null,
-          bttsPrediction: parsed.bttsAnalysis ? { prediction: parsed.bttsAnalysis, rationale: parsed.bttsAnalysis } : (parsed.bttsPrediction || null),
+          cornerAnalysis,
+          bttsPrediction: parsed.bttsAnalysis ? { prediction: formatText(parsed.bttsAnalysis), rationale: formatText(parsed.bttsAnalysis) } : (parsed.bttsPrediction || null),
           overUnderPrediction: parsed.overUnderPrediction || null,
           summaryVerdict: parsed.summaryVerdict || null
         };

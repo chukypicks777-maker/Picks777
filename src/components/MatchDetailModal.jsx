@@ -102,7 +102,7 @@ export default function MatchDetailModal({ match, onClose, onAddToParlay, oddsFo
         <div className="text-right">
           <strong className="text-2xl font-mono text-white tracking-wider">
             {['LIVE', 'FINISHED'].includes(detail.status)
-              ? `${detail.liveScore.home ?? 0} - ${detail.liveScore.away ?? 0}`
+              ? `${detail.liveScore?.home ?? 0} - ${detail.liveScore?.away ?? 0}`
               : 'VS'}
           </strong>
           <p className="text-xs text-rose-400 font-semibold mt-0.5">
@@ -252,8 +252,8 @@ export default function MatchDetailModal({ match, onClose, onAddToParlay, oddsFo
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
                 {report?.cornerAnalysis || (
-                  detail.realBoxscore?.home?.corners !== null && detail.realBoxscore?.away?.corners !== null
-                    ? `Córners registrados: ${detail.realBoxscore.home.corners} (${detail.homeTeam.name}) - ${detail.realBoxscore.away.corners} (${detail.awayTeam.name}).`
+                  detail.realBoxscore?.home?.corners != null && detail.realBoxscore?.away?.corners != null
+                    ? `Córners registrados: ${detail.realBoxscore.home.corners} (${detail.homeTeam?.name || 'Local'}) - ${detail.realBoxscore.away.corners} (${detail.awayTeam?.name || 'Visitante'}).`
                     : 'Proyección táctica de córners procesada a partir de los datos en vivo e informe IA.'
                 )}
               </p>
@@ -299,9 +299,9 @@ export default function MatchDetailModal({ match, onClose, onAddToParlay, oddsFo
                 <div className="metric p-3" key={key}>
                   <p className="text-[11px] text-slate-400 mb-1">{label}</p>
                   <strong className="text-base text-sky-200 font-mono">
-                    {percent(detail.probabilities[key])}
+                    {percent(detail.probabilities?.[key])}
                   </strong>
-                  {Number.isFinite(detail.probabilities[key]) && (
+                  {Number.isFinite(detail.probabilities?.[key]) && (
                     <progress
                       className="w-full h-1 mt-2 accent-sky-400"
                       value={detail.probabilities[key]}
@@ -360,7 +360,7 @@ export default function MatchDetailModal({ match, onClose, onAddToParlay, oddsFo
             </table>
           </div>
 
-          {detail.recentMatches.map(group => (
+          {(detail.recentMatches || []).map(group => (
             <section key={group.teamId} className="space-y-2 mt-4">
               <h3 className="font-semibold text-xs text-slate-200 uppercase tracking-wider">
                 Partidos recientes de {group.team}
@@ -436,8 +436,8 @@ export default function MatchDetailModal({ match, onClose, onAddToParlay, oddsFo
                 ].map(([label, key]) => (
                   <tr key={key}>
                     <td>{label}</td>
-                    <td className="font-mono">{displayNumber(detail.realBoxscore?.home[key])}</td>
-                    <td className="font-mono">{displayNumber(detail.realBoxscore?.away[key])}</td>
+                    <td className="font-mono">{displayNumber(detail.realBoxscore?.home?.[key])}</td>
+                    <td className="font-mono">{displayNumber(detail.realBoxscore?.away?.[key])}</td>
                   </tr>
                 ))}
               </tbody>
