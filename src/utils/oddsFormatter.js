@@ -1,7 +1,7 @@
 // Odds Conversion Utility (Decimal, American, Fractional)
 
 export function formatOdds(decimalOdds, format = 'decimal') {
-  const num = parseFloat(decimalOdds);
+  const num = Number(decimalOdds);
   if (!Number.isFinite(num) || num <= 1.0) return 'N/D';
 
   switch (format) {

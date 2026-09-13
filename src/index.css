@@ -125,33 +125,3 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #38bdf8;
 }
-
-/* Shared responsive controls and accessible native dialogs. */
-.control, .primary {
-  display: inline-flex; align-items: center; gap: .5rem;
-  padding: .65rem .9rem; border: 1px solid #ffffff20; border-radius: .65rem;
-  background: #131f30; color: #e2e8f0; font-size: .8rem; cursor: pointer;
-  transition: background .2s, border-color .2s;
-}
-.control:hover { background: #203149; border-color: #7dd3fc70; }
-.primary { background: #7dd3fc; color: #082033; font-weight: 700; }
-.primary:hover { background: #bae6fd; }
-button:disabled { opacity: .4; cursor: not-allowed; }
-.field { display: block; width: 100%; padding: .7rem .85rem; background: #0b1420; color: #e2e8f0; border: 1px solid #ffffff25; border-radius: .65rem; font-size: .9rem; }
-:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 3px; }
-.metric { background: #101b2c; border: 1px solid #ffffff12; border-radius: .85rem; padding: 1rem; }
-.eyebrow { color: #7dd3fc; font-size: .65rem; text-transform: uppercase; letter-spacing: .16em; }
-.notice, .notice-error { border: 1px solid #fbbf2430; background: #fbbf240a; color: #fcd68b; padding: .85rem; border-radius: .75rem; font-size: .8rem; line-height: 1.65; }
-.notice-error { border-color: #fb718550; background: #fb718512; color: #fda4af; }
-.picks-dialog { margin: auto; padding: 0; width: min(960px, calc(100% - 1.5rem)); max-height: 90dvh; background: #0a111d; color: #e2e8f0; border: 1px solid #7dd3fc35; border-radius: 1.25rem; box-shadow: 0 30px 100px #000b; }
-.picks-dialog::backdrop { background: #02060dd9; backdrop-filter: blur(6px); }
-.data-table { width: 100%; text-align: left; font-size: .8rem; border-collapse: collapse; }
-.data-table th { color: #94a3b8; font-weight: 500; background: #111d2d; }
-.data-table td, .data-table th { padding: .85rem; border-bottom: 1px solid #ffffff10; }
-.data-table tr:hover td { background: #ffffff04; }
-progress { accent-color: #7dd3fc; }
-.skip-link { position: absolute; left: 1rem; top: -5rem; z-index: 200; padding: 1rem; background: #7dd3fc; color: #082033; }
-.skip-link:focus { top: 1rem; }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
-}
