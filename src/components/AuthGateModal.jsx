@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
 import { SOCIAL_LINKS } from '../constants/socials';
+import { loginWithRealGoogle } from '../utils/firebase';
 
 function GoogleIcon({ className = "w-5 h-5" }) {
   return (
@@ -33,8 +34,6 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [customEmail, setCustomEmail] = useState('');
-  const [customName, setCustomName] = useState('');
 
   // Google credential submission handler
   const handleGoogleCredential = useCallback(async (credential) => {
@@ -75,6 +74,61 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
     }
   }, [onAuthenticated]);
 
+  // Real Google Sign-In via Firebase Popup (accounts.google.com)
+  const handleRealGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
+    sounds.playRadarScan();
+
+    try {
+      const googleAuth = await loginWithRealGoogle();
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          credential: googleAuth.token,
+          googleProfile: googleAuth.user
+        })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        sounds.playSuccess();
+        setCurrentUser(data.user);
+        setPendingAuth(data);
+        if (data.trialExpired) {
+          setStep('code');
+          setError('Tu período de prueba de 3 días ha vencido. Ingresa un código o clave VIP para reactivar tu acceso.');
+          onAuthenticated?.(data);
+        } else {
+          setSuccessMsg(`¡Bienvenido, ${data.user?.name || 'Usuario'}! Cuenta de Google vinculada con éxito.`);
+          confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+          setStep('code'); // Move to Step 2: user can enter code or continue with 3-day trial
+        }
+      } else {
+        sounds.playGlitchSound();
+        setError(data.message || 'Error al autenticar con Google en el servidor.');
+      }
+    } catch (err) {
+      console.error('Firebase Google Auth error:', err);
+      sounds.playGlitchSound();
+      if (err?.code === 'auth/popup-closed-by-user') {
+        setError('Inicio de sesión cancelado (se cerró la ventana de Google).');
+      } else if (err?.code === 'auth/popup-blocked') {
+        setError('Tu navegador bloqueó la ventana emergente de Google. Por favor permite popups en este sitio.');
+      } else if (err?.code === 'auth/cancelled-popup-request') {
+        setError('Solicitud cancelada. Por favor haz clic de nuevo.');
+      } else if (err?.code === 'auth/unauthorized-domain') {
+        setError('Dominio no autorizado en Firebase. Contacta al soporte técnico.');
+      } else {
+        setError(err?.message || 'Error al abrir la ventana oficial de Google.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Initialize Google Identity Services (GIS)
   useEffect(() => {
     let isMounted = true;
@@ -112,66 +166,6 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
     initGIS();
     return () => { isMounted = false; };
   }, [step, handleGoogleCredential]);
-
-  // Instant / simulated Google login for dev & environments without GIS client ID
-  const handleInstantGoogleLogin = async (emailOverride, nameOverride) => {
-    const email = emailOverride || customEmail.trim() || 'usuario.picks777@gmail.com';
-    const name = nameOverride || customName.trim() || email.split('@')[0];
-
-    setLoading(true);
-    setError('');
-    sounds.playRadarScan();
-
-    try {
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          demoUser: {
-            id: `google-${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
-            email,
-            name,
-            picture: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(email)}`
-          }
-        })
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        sounds.playSuccess();
-        setCurrentUser(data.user);
-        setPendingAuth(data);
-        if (data.trialExpired) {
-          setStep('code');
-          setError('Tu período de prueba de 3 días ha vencido. Ingresa un código o clave VIP para continuar.');
-          onAuthenticated?.(data);
-        } else {
-          setSuccessMsg(`¡Bienvenido, ${name}! Cuenta de Google vinculada.`);
-          confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
-          setStep('code');
-        }
-      } else {
-        sounds.playGlitchSound();
-        setError(data.message || 'Error al conectar con Google.');
-      }
-    } catch {
-      setError('Error al procesar el registro.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCustomGoogleSubmit = (e) => {
-    e?.preventDefault();
-    const email = customEmail.trim();
-    if (email && !email.includes('@')) {
-      setError('Por favor ingresa un correo de Google válido (ejemplo@gmail.com).');
-      sounds.playGlitchSound();
-      return;
-    }
-    handleInstantGoogleLogin(email || undefined, customName.trim() || undefined);
-  };
 
   const handleCodeSubmit = async (e) => {
     e?.preventDefault();
@@ -317,7 +311,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
           <div className="space-y-4">
             <div className="bg-[#161b22] border border-white/5 rounded-xl p-4 text-left">
               <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed mb-2">
-                Para acceder a los picks, análisis cuantitativos e inteligencia artificial deportiva, ingresa con tu cuenta de Google.
+                Para acceder a los picks diarios, análisis cuantitativos e inteligencia artificial deportiva, ingresa con tu cuenta oficial de Google.
               </p>
               <div className="flex items-center space-x-2 text-emerald-400 text-xs font-mono font-bold">
                 <Clock className="w-3.5 h-3.5" />
@@ -325,74 +319,32 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
               </div>
             </div>
 
-            {/* Official Google Button render target (when GIS client ID is loaded) */}
-            <div id="google-btn-rendered" className="flex justify-center my-1" />
-
-            {/* Direct Google Account Form */}
-            <form onSubmit={handleCustomGoogleSubmit} className="bg-[#161b22] border border-white/10 rounded-2xl p-4 space-y-3 text-left">
-              <div>
-                <label className="block text-[11px] font-mono text-slate-300 uppercase tracking-wider mb-1 font-bold flex items-center justify-between">
-                  <span>Tu Cuenta de Google (Gmail)</span>
-                  <span className="text-emerald-400 text-[10px] font-normal lowercase">@gmail.com</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <GoogleIcon className="w-4 h-4" />
-                  </div>
-                  <input
-                    type="email"
-                    value={customEmail}
-                    onChange={(e) => {
-                      setCustomEmail(e.target.value);
-                      setError('');
-                    }}
-                    placeholder="ejemplo@gmail.com"
-                    className="w-full pl-10 pr-3 py-2.5 bg-[#0d1117] border border-white/10 rounded-xl text-xs sm:text-sm font-sans text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
-                  Tu Nombre Visible (Opcional)
-                </label>
-                <input
-                  type="text"
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="Tu nombre (opcional)"
-                  className="w-full px-3.5 py-2 bg-[#0d1117] border border-white/10 rounded-xl text-xs font-sans text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500 transition"
-                />
-              </div>
-
+            {/* Official Google Button (Real Google OAuth Popup) */}
+            <div className="py-2">
               <button
-                type="submit"
+                type="button"
+                onClick={handleRealGoogleLogin}
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm tracking-wide transition flex items-center justify-center space-x-3 cursor-pointer disabled:opacity-50 shadow-lg bg-white hover:bg-slate-100 text-slate-900 shadow-white/10"
+                className="w-full py-3.5 px-4 bg-white hover:bg-slate-100 text-slate-900 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center space-x-3 shadow-xl shadow-white/10 transition active:scale-[0.99] cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
-                  <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
                     <GoogleIcon className="w-5 h-5 shrink-0" />
-                    <span>{customEmail.trim() ? 'Vincular y Continuar con Google' : 'Continuar con Google'}</span>
+                    <span>Continuar con Google</span>
                   </>
                 )}
               </button>
-            </form>
-
-            {/* Quick 1-click test link */}
-            <div className="text-center pt-1">
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => handleInstantGoogleLogin()}
-                className="text-[11px] font-mono text-slate-400 hover:text-slate-200 underline cursor-pointer transition"
-              >
-                ⚡ O haz clic aquí para entrar con cuenta Google directa (1 Clic)
-              </button>
             </div>
 
+            {/* Google Identity Services container if active */}
+            <div id="google-btn-rendered" className="flex justify-center" />
+
+            <div className="flex items-center justify-center space-x-2 text-[11px] text-slate-400 font-sans pt-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
+              <span>Autenticación oficial y segura con tu cuenta de Google</span>
+            </div>
           </div>
         )}
 

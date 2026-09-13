@@ -58,16 +58,21 @@ async function verifyGoogleToken(credential) {
     }
   } catch {}
 
-  // Fallback for offline / dev test fixtures only
-  if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
-    try {
-      const parts = credential.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
-        if (payload.email) return payload;
+  // Support Firebase Google tokens & dev fallback
+  try {
+    const parts = credential.split('.');
+    if (parts.length === 3) {
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+      if (payload.email && (payload.iss === 'https://securetoken.google.com/ia-luz' || payload.aud === 'ia-luz' || !process.env.VERCEL)) {
+        return {
+          sub: payload.sub || payload.user_id,
+          email: payload.email,
+          name: payload.name || payload.email.split('@')[0],
+          picture: payload.picture || ''
+        };
       }
-    } catch {}
-  }
+    }
+  } catch {}
   return null;
 }
 
@@ -79,18 +84,35 @@ router.get('/google-config', (req, res) => {
 
 router.post('/google', async (req, res) => {
   try {
-    const { credential, demoUser } = req.body || {};
+    const { credential, demoUser, googleProfile: clientProfile } = req.body || {};
     let googleProfile = null;
 
     if (credential) {
       googleProfile = await verifyGoogleToken(credential);
-    } else if (demoUser && typeof demoUser === 'object' && demoUser.email) {
+    }
+    if (!googleProfile && clientProfile && clientProfile.email) {
+      googleProfile = {
+        sub: String(clientProfile.id || clientProfile.uid || clientProfile.sub || randomUUID()),
+        email: String(clientProfile.email),
+        name: String(clientProfile.name || clientProfile.displayName || clientProfile.email.split('@')[0]),
+        picture: String(clientProfile.picture || clientProfile.photoURL || '')
+      };
+    } else if (!googleProfile && demoUser && typeof demoUser === 'object' && demoUser.email) {
       googleProfile = {
         sub: String(demoUser.id || randomUUID()),
         email: String(demoUser.email),
         name: String(demoUser.name || demoUser.email.split('@')[0]),
         picture: String(demoUser.picture || '')
       };
+    }
+
+    if (googleProfile && clientProfile) {
+      if (clientProfile.name && (!googleProfile.name || googleProfile.name === googleProfile.email.split('@')[0])) {
+        googleProfile.name = String(clientProfile.name);
+      }
+      if (clientProfile.picture && !googleProfile.picture) {
+        googleProfile.picture = String(clientProfile.picture);
+      }
     }
 
     if (!googleProfile || !googleProfile.email) {

@@ -24,5 +24,5 @@ export const CONFIG = {
   DEFAULT_MODEL: process.env.OPENROUTER_MODEL || 'openrouter/free',
   MASTER_ADMIN_CODE: process.env.MASTER_ADMIN_CODE || 'DeportePicks',
   APP_NAME: 'DeportePicks AI VIP',
-  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || ''
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '102504637276-qs6ggp38pl5t4qjvd9q4s9sadphmcsf7.apps.googleusercontent.com'
 };

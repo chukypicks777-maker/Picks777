@@ -1,0 +1,15 @@
+{
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "777 Picks",
+        "supportEmail": "roberminec23@gmail.com",
+        "authorizedRedirectUris": [
+          "https://picks777.vercel.app",
+          "http://localhost:5173",
+          "http://localhost:5000"
+        ]
+      }
+    }
+  }
+}
