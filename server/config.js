@@ -23,5 +23,6 @@ export const CONFIG = {
   OPENROUTER_BASE_URL: 'https://openrouter.ai/api/v1',
   DEFAULT_MODEL: process.env.OPENROUTER_MODEL || 'openrouter/free',
   MASTER_ADMIN_CODE: process.env.MASTER_ADMIN_CODE || 'DeportePicks',
-  APP_NAME: 'DeportePicks AI VIP'
+  APP_NAME: 'DeportePicks AI VIP',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || ''
 };

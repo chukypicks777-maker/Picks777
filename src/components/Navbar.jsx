@@ -222,33 +222,49 @@ export default function Navbar({
               <option value="fractional">Fraccionario</option>
             </select>
 
-            {/* Guest Upgrade Button */}
-            {auth?.isGuest && (
+            {/* Upgrade to VIP Button (for users on trial) */}
+            {auth && !auth.isAdmin && !auth.user?.hasCode && (
               <button
                 onClick={() => { sounds.playClick(); onOpenUpgrade?.(); }}
                 className="hidden sm:flex items-center space-x-1 px-2.5 py-1 bg-gradient-to-r from-amber-500/20 to-emerald-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-mono font-bold transition cursor-pointer"
-                title="Activar Código VIP"
+                title="Canjear Clave VIP"
               >
                 <Crown className="w-3 h-3 text-amber-400" />
-                <span>Canjear VIP</span>
+                <span>Canjear Clave</span>
               </button>
             )}
 
             {/* User Profile Chip */}
             {auth && (
               <div className="flex items-center space-x-1.5 bg-[#161b22] border border-white/10 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-sans">
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                  auth.isAdmin ? 'bg-amber-500 text-black' : (auth.isGuest ? 'bg-slate-700 text-sky-300' : 'bg-emerald-500 text-black')
-                }`}>
-                  {auth.isAdmin ? <Crown className="w-3 h-3" /> : userInitial || <User className="w-3 h-3" />}
-                </div>
+                {auth.user?.picture ? (
+                  <img
+                    src={auth.user.picture}
+                    alt=""
+                    className="w-5 h-5 rounded-full object-cover border border-emerald-500/40"
+                  />
+                ) : (
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+                    auth.isAdmin ? 'bg-amber-500 text-black' : (auth.isTrial ? 'bg-sky-500 text-black' : 'bg-emerald-500 text-black')
+                  }`}>
+                    {auth.isAdmin ? <Crown className="w-3 h-3" /> : userInitial || <User className="w-3 h-3" />}
+                  </div>
+                )}
                 <span className="hidden sm:inline-block font-semibold text-slate-200 max-w-[90px] truncate text-[11px]">
                   {userName}
                 </span>
                 <span className={`text-[10px] font-mono font-bold ${
-                  auth.isAdmin ? 'text-amber-400' : (auth.isGuest ? 'text-sky-400' : 'text-emerald-400')
+                  auth.isAdmin
+                    ? 'text-amber-400'
+                    : (auth.trialExpired
+                      ? 'text-rose-400'
+                      : (auth.user?.hasCode ? 'text-emerald-400' : 'text-sky-400'))
                 }`}>
-                  {auth.isAdmin ? 'OWNER' : (auth.isGuest ? 'INVITADO' : `${auth.user?.daysRemaining || 30}d`)}
+                  {auth.isAdmin
+                    ? 'OWNER'
+                    : (auth.trialExpired
+                      ? 'VENCIDO'
+                      : (auth.user?.hasCode ? `VIP ${auth.user?.daysRemaining || 30}d` : `PRUEBA ${auth.user?.daysRemaining || 3}d`))}
                 </span>
               </div>
             )}

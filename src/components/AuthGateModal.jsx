@@ -1,29 +1,182 @@
-import React, { useState } from 'react';
-import { KeyRound, User, ArrowRight, AlertCircle, CheckCircle2, Crown, ExternalLink, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { KeyRound, ArrowRight, AlertCircle, CheckCircle2, Crown, ExternalLink, X, Clock, ShieldCheck } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
 import { SOCIAL_LINKS } from '../constants/socials';
 
-export default function AuthGateModal({ onAuthenticated, onClose }) {
-  const [username, setUsername] = useState(() => {
-    return localStorage.getItem('deportepicks_user_name') || '';
+function GoogleIcon({ className = "w-5 h-5" }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24">
+      <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+      <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.27 21.36 7.34 24 12 24z"/>
+      <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.16 0 9.94 0 12s.46 3.84 1.26 5.42l4.02-3.15z"/>
+      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.27 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+    </svg>
+  );
+}
+
+export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
+  const [pendingAuth, setPendingAuth] = useState(null);
+  const isTrialExpired = Boolean(auth?.trialExpired || pendingAuth?.trialExpired);
+  const isAlreadyLoggedIn = Boolean(auth?.valid || auth?.user);
+  
+  // Step state: 'google' | 'code'
+  const [step, setStep] = useState(() => {
+    if (isTrialExpired) return 'code';
+    if (isAlreadyLoggedIn) return 'code';
+    return 'google';
   });
+
+  const [currentUser, setCurrentUser] = useState(() => auth?.user || null);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [customEmail, setCustomEmail] = useState('');
+  const [customName, setCustomName] = useState('');
 
-  const handleSubmit = async (e) => {
+  // Google credential submission handler
+  const handleGoogleCredential = useCallback(async (credential) => {
+    setLoading(true);
+    setError('');
+    sounds.playRadarScan();
+
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ credential })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        sounds.playSuccess();
+        setCurrentUser(data.user);
+        setPendingAuth(data);
+        if (data.trialExpired) {
+          setStep('code');
+          setError('Tu período de prueba de 3 días ha vencido. Ingresa un código o clave VIP para reactivar tu acceso.');
+          onAuthenticated?.(data);
+        } else {
+          setSuccessMsg(`¡Bienvenido, ${data.user?.name || 'Usuario'}! Cuenta de Google vinculada con éxito.`);
+          confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+          setStep('code'); // Move to Step 2: user can enter code or continue with 3-day trial
+        }
+      } else {
+        sounds.playGlitchSound();
+        setError(data.message || 'Error al autenticar con Google.');
+      }
+    } catch {
+      setError('Error de conexión con el servidor.');
+    } finally {
+      setLoading(false);
+    }
+  }, [onAuthenticated]);
+
+  // Initialize Google Identity Services (GIS)
+  useEffect(() => {
+    let isMounted = true;
+
+    async function initGIS() {
+      try {
+        const res = await fetch('/api/auth/google-config');
+        const data = await res.json();
+        const clientId = data.clientId || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_CLIENT_ID);
+
+        if (clientId && window.google?.accounts?.id && isMounted) {
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: async (response) => {
+              if (response?.credential && isMounted) {
+                await handleGoogleCredential(response.credential);
+              }
+            }
+          });
+
+          const container = document.getElementById('google-btn-rendered');
+          if (container && isMounted) {
+            window.google.accounts.id.renderButton(container, {
+              theme: 'filled_black',
+              size: 'large',
+              text: 'continue_with',
+              shape: 'pill',
+              width: 300
+            });
+          }
+        }
+      } catch {}
+    }
+
+    initGIS();
+    return () => { isMounted = false; };
+  }, [step, handleGoogleCredential]);
+
+  // Instant / simulated Google login for dev & environments without GIS client ID
+  const handleInstantGoogleLogin = async (emailOverride, nameOverride) => {
+    const email = emailOverride || customEmail.trim() || 'usuario.picks777@gmail.com';
+    const name = nameOverride || customName.trim() || email.split('@')[0];
+
+    setLoading(true);
+    setError('');
+    sounds.playRadarScan();
+
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          demoUser: {
+            id: `google-${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            email,
+            name,
+            picture: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(email)}`
+          }
+        })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        sounds.playSuccess();
+        setCurrentUser(data.user);
+        setPendingAuth(data);
+        if (data.trialExpired) {
+          setStep('code');
+          setError('Tu período de prueba de 3 días ha vencido. Ingresa un código o clave VIP para continuar.');
+          onAuthenticated?.(data);
+        } else {
+          setSuccessMsg(`¡Bienvenido, ${name}! Cuenta de Google vinculada.`);
+          confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+          setStep('code');
+        }
+      } else {
+        sounds.playGlitchSound();
+        setError(data.message || 'Error al conectar con Google.');
+      }
+    } catch {
+      setError('Error al procesar el registro.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCustomGoogleSubmit = (e) => {
     e?.preventDefault();
-    if (!username.trim()) {
-      setError('Por favor escribe tu nombre o alias para continuar.');
+    const email = customEmail.trim();
+    if (email && !email.includes('@')) {
+      setError('Por favor ingresa un correo de Google válido (ejemplo@gmail.com).');
       sounds.playGlitchSound();
       return;
     }
+    handleInstantGoogleLogin(email || undefined, customName.trim() || undefined);
+  };
 
+  const handleCodeSubmit = async (e) => {
+    e?.preventDefault();
     if (!code.trim()) {
-      setError('Por favor escribe tu código de acceso VIP. Si no tienes uno, únete a nuestras comunidades abajo para reclamarlo GRATIS.');
+      setError('Por favor escribe tu código o clave VIP.');
       sounds.playGlitchSound();
       return;
     }
@@ -34,32 +187,25 @@ export default function AuthGateModal({ onAuthenticated, onClose }) {
     sounds.playRadarScan();
 
     try {
-      const res = await fetch('/api/auth/verify-code', {
+      const res = await fetch('/api/auth/redeem-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ 
-          code: code.trim(),
-          username: username.trim()
-        })
+        body: JSON.stringify({ code: code.trim() })
       });
       const data = await res.json();
 
       if (data.success) {
         sounds.playSuccess();
-        localStorage.setItem('deportepicks_user_name', username.trim());
-        confetti({
-          particleCount: 60,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-        setSuccessMsg(data.message || `¡Bienvenido, ${username.trim()}! Acceso VIP concedido.`);
+        confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
+        setSuccessMsg(data.message || '¡Clave VIP activada con éxito!');
         setTimeout(() => {
-          onAuthenticated(data);
+          onAuthenticated?.(data);
+          onClose?.();
         }, 800);
       } else {
         sounds.playGlitchSound();
-        setError(data.message || 'Código incorrecto o vencido. Por favor ingresa un código válido o únete a nuestras comunidades para obtener uno GRATIS.');
+        setError(data.message || 'Código incorrecto o vencido. Verifica o solicita uno en nuestras comunidades.');
       }
     } catch {
       setError('Error al conectar con el servidor.');
@@ -68,18 +214,41 @@ export default function AuthGateModal({ onAuthenticated, onClose }) {
     }
   };
 
-  const handleUseDemo = (demoCode, demoName = '') => {
+  const handleUseDemoCode = (demoCode) => {
     setCode(demoCode);
-    if (demoName) setUsername(demoName);
     sounds.playClick();
   };
 
+  const handleContinueWithTrial = () => {
+    sounds.playClick();
+    const finalAuth = pendingAuth || auth;
+    if (finalAuth) {
+      onAuthenticated?.(finalAuth);
+    }
+    onClose?.();
+  };
+
+  const handleLogoutAndSwitch = async () => {
+    sounds.playClick();
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    } catch {}
+    setCurrentUser(null);
+    setPendingAuth(null);
+    setStep('google');
+    setError('');
+    setSuccessMsg('');
+    window.dispatchEvent(new Event('picks-session-expired'));
+  };
+
+  const canCloseModal = Boolean(onClose && (auth?.valid || pendingAuth?.valid) && !isTrialExpired);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-      
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
       <div className="relative w-full max-w-lg bg-[#0d1117] border border-white/10 rounded-2xl p-6 sm:p-8 text-center shadow-2xl overflow-hidden my-4">
         
-        {onClose && (
+        {/* Close button (only when access is valid and modal is dismissible) */}
+        {canCloseModal && (
           <button
             type="button"
             onClick={() => { sounds.playClick(); onClose(); }}
@@ -90,8 +259,8 @@ export default function AuthGateModal({ onAuthenticated, onClose }) {
           </button>
         )}
 
-        {/* Official 777 Picks Circular Logo */}
-        <div className="relative w-24 h-24 mx-auto mb-3">
+        {/* 777 Picks Circular Logo */}
+        <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3">
           <img 
             src="/logo.jpg" 
             alt="777 Picks - Picks de Confianza" 
@@ -107,111 +276,253 @@ export default function AuthGateModal({ onAuthenticated, onClose }) {
           777 <span className="text-red-500">PICKS</span>
         </h2>
         <p className="text-xs text-slate-400 mb-4 font-sans max-w-sm mx-auto">
-          Picks de Confianza • Acceso exclusivo para miembros con código VIP verificado.
+          Picks de Confianza • Plataforma Cuantitativa de Apuestas Deportivas
         </p>
 
-        {/* VIP Lock Status Indicator */}
-        <div className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider mb-5">
-          <KeyRound className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>Acceso Protegido por Código VIP</span>
-        </div>
-
-        {/* Input Form */}
-        <form onSubmit={handleSubmit} className="space-y-3.5 text-left">
-          
-          {/* 1. Username field */}
-          <div>
-            <label className="block text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1 font-semibold">
-              Tu Nombre o Alias
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <User className="w-4 h-4 text-slate-400" />
-              </div>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  setError('');
-                }}
-                placeholder="Ej: Carlos Picks, ApuestaPro, Gael"
-                className="w-full pl-10 pr-4 py-2.5 bg-[#161b22] border border-white/10 rounded-xl text-sm font-sans text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
-              />
-            </div>
+        {/* Status Indicator */}
+        {isTrialExpired ? (
+          <div className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono font-bold uppercase tracking-wider mb-5">
+            <Clock className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>Período de Prueba de 3 Días Vencido</span>
           </div>
-
-          {/* 2. Access Code field */}
-          <div>
-            <label className="block text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1 font-semibold">
-              Código de Acceso VIP
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                <KeyRound className="w-4 h-4 text-emerald-400" />
-              </div>
-              <input
-                type="text"
-                value={code}
-                onChange={(e) => {
-                  setCode(e.target.value.toUpperCase());
-                  setError('');
-                }}
-                placeholder="EJ: VIP-PREMIUM-777 O DEPORTEPICKS"
-                className="w-full pl-10 pr-4 py-2.5 bg-[#161b22] border border-white/10 rounded-xl text-sm font-mono font-bold text-emerald-400 placeholder:text-slate-500 tracking-wider focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
-              />
-            </div>
+        ) : step === 'google' ? (
+          <div className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-mono font-bold uppercase tracking-wider mb-5">
+            <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
+            <span>Paso 1: Registro Exclusivo con Google</span>
           </div>
+        ) : (
+          <div className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider mb-5">
+            <KeyRound className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Paso 2: Canjear Clave VIP (Opcional)</span>
+          </div>
+        )}
 
-          {error && (
-            <div className="flex items-center space-x-2 text-rose-300 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl text-xs font-sans">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-              <span>{error}</span>
+        {/* Feedback Messages */}
+        {error && (
+          <div className="flex items-center space-x-2 text-rose-300 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl text-xs font-sans mb-4 text-left">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="flex items-center space-x-2 text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl text-xs font-sans mb-4 text-left">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* STEP 1: GOOGLE REGISTRATION */}
+        {step === 'google' && (
+          <div className="space-y-4">
+            <div className="bg-[#161b22] border border-white/5 rounded-xl p-4 text-left">
+              <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed mb-2">
+                Para acceder a los picks, análisis cuantitativos e inteligencia artificial deportiva, ingresa con tu cuenta de Google.
+              </p>
+              <div className="flex items-center space-x-2 text-emerald-400 text-xs font-mono font-bold">
+                <Clock className="w-3.5 h-3.5" />
+                <span>¡Incluye 3 días de acceso libre total garantizado!</span>
+              </div>
             </div>
-          )}
 
-          {successMsg && (
-            <div className="flex items-center space-x-2 text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 p-2.5 rounded-xl text-xs font-sans">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-              <span>{successMsg}</span>
+            {/* Official Google Button render target (when GIS client ID is loaded) */}
+            <div id="google-btn-rendered" className="flex justify-center my-1" />
+
+            {/* Direct Google Account Form */}
+            <form onSubmit={handleCustomGoogleSubmit} className="bg-[#161b22] border border-white/10 rounded-2xl p-4 space-y-3 text-left">
+              <div>
+                <label className="block text-[11px] font-mono text-slate-300 uppercase tracking-wider mb-1 font-bold flex items-center justify-between">
+                  <span>Tu Cuenta de Google (Gmail)</span>
+                  <span className="text-emerald-400 text-[10px] font-normal lowercase">@gmail.com</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <GoogleIcon className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="email"
+                    value={customEmail}
+                    onChange={(e) => {
+                      setCustomEmail(e.target.value);
+                      setError('');
+                    }}
+                    placeholder="ejemplo@gmail.com"
+                    className="w-full pl-10 pr-3 py-2.5 bg-[#0d1117] border border-white/10 rounded-xl text-xs sm:text-sm font-sans text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
+                  Tu Nombre Visible (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="Tu nombre (opcional)"
+                  className="w-full px-3.5 py-2 bg-[#0d1117] border border-white/10 rounded-xl text-xs font-sans text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500 transition"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm tracking-wide transition flex items-center justify-center space-x-3 cursor-pointer disabled:opacity-50 shadow-lg bg-white hover:bg-slate-100 text-slate-900 shadow-white/10"
+              >
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <GoogleIcon className="w-5 h-5 shrink-0" />
+                    <span>{customEmail.trim() ? 'Vincular y Continuar con Google' : 'Continuar con Google'}</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Quick 1-click test link */}
+            <div className="text-center pt-1">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => handleInstantGoogleLogin()}
+                className="text-[11px] font-mono text-slate-400 hover:text-slate-200 underline cursor-pointer transition"
+              >
+                ⚡ O haz clic aquí para entrar con cuenta Google directa (1 Clic)
+              </button>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 px-4 rounded-xl font-bold text-xs tracking-wider uppercase transition flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 shadow-lg bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/20"
-          >
-            {loading ? (
-              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <span>Desbloquear con Código VIP</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
+          </div>
+        )}
+
+        {/* STEP 2: VIP CODE REDEMPTION & TRIAL OPTIONS */}
+        {step === 'code' && (
+          <div className="space-y-4 text-left">
+            
+            {/* User identification badge */}
+            {currentUser && (
+              <div className="flex items-center space-x-3 bg-[#161b22] border border-white/10 rounded-xl p-3">
+                {currentUser.picture ? (
+                  <img
+                    src={currentUser.picture}
+                    alt={currentUser.name}
+                    className="w-10 h-10 rounded-full object-cover border border-emerald-500/50"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-sm">
+                    {currentUser.name?.charAt(0) || 'G'}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-white block truncate">{currentUser.name}</span>
+                  <span className="text-[11px] text-slate-400 font-mono block truncate">{currentUser.email}</span>
+                </div>
+                <div className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                  isTrialExpired ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                }`}>
+                  {isTrialExpired ? 'Vencido' : '3 Días Activos'}
+                </div>
+              </div>
             )}
-          </button>
-        </form>
 
-        {/* Demo shortcuts */}
-        <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-center space-x-2">
-          <span className="text-[11px] text-slate-500 font-sans">Accesos rápidos:</span>
-          <button
-            type="button"
-            onClick={() => handleUseDemo('DeportePicks', 'Dueño DeportePicks')}
-            className="text-[11px] font-mono text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded cursor-pointer transition flex items-center space-x-1"
-          >
-            <Crown className="w-3 h-3" />
-            <span>Owner ("DeportePicks")</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleUseDemo('VIP-PREMIUM-777', 'Usuario VIP')}
-            className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded cursor-pointer transition"
-          >
-            VIP-PREMIUM-777
-          </button>
-        </div>
+            {/* Explanatory text */}
+            <p className="text-xs text-slate-300 font-sans leading-relaxed">
+              {isTrialExpired ? (
+                <span className="text-rose-300 font-semibold">
+                  Tu período de 3 días ha vencido. Para seguir utilizando todas las herramientas y pronósticos, ingresa una clave de membresía válida:
+                </span>
+              ) : (
+                <span>
+                  ¿Tienes una clave o código VIP? Ingrésalo ahora para activar membresía extendida o beneficios exclusivos.
+                </span>
+              )}
+            </p>
+
+            {/* VIP Code Form */}
+            <form onSubmit={handleCodeSubmit} className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1 font-semibold">
+                  Clave o Código VIP
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                    <KeyRound className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={code}
+                    onChange={(e) => {
+                      setCode(e.target.value.toUpperCase());
+                      setError('');
+                    }}
+                    placeholder="EJ: VIP-PREMIUM-777 O DEPORTEPICKS"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#161b22] border border-white/10 rounded-xl text-sm font-mono font-bold text-emerald-400 placeholder:text-slate-500 tracking-wider focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 px-4 rounded-xl font-bold text-xs tracking-wider uppercase transition flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 shadow-lg bg-emerald-500 hover:bg-emerald-400 text-black shadow-emerald-500/20"
+              >
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>{isTrialExpired ? 'Reactivar Acceso con Clave' : 'Canjear Clave VIP'}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Option to continue with 3-day trial without entering code */}
+            {!isTrialExpired && (
+              <button
+                type="button"
+                onClick={handleContinueWithTrial}
+                className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-mono text-slate-300 hover:text-white transition flex items-center justify-center space-x-2 cursor-pointer"
+              >
+                <span>Continuar con mi Prueba Gratuita (3 Días)</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+            )}
+
+            {/* Quick test code buttons */}
+            <div className="pt-2 border-t border-white/5 flex items-center justify-center space-x-2">
+              <span className="text-[11px] text-slate-500 font-sans">Accesos rápidos:</span>
+              <button
+                type="button"
+                onClick={() => handleUseDemoCode('DeportePicks')}
+                className="text-[11px] font-mono text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded cursor-pointer transition flex items-center space-x-1"
+              >
+                <Crown className="w-3 h-3" />
+                <span>Owner</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleUseDemoCode('VIP-PREMIUM-777')}
+                className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded cursor-pointer transition"
+              >
+                VIP-PREMIUM-777
+              </button>
+            </div>
+
+            {/* Option to switch Google account */}
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={handleLogoutAndSwitch}
+                className="text-[11px] font-mono text-slate-400 hover:text-slate-200 transition cursor-pointer underline"
+              >
+                {isTrialExpired ? '← Cerrar sesión o cambiar de cuenta Google' : '← Cambiar de cuenta Google'}
+              </button>
+            </div>
+
+          </div>
+        )}
 
         {/* SOCIAL NETWORKS SECTION - REQUIRED EXACT TEXT */}
         <div className="mt-6 pt-5 border-t border-white/10 text-left">

@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { redisConfigured, redisCommand } from './services/dataCache.js';
 const KEY = 'picks:v2:access';
 const clean = code => String(code || '').trim().toUpperCase();
-const initial = () => ({ codes: [] });
+const initial = () => ({ codes: [], users: [] });
 const defaultStorageFile = () => (process.env.VERCEL ? path.join('/tmp', 'access-v2.json') : path.resolve('server/data/access-v2.json'));
 export class StorageManager {
   constructor(file = defaultStorageFile()) { this.file = file; this.queue = Promise.resolve(); }
@@ -91,5 +91,164 @@ export class StorageManager {
   }
   async deleteCode(code) { return this.transaction(db => { db.codes = db.codes.filter(c => c.code !== clean(code)); return true; }); }
   async revokeCode(code) { return this.transaction(db => { const c = db.codes.find(c => c.code === clean(code)); if (c) { c.revoked = true; c.expiresAt = new Date().toISOString(); } return Boolean(c); }); }
+  async getUsers() { return (await this.load()).users || []; }
+  async getUser(idOrEmailOrGoogleId) {
+    const users = await this.getUsers();
+    const query = String(idOrEmailOrGoogleId || '').trim().toLowerCase();
+    return users.find(u => u.id === idOrEmailOrGoogleId || u.googleId === idOrEmailOrGoogleId || (u.email && u.email.toLowerCase() === query));
+  }
+  async upsertGoogleUser({ googleId, email, name, picture, deviceId }) {
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) throw new Error('Email inválido.');
+    const gId = String(googleId || '').trim();
+    const cleanName = String(name || cleanEmail.split('@')[0] || 'Usuario Google').trim().slice(0, 80);
+    const cleanPic = String(picture || '').trim().slice(0, 500);
+
+    return this.transaction(db => {
+      db.users ||= [];
+      let user = db.users.find(u => (gId && u.googleId === gId) || (u.email && u.email.toLowerCase() === cleanEmail));
+      const now = Date.now();
+
+      if (user) {
+        if (cleanName) user.name = cleanName;
+        if (cleanPic) user.picture = cleanPic;
+        if (gId && !user.googleId) user.googleId = gId;
+        user.devices ||= [];
+        if (deviceId && !user.devices.includes(deviceId)) {
+          if (user.devices.length < 50) user.devices.push(deviceId);
+        }
+      } else {
+        const trialDays = 3;
+        const createdAt = new Date(now).toISOString();
+        const trialExpiresAt = new Date(now + trialDays * 86400000).toISOString();
+        user = {
+          id: randomUUID(),
+          googleId: gId || randomUUID(),
+          email: cleanEmail,
+          name: cleanName,
+          picture: cleanPic,
+          createdAt,
+          trialExpiresAt,
+          vipCode: null,
+          vipExpiresAt: null,
+          role: 'trial',
+          devices: deviceId ? [deviceId] : []
+        };
+        db.users.unshift(user);
+      }
+
+      let isVip = false;
+      const isOwner = user.role === 'owner' || user.vipCode === 'MASTER';
+      if (isOwner) {
+        user.role = 'owner';
+        user.vipCode = 'MASTER';
+        user.vipExpiresAt = new Date(now + 365 * 86400000).toISOString();
+      } else if (user.vipCode) {
+        const codeItem = db.codes.find(c => c.code === clean(user.vipCode));
+        if (codeItem && !codeItem.revoked && codeItem.expiresAt && Date.parse(codeItem.expiresAt) > now) {
+          isVip = true;
+          user.vipExpiresAt = codeItem.expiresAt;
+        } else {
+          user.vipCode = null;
+        }
+      }
+
+      const trialEnd = Date.parse(user.trialExpiresAt);
+      const isTrial = !isOwner && !isVip && trialEnd > now;
+      const trialExpired = !isOwner && !isVip && trialEnd <= now;
+      const daysRemaining = isOwner
+        ? 365
+        : (isVip
+          ? Math.ceil((Date.parse(user.vipExpiresAt) - now) / 86400000)
+          : (isTrial ? Math.max(1, Math.ceil((trialEnd - now) / 86400000)) : 0));
+
+      const effectiveRole = isOwner ? 'owner' : (isVip ? 'vip' : (trialExpired ? 'expired' : 'trial'));
+      user.role = effectiveRole;
+
+      return {
+        ...user,
+        isVip,
+        isTrial,
+        trialExpired,
+        daysRemaining,
+        expiresAt: isOwner
+          ? user.vipExpiresAt
+          : (isVip ? user.vipExpiresAt : user.trialExpiresAt)
+      };
+    });
+  }
+  async redeemUserCode({ userId, code, deviceId }) {
+    const cleanCode = clean(code);
+    if (!cleanCode) return { success: false, message: 'Ingresa una clave válida.' };
+    return this.transaction(db => {
+      db.users ||= [];
+      const user = db.users.find(u => u.id === userId || (u.email && u.email.toLowerCase() === String(userId).toLowerCase()));
+      if (!user) return { success: false, message: 'Usuario no encontrado.' };
+
+      const now = Date.now();
+      const masterCode = (process.env.MASTER_ADMIN_CODE || 'DeportePicks').trim().toUpperCase();
+      if (cleanCode === masterCode) {
+        user.role = 'owner';
+        user.vipCode = 'MASTER';
+        user.vipExpiresAt = new Date(now + 365 * 86400000).toISOString();
+        return {
+          success: true,
+          isAdmin: true,
+          role: 'owner',
+          plan: 'Owner',
+          expiresAt: user.vipExpiresAt,
+          daysRemaining: 365,
+          message: '👑 Acceso Master Owner activado con éxito.'
+        };
+      }
+
+      let item = db.codes.find(c => c.code === cleanCode);
+      if (!item && cleanCode === 'VIP-PREMIUM-777') {
+        item = {
+          code: 'VIP-PREMIUM-777',
+          durationDays: 30,
+          label: 'Membresía Especial VIP 777',
+          createdAt: new Date(now).toISOString(),
+          isClaimed: false,
+          claimedAt: null,
+          expiresAt: null,
+          devices: []
+        };
+        db.codes.unshift(item);
+      }
+      if (!item) return { success: false, message: 'Código o clave VIP inválida.' };
+      if (item.revoked || (item.expiresAt && Date.parse(item.expiresAt) <= now)) {
+        return { success: false, expired: true, message: 'Este código ha vencido o ha sido revocado.' };
+      }
+
+      if (!item.isClaimed) {
+        item.isClaimed = true;
+        item.claimedAt = new Date(now).toISOString();
+        item.expiresAt = new Date(now + item.durationDays * 86400000).toISOString();
+        item.claimedBy = user.email || user.name || 'Usuario VIP';
+      }
+      item.devices ||= [];
+      if (deviceId && !item.devices.includes(deviceId)) {
+        if (item.devices.length >= 100) return { success: false, message: 'Límite de dispositivos alcanzado para este código.' };
+        item.devices.push(deviceId);
+      }
+
+      user.vipCode = item.code;
+      user.vipExpiresAt = item.expiresAt;
+      user.role = 'vip';
+
+      const daysRemaining = Math.ceil((Date.parse(item.expiresAt) - now) / 86400000);
+      return {
+        success: true,
+        isAdmin: false,
+        role: 'vip',
+        plan: 'VIP',
+        code: item.code,
+        expiresAt: item.expiresAt,
+        daysRemaining,
+        message: `✅ ¡Membresía VIP activada por ${item.durationDays} días!`
+      };
+    });
+  }
 }
 export const storage = new StorageManager();

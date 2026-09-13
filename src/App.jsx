@@ -13,7 +13,7 @@ import AdminDashboardModal from './components/AdminDashboardModal';
 import StatsCenterModal from './components/StatsCenterModal';
 import FooterCommunityShowcase from './components/FooterCommunityShowcase';
 import { sounds } from './utils/audioEffects';
-import { Layers, Radio, Zap } from 'lucide-react';
+import { Layers, Radio, Zap, AlertCircle } from 'lucide-react';
 
 export default function App() {
   // Auth state
@@ -41,7 +41,8 @@ export default function App() {
 
   // Match Data & Modals
   const [matches, setMatches] = useState([]);
-  const [loadingMatches, setLoadingMatches] = useState(true);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [matchError, setMatchError] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [showAdminModal, setShowAdminModal] = useState(false);
@@ -53,8 +54,56 @@ export default function App() {
   // Auto-polling interval reference
   const pollingRef = useRef(null);
 
+  // Check session on mount
+  useEffect(() => {
+    let active = true;
+    async function verifySession() {
+      try {
+        const res = await fetch('/api/auth/check-session', {
+          method: 'POST',
+          credentials: 'same-origin'
+        });
+        const data = await res.json();
+        if (!active) return;
+        if (data.success && data.user) {
+          setAuth(data);
+          localStorage.setItem('deportepicks_auth', JSON.stringify(data));
+          if (data.trialExpired) {
+            setShowUpgradeModal(true);
+          }
+        } else if (!data.valid) {
+          setAuth(null);
+          localStorage.removeItem('deportepicks_auth');
+        }
+      } catch {}
+    }
+    verifySession();
+    return () => { active = false; };
+  }, []);
+
+  // Global listeners for trial/session expiry events
+  useEffect(() => {
+    const handleTrialExpired = () => {
+      setAuth(prev => ({ ...(prev || {}), valid: false, trialExpired: true }));
+      setShowUpgradeModal(true);
+    };
+    const handleSessionExpired = () => {
+      setAuth(null);
+      localStorage.removeItem('deportepicks_auth');
+    };
+
+    window.addEventListener('picks-trial-expired', handleTrialExpired);
+    window.addEventListener('picks-session-expired', handleSessionExpired);
+    return () => {
+      window.removeEventListener('picks-trial-expired', handleTrialExpired);
+      window.removeEventListener('picks-session-expired', handleSessionExpired);
+    };
+  }, []);
+
   const fetchMatches = useCallback(async () => {
     try {
+      setLoadingMatches(true);
+      setMatchError('');
       const params = new URLSearchParams();
       if (selectedLeague !== 'all') params.append('league', selectedLeague);
       if (timeframe !== 'all') params.append('timeframe', timeframe);
@@ -65,12 +114,31 @@ export default function App() {
       const res = await fetch(`/api/matches?${params.toString()}`, {
         credentials: 'same-origin'
       });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 403 && errData.trialExpired) {
+          setAuth(prev => ({ ...(prev || {}), valid: false, trialExpired: true }));
+          setShowUpgradeModal(true);
+        } else if (res.status === 401) {
+          setAuth(null);
+          localStorage.removeItem('deportepicks_auth');
+        } else {
+          setMatchError(errData.message || 'Error al consultar los partidos en el servidor.');
+        }
+        return;
+      }
+
       const data = await res.json();
-      if (data.success && data.matches) {
+      if (data.success && Array.isArray(data.matches)) {
         setMatches(data.matches);
+        setMatchError('');
+      } else {
+        setMatchError(data.message || 'No se pudieron procesar los partidos.');
       }
     } catch (err) {
       console.error('Error fetching matches:', err);
+      setMatchError('Error de conexión al consultar el feed de partidos en vivo.');
     } finally {
       setLoadingMatches(false);
     }
@@ -102,18 +170,20 @@ export default function App() {
     localStorage.setItem('deportepicks_odds', oddsFormat);
   }, [oddsFormat]);
 
-  // Load matches on filter changes
+  // Load matches on filter changes or when auth session becomes valid
   useEffect(() => {
     let active = true;
-    (async () => {
-      if (active) {
-        await fetchMatches();
-      }
-    })();
+    if (auth?.valid && !auth?.trialExpired) {
+      (async () => {
+        if (active) {
+          await fetchMatches();
+        }
+      })();
+    }
     return () => {
       active = false;
     };
-  }, [fetchMatches]);
+  }, [fetchMatches, auth?.valid, auth?.trialExpired, auth?.user?.id]);
 
   // Real-time live polling (every 25 seconds)
   useEffect(() => {
@@ -145,16 +215,27 @@ export default function App() {
     setAuth(authData);
     localStorage.setItem('deportepicks_auth', JSON.stringify(authData));
     const name = authData.user?.name || authData.user?.username || (authData.isAdmin ? 'Administrador' : 'Usuario');
-    if (authData.isGuest) {
-      showToast(`👤 ¡Bienvenido como Invitado, ${name}!`);
-    } else if (authData.isAdmin) {
-      showToast('👑 Modo Administrador Activado');
+    if (authData.trialExpired) {
+      showToast('⚠️ Tu período de prueba de 3 días ha vencido.');
+      setShowUpgradeModal(true);
     } else {
-      showToast(`✅ ¡Bienvenido, ${name}! Licencia VIP Concedida`);
+      if (authData.isAdmin) {
+        showToast('👑 Modo Administrador Owner Activado');
+      } else if (authData.user?.hasCode || authData.role === 'vip_user') {
+        showToast(`✅ ¡Bienvenido, ${name}! Membresía VIP Concedida`);
+      } else {
+        showToast(`🎉 ¡Bienvenido, ${name}! Tu prueba de 3 días está activa`);
+      }
+      setShowUpgradeModal(false);
+      // Immediately load matches now that session is active!
+      fetchMatches();
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    } catch {}
     setAuth(null);
     localStorage.removeItem('deportepicks_auth');
     showToast('Sesión finalizada.');
@@ -225,13 +306,16 @@ export default function App() {
       )}
 
       {/* Access Gate Modal */}
-      {(!auth || showUpgradeModal) && (
+      {(!auth || !auth.valid || auth.trialExpired || showUpgradeModal) && (
         <AuthGateModal
+          auth={auth}
           onAuthenticated={(data) => {
             handleAuthenticated(data);
-            setShowUpgradeModal(false);
+            if (data.valid && !data.trialExpired) {
+              setShowUpgradeModal(false);
+            }
           }}
-          onClose={auth ? () => setShowUpgradeModal(false) : null}
+          onClose={(auth?.valid && !auth?.trialExpired) ? () => setShowUpgradeModal(false) : null}
         />
       )}
 
@@ -311,6 +395,23 @@ export default function App() {
                 <div key={i} className="h-56 terminal-card rounded-xl animate-pulse bg-[#0d121c]" />
               ))}
             </div>
+          ) : matchError ? (
+            <div className="text-center py-12 terminal-card rounded-2xl border border-rose-500/30 bg-rose-500/5 my-4">
+              <AlertCircle className="w-10 h-10 text-rose-400 mx-auto mb-2" />
+              <h4 className="text-sm font-bold text-white mb-1">
+                No se pudieron consultar los partidos en vivo
+              </h4>
+              <p className="text-xs font-mono text-rose-300 mb-4 max-w-md mx-auto">
+                {matchError}
+              </p>
+              <button
+                type="button"
+                onClick={() => fetchMatches()}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-xs font-mono transition cursor-pointer shadow-lg shadow-emerald-500/20"
+              >
+                Reintentar Conexión
+              </button>
+            </div>
           ) : filteredMatches.length === 0 ? (
             <div className="text-center py-16 terminal-card rounded-2xl">
               <Radio className="w-10 h-10 text-slate-600 mx-auto mb-2" />
@@ -322,7 +423,7 @@ export default function App() {
               </p>
               <button
                 onClick={() => { setSelectedLeague('all'); setTimeframe('all'); setMatchStatusFilter('all'); setSearchQuery(''); setMarketFilter('all'); }}
-                className="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-xs font-mono transition"
+                className="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-xs font-mono transition cursor-pointer"
               >
                 Restablecer Filtros
               </button>
@@ -392,6 +493,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-slate-300">DEPORTEPICKS AI VIP</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.0.0</span>
             <span>•</span>
             <span>Plataforma de Análisis Cuantitativo para Apuestas</span>
           </div>

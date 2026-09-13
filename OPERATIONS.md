@@ -24,6 +24,12 @@ La identidad de autenticación procede del socket en servidores normales (no se 
 
 La cuota IA VIP se comparte por código y persiste al borrar cookies. Owner no está exento. Esto no cambia la política de códigos compartidos ni equivale a contar personas.
 
+### Autenticación con Google & Vercel
+
+Para activar el botón oficial de Google Identity Services (GIS) en Vercel, agrega en las Variables de Entorno de Vercel (Settings -> Environment Variables):
+- `GOOGLE_CLIENT_ID`: ID de cliente OAuth 2.0 creado en Google Cloud Console (tipo Aplicación Web), agregando tu dominio de Vercel a "Orígenes de JavaScript autorizados".
+- La plataforma cuenta además con soporte de inicio rápido con cuenta de Google para entornos de vista previa y desarrollo local.
+
 ## Antes de desplegar
 
 El titular debe confirmar revocación y sustitución de todas las credenciales expuestas. Usar Redis y credenciales separados para preview, no conectar pruebas deterministas a servicios reales. No promover sin resultados de pruebas, lint/build, HTTPS/cookies, autorización, persistencia entre instancias, revocación, límites, caídas y aprobación explícita del responsable.

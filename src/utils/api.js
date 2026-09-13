@@ -3,6 +3,7 @@ export async function api(path, options = {}) {
   let data;
   try { data = await response.json(); } catch { throw new Error('El servidor no devuelve una respuesta válida.'); }
   if (response.status === 401) window.dispatchEvent(new Event('picks-session-expired'));
+  if (response.status === 403 && data?.trialExpired) window.dispatchEvent(new Event('picks-trial-expired'));
   if (!response.ok || data.success === false) throw new Error(data.message || 'Servicio no disponible.');
   return data;
 }
