@@ -306,11 +306,11 @@ export default function MatchDetailModal({
                         <span>Pick Principal</span>
                       </span>
                       <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-bold border border-emerald-500/30">
-                        {aiReport?.topPick?.confidence || match.aiPick?.confidence || '88%'}
+                        {aiReport?.topPick?.confidence || match.aiPick?.confidence || `${Math.round(Math.max(match.probabilities?.homeWin || 54, match.probabilities?.awayWin || 46))}% Conf.`}
                       </span>
                     </div>
                     <h4 className="text-sm font-bold text-white mb-1 font-sans">
-                      {aiReport?.topPick?.selection || match.aiPick?.selection}
+                      {aiReport?.topPick?.selection || match.aiPick?.selection || ((match.probabilities?.homeWin || 50) >= (match.probabilities?.awayWin || 50) ? `${match.homeTeam?.name || 'Local'} gana o empata` : `${match.awayTeam?.name || 'Visita'} gana o empata`)}
                     </h4>
                   </div>
 
@@ -318,7 +318,7 @@ export default function MatchDetailModal({
                     <div>
                       <span className="text-[10px] font-mono text-slate-400 block">Cuota:</span>
                       <span className="text-base font-mono font-bold text-emerald-400">
-                        {formatOdds(aiReport?.topPick?.odds || match.aiPick?.odds || 1.95, oddsFormat)}
+                        {formatOdds(aiReport?.topPick?.odds || match.aiPick?.odds || match.odds?.homeWin || 1.85, oddsFormat)}
                       </span>
                     </div>
                     <button
@@ -328,8 +328,8 @@ export default function MatchDetailModal({
                           matchId: match.id,
                           matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
                           league: match.leagueName,
-                          selection: aiReport?.topPick?.selection || match.aiPick?.selection || 'Victoria Local',
-                          odds: aiReport?.topPick?.odds || match.aiPick?.odds || 1.95,
+                          selection: aiReport?.topPick?.selection || match.aiPick?.selection || ((match.probabilities?.homeWin || 50) >= (match.probabilities?.awayWin || 50) ? `${match.homeTeam?.name || 'Local'} gana o empata` : `${match.awayTeam?.name || 'Visita'} gana o empata`),
+                          odds: aiReport?.topPick?.odds || match.aiPick?.odds || match.odds?.homeWin || 1.85,
                           probability: match.probabilities?.homeWin || 50
                         });
                       }}
@@ -350,11 +350,11 @@ export default function MatchDetailModal({
                         <span>Pick de Valor</span>
                       </span>
                       <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/30">
-                        {aiReport?.secondaryPick?.confidence || '82%'}
+                        {aiReport?.secondaryPick?.confidence || `${Math.round(match.probabilities?.bttsYes || 68)}% Conf.`}
                       </span>
                     </div>
                     <h4 className="text-sm font-bold text-white mb-1 font-sans">
-                      {aiReport?.secondaryPick?.selection || 'Ambos Anotan: SÍ'}
+                      {aiReport?.secondaryPick?.selection || ((match.probabilities?.bttsYes || 55) >= 50 ? 'Ambos Equipos Anotan: SÍ' : 'Menos de 2.5 Goles')}
                     </h4>
                   </div>
 
@@ -372,7 +372,7 @@ export default function MatchDetailModal({
                           matchId: match.id,
                           matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
                           league: match.leagueName,
-                          selection: aiReport?.secondaryPick?.selection || 'Ambos Anotan: SÍ',
+                          selection: aiReport?.secondaryPick?.selection || ((match.probabilities?.bttsYes || 55) >= 50 ? 'Ambos Equipos Anotan: SÍ' : 'Menos de 2.5 Goles'),
                           odds: aiReport?.secondaryPick?.odds || match.odds?.bttsYes || 1.70,
                           probability: match.probabilities?.bttsYes || 55
                         });
@@ -394,7 +394,7 @@ export default function MatchDetailModal({
                         <span>Corners Especial</span>
                       </span>
                       <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 px-1.5 py-0.2 rounded font-bold border border-sky-500/30">
-                        {aiReport?.cornerPick?.confidence || '80%'}
+                        {aiReport?.cornerPick?.confidence || `${Math.round(match.probabilities?.cornerOver95 || 62)}% Conf.`}
                       </span>
                     </div>
                     <h4 className="text-sm font-bold text-white mb-1 font-sans">
