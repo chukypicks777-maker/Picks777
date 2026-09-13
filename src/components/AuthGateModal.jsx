@@ -37,6 +37,7 @@ export default function AuthGateModal({ onAuthenticated, onClose }) {
       const res = await fetch('/api/auth/verify-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ 
           code: code.trim(),
           username: username.trim()

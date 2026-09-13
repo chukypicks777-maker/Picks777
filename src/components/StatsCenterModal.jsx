@@ -89,7 +89,9 @@ export default function StatsCenterModal({ onClose }) {
     let active = true;
     async function fetchStandings() {
       try {
-        const res = await fetch(`/api/matches/standings?league=${selectedLeague}`);
+        const res = await fetch(`/api/matches/standings?league=${selectedLeague}`, {
+          credentials: 'same-origin'
+        });
         const data = await res.json();
         if (active && data.success && Array.isArray(data.standings) && data.standings.length > 0) {
           setDynamicTable(data.standings);
