@@ -4,19 +4,28 @@ import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
+import { getBestBankerPick } from '../utils/mathProbabilities';
 
 export default function MatchCard({ 
   match, 
   onOpenModal, 
   onAddToParlay, 
-  oddsFormat = 'decimal' 
+  oddsFormat = 'decimal',
+  bankerRank = null
 }) {
   const homeProb = match.probabilities?.homeWin || 50;
   const drawProb = match.probabilities?.draw || 25;
   const awayProb = match.probabilities?.awayWin || 25;
   const bttsProb = match.probabilities?.bttsYes || 55;
   const over25Prob = match.probabilities?.over25 || 60;
-  const cornerAvg = ((match.homeTeam?.avgCorners ?? 4.8) + (match.awayTeam?.avgCorners ?? 4.5)).toFixed(1);
+  const under25Prob = match.probabilities?.under25 != null ? match.probabilities.under25 : (100 - over25Prob);
+  const confidenceScore = match.probabilities?.confidence || match.aiPick?.probability || Math.round(Math.max(homeProb, awayProb, over25Prob, under25Prob, 65));
+  
+  const bankerPick = getBestBankerPick(match);
+  const isBankerMode = bankerRank != null;
+  const displayPick = isBankerMode ? bankerPick.selection : (match.aiPick?.selection || bankerPick.selection);
+  const displayOdds = isBankerMode ? bankerPick.odds : (match.aiPick?.odds || match.odds?.homeWin || bankerPick.odds);
+  const displayProb = isBankerMode ? bankerPick.safetyScore : confidenceScore;
 
   const formatMatchTime = (iso) => {
     const d = new Date(iso);
@@ -135,19 +144,31 @@ export default function MatchCard({
           </div>
         </div>
 
-        {/* Quick Stats Pills: BTTS & Corners */}
+        {/* Banker Rank Banner if in Banker Mode */}
+        {bankerRank != null && (
+          <div className="mb-2.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-500/20 via-sky-500/15 to-transparent border border-emerald-500/35 flex items-center justify-between font-mono text-[10px]">
+            <span className="font-bold text-emerald-300 flex items-center space-x-1">
+              <span>💎 TOP #{bankerRank} BANQUERO</span>
+            </span>
+            <span className="text-sky-300 font-bold">
+              {displayProb}% Seguridad
+            </span>
+          </div>
+        )}
+
+        {/* Quick Stats Pills: BTTS, +2.5 Over & -2.5 Under */}
         <div className="grid grid-cols-3 gap-1 mb-3 text-center text-[10px] font-mono">
           <div className="bg-[#121824] p-1.5 rounded border border-white/5">
             <span className="text-slate-400 block text-[9px]">BTTS</span>
             <span className="font-bold text-amber-300">{bttsProb}%</span>
           </div>
           <div className="bg-[#121824] p-1.5 rounded border border-white/5">
-            <span className="text-slate-400 block text-[9px]">+2.5 Gol</span>
+            <span className="text-slate-400 block text-[9px]">+2.5 Over</span>
             <span className="font-bold text-emerald-400">{over25Prob}%</span>
           </div>
           <div className="bg-[#121824] p-1.5 rounded border border-white/5">
-            <span className="text-slate-400 block text-[9px]">Corners</span>
-            <span className="font-bold text-sky-300">{cornerAvg} 🚩</span>
+            <span className="text-slate-400 block text-[9px]">-2.5 Under</span>
+            <span className="font-bold text-sky-300">{under25Prob}%</span>
           </div>
         </div>
 
@@ -156,7 +177,7 @@ export default function MatchCard({
           <div className="flex items-center justify-between mb-0.5">
             <span className="text-[9.5px] font-mono font-bold text-sky-400 uppercase tracking-wide flex items-center space-x-1">
               <Zap className="w-2.5 h-2.5 fill-sky-400" />
-              <span>Pronóstico IA</span>
+              <span>{isBankerMode || confidenceScore >= 80 ? '💎 Pick Banquero IA' : 'Pronóstico IA'}</span>
             </span>
             {match.aiPick?.settlement === 'WON' ? (
               <span className="text-[9.5px] font-mono text-emerald-400 font-bold flex items-center space-x-0.5">
@@ -165,13 +186,18 @@ export default function MatchCard({
               </span>
             ) : (
               <span className="text-[9.5px] font-mono text-slate-400">
-                {match.probabilities?.confidence || 88}% Conf.
+                {displayProb}% Conf.
               </span>
             )}
           </div>
-          <p className="text-xs font-semibold text-white truncate">
-            {match.aiPick?.selection || 'Victoria Local'}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-white truncate">
+              {displayPick}
+            </p>
+            <span className="text-[11px] font-mono font-bold text-emerald-400 shrink-0 ml-1.5">
+              @{formatOdds(displayOdds, oddsFormat)}
+            </span>
+          </div>
         </div>
 
       </div>
@@ -186,9 +212,9 @@ export default function MatchCard({
               matchId: match.id,
               matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
               league: match.leagueName,
-              selection: match.aiPick?.selection || 'Victoria Local',
-              odds: match.aiPick?.odds || match.odds?.homeWin || 1.95,
-              probability: match.probabilities?.homeWin || 50
+              selection: displayPick,
+              odds: displayOdds,
+              probability: displayProb
             });
           }}
           className="py-1.5 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"

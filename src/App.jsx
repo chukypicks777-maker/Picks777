@@ -14,6 +14,7 @@ import StatsCenterModal from './components/StatsCenterModal';
 import FooterCommunityShowcase from './components/FooterCommunityShowcase';
 import { sounds } from './utils/audioEffects';
 import { Layers, Radio, Zap, AlertCircle } from 'lucide-react';
+import { getMatchSafetyScore } from './utils/mathProbabilities';
 
 export default function App() {
   // Auth state
@@ -271,13 +272,18 @@ export default function App() {
   };
 
   // Filter by market if active
-  const filteredMatches = matches.filter(m => {
-    if (marketFilter === 'safe') return (m.probabilities?.confidence || 0) >= 85;
-    if (marketFilter === 'btts') return (m.probabilities?.bttsYes || 0) >= 60;
-    if (marketFilter === 'over') return (m.probabilities?.over25 || 0) >= 60;
-    if (marketFilter === 'corners') return (m.probabilities?.cornerOver95 || 0) >= 60;
+  let filteredMatches = matches.filter(m => {
+    if (marketFilter === 'safe') return true; // En modo banquero se ordenan todos de mayor a menor seguridad
+    if (marketFilter === 'btts') return (m.probabilities?.bttsYes || 0) >= 55;
+    if (marketFilter === 'over') return (m.probabilities?.over25 || 0) >= 55;
+    if (marketFilter === 'under') return (m.probabilities?.under25 || (100 - (m.probabilities?.over25 || 50))) >= 50;
     return true;
   });
+
+  // When 'safe' (Picks Banqueros) is active, sort from highest safety to lowest ("de lo mejor a lo menor, lo más seguro")
+  if (marketFilter === 'safe') {
+    filteredMatches = [...filteredMatches].sort((a, b) => getMatchSafetyScore(b) - getMatchSafetyScore(a));
+  }
 
   const liveMatchesCount = matches.filter(m => m.status === 'LIVE').length;
   const featuredMatch = matches.find(m => m.isFeatured && m.status !== 'FINISHED') || matches[0];
@@ -377,9 +383,29 @@ export default function App() {
 
         {/* Matches Grid */}
         <div className="mb-12">
+          {/* Banner Exclusivo de Picks Banqueros cuando el filtro está activo */}
+          {marketFilter === 'safe' && (
+            <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-[#0d1522] to-sky-500/20 border border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.15)] flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xl">💎</span>
+                  <h4 className="font-black text-sm md:text-base text-white uppercase tracking-wider font-sans">
+                    Picks Banqueros Oficiales — Ordenados de Mayor a Menor Seguridad
+                  </h4>
+                </div>
+                <p className="text-xs text-emerald-300/90 font-mono">
+                  Selección cuantitativa de máxima confianza y menor varianza. Priorizados de lo mejor a lo menor ({filteredMatches.length} pronósticos clasificados).
+                </p>
+              </div>
+              <span className="px-3 py-1.5 rounded-xl bg-emerald-500/30 text-emerald-200 border border-emerald-500/50 font-mono text-xs font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                RANKING ACTIVADO (1 AL {filteredMatches.length})
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-sm md:text-base text-white flex items-center space-x-2">
-              <span>Partidos & Pronósticos Cuantitativos</span>
+              <span>{marketFilter === 'safe' ? '💎 Ranking de Picks Banqueros' : 'Partidos & Pronósticos Cuantitativos'}</span>
               <span className="text-xs font-mono font-normal text-slate-400">
                 ({filteredMatches.length} encuentros)
               </span>
@@ -430,13 +456,14 @@ export default function App() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMatches.map(m => (
+              {filteredMatches.map((m, idx) => (
                 <MatchCard
                   key={m.id}
                   match={m}
                   onOpenModal={setSelectedMatch}
                   onAddToParlay={handleAddToParlay}
                   oddsFormat={oddsFormat}
+                  bankerRank={marketFilter === 'safe' ? idx + 1 : null}
                 />
               ))}
             </div>

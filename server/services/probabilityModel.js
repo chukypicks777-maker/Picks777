@@ -27,7 +27,9 @@ export function poissonModel(home, away, minGames = 5) {
   }));
   const probabilities = Object.fromEntries(Object.entries(sums).map(([k, v]) => [k, v / mass * 100]));
   probabilities.bttsNo = 100 - probabilities.bttsYes;
+  probabilities.under15 = 100 - probabilities.over15;
   probabilities.under25 = 100 - probabilities.over25;
+  probabilities.under35 = 100 - probabilities.over35;
   probabilities.cornerOver95 = null;
   probabilities.confidence = null;
   scores.sort((a, b) => b.probability - a.probability);
