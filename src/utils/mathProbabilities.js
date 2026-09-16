@@ -52,6 +52,14 @@ export function calculateCornerProbabilities(avgCorners) {
   const over95 = Math.round(probOver95Raw * 100);
   const under95 = 100 - over95;
 
+  // Nuevas líneas detalladas de Córners (+1.5, +2.5, +3.5, +4.5, +5.5, +6.5)
+  const over15 = Math.min(99, Math.max(1, Math.round((1 - poissonCumulative(lambda, 1)) * 100)));
+  const over25 = Math.min(over15 - 1, Math.max(1, Math.round((1 - poissonCumulative(lambda, 2)) * 100)));
+  const over35 = Math.min(over25 - 1, Math.max(1, Math.round((1 - poissonCumulative(lambda, 3)) * 100)));
+  const over45 = Math.min(over35 - 1, Math.max(1, Math.round((1 - poissonCumulative(lambda, 4)) * 100)));
+  const over55 = Math.min(over45 - 1, Math.max(1, Math.round((1 - poissonCumulative(lambda, 5)) * 100)));
+  const over65 = Math.min(over55 - 1, Math.max(1, Math.round((1 - poissonCumulative(lambda, 6)) * 100)));
+
   return {
     lambda: Number(lambda.toFixed(1)),
     over5,
@@ -59,7 +67,13 @@ export function calculateCornerProbabilities(avgCorners) {
     over85,
     under85,
     over95,
-    under95
+    under95,
+    over15,
+    over25,
+    over35,
+    over45,
+    over55,
+    over65
   };
 }
 
@@ -83,13 +97,19 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, _match = {}
   const cornerProbs = calculateCornerProbabilities(avgCorners);
 
   // Goles Over / Under del equipo
-  const over25Rate = team.over25Rate || Math.round(Math.min(90, Math.max(25, (avgGF + avgGC) * 22)));
+  const lambdaGoals = Math.max(0.6, avgGF + avgGC);
+  const probOver05Calc = Math.min(99, Math.max(65, Math.round((1 - Math.exp(-lambdaGoals)) * 100)));
+
+  const over25Rate = team.over25Rate || Math.round(Math.min(90, Math.max(15, (avgGF + avgGC) * 22)));
   const under25Rate = 100 - over25Rate;
 
-  const over15Rate = Math.round(Math.min(98, Math.max(45, over25Rate + 24)));
+  const over15Rate = team.over15Rate || Math.round(Math.min(probOver05Calc - 1, Math.max(over25Rate + 12, over25Rate + 24)));
   const under15Rate = 100 - over15Rate;
 
-  const over35Rate = Math.round(Math.max(10, over25Rate - 26));
+  const over05Rate = team.over05Rate || Math.min(99, Math.max(over15Rate + 1, probOver05Calc));
+  const under05Rate = 100 - over05Rate;
+
+  const over35Rate = team.over35Rate || Math.round(Math.min(over25Rate - 2, Math.max(10, over25Rate - 26)));
   const under35Rate = 100 - over35Rate;
 
   const bttsRate = team.bttsRate || Math.round(Math.min(85, Math.max(30, (avgGF > 0.8 && avgGC > 0.8 ? 62 : 45))));
@@ -99,6 +119,14 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, _match = {}
 
   const fouls = Number((team.avgFouls || (isHome ? 11.2 : 12.8)).toFixed(1));
   const cards = Number((team.avgYellowCards || (isHome ? 2.1 : 2.6)).toFixed(1));
+
+  // Probabilidades de Tarjetas (-0.5, +0.5, +1.5, +2.5)
+  const lambdaCards = Math.max(0.5, cards);
+  const probCardsUnder05Raw = Math.round(poissonProbability(lambdaCards, 0) * 100);
+  const cardsUnder05 = Math.max(1, Math.min(55, probCardsUnder05Raw));
+  const cardsOver05 = 100 - cardsUnder05;
+  const cardsOver15 = Math.max(1, Math.min(cardsOver05 - 1, Math.round((1 - poissonCumulative(lambdaCards, 1)) * 100)));
+  const cardsOver25 = Math.max(1, Math.min(cardsOver15 - 1, Math.round((1 - poissonCumulative(lambdaCards, 2)) * 100)));
 
   return {
     name: team.name || (isHome ? 'Equipo Local' : 'Equipo Visitante'),
@@ -114,6 +142,8 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, _match = {}
     avgGF,
     avgGC,
     goalDiff,
+    over05Rate,
+    under05Rate,
     over15Rate,
     under15Rate,
     over25Rate,
@@ -129,6 +159,17 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, _match = {}
     cornerUnder5: cornerProbs.under5,
     cornerOver85: cornerProbs.over85,
     cornerUnder85: cornerProbs.under85,
+    cornerOver15: cornerProbs.over15,
+    cornerOver25: cornerProbs.over25,
+    cornerOver35: cornerProbs.over35,
+    cornerOver45: cornerProbs.over45,
+    cornerOver55: cornerProbs.over55,
+    cornerOver65: cornerProbs.over65,
+    // Tarjetas
+    cardsUnder05,
+    cardsOver05,
+    cardsOver15,
+    cardsOver25,
     // Disciplina
     fouls,
     cards
@@ -380,5 +421,221 @@ export function getMatchSafetyScore(match) {
   if (maxProb > 0) return Math.round(maxProb);
   const banker = getBestBankerPick(match);
   return banker?.safetyScore || 60;
+}
+
+/**
+ * Obtiene las 3 mejores oportunidades de un partido (las de mayor probabilidad/posibilidad)
+ * para agregarlas automáticamente al boleto de parlay al presionar "+ Al Parlay".
+ * Analiza rigurosamente Doble Oportunidad, Total Goles, Córners y Tarjetas, garantizando
+ * selecciones complementarias, no contradictorias y con altas posibilidades estadísticas.
+ *
+ * @param {Object} match Objeto de datos del partido
+ * @returns {Array<Object>} Lista con las 3 selecciones de mayor probabilidad
+ */
+export function getTop3Opportunities(match) {
+  if (!match) {
+    return [
+      { matchId: 'm-def', matchTitle: 'Partido', league: 'Liga', selection: 'Victoria o Empate (1X)', market: 'Doble Oportunidad (1X)', probability: 80, odds: 1.25 },
+      { matchId: 'm-def', matchTitle: 'Partido', league: 'Liga', selection: 'Más de 1.5 Goles', market: 'Total Goles Over 1.5', probability: 82, odds: 1.24 },
+      { matchId: 'm-def', matchTitle: 'Partido', league: 'Liga', selection: 'Más de 5.5 Córners', market: 'Córners Totales', probability: 85, odds: 1.20 }
+    ];
+  }
+
+  const p = match.probabilities || {};
+  const odds = match.odds || {};
+  const matchId = match.id || 'match';
+  const matchTitle = `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`;
+  const league = match.leagueName || 'Fútbol';
+  const homeShort = match.homeTeam?.shortName || match.homeTeam?.name || 'Local';
+  const awayShort = match.awayTeam?.shortName || match.awayTeam?.name || 'Visita';
+
+  const homeProb = p.homeWin != null ? Number(p.homeWin) : 48;
+  const awayProb = p.awayWin != null ? Number(p.awayWin) : 26;
+  const drawProb = p.draw != null ? Number(p.draw) : Math.max(10, 100 - homeProb - awayProb);
+
+  const calcOdds = (prob, fallback = 1.25) => {
+    if (!prob || prob <= 0) return fallback;
+    const p = Math.min(97, Math.max(35, prob));
+    // Calibrated bookmaker odds curve for high-probability markets:
+    // 95% -> 1.15
+    // 90% -> 1.22
+    // 85% -> 1.30
+    // 80% -> 1.38
+    // 75% -> 1.46
+    const calibrated = 1.06 + ((100 - p) / 100) * 1.60;
+    return Number(Math.max(1.12, Math.min(3.50, calibrated)).toFixed(2));
+  };
+
+  const candidates = [];
+
+  // 1. Doble Oportunidad (Alta probabilidad de acierto entre 75% y 95%)
+  const dc1XProb = Math.min(97, Math.max(35, Math.round(homeProb + drawProb)));
+  const dcX2Prob = Math.min(97, Math.max(35, Math.round(awayProb + drawProb)));
+
+  if (dc1XProb >= dcX2Prob) {
+    candidates.push({
+      category: 'result',
+      market: 'Doble Oportunidad (1X)',
+      selection: `${homeShort} o Empate (1X)`,
+      probability: dc1XProb,
+      odds: odds.dc1X || calcOdds(dc1XProb, 1.22)
+    });
+  } else {
+    candidates.push({
+      category: 'result',
+      market: 'Doble Oportunidad (X2)',
+      selection: `${awayShort} o Empate (X2)`,
+      probability: dcX2Prob,
+      odds: odds.dcX2 || calcOdds(dcX2Prob, 1.25)
+    });
+  }
+
+  // 2. Líneas Seguras de Goles
+  const over15Prob = p.over15 != null
+    ? Number(p.over15)
+    : (p.over25 != null ? Math.min(96, Math.round(Number(p.over25) + 26)) : 82);
+  const under35Prob = p.under35 != null
+    ? Number(p.under35)
+    : (p.over25 != null ? Math.min(94, Math.round(100 - (Number(p.over25) - 24))) : 78);
+
+  if (over15Prob >= under35Prob) {
+    candidates.push({
+      category: 'goals',
+      market: 'Total Goles Over 1.5',
+      selection: 'Más de 1.5 Goles',
+      probability: over15Prob,
+      odds: Number((odds.over15 || calcOdds(over15Prob, 1.28)).toFixed(2))
+    });
+  } else {
+    candidates.push({
+      category: 'goals',
+      market: 'Total Goles Under 3.5',
+      selection: 'Menos de 3.5 Goles',
+      probability: under35Prob,
+      odds: Number((odds.under35 || calcOdds(under35Prob, 1.30)).toFixed(2))
+    });
+  }
+
+  // 3. Córners del Partido (Línea adaptativa de máxima probabilidad según lambda)
+  const homeCorners = Number(match.homeTeam?.avgCorners) || 5.2;
+  const awayCorners = Number(match.awayTeam?.avgCorners) || 4.8;
+  const lambdaCorners = Math.max(3.5, homeCorners + awayCorners);
+
+  let cornerLine = '5.5';
+  let cornerK = 5;
+  if (lambdaCorners >= 9.0) {
+    cornerLine = '5.5';
+    cornerK = 5;
+  } else if (lambdaCorners >= 7.0) {
+    cornerLine = '4.5';
+    cornerK = 4;
+  } else {
+    cornerLine = '3.5';
+    cornerK = 3;
+  }
+  const probOverCorners = Math.min(97, Math.max(78, Math.round((1 - poissonCumulative(lambdaCorners, cornerK)) * 100)));
+
+  candidates.push({
+    category: 'corners',
+    market: 'Córners Totales',
+    selection: `Más de ${cornerLine} Córners`,
+    probability: probOverCorners,
+    odds: calcOdds(probOverCorners, 1.22)
+  });
+
+  // 4. Tarjetas Totales (Línea adaptativa de alta probabilidad)
+  const homeCards = Number(match.homeTeam?.avgYellowCards) || 2.1;
+  const awayCards = Number(match.awayTeam?.avgYellowCards) || 2.4;
+  const lambdaCards = Math.max(1.5, homeCards + awayCards);
+
+  let cardLine = '1.5';
+  let cardK = 1;
+  if (lambdaCards >= 3.0) {
+    cardLine = '1.5';
+    cardK = 1;
+  } else {
+    cardLine = '0.5';
+    cardK = 0;
+  }
+  const probOverCards = Math.min(97, Math.max(76, Math.round((1 - poissonCumulative(lambdaCards, cardK)) * 100)));
+
+  candidates.push({
+    category: 'cards',
+    market: 'Tarjetas Totales',
+    selection: `Más de ${cardLine} Tarjetas`,
+    probability: probOverCards,
+    odds: calcOdds(probOverCards, 1.20)
+  });
+
+  // 5. Goles por Equipo (Anotará al menos 1 gol - evaluar favorito goleador)
+  const homeGoalsAvg = Number(match.homeTeam?.avgGoalsScored) || ((match.homeTeam?.goalsFor || 24) / Math.max(1, match.homeTeam?.gamesPlayed || 15));
+  const awayGoalsAvg = Number(match.awayTeam?.avgGoalsScored) || ((match.awayTeam?.goalsFor || 20) / Math.max(1, match.awayTeam?.gamesPlayed || 15));
+
+  const probHomeScores = Math.min(96, Math.max(50, Math.round((1 - Math.exp(-homeGoalsAvg)) * 100)));
+  const probAwayScores = Math.min(96, Math.max(50, Math.round((1 - Math.exp(-awayGoalsAvg)) * 100)));
+
+  if (probHomeScores >= probAwayScores) {
+    candidates.push({
+      category: 'team_goals',
+      market: 'Goles por Equipo',
+      selection: `${homeShort} anota (+0.5 Goles)`,
+      probability: probHomeScores,
+      odds: calcOdds(probHomeScores, 1.26)
+    });
+  } else {
+    candidates.push({
+      category: 'team_goals',
+      market: 'Goles por Equipo',
+      selection: `${awayShort} anota (+0.5 Goles)`,
+      probability: probAwayScores,
+      odds: calcOdds(probAwayScores, 1.26)
+    });
+  }
+
+  // Si existe pick IA de alta confianza, considerarlo
+  if (match.aiPick?.selection && (match.aiPick.probability || 0) >= 65) {
+    candidates.push({
+      category: 'ai_pick',
+      market: 'Pronóstico IA Principal',
+      selection: match.aiPick.selection,
+      probability: match.aiPick.probability,
+      odds: match.aiPick.odds || calcOdds(match.aiPick.probability, 1.45)
+    });
+  }
+
+  // Ordenar de mayor a menor probabilidad ("las que tengas más posibilidad")
+  candidates.sort((a, b) => b.probability - a.probability);
+
+  // Seleccionar las 3 mejores sin repetir categoría para evitar redundancias
+  const selected = [];
+  const usedCategories = new Set();
+
+  for (const cand of candidates) {
+    if (!usedCategories.has(cand.category)) {
+      selected.push(cand);
+      usedCategories.add(cand.category);
+      if (selected.length === 3) break;
+    }
+  }
+
+  // Si no se llenaron 3 (raro), completar con las mejores restantes
+  if (selected.length < 3) {
+    for (const cand of candidates) {
+      if (!selected.includes(cand)) {
+        selected.push(cand);
+        if (selected.length === 3) break;
+      }
+    }
+  }
+
+  return selected.slice(0, 3).map(sel => ({
+    matchId,
+    matchTitle,
+    league,
+    selection: sel.selection,
+    market: sel.market,
+    odds: sel.odds,
+    probability: sel.probability
+  }));
 }
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flag } from 'lucide-react';
+import { Flag, Flame } from 'lucide-react';
 import NumberCounter from './NumberCounter';
 
 export default function TeamDetailedStatsCard({ stats, isHome }) {
@@ -18,7 +18,7 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
             {stats.logo ? (
               <img src={stats.logo} alt={stats.name} className="w-8 h-8 object-contain filter drop-shadow" />
             ) : (
-              <div className={`w-8 h-8 rounded-full bg-${accentColor}-500/20 text-${accentColor}-300 flex items-center justify-center font-bold text-xs`}>
+              <div className={`w-8 h-8 rounded-full ${isHome ? 'bg-sky-500/20 text-sky-300' : 'bg-indigo-500/20 text-indigo-300'} flex items-center justify-center font-bold text-xs`}>
                 {stats.shortName}
               </div>
             )}
@@ -74,127 +74,208 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
           </div>
         </div>
 
-        {/* AGRUPACIÓN OVERS (+) VS UNDERS (-) POR LADOS DIFERENTES */}
-        <div className="bg-[#121926] p-3 rounded-xl border border-white/10 space-y-2.5">
-          <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
-            <span className="text-[10.5px] font-bold text-slate-200 flex items-center space-x-1.5 uppercase tracking-wide">
-              <Flag className="w-3 h-3 text-sky-400" />
-              <span>Métricas Agrupadas por Lados</span>
-            </span>
-            <span className="text-[9.5px] text-slate-400">
-              Córners Fav: <strong className="text-white">{stats.avgCorners}</strong> | Concedidos: <strong className="text-slate-300">{stats.avgCornersConceded}</strong>
-            </span>
-          </div>
+        {/* MÉTRICAS CATEGORIZADAS: GOLES, TARJETAS, CÓRNERS */}
+        <div className="bg-[#121926] p-3 rounded-xl border border-white/10 space-y-3.5">
+          
+          {/* SECCIÓN 1: GOLES */}
+          <div>
+            <div className="flex items-center justify-between border-b border-emerald-500/20 pb-1.5 mb-2">
+              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-tight flex items-center space-x-1.5">
+                <Flame className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Goles</span>
+              </span>
+              <span className="text-[9.5px] text-slate-400 font-mono">
+                Prom: <strong className="text-emerald-300">{(Number(stats.avgGF || 0) + Number(stats.avgGC || 0)).toFixed(2)}</strong> / p
+              </span>
+            </div>
 
-          <div className="grid grid-cols-2 gap-2 text-center">
-            {/* LADO IZQUIERDO: OVERS (+) */}
-            <div className="bg-[#0b131e] p-2.5 rounded-lg border border-emerald-500/30 space-y-2">
-              <div className="flex items-center justify-between border-b border-emerald-500/20 pb-1">
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-tight flex items-center space-x-1">
-                  <span>▲ LADO OVERS (+)</span>
-                </span>
-                <span className="text-[8.5px] bg-emerald-500/20 text-emerald-300 px-1 rounded font-bold">POSITIVO</span>
-              </div>
-
-              {/* +5 Córners */}
-              <div className="bg-[#121c2b] p-1.5 rounded border border-emerald-500/20 text-left">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-slate-300 font-semibold">+5 Córners</span>
-                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.cornerOver5} suffix="%" /></span>
+            <div className="grid grid-cols-2 gap-1.5 text-left">
+              {/* +0.5 */}
+              <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+0.5</span>
+                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over05Rate} suffix="%" /></span>
                 </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1">
-                  <div style={{ width: `${stats.cornerOver5}%` }} className="h-full bg-emerald-400 rounded-full" />
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.over05Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
                 </div>
               </div>
 
-              {/* +1.5 Goles */}
-              <div className="bg-[#121c2b] p-1.5 rounded border border-emerald-500/20 text-left">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-slate-300 font-semibold">+1.5 Goles</span>
-                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over15Rate} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1">
-                  <div style={{ width: `${stats.over15Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +2.5 Goles */}
-              <div className="bg-[#121c2b] p-1.5 rounded border border-emerald-500/20 text-left">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-slate-300 font-semibold">+2.5 Goles</span>
+              {/* +2.5 */}
+              <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+2.5</span>
                   <span className="font-bold text-emerald-400"><NumberCounter value={stats.over25Rate} suffix="%" /></span>
                 </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1">
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
                   <div style={{ width: `${stats.over25Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
                 </div>
               </div>
 
-              {/* +3.5 Goles */}
-              <div className="bg-[#121c2b] p-1.5 rounded border border-emerald-500/20 text-left">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-slate-300 font-semibold">+3.5 Goles</span>
+              {/* +1.5 */}
+              <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+1.5</span>
+                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over15Rate} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.over15Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* +3.5 */}
+              <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+3.5</span>
                   <span className="font-bold text-emerald-400"><NumberCounter value={stats.over35Rate} suffix="%" /></span>
                 </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1">
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
                   <div style={{ width: `${stats.over35Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* LADO DERECHO: UNDERS (-) */}
-            <div className="bg-[#191310] p-2.5 rounded-lg border border-amber-500/30 space-y-2">
-              <div className="flex items-center justify-between border-b border-amber-500/20 pb-1">
-                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-tight flex items-center space-x-1">
-                  <span>▼ LADO UNDERS (-)</span>
-                </span>
-                <span className="text-[8.5px] bg-amber-500/20 text-amber-300 px-1 rounded font-bold">NEGATIVO</span>
-              </div>
+          {/* SECCIÓN 2: TARJETAS */}
+          <div>
+            <div className="flex items-center justify-between border-b border-amber-500/20 pb-1.5 mb-2">
+              <span className="text-[11px] font-bold text-amber-400 uppercase tracking-tight flex items-center space-x-1.5">
+                <span className="text-amber-400 text-xs">🟨</span>
+                <span>Tarjetas</span>
+              </span>
+              <span className="text-[9.5px] text-slate-400 font-mono">
+                Prom: <strong className="text-amber-300">{stats.cards}</strong> / p
+              </span>
+            </div>
 
-              {/* -5 Córners */}
-              <div className="bg-[#241a15] p-1.5 rounded border border-amber-500/20 text-left">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-slate-300 font-semibold">-5 Córners</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cornerUnder5} suffix="%" /></span>
+            <div className="grid grid-cols-2 gap-1.5 text-left">
+              {/* -0.5 */}
+              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">-0.5</span>
+                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsUnder05} suffix="%" /></span>
                 </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1">
-                  <div style={{ width: `${stats.cornerUnder5}%` }} className="h-full bg-amber-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* -1.5 Goles */}
-              <div className="bg-[#241a15] p-1.5 rounded border border-amber-500/20 text-left">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-slate-300 font-semibold">-1.5 Goles</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.under15Rate} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1">
-                  <div style={{ width: `${stats.under15Rate}%` }} className="h-full bg-amber-400 rounded-full" />
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cardsUnder05}%` }} className="h-full bg-amber-400 rounded-full" />
                 </div>
               </div>
 
-              {/* -2.5 Goles */}
-              <div className="bg-[#241a15] p-1.5 rounded border border-amber-500/20 text-left">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-slate-300 font-semibold">-2.5 Goles</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.under25Rate} suffix="%" /></span>
+              {/* +0.5 */}
+              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+0.5</span>
+                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsOver05} suffix="%" /></span>
                 </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1">
-                  <div style={{ width: `${stats.under25Rate}%` }} className="h-full bg-amber-400 rounded-full" />
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cardsOver05}%` }} className="h-full bg-amber-400 rounded-full" />
                 </div>
               </div>
 
-              {/* -3.5 Goles */}
-              <div className="bg-[#241a15] p-1.5 rounded border border-amber-500/20 text-left">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-slate-300 font-semibold">-3.5 Goles</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.under35Rate} suffix="%" /></span>
+              {/* +1.5 */}
+              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+1.5</span>
+                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsOver15} suffix="%" /></span>
                 </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1">
-                  <div style={{ width: `${stats.under35Rate}%` }} className="h-full bg-amber-400 rounded-full" />
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cardsOver15}%` }} className="h-full bg-amber-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* +2.5 */}
+              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+2.5</span>
+                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsOver25} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cardsOver25}%` }} className="h-full bg-amber-400 rounded-full" />
                 </div>
               </div>
             </div>
           </div>
+
+          {/* SECCIÓN 3: CÓRNERS */}
+          <div>
+            <div className="flex items-center justify-between border-b border-sky-500/20 pb-1.5 mb-2">
+              <span className="text-[11px] font-bold text-sky-400 uppercase tracking-tight flex items-center space-x-1.5">
+                <Flag className="w-3.5 h-3.5 text-sky-400" />
+                <span>Córners</span>
+              </span>
+              <span className="text-[9.5px] text-slate-400 font-mono">
+                Fav: <strong className="text-white">{stats.avgCorners}</strong> | Conced: <strong className="text-slate-300">{stats.avgCornersConceded}</strong>
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 text-left">
+              {/* +1.5 */}
+              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+1.5</span>
+                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver15} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cornerOver15}%` }} className="h-full bg-sky-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* +2.5 */}
+              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+2.5</span>
+                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver25} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cornerOver25}%` }} className="h-full bg-sky-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* +3.5 */}
+              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+3.5</span>
+                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver35} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cornerOver35}%` }} className="h-full bg-sky-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* +4.5 */}
+              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+4.5</span>
+                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver45} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cornerOver45}%` }} className="h-full bg-sky-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* +5.5 */}
+              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+5.5</span>
+                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver55} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cornerOver55}%` }} className="h-full bg-sky-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* +6.5 */}
+              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+6.5</span>
+                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver65} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cornerOver65}%` }} className="h-full bg-sky-400 rounded-full" />
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 

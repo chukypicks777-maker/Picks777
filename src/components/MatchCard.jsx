@@ -4,7 +4,7 @@ import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
-import { getBestBankerPick } from '../utils/mathProbabilities';
+import { getBestBankerPick, getTop3Opportunities } from '../utils/mathProbabilities';
 
 export default function MatchCard({ 
   match, 
@@ -13,13 +13,13 @@ export default function MatchCard({
   oddsFormat = 'decimal',
   bankerRank = null
 }) {
-  const homeProb = match.probabilities?.homeWin || 50;
-  const drawProb = match.probabilities?.draw || 25;
-  const awayProb = match.probabilities?.awayWin || 25;
-  const bttsProb = match.probabilities?.bttsYes || 55;
-  const over25Prob = match.probabilities?.over25 || 60;
-  const under25Prob = match.probabilities?.under25 != null ? match.probabilities.under25 : (100 - over25Prob);
-  const confidenceScore = match.probabilities?.confidence || match.aiPick?.probability || Math.round(Math.max(homeProb, awayProb, over25Prob, under25Prob, 65));
+  const homeProb = Math.round(match.probabilities?.homeWin || 50);
+  const drawProb = Math.round(match.probabilities?.draw || 25);
+  const awayProb = Math.round(match.probabilities?.awayWin || 25);
+  const bttsProb = Math.round(match.probabilities?.bttsYes || 55);
+  const over25Prob = Math.round(match.probabilities?.over25 || 60);
+  const under25Prob = match.probabilities?.under25 != null ? Math.round(match.probabilities.under25) : (100 - over25Prob);
+  const confidenceScore = Math.round(match.probabilities?.confidence || match.aiPick?.probability || Math.max(homeProb, awayProb, over25Prob, under25Prob, 65));
   
   const bankerPick = getBestBankerPick(match);
   const isBankerMode = bankerRank != null;
@@ -208,14 +208,8 @@ export default function MatchCard({
           onClick={(e) => {
             e.stopPropagation();
             sounds.playAddParlay();
-            onAddToParlay({
-              matchId: match.id,
-              matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
-              league: match.leagueName,
-              selection: displayPick,
-              odds: displayOdds,
-              probability: displayProb
-            });
+            const topOpportunities = getTop3Opportunities(match);
+            onAddToParlay(topOpportunities);
           }}
           className="py-1.5 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
         >

@@ -5,6 +5,7 @@ import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
 import RadarScanner from './RadarScanner';
+import { getTop3Opportunities } from '../utils/mathProbabilities';
 
 export default function HeroFeaturedMatch({ 
   match, 
@@ -16,9 +17,9 @@ export default function HeroFeaturedMatch({
 
   if (!match) return null;
 
-  const homeProb = match.probabilities?.homeWin || 54;
-  const drawProb = match.probabilities?.draw || 26;
-  const awayProb = match.probabilities?.awayWin || 20;
+  const homeProb = Math.round(match.probabilities?.homeWin || 54);
+  const drawProb = Math.round(match.probabilities?.draw || 26);
+  const awayProb = Math.round(match.probabilities?.awayWin || 20);
 
   return (
     <div className="mb-8">
@@ -208,14 +209,8 @@ export default function HeroFeaturedMatch({
                       onClick={(e) => {
                         e.stopPropagation();
                         sounds.playAddParlay();
-                        onAddToParlay({
-                          matchId: match.id,
-                          matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
-                          league: match.leagueName,
-                          selection: match.aiPick?.selection || 'Victoria Local',
-                          odds: match.aiPick?.odds || 1.95,
-                          probability: match.probabilities?.homeWin || 50
-                        });
+                        const topOpportunities = getTop3Opportunities(match);
+                        onAddToParlay(topOpportunities);
                       }}
                       className="py-2 px-3 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 cursor-pointer"
                     >

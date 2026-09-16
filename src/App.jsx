@@ -242,16 +242,33 @@ export default function App() {
     showToast('Sesión finalizada.');
   };
 
-  const handleAddToParlay = (leg) => {
-    const exists = parlayLegs.some(l => l.matchId === leg.matchId && l.selection === leg.selection);
-    if (exists) {
-      showToast('Esta selección ya está en tu Parlay.');
+  const handleAddToParlay = (legOrLegs) => {
+    const items = Array.isArray(legOrLegs) ? legOrLegs : [legOrLegs];
+    let addedCount = 0;
+    const updated = [...parlayLegs];
+
+    for (const leg of items) {
+      if (!leg || !leg.selection) continue;
+      const exists = updated.some(l => l.matchId === leg.matchId && l.selection === leg.selection);
+      if (!exists) {
+        updated.push(leg);
+        addedCount++;
+      }
+    }
+
+    if (addedCount === 0) {
+      setShowParlayDrawer(true);
+      showToast(items.length > 1 ? 'Las mejores oportunidades ya están en tu Boleto Parlay.' : 'Esta selección ya está en tu Boleto Parlay.');
       return;
     }
-    const updated = [...parlayLegs, leg];
+
     setParlayLegs(updated);
     setShowParlayDrawer(true);
-    showToast(`Añadido: ${leg.selection}`);
+    if (items.length > 1) {
+      showToast(`🔥 Añadidas ${addedCount} mejores oportunidades al Parlay`);
+    } else {
+      showToast(`Añadido: ${items[0].selection}`);
+    }
   };
 
   const handleRemoveParlayLeg = (index) => {

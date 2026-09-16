@@ -712,7 +712,7 @@ export default function MatchDetailModal({
                 <div className="flex items-center justify-between">
                   <h5 className="font-bold text-xs uppercase text-slate-300 font-mono flex items-center space-x-2">
                     <Shield className="w-3.5 h-3.5 text-sky-400" />
-                    <span>Apartados Detallados por Equipo (Estadísticas & Córners +5 / -5)</span>
+                    <span>Apartados Detallados por Equipo (Goles, Tarjetas & Córners)</span>
                   </h5>
                   <span className="text-[10px] font-mono text-slate-400">
                     Métricas Individuales Oficiales

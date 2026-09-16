@@ -41,7 +41,7 @@ export default function ParlayBuilderDrawer({
   const handleCopyTicket = () => {
     sounds.playClick();
     const summary = `🏆 DEPORTEPICKS PRO — TICKET DE PARLAY 🏆\n\n` +
-      legs.map((l, i) => `${i + 1}. [${l.league}] ${l.matchTitle}\n   👉 Selección: ${l.selection} @ ${formatOdds(l.odds, oddsFormat)}`).join('\n\n') +
+      legs.map((l, i) => `${i + 1}. [${l.league}] ${l.matchTitle}\n   👉 Selección: ${l.selection} @ ${formatOdds(l.odds, oddsFormat)}${l.probability != null ? ` (${Math.round(l.probability)}% prob)` : ''}`).join('\n\n') +
       `\n\n📊 Cuota Total: ${formatOdds(totalDecimalOdds, oddsFormat)}\n💰 Monto: ${formatCurrency(stake, currency)}\n💵 Retorno: ${formatCurrency(potentialPayout, currency)}\n⚠️ Todos los eventos deben cumplirse.`;
 
     navigator.clipboard.writeText(summary);
@@ -129,6 +129,18 @@ export default function ParlayBuilderDrawer({
                       <p className="font-semibold text-xs text-white truncate font-sans">
                         {leg.selection}
                       </p>
+                      {leg.probability != null && (
+                        <div className="flex items-center space-x-1.5 mt-0.5">
+                          <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 rounded font-bold">
+                            {Math.round(leg.probability)}% Prob.
+                          </span>
+                          {leg.market && (
+                            <span className="text-[9px] font-mono text-slate-400 truncate">
+                              {leg.market}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center space-x-2 shrink-0">
