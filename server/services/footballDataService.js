@@ -117,20 +117,45 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
   return match;
 }
 
-function dateWindow() {
+function getScoreboardDates() {
   const now = Date.now();
   const fmt = value => new Date(value).toISOString().slice(0, 10).replaceAll('-', '');
-  return `${fmt(now - 86400000)}-${fmt(now + 7 * 86400000)}`;
+  return [-1, 0, 1, 2, 3, 4, 5].map(offset => fmt(now + offset * 86400000));
 }
 export async function getFootballFeed() {
-  const range = dateWindow();
+  const dates = getScoreboardDates();
+  const rangeKey = `${dates[0]}-${dates[dates.length - 1]}`;
   const results = await Promise.all(LEAGUES.map(async league => {
     try {
       const [scoreboard, standings] = await Promise.all([
-        cachedData(`scoreboard:${league.id}:${range}`, 60, async () => {
-          const data = await fetchJson(`${BASE}/${league.espnCode}/scoreboard?dates=${range}&limit=200`);
-          if (!Array.isArray(data.events)) throw new Error('Formato del proveedor no reconocido.');
-          return { data, fetchedAt: new Date().toISOString() };
+        cachedData(`scoreboard:${league.id}:${rangeKey}`, 60, async () => {
+          const urls = [
+            `${BASE}/${league.espnCode}/scoreboard?limit=100`,
+            ...dates.map(d => `${BASE}/${league.espnCode}/scoreboard?dates=${d}&limit=100`)
+          ];
+          const responses = await Promise.all(urls.map(u => fetchJson(u).catch(() => null)));
+          const valid = responses.filter(r => r && Array.isArray(r.events));
+          if (valid.length === 0) throw new Error('Formato del proveedor no reconocido.');
+
+          const eventsMap = new Map();
+          let baseLeague = valid[0].leagues;
+
+          for (const resp of valid) {
+            if (resp.leagues && !baseLeague) baseLeague = resp.leagues;
+            for (const ev of (resp.events || [])) {
+              if (ev?.id && !eventsMap.has(ev.id)) {
+                eventsMap.set(ev.id, ev);
+              }
+            }
+          }
+
+          return {
+            data: {
+              events: Array.from(eventsMap.values()),
+              leagues: baseLeague
+            },
+            fetchedAt: new Date().toISOString()
+          };
         }),
         standingsFor(league).catch(() => null)
       ]);
