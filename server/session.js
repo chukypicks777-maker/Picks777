@@ -107,10 +107,11 @@ export async function requireSession(req, res, next) {
   } catch { res.status(503).json({ success: false, message: 'No se puede validar la sesión; comprueba la configuración del almacenamiento.' }); }
 }
 export function requireAdmin(req, res, next) {
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey && adminKey.trim() === (CONFIG.MASTER_ADMIN_CODE || 'DeportePicks').trim()) {
+  const adminKey = req.headers['x-admin-key'] || req.body?.adminKey;
+  const master = (CONFIG.MASTER_ADMIN_CODE || 'DeportePicks').trim().toUpperCase();
+  if (adminKey && String(adminKey).trim().toUpperCase() === master) {
     return next();
   }
-  if (req.session?.role !== 'owner') return res.status(403).json({ success: false, message: 'Acceso exclusivo del administrador.' });
-  next();
+  if (req.session?.role === 'owner') return next();
+  return res.status(403).json({ success: false, message: 'Acceso exclusivo del administrador.' });
 }

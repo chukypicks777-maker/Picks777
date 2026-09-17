@@ -6,10 +6,75 @@ import {
   Check, 
   Trash2, 
   Ban, 
-  Download 
+  Download,
+  Eye,
+  EyeOff,
+  Sparkles,
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
+  Globe,
+  Key,
+  Zap,
+  Shield,
+  Search,
+  ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
+
+export const PROVIDER_PRESETS = {
+  openrouter: {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    icon: '🌐',
+    badge: '400+ Modelos',
+    defaultBaseUrl: 'https://openrouter.ai/api/v1',
+    defaultModel: 'nvidia/nemotron-3.5-lightning:free',
+    keyPlaceholder: 'sk-or-v1-...',
+    keyHelp: 'Obtén tu clave gratuita en openrouter.ai/keys'
+  },
+  gemini: {
+    id: 'gemini',
+    name: 'Google Gemini',
+    icon: '🔷',
+    badge: 'Google AI Studio',
+    defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    defaultModel: 'gemini-2.0-flash',
+    keyPlaceholder: 'AIzaSy...',
+    keyHelp: 'Obtén tu clave oficial en aistudio.google.com/apikey'
+  },
+  deepseek: {
+    id: 'deepseek',
+    name: 'DeepSeek / Chinos',
+    icon: '🇨🇳',
+    badge: 'DeepSeek & Qwen',
+    defaultBaseUrl: 'https://api.deepseek.com/v1',
+    defaultModel: 'deepseek-chat',
+    keyPlaceholder: 'sk-...',
+    keyHelp: 'Compatible con DeepSeek, Alibaba Qwen (DashScope) y Moonshot'
+  },
+  groq: {
+    id: 'groq',
+    name: 'Groq (Ultra Rápido)',
+    icon: '⚡',
+    badge: 'LPU Inferencia',
+    defaultBaseUrl: 'https://api.groq.com/openai/v1',
+    defaultModel: 'llama-3.3-70b-versatile',
+    keyPlaceholder: 'gsk_...',
+    keyHelp: 'Inferencia en milisegundos en console.groq.com/keys'
+  },
+  custom: {
+    id: 'custom',
+    name: 'Personalizado / 3ros',
+    icon: '🛠️',
+    badge: 'Cualquier API OpenAI',
+    defaultBaseUrl: 'https://api.together.xyz/v1',
+    defaultModel: 'meta-llama/Llama-3-70b-chat-hf',
+    keyPlaceholder: 'Clave API personalizada...',
+    keyHelp: 'Cualquier servidor compatible con /chat/completions (Ollama, Together, etc.)'
+  }
+};
 
 export default function AdminDashboardModal({ onClose }) {
   const [activeTab, setActiveTab] = useState('generator');
@@ -26,11 +91,30 @@ export default function AdminDashboardModal({ onClose }) {
   const [singleCode, setSingleCode] = useState('');
   const [singleDuration, setSingleDuration] = useState(30);
 
-  // Settings states
-  const [settings, setSettings] = useState({ selectedModel: 'z-ai/glm-5.2:free', openRouterApiKeyMasked: '' });
-  const [newModel, setNewModel] = useState('z-ai/glm-5.2:free');
+  // AI Configuration states
+  const [settings, setSettings] = useState({
+    provider: 'openrouter',
+    selectedModel: 'nvidia/nemotron-3.5-lightning:free',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    apiKeyMasked: '',
+    isConfigured: false
+  });
+  const [provider, setProvider] = useState('openrouter');
+  const [newModel, setNewModel] = useState('nvidia/nemotron-3.5-lightning:free');
+  const [customModelInput, setCustomModelInput] = useState('');
   const [newApiKey, setNewApiKey] = useState('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [baseUrl, setBaseUrl] = useState('https://openrouter.ai/api/v1');
   const [savedSettingsMsg, setSavedSettingsMsg] = useState('');
+  const [testResult, setTestResult] = useState(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Models catalog states
+  const [availableModelsList, setAvailableModelsList] = useState([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [modelSearchQuery, setModelSearchQuery] = useState('');
+  const [modelCategoryFilter, setModelCategoryFilter] = useState('all');
 
   // Table filters
   const [searchFilter, setSearchFilter] = useState('');
@@ -53,16 +137,43 @@ export default function AdminDashboardModal({ onClose }) {
     }
   }, []);
 
+  const fetchModelsForProvider = useCallback(async (p = provider, key = newApiKey, url = baseUrl) => {
+    setLoadingModels(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('provider', p);
+      if (key && key.trim()) params.append('apiKey', key.trim());
+      if (url && url.trim()) params.append('baseUrl', url.trim());
+      const res = await fetch(`/api/settings/models?${params.toString()}`, {
+        headers: { 'x-admin-key': 'DeportePicks' }
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.models)) {
+        setAvailableModelsList(data.models);
+      }
+    } catch (err) {
+      console.error('Error loading models:', err);
+    } finally {
+      setLoadingModels(false);
+    }
+  }, [provider, newApiKey, baseUrl]);
+
   const fetchSettings = useCallback(async () => {
     try {
-      const res = await fetch('/api/settings');
+      const res = await fetch('/api/settings', {
+        headers: { 'x-admin-key': 'DeportePicks' }
+      });
       const data = await res.json();
       if (data.success && data.settings) {
         setSettings(data.settings);
-        setNewModel(data.settings.selectedModel || 'z-ai/glm-5.2:free');
+        const prov = data.settings.provider || 'openrouter';
+        setProvider(prov);
+        setBaseUrl(data.settings.baseUrl || PROVIDER_PRESETS[prov]?.defaultBaseUrl || 'https://openrouter.ai/api/v1');
+        setNewModel(data.settings.selectedModel || PROVIDER_PRESETS[prov]?.defaultModel || 'nvidia/nemotron-3.5-lightning:free');
+        fetchModelsForProvider(prov, '', data.settings.baseUrl);
       }
     } catch {}
-  }, []);
+  }, [fetchModelsForProvider]);
 
   useEffect(() => {
     let active = true;
@@ -195,36 +306,85 @@ export default function AdminDashboardModal({ onClose }) {
   };
 
   const handleSaveSettings = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    setIsSaving(true);
+    setSavedSettingsMsg('');
     try {
+      const targetModel = customModelInput.trim() || newModel;
       const res = await fetch('/api/settings/update', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-key': 'DeportePicks'
+        },
         body: JSON.stringify({
-          adminKey: 'DeportePicks',
-          selectedModel: newModel,
-          openRouterApiKey: newApiKey || undefined
+          provider,
+          selectedModel: targetModel,
+          modelName: targetModel,
+          baseUrl: baseUrl.trim(),
+          apiKey: newApiKey.trim() || undefined
         })
       });
       const data = await res.json();
       if (data.success) {
         sounds.playSuccess();
-        setSavedSettingsMsg('Configuración guardada.');
-        setTimeout(() => setSavedSettingsMsg(''), 3000);
-        fetchSettings();
+        confetti({ particleCount: 35, spread: 50, origin: { y: 0.6 } });
+        setSavedSettingsMsg('✅ Configuración de IA guardada exitosamente.');
+        setSettings(data.settings);
+        setNewApiKey('');
+        setTimeout(() => setSavedSettingsMsg(''), 4000);
+      } else {
+        alert(data.message || 'Error al guardar la configuración.');
       }
-    } catch {}
+    } catch (err) {
+      alert('Error de conexión al guardar configuración.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    try {
+      const targetModel = customModelInput.trim() || newModel;
+      const res = await fetch('/api/settings/test', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-key': 'DeportePicks'
+        },
+        body: JSON.stringify({
+          provider,
+          apiKey: newApiKey.trim() || undefined,
+          baseUrl: baseUrl.trim(),
+          selectedModel: targetModel
+        })
+      });
+      const data = await res.json();
+      setTestResult(data);
+      if (data.success) {
+        sounds.playSuccess();
+      } else {
+        sounds.playClick();
+      }
+    } catch (err) {
+      setTestResult({ success: false, message: 'Error al enviar petición de prueba.' });
+    } finally {
+      setIsTesting(false);
+    }
   };
 
   const handleClearCache = async () => {
-    if (!window.confirm('¿Limpiar el caché de pronósticos?')) return;
+    if (!window.confirm('¿Limpiar el caché de pronósticos y modelos de IA?')) return;
     try {
       sounds.playClick();
-      await fetch('/api/admin/cache/clear', {
+      await fetch('/api/settings/cache/clear', {
         method: 'POST',
         headers: { 'x-admin-key': 'DeportePicks' }
       });
-      alert('Caché eliminada.');
+      setSavedSettingsMsg('Caché de IA eliminado.');
+      setTimeout(() => setSavedSettingsMsg(''), 3000);
     } catch {}
   };
 
@@ -579,66 +739,356 @@ export default function AdminDashboardModal({ onClose }) {
             </div>
           )}
 
-          {/* TAB 3: AI CONFIG */}
+          {/* TAB 3: AI CONFIG (MULTI-PROVIDER & MODELOS REALES) */}
           {activeTab === 'ai_config' && (
-            <div className="max-w-xl mx-auto space-y-4">
-              <div className="bg-[#111723] rounded-xl p-5 border border-white/5">
-                <h4 className="font-bold text-sm text-white mb-3 font-sans">
-                  Configuración del Motor de Inteligencia Artificial
-                </h4>
-
-                <form onSubmit={handleSaveSettings} className="space-y-3.5 text-xs font-mono">
+            <div className="max-w-2xl mx-auto space-y-4">
+              
+              {/* Header Status Card */}
+              <div className="bg-[#111723] rounded-xl p-4 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2.5 bg-sky-500/10 border border-sky-500/20 rounded-lg text-sky-400">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
                   <div>
-                    <label className="block text-slate-400 mb-1">Modelo Seleccionado:</label>
-                    <select
-                      value={newModel}
-                      onChange={(e) => setNewModel(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#090d15] border border-white/10 rounded-lg text-sky-300 font-bold"
-                    >
-                      <option value="z-ai/glm-5.2:free">z-ai/glm-5.2:free (Z-AI GLM 5.2)</option>
-                      <option value="minimax/minimax-m3:free">minimax/minimax-m3:free (MiniMax M3)</option>
-                      <option value="nvidia/nemotron-3.5-lightning:free">nvidia/nemotron-3.5-lightning:free</option>
-                      <option value="google/gemma-4-31b-it:free">google/gemma-4-31b-it:free</option>
-                    </select>
+                    <h4 className="font-bold text-sm text-white font-sans flex items-center space-x-2">
+                      <span>Motor de Inteligencia Artificial</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        settings.isConfigured ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      }`}>
+                        {settings.isConfigured ? '🟢 CONECTADO' : '⚪ MODO ESTADÍSTICO'}
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                      {settings.isConfigured 
+                        ? `Proveedor activo: ${settings.provider?.toUpperCase()} • Modelo: ${settings.selectedModel}`
+                        : 'Sin clave configurada. Los pronósticos usan análisis cuantitativo y Poisson.'}
+                    </p>
+                  </div>
+                </div>
+
+                {settings.apiKeyMasked && (
+                  <div className="text-right font-mono text-[10px] text-slate-400 bg-black/30 px-2.5 py-1.5 rounded-lg border border-white/5">
+                    <span className="block text-slate-500">Clave en Servidor:</span>
+                    <span className="text-sky-300 font-bold">{settings.apiKeyMasked}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Main Configuration Form */}
+              <div className="bg-[#111723] rounded-xl p-5 border border-white/10 space-y-4 font-mono text-xs">
+                
+                {/* 1. Selector de Proveedor */}
+                <div>
+                  <label className="block text-slate-300 font-bold mb-2 font-sans flex items-center justify-between">
+                    <span>1. Selecciona el Proveedor de IA:</span>
+                    <span className="text-[10px] font-normal text-slate-400 font-mono">Compatible con cualquier API</span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {Object.values(PROVIDER_PRESETS).map((p) => {
+                      const isSelected = provider === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            sounds.playClick();
+                            setProvider(p.id);
+                            setBaseUrl(p.defaultBaseUrl);
+                            setNewModel(p.defaultModel);
+                            setCustomModelInput('');
+                            fetchModelsForProvider(p.id, newApiKey || undefined, p.defaultBaseUrl);
+                          }}
+                          className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between space-y-1 ${
+                            isSelected
+                              ? 'bg-sky-500/15 border-sky-400/60 shadow-[0_0_15px_rgba(56,189,248,0.15)] text-white'
+                              : 'bg-[#0b1019] border-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-base">{p.icon}</span>
+                            <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono ${
+                              isSelected ? 'bg-sky-400 text-black font-bold' : 'bg-white/5 text-slate-500'
+                            }`}>
+                              {p.badge}
+                            </span>
+                          </div>
+                          <span className="font-bold text-xs font-sans text-white truncate block">
+                            {p.name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 2. Clave API del Proveedor */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-slate-300 font-bold font-sans flex items-center space-x-1.5">
+                      <Key className="w-3.5 h-3.5 text-sky-400" />
+                      <span>2. Clave API ({PROVIDER_PRESETS[provider]?.name}):</span>
+                    </label>
+                    <span className="text-[10px] text-slate-500">
+                      {settings.apiKeyMasked ? `Actual: ${settings.apiKeyMasked}` : 'No configurada'}
+                    </span>
                   </div>
 
-                  <div>
-                    <label className="block text-slate-400 mb-1">
-                      API Key de OpenRouter (Actual: {settings.openRouterApiKeyMasked}):
-                    </label>
+                  <div className="relative">
                     <input
-                      type="password"
+                      type={showApiKey ? 'text' : 'password'}
                       value={newApiKey}
                       onChange={(e) => setNewApiKey(e.target.value)}
-                      placeholder="sk-or-v1-..."
-                      className="w-full px-3 py-1.5 bg-[#090d15] border border-white/10 rounded-lg text-white"
+                      placeholder={settings.apiKeyMasked ? `Dejar vacío para conservar clave actual (${settings.apiKeyMasked})` : PROVIDER_PRESETS[provider]?.keyPlaceholder}
+                      className="w-full pl-3 pr-10 py-2 bg-[#090d15] border border-white/10 rounded-lg text-white placeholder:text-slate-600 focus:outline-none focus:border-sky-400 transition"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white cursor-pointer"
+                    >
+                      {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 flex items-center justify-between">
+                    <span>{PROVIDER_PRESETS[provider]?.keyHelp}</span>
+                    <span className="text-slate-500">Almacenada con cifrado en servidor</span>
+                  </p>
+                </div>
+
+                {/* 3. URL Base (Endpoint) */}
+                <div className="space-y-1 pt-1">
+                  <label className="text-slate-300 font-bold font-sans flex items-center space-x-1.5">
+                    <Globe className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>3. Endpoint / URL Base del Proveedor:</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={baseUrl}
+                    onChange={(e) => setBaseUrl(e.target.value)}
+                    placeholder="https://api..."
+                    className="w-full px-3 py-1.5 bg-[#090d15] border border-white/10 rounded-lg text-slate-300 font-mono text-xs focus:outline-none focus:border-indigo-400"
+                  />
+                </div>
+
+                {/* 4. Modelos Reales del Proveedor */}
+                <div className="space-y-2 pt-2 border-t border-white/5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <label className="text-slate-300 font-bold font-sans flex items-center space-x-1.5">
+                      <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>4. Catálogo de Modelos Reales del Proveedor:</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sounds.playClick();
+                        fetchModelsForProvider(provider, newApiKey || undefined, baseUrl);
+                      }}
+                      disabled={loadingModels}
+                      className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[10px] font-bold flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${loadingModels ? 'animate-spin text-sky-400' : ''}`} />
+                      <span>{loadingModels ? 'Cargando modelos...' : `🔄 Cargar Modelos (${availableModelsList.length})`}</span>
+                    </button>
                   </div>
 
-                  {savedSettingsMsg && (
-                    <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-300">
-                      {savedSettingsMsg}
+                  {/* Filtros Rápidos (Especialmente útil para OpenRouter con 400+ modelos) */}
+                  {provider === 'openrouter' && (
+                    <div className="space-y-1.5">
+                      <div className="flex flex-wrap gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setModelCategoryFilter('all')}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                            modelCategoryFilter === 'all' ? 'bg-white text-black' : 'bg-white/5 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          Todos ({availableModelsList.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setModelCategoryFilter('free')}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer flex items-center space-x-1 ${
+                            modelCategoryFilter === 'free' ? 'bg-emerald-500 text-black' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                          }`}
+                        >
+                          <span>🎁 Solo Gratis (:free)</span>
+                          <span className="font-mono">({availableModelsList.filter(m => m.isFree || m.id.includes(':free')).length})</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setModelCategoryFilter('nvidia')}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                            modelCategoryFilter === 'nvidia' ? 'bg-lime-500 text-black' : 'bg-white/5 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          NVIDIA Nemotron
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setModelCategoryFilter('deepseek')}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                            modelCategoryFilter === 'deepseek' ? 'bg-sky-500 text-black' : 'bg-white/5 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          DeepSeek
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setModelCategoryFilter('gemini')}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                            modelCategoryFilter === 'gemini' ? 'bg-indigo-500 text-white' : 'bg-white/5 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          Google
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setModelCategoryFilter('llama')}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                            modelCategoryFilter === 'llama' ? 'bg-purple-500 text-white' : 'bg-white/5 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          Meta Llama
+                        </button>
+                      </div>
+
+                      {/* Buscador de modelos */}
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500">
+                          <Search className="w-3 h-3" />
+                        </div>
+                        <input
+                          type="text"
+                          value={modelSearchQuery}
+                          onChange={(e) => setModelSearchQuery(e.target.value)}
+                          placeholder="Buscar por nombre o ID (ej: nemotron, dots, free, llama)..."
+                          className="w-full pl-7 pr-3 py-1 bg-[#090d15] border border-white/10 rounded-lg text-slate-200 text-xs placeholder:text-slate-600 focus:outline-none focus:border-sky-400"
+                        />
+                      </div>
                     </div>
                   )}
 
-                  <div className="flex items-center space-x-3 pt-2">
+                  {/* Selector de modelos desplegable */}
+                  <select
+                    value={newModel}
+                    onChange={(e) => {
+                      setNewModel(e.target.value);
+                      setCustomModelInput('');
+                    }}
+                    className="w-full px-3 py-2 bg-[#090d15] border border-white/10 rounded-lg text-sky-300 font-bold focus:outline-none focus:border-sky-400"
+                  >
+                    {availableModelsList
+                      .filter(m => {
+                        const id = (m.id || '').toLowerCase();
+                        const name = (m.name || '').toLowerCase();
+                        const query = modelSearchQuery.toLowerCase().trim();
+                        if (query && !id.includes(query) && !name.includes(query)) return false;
+
+                        if (modelCategoryFilter === 'free') {
+                          return m.isFree || id.includes(':free');
+                        }
+                        if (modelCategoryFilter === 'nvidia') {
+                          return id.includes('nvidia') || id.includes('nemotron') || name.includes('nvidia');
+                        }
+                        if (modelCategoryFilter === 'deepseek') {
+                          return id.includes('deepseek') || name.includes('deepseek');
+                        }
+                        if (modelCategoryFilter === 'gemini') {
+                          return id.includes('gemini') || name.includes('gemini') || id.includes('google');
+                        }
+                        if (modelCategoryFilter === 'llama') {
+                          return id.includes('llama') || name.includes('llama');
+                        }
+                        return true;
+                      })
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.isFree || m.id.includes(':free') ? '🎁 [GRATIS] ' : ''}{m.name || m.id} ({m.id})
+                        </option>
+                      ))}
+                  </select>
+
+                  {/* Entrada manual de modelo */}
+                  <div className="pt-1">
+                    <span className="text-[10px] text-slate-400 block mb-1">
+                      O escribe / pega el ID del modelo manualmente:
+                    </span>
+                    <input
+                      type="text"
+                      value={customModelInput}
+                      onChange={(e) => setCustomModelInput(e.target.value)}
+                      placeholder={`Ej: ${newModel || 'nvidia/nemotron-3.5-lightning:free'}`}
+                      className="w-full px-3 py-1.5 bg-[#090d15] border border-white/10 rounded-lg text-white placeholder:text-slate-600 focus:outline-none focus:border-sky-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Panel de prueba de conexión */}
+                {testResult && (
+                  <div className={`p-3 rounded-lg border text-xs font-mono flex items-start space-x-2 ${
+                    testResult.success
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                      : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                  }`}>
+                    {testResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+                    )}
+                    <div>
+                      <span className="font-bold block">{testResult.message}</span>
+                      {testResult.sample && (
+                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                          Respuesta del modelo: "{testResult.sample}"
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {savedSettingsMsg && (
+                  <div className="p-2.5 bg-emerald-500/15 border border-emerald-500/30 rounded-lg text-emerald-300 font-bold flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>{savedSettingsMsg}</span>
+                  </div>
+                )}
+
+                {/* Botones de Acción */}
+                <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-white/5">
+                  <div className="flex items-center space-x-2">
                     <button
-                      type="submit"
-                      className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-black font-bold rounded-lg transition cursor-pointer"
+                      type="button"
+                      onClick={handleSaveSettings}
+                      disabled={isSaving}
+                      className="px-4 py-2 bg-sky-400 hover:bg-sky-300 text-black font-bold rounded-lg transition cursor-pointer shadow-[0_0_12px_rgba(56,189,248,0.3)] disabled:opacity-50 flex items-center space-x-1.5"
                     >
-                      Guardar Configuración
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{isSaving ? 'Guardando...' : 'Guardar Configuración de IA'}</span>
                     </button>
 
                     <button
                       type="button"
-                      onClick={handleClearCache}
-                      className="px-3 py-2 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-lg transition cursor-pointer"
+                      onClick={handleTestConnection}
+                      disabled={isTesting}
+                      className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg font-semibold transition cursor-pointer flex items-center space-x-1.5 disabled:opacity-50"
                     >
-                      Limpiar Caché
+                      <Zap className={`w-3.5 h-3.5 ${isTesting ? 'animate-pulse text-amber-400' : ''}`} />
+                      <span>{isTesting ? 'Probando...' : '🧪 Probar Conexión'}</span>
                     </button>
                   </div>
-                </form>
+
+                  <button
+                    type="button"
+                    onClick={handleClearCache}
+                    className="px-3 py-2 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-lg transition cursor-pointer text-[11px]"
+                  >
+                    Limpiar Caché de IA
+                  </button>
+                </div>
+
               </div>
+
             </div>
           )}
 

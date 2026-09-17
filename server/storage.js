@@ -4,7 +4,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { redisConfigured, redisCommand } from './services/dataCache.js';
 const KEY = 'picks:v2:access';
 const clean = code => String(code || '').trim().toUpperCase();
-const initial = () => ({ codes: [], users: [] });
+const initial = () => ({ codes: [], users: [], aiConfig: null });
 const defaultStorageFile = () => (process.env.VERCEL ? path.join('/tmp', 'access-v2.json') : path.resolve('server/data/access-v2.json'));
 export class StorageManager {
   constructor(file = defaultStorageFile()) { this.file = file; this.queue = Promise.resolve(); }
@@ -250,5 +250,30 @@ export class StorageManager {
       };
     });
   }
+  async getAiConfig() {
+    const data = await this.load();
+    return data.aiConfig || null;
+  }
+  async updateAiConfig(updates = {}) {
+    return this.transaction(db => {
+      const existing = db.aiConfig || {};
+      const newApiKey = updates.apiKey !== undefined && updates.apiKey !== null ? String(updates.apiKey).trim() : existing.apiKey;
+      db.aiConfig = {
+        provider: String(updates.provider || existing.provider || 'openrouter').trim().toLowerCase(),
+        apiKey: newApiKey || '',
+        baseUrl: String(updates.baseUrl || existing.baseUrl || 'https://openrouter.ai/api/v1').trim(),
+        selectedModel: String(updates.selectedModel || existing.selectedModel || 'nvidia/nemotron-3.5-lightning:free').trim(),
+        modelName: String(updates.modelName || existing.modelName || '').trim(),
+        updatedAt: new Date().toISOString()
+      };
+      return db.aiConfig;
+    });
+  }
+}
+export function maskApiKey(key) {
+  if (!key || typeof key !== 'string') return '';
+  const clean = key.trim();
+  if (clean.length <= 8) return '••••••••';
+  return `${clean.slice(0, 6)}••••••••${clean.slice(-4)}`;
 }
 export const storage = new StorageManager();

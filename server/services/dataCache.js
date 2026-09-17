@@ -51,3 +51,9 @@ export async function fetchJson(url) {
   if (!response.ok) throw new Error(`El proveedor responde HTTP ${response.status}.`);
   return response.json();
 }
+
+export function clearCachePattern(prefix) {
+  for (const key of memory.keys()) {
+    if (key.startsWith(prefix) || key.includes(prefix)) memory.delete(key);
+  }
+}
