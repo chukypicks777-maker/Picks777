@@ -67,6 +67,8 @@ test('Poisson is normalized, preserves zero probabilities and does not manufactu
   const p = model.probabilities;
   assert.ok(Math.abs(p.homeWin + p.draw + p.awayWin - 100) < 1e-8);
   assert.equal(p.over25 + p.under25, 100);
+  assert.equal(p.over45 + p.under45, 100);
+  assert.ok(p.over45 <= p.over35 && p.over35 <= p.over25 && p.over25 <= p.over15);
   assert.equal(p.bttsYes + p.bttsNo, 100);
   assert.equal(p.confidence, null);
   assert.equal(p.cornerOver95, null);

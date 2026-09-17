@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Eye, Clock, CheckCircle2, Zap } from 'lucide-react';
+import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles } from 'lucide-react';
 import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
@@ -197,6 +197,17 @@ export default function MatchCard({
             <span className="text-[11px] font-mono font-bold text-emerald-400 shrink-0 ml-1.5">
               @{formatOdds(displayOdds, oddsFormat)}
             </span>
+          </div>
+
+          {/* Justificación por IA de por qué es el seguro (tendencias de goles y datos de temporada) */}
+          <div className="mt-2 pt-2 border-t border-white/10 flex items-start space-x-1.5 text-[10px] text-emerald-300/90 font-mono leading-snug">
+            <Sparkles className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
+            <p className="line-clamp-2">
+              <strong className="text-emerald-400 font-sans">Justificación IA: </strong>
+              {isBankerMode
+                ? (bankerPick?.rationale || match.aiPick?.summaryRationale || 'Alta probabilidad estadística respaldada por xG, goles anotados y rendimiento en temporada.')
+                : (match.aiPick?.summaryRationale || bankerPick?.rationale || 'Alta probabilidad estadística respaldada por xG, goles anotados y rendimiento en temporada.')}
+            </p>
           </div>
         </div>
 

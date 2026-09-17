@@ -7,7 +7,8 @@ import {
   calculateTeamDetailedStats,
   calculateDifferential,
   getMatchSafetyScore,
-  getTop3Opportunities
+  getTop3Opportunities,
+  getBestBankerPick
 } from '../src/utils/mathProbabilities.js';
 
 test('poisson cumulative and probability functions behave correctly', () => {
@@ -155,4 +156,66 @@ test('getTop3Opportunities returns the 3 best high-probability opportunities wit
     assert.ok(scoringPick.selection.includes('RMA'), 'Should pick RMA scoring over LEG when RMA averages more goals');
   }
   assert.ok(awayTop3.every(p => p.odds >= 1.12), 'All odds should be >= 1.12');
+});
+
+test('getBestBankerPick returns rich AI justification, safetyScore, realistic odds and high-probability pick', () => {
+  // Test heavy home favorite
+  const matchA = {
+    id: 'match-real-madrid-getafe',
+    homeTeam: { name: 'Real Madrid', shortName: 'RMA', goalsFor: 40, goalsAgainst: 12, gamesPlayed: 16, avgGoalsScored: 2.5 },
+    awayTeam: { name: 'Getafe', shortName: 'GET', goalsFor: 12, goalsAgainst: 22, gamesPlayed: 16, avgGoalsScored: 0.75 },
+    probabilities: {
+      homeWin: 72,
+      draw: 18,
+      awayWin: 10,
+      over15: 85,
+      under35: 75,
+      confidence: 88
+    },
+    odds: {
+      homeWin: 1.35
+    }
+  };
+
+  const bankerA = getBestBankerPick(matchA);
+  assert.ok(bankerA.selection, 'Banker pick must have a selection');
+  assert.ok(bankerA.probability >= 70, `Probability ${bankerA.probability} should be high safety`);
+  assert.ok(bankerA.safetyScore >= 70, `Safety score ${bankerA.safetyScore} should be high`);
+  assert.ok(bankerA.odds >= 1.10 && bankerA.odds <= 2.50, `Odds ${bankerA.odds} must be realistic`);
+  assert.ok(bankerA.rationale, 'Rationale must be present');
+  assert.ok(bankerA.rationale.length > 25, 'Rationale must be a descriptive statistical justification');
+  assert.ok(
+    bankerA.rationale.toLowerCase().includes('gol') ||
+    bankerA.rationale.toLowerCase().includes('seguridad') ||
+    bankerA.rationale.toLowerCase().includes('victoria') ||
+    bankerA.rationale.toLowerCase().includes('poisson'),
+    'Rationale must mention goals, safety, win, or Poisson'
+  );
+
+  // Test defensive, low-scoring match
+  const matchDefensive = {
+    id: 'match-atletico-mallorca',
+    homeTeam: { name: 'Atlético Madrid', shortName: 'ATM', goalsFor: 20, goalsAgainst: 8, gamesPlayed: 15, avgGoalsScored: 1.33 },
+    awayTeam: { name: 'Mallorca', shortName: 'MLL', goalsFor: 11, goalsAgainst: 14, gamesPlayed: 15, avgGoalsScored: 0.73 },
+    probabilities: {
+      homeWin: 52,
+      draw: 32,
+      awayWin: 16,
+      over25: 35,
+      under25: 65,
+      under35: 86,
+      over15: 60
+    }
+  };
+
+  const bankerDef = getBestBankerPick(matchDefensive);
+  assert.ok(bankerDef.selection.includes('Menos') || bankerDef.selection.includes('Empate'), 'Should pick Under or Double Chance');
+  assert.ok(bankerDef.safetyScore >= 75);
+  assert.ok(bankerDef.rationale.length > 20);
+
+  // Test fallback on null or empty match
+  const bankerFallback = getBestBankerPick(null);
+  assert.ok(bankerFallback.selection);
+  assert.ok(bankerFallback.safetyScore >= 60);
+  assert.ok(bankerFallback.rationale.includes('seguridad'));
 });

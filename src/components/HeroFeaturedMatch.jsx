@@ -122,7 +122,7 @@ export default function HeroFeaturedMatch({
                           ? `${match.liveScore?.home ?? 0} - ${match.liveScore?.away ?? 0}`
                           : match.status === 'FINISHED'
                           ? `${match.finalScore?.home ?? 0} - ${match.finalScore?.away ?? 0}`
-                          : match.aiPick?.predictedScore || '2 - 1'}
+                          : match.aiPick?.predictedScore || match.model?.predictedScore || ((match.probabilities?.awayWin || 0) > (match.probabilities?.homeWin || 0) ? '1 - 2' : '2 - 1')}
                       </span>
                     </div>
                   </div>

@@ -11,7 +11,8 @@ import {
   Zap, 
   Activity, 
   TrendingUp, 
-  Shield 
+  Shield,
+  Sparkles 
 } from 'lucide-react';
 import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
@@ -21,7 +22,7 @@ import NumberCounter from './NumberCounter';
 import TeamDetailedStatsCard from './TeamDetailedStatsCard';
 import DifferentialAnalysisSection from './DifferentialAnalysisSection';
 import OverUnderGroupedSection from './OverUnderGroupedSection';
-import { calculateTeamDetailedStats, calculateDifferential } from '../utils/mathProbabilities';
+import { calculateTeamDetailedStats, calculateDifferential, getBestBankerPick } from '../utils/mathProbabilities';
 
 function calculateMatchSimulation(match, withJitter = false) {
   if (!match) return { "2 - 1": 18.0, "1 - 1": 15.0, "2 - 0": 13.0, "Otros": 54.0 };
@@ -77,6 +78,42 @@ export default function MatchDetailModal({
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [activeModelInfo, setActiveModelInfo] = useState({ provider: '', selectedModel: '', isConfigured: false });
 
+  // Derive simulation data; reset custom jitter simulation if match changes
+  const [lastMatchId, setLastMatchId] = useState(match?.id);
+  if (match?.id !== lastMatchId) {
+    setLastMatchId(match?.id);
+    setCustomSim(null);
+    setAiReport(null);
+    setLoadingAi(true);
+  }
+  const m = enrichedMatch || match;
+  const simulationData = customSim || calculateMatchSimulation(m, false);
+
+  const fetchAiAnalysis = useCallback(async (forceRefresh = false, modelOverride = null) => {
+    if (!match?.id) return;
+    setLoadingAi(true);
+    try {
+      const res = await fetch(`/api/matches/${match.id}/ai-analysis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ 
+          forceRefresh,
+          model: modelOverride || activeModelInfo.selectedModel || undefined
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.report) setAiReport(data.report);
+        if (data.match) setEnrichedMatch(prev => ({ ...prev, ...data.match }));
+      }
+    } catch (err) {
+      console.error('Error fetching AI analysis:', err);
+    } finally {
+      setLoadingAi(false);
+    }
+  }, [match?.id, activeModelInfo.selectedModel]);
+
   useEffect(() => {
     let active = true;
     const loadActiveModel = async () => {
@@ -96,12 +133,14 @@ export default function MatchDetailModal({
 
     const handleSettingsUpdated = (e) => {
       if (e.detail?.selectedModel) {
+        const newModel = e.detail.selectedModel;
         setActiveModelInfo(prev => ({
           ...prev,
-          selectedModel: e.detail.selectedModel,
+          selectedModel: newModel,
           provider: e.detail.provider || prev.provider,
           isConfigured: e.detail.isConfigured ?? prev.isConfigured
         }));
+        fetchAiAnalysis(true, newModel);
       }
     };
     window.addEventListener('ai-settings-updated', handleSettingsUpdated);
@@ -110,37 +149,6 @@ export default function MatchDetailModal({
       window.removeEventListener('ai-settings-updated', handleSettingsUpdated);
     };
   }, []);
-
-  // Derive simulation data; reset custom jitter simulation if match changes
-  const [lastMatchId, setLastMatchId] = useState(match?.id);
-  if (match?.id !== lastMatchId) {
-    setLastMatchId(match?.id);
-    setCustomSim(null);
-  }
-  const m = enrichedMatch || match;
-  const simulationData = customSim || calculateMatchSimulation(m, false);
-
-  const fetchAiAnalysis = useCallback(async (forceRefresh = false) => {
-    if (!match?.id) return;
-    if (forceRefresh) setLoadingAi(true);
-    try {
-      const res = await fetch(`/api/matches/${match.id}/ai-analysis`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ forceRefresh })
-      });
-      const data = await res.json();
-      if (data.success) {
-        if (data.report) setAiReport(data.report);
-        if (data.match) setEnrichedMatch(prev => ({ ...prev, ...data.match }));
-      }
-    } catch (err) {
-      console.error('Error fetching AI analysis:', err);
-    } finally {
-      setLoadingAi(false);
-    }
-  }, [match?.id]);
 
   const runMonteCarloSimulation = useCallback(() => {
     setSimulating(true);
@@ -296,7 +304,7 @@ export default function MatchDetailModal({
                     ? `${match.liveScore?.home ?? 0} - ${match.liveScore?.away ?? 0}`
                     : match.status === 'FINISHED'
                     ? `${match.finalScore?.home ?? 0} - ${match.finalScore?.away ?? 0}`
-                    : aiReport?.predictedScore || match.aiPick?.predictedScore || '2 - 1'}
+                    : aiReport?.predictedScore || m.model?.predictedScore || match.aiPick?.predictedScore || ((match.probabilities?.awayWin || 0) > (match.probabilities?.homeWin || 0) ? '1 - 2' : '2 - 1')}
                 </span>
               </div>
             </div>
@@ -392,13 +400,13 @@ export default function MatchDetailModal({
                 </div>
               )}
 
-              {/* Mensaje informativo si está en respaldo cuantitativo */}
+              {/* Mensaje informativo si está en modo cuantitativo */}
               {!loadingAi && !aiReport?.aiAvailable && (
                 <div className="p-3 rounded-xl bg-slate-800/40 border border-white/5 text-slate-300 text-xs font-mono flex items-center justify-between">
                   <div className="flex items-center space-x-2 min-w-0">
                     <Activity className="w-4 h-4 text-slate-400 shrink-0" />
                     <span className="truncate">
-                      {aiReport?.aiStatus || 'Pronóstico generado mediante modelo cuantitativo de Poisson con métricas oficiales.'}
+                      {aiReport?.aiStatus || 'Análisis cuantitativo institucional basado en el modelo matemático de Poisson y estadísticas oficiales.'}
                     </span>
                   </div>
                   <button
@@ -411,156 +419,199 @@ export default function MatchDetailModal({
               )}
 
               {/* Top Pick Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                
-                {/* 1. Main Banker Pick */}
-                <div className="bg-[#111723] rounded-xl p-4 border border-emerald-500/50 flex flex-col justify-between shadow-[0_0_25px_rgba(16,185,129,0.15)] relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider flex items-center space-x-1">
-                        <Zap className="w-3 h-3 fill-emerald-400 text-emerald-400" />
-                        <span>💎 Pick Banquero Principal</span>
-                      </span>
-                      <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold border border-emerald-500/40">
-                        {aiReport?.topPick?.confidence || match.aiPick?.confidence || `${Math.round(Math.max(match.probabilities?.confidence || 0, match.probabilities?.homeWin || 54, match.probabilities?.awayWin || 46))}% Conf.`}
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-bold text-white mb-1 font-sans">
-                      {aiReport?.topPick?.selection || match.aiPick?.selection || ((match.probabilities?.homeWin || 50) >= (match.probabilities?.awayWin || 50) ? `${match.homeTeam?.name || 'Local'} gana o empata` : `${match.awayTeam?.name || 'Visita'} gana o empata`)}
-                    </h4>
-                    <p className="text-[10px] font-mono text-emerald-400/90 mt-0.5">
-                      Máxima Seguridad Cuantitativa • Stake {aiReport?.topPick?.stake || '3/5 Unidades'}
-                    </p>
-                  </div>
+              {(() => {
+                const homeProbVal = Number(m.probabilities?.homeWin || 50);
+                const awayProbVal = Number(m.probabilities?.awayWin || 25);
+                const drawProbVal = Number(m.probabilities?.draw || 25);
+                const isHomeFavoredVal = homeProbVal >= awayProbVal;
 
-                  <div className="pt-3 border-t border-white/5 mt-3 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-mono text-slate-400 block">Cuota:</span>
-                      <span className="text-base font-mono font-bold text-emerald-400">
-                        {formatOdds(aiReport?.topPick?.odds || match.aiPick?.odds || match.odds?.homeWin || 1.85, oddsFormat)}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        sounds.playAddParlay();
-                        onAddToParlay({
-                          matchId: match.id,
-                          matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
-                          league: match.leagueName,
-                          selection: aiReport?.topPick?.selection || match.aiPick?.selection || ((match.probabilities?.homeWin || 50) >= (match.probabilities?.awayWin || 50) ? `${match.homeTeam?.name || 'Local'} gana o empata` : `${match.awayTeam?.name || 'Visita'} gana o empata`),
-                          odds: aiReport?.topPick?.odds || match.aiPick?.odds || match.odds?.homeWin || 1.85,
-                          probability: match.probabilities?.homeWin || 50
-                        });
-                      }}
-                      className="px-2.5 py-1 bg-emerald-600 text-white font-semibold text-xs rounded-md hover:bg-emerald-500 transition flex items-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.4)]"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>Al Parlay</span>
-                    </button>
-                  </div>
-                </div>
+                // 1. Pick Banquero Principal
+                const defaultBanker = getBestBankerPick(m);
+                const bankerSelection = aiReport?.topPick?.selection || m.aiPick?.selection || defaultBanker?.selection;
+                const bankerOdds = Number(aiReport?.topPick?.odds || m.aiPick?.odds || defaultBanker?.odds || 1.35);
+                const bankerProb = Number(aiReport?.topPick?.probability || m.aiPick?.probability || defaultBanker?.probability || Math.round(Math.max(homeProbVal, awayProbVal)));
+                const bankerRationale = aiReport?.topPick?.rationale || m.aiPick?.summaryRationale || defaultBanker?.rationale || 'Alta probabilidad estadística respaldada por xG, goles anotados y rendimiento en temporada.';
 
-                {/* 2. Secondary Value Pick */}
-                <div className="bg-[#111723] rounded-xl p-4 border border-amber-500/40 flex flex-col justify-between shadow-[0_0_20px_rgba(245,158,11,0.1)]">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider flex items-center space-x-1">
-                        <Activity className="w-3 h-3 text-amber-400" />
-                        <span>⚡ Pick de Valor</span>
-                      </span>
-                      <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/30">
-                        {aiReport?.secondaryPick?.confidence || `${Math.round(match.probabilities?.bttsYes || 68)}% Conf.`}
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-bold text-white mb-1 font-sans">
-                      {aiReport?.secondaryPick?.selection || ((match.probabilities?.bttsYes || 55) >= 50 ? 'Ambos Equipos Anotan: SÍ' : 'Menos de 2.5 Goles')}
-                    </h4>
-                    <p className="text-[10px] font-mono text-amber-300/80 mt-0.5">
-                      Rentabilidad de Cuota Estadística
-                    </p>
-                  </div>
+                // 2. Pick de Valor
+                const bttsProbVal = Number(m.probabilities?.bttsYes || 55);
+                const over25ProbVal = Number(m.probabilities?.over25 || 52);
+                const defaultValueSelection = (bttsProbVal >= 52 ? 'Ambos Equipos Anotan: SÍ' : (over25ProbVal >= 52 ? 'Más de 2.5 Goles' : 'Menos de 2.5 Goles'));
+                const valueSelection = aiReport?.secondaryPick?.selection || aiReport?.valueBet?.selection || defaultValueSelection;
+                const valueOdds = Number(aiReport?.secondaryPick?.odds || aiReport?.valueBet?.odds || m.odds?.bttsYes || (bttsProbVal >= 52 ? 1.75 : 1.85));
+                const valueProb = Number(aiReport?.secondaryPick?.probability || aiReport?.valueBet?.probability || (bttsProbVal >= 52 ? bttsProbVal : (over25ProbVal >= 52 ? over25ProbVal : 100 - over25ProbVal)));
+                const valueRationale = aiReport?.secondaryPick?.rationale || aiReport?.valueBet?.rationale || null;
 
-                  <div className="pt-3 border-t border-white/5 mt-3 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-mono text-slate-400 block">Cuota:</span>
-                      <span className="text-base font-mono font-bold text-amber-400">
-                        {formatOdds(aiReport?.secondaryPick?.odds || match.odds?.bttsYes || 1.70, oddsFormat)}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        sounds.playAddParlay();
-                        onAddToParlay({
-                          matchId: match.id,
-                          matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
-                          league: match.leagueName,
-                          selection: aiReport?.secondaryPick?.selection || ((match.probabilities?.bttsYes || 55) >= 50 ? 'Ambos Equipos Anotan: SÍ' : 'Menos de 2.5 Goles'),
-                          odds: aiReport?.secondaryPick?.odds || match.odds?.bttsYes || 1.70,
-                          probability: match.probabilities?.bttsYes || 55
-                        });
-                      }}
-                      className="px-2.5 py-1 bg-amber-500 text-black font-semibold text-xs rounded-md hover:bg-amber-400 transition flex items-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.4)]"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>Al Parlay</span>
-                    </button>
-                  </div>
-                </div>
+                // 3. Doble Oportunidad Segura
+                const dcProbCalculated = Math.min(97, Math.max(50, Math.round((isHomeFavoredVal ? homeProbVal : awayProbVal) + drawProbVal)));
+                const dcOddsCalculated = Number(Math.max(1.10, Math.min(2.50, (100 / dcProbCalculated) * 0.95)).toFixed(2));
+                const dcSelectionCalculated = isHomeFavoredVal ? `${m.homeTeam?.name || 'Local'} o Empate (1X)` : `${m.awayTeam?.name || 'Visita'} o Empate (X2)`;
+                const safeSelection = aiReport?.safePick?.selection || dcSelectionCalculated;
+                const safeOdds = Number(aiReport?.safePick?.odds || dcOddsCalculated);
+                const safeProb = Number(aiReport?.safePick?.probability || dcProbCalculated);
+                const safeRationale = aiReport?.safePick?.rationale || `Cobertura de alta probabilidad (${safeProb}%) ante escenarios de paridad según distribución Poisson.`;
 
-                {/* 3. Safe Pick / Doble Oportunidad (Replaces Corners Pick as requested) */}
-                <div className="bg-[#111723] rounded-xl p-4 border border-sky-500/40 flex flex-col justify-between shadow-[0_0_20px_rgba(56,189,248,0.1)]">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-mono text-sky-400 font-bold uppercase tracking-wider flex items-center space-x-1">
-                        <Shield className="w-3 h-3 text-sky-400" />
-                        <span>🛡️ Doble Oportunidad Segura</span>
-                      </span>
-                      <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 px-1.5 py-0.2 rounded font-bold border border-sky-500/30">
-                        {Math.min(94, Math.max(70, Math.round(((match.probabilities?.homeWin || 50) >= (match.probabilities?.awayWin || 50) ? (match.probabilities?.homeWin || 50) : (match.probabilities?.awayWin || 50)) + (match.probabilities?.draw || 25))))}% Conf.
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-bold text-white mb-1 font-sans">
-                      {(match.probabilities?.homeWin || 50) >= (match.probabilities?.awayWin || 50)
-                        ? `${match.homeTeam?.name || 'Local'} o Empate (1X)`
-                        : `${match.awayTeam?.name || 'Visita'} o Empate (X2)`}
-                    </h4>
-                    <p className="text-[10px] font-mono text-sky-300/80 mt-0.5">
-                      Apuesta de Cobertura y Bajo Riesgo
-                    </p>
-                  </div>
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                    {/* 1. Main Banker Pick */}
+                    <div className="bg-[#111723] rounded-xl p-4 border border-emerald-500/50 flex flex-col justify-between shadow-[0_0_25px_rgba(16,185,129,0.15)] relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider flex items-center space-x-1">
+                            <Zap className="w-3 h-3 fill-emerald-400 text-emerald-400" />
+                            <span>💎 Pick Banquero Principal</span>
+                          </span>
+                          <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold border border-emerald-500/40">
+                            {bankerProb}% Conf.
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-white mb-1 font-sans">
+                          {bankerSelection}
+                        </h4>
+                        <p className="text-[10px] font-mono text-emerald-400/90 mt-0.5">
+                          Máxima Seguridad Cuantitativa • Stake {aiReport?.topPick?.stake || '3/5 Unidades'}
+                        </p>
+                        {/* Justificación por IA */}
+                        <div className="mt-2 pt-2 border-t border-emerald-500/20 text-[10.5px] text-emerald-300/90 font-mono flex items-start space-x-1.5 leading-snug">
+                          <Sparkles className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
+                          <p>
+                            <strong className="text-white font-sans">Justificación IA: </strong>
+                            {bankerRationale}
+                          </p>
+                        </div>
+                      </div>
 
-                  <div className="pt-3 border-t border-white/5 mt-3 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-mono text-slate-400 block">Cuota:</span>
-                      <span className="text-base font-mono font-bold text-sky-400">
-                        {formatOdds(1.36, oddsFormat)}
-                      </span>
+                      <div className="pt-3 border-t border-white/5 mt-3 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] font-mono text-slate-400 block">Cuota:</span>
+                          <span className="text-base font-mono font-bold text-emerald-400">
+                            {formatOdds(bankerOdds, oddsFormat)}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            sounds.playAddParlay();
+                            onAddToParlay({
+                              matchId: match.id,
+                              matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
+                              league: match.leagueName,
+                              selection: bankerSelection,
+                              odds: bankerOdds,
+                              probability: bankerProb
+                            });
+                          }}
+                          className="px-2.5 py-1 bg-emerald-600 text-white font-semibold text-xs rounded-md hover:bg-emerald-500 transition flex items-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Al Parlay</span>
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        sounds.playAddParlay();
-                        const safeSel = (match.probabilities?.homeWin || 50) >= (match.probabilities?.awayWin || 50)
-                          ? `${match.homeTeam?.name || 'Local'} o Empate (1X)`
-                          : `${match.awayTeam?.name || 'Visita'} o Empate (X2)`;
-                        onAddToParlay({
-                          matchId: match.id,
-                          matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
-                          league: match.leagueName,
-                          selection: safeSel,
-                          odds: 1.36,
-                          probability: 80
-                        });
-                      }}
-                      className="px-2.5 py-1 bg-sky-400 text-black font-semibold text-xs rounded-md hover:bg-sky-300 transition flex items-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(56,189,248,0.4)]"
-                    >
-                      <Plus className="w-3 h-3" />
-                      <span>Al Parlay</span>
-                    </button>
-                  </div>
-                </div>
 
-              </div>
+                    {/* 2. Secondary Value Pick */}
+                    <div className="bg-[#111723] rounded-xl p-4 border border-amber-500/40 flex flex-col justify-between shadow-[0_0_20px_rgba(245,158,11,0.1)]">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider flex items-center space-x-1">
+                            <Activity className="w-3 h-3 text-amber-400" />
+                            <span>⚡ Pick de Valor</span>
+                          </span>
+                          <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/30">
+                            {valueProb}% Conf.
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-white mb-1 font-sans">
+                          {valueSelection}
+                        </h4>
+                        <p className="text-[10px] font-mono text-amber-300/80 mt-0.5">
+                          Rentabilidad de Cuota Estadística
+                        </p>
+                        {valueRationale && (
+                          <div className="mt-2 pt-2 border-t border-amber-500/20 text-[10px] text-amber-300/90 font-mono line-clamp-2">
+                            {valueRationale}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-3 border-t border-white/5 mt-3 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] font-mono text-slate-400 block">Cuota:</span>
+                          <span className="text-base font-mono font-bold text-amber-400">
+                            {formatOdds(valueOdds, oddsFormat)}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            sounds.playAddParlay();
+                            onAddToParlay({
+                              matchId: match.id,
+                              matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
+                              league: match.leagueName,
+                              selection: valueSelection,
+                              odds: valueOdds,
+                              probability: valueProb
+                            });
+                          }}
+                          className="px-2.5 py-1 bg-amber-500 text-black font-semibold text-xs rounded-md hover:bg-amber-400 transition flex items-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.4)]"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Al Parlay</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 3. Safe Pick / Doble Oportunidad */}
+                    <div className="bg-[#111723] rounded-xl p-4 border border-sky-500/40 flex flex-col justify-between shadow-[0_0_20px_rgba(56,189,248,0.1)]">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-mono text-sky-400 font-bold uppercase tracking-wider flex items-center space-x-1">
+                            <Shield className="w-3 h-3 text-sky-400" />
+                            <span>🛡️ Doble Oportunidad Segura</span>
+                          </span>
+                          <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 px-1.5 py-0.2 rounded font-bold border border-sky-500/30">
+                            {safeProb}% Conf.
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-white mb-1 font-sans">
+                          {safeSelection}
+                        </h4>
+                        <p className="text-[10px] font-mono text-sky-300/80 mt-0.5">
+                          Apuesta de Cobertura y Bajo Riesgo
+                        </p>
+                        <div className="mt-2 pt-2 border-t border-sky-500/20 text-[10px] text-sky-300/90 font-mono line-clamp-2">
+                          {safeRationale}
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-white/5 mt-3 flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] font-mono text-slate-400 block">Cuota:</span>
+                          <span className="text-base font-mono font-bold text-sky-400">
+                            {formatOdds(safeOdds, oddsFormat)}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            sounds.playAddParlay();
+                            onAddToParlay({
+                              matchId: match.id,
+                              matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
+                              league: match.leagueName,
+                              selection: safeSelection,
+                              odds: safeOdds,
+                              probability: safeProb
+                            });
+                          }}
+                          className="px-2.5 py-1 bg-sky-400 text-black font-semibold text-xs rounded-md hover:bg-sky-300 transition flex items-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(56,189,248,0.4)]"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Al Parlay</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Comprehensive Over/Under & BTTS Probabilities Matrix (Positivo y Negativo sin Córners) */}
               <div className="bg-[#111723] rounded-xl p-5 border border-white/5 space-y-3">
@@ -641,25 +692,95 @@ export default function MatchDetailModal({
                     </div>
                   </div>
 
-                  {/* BTTS Sí */}
+                  {/* +4.5 Goles */}
                   <div className="bg-[#141b29] p-2.5 rounded-lg border border-teal-500/20 text-center">
-                    <span className="text-slate-400 block text-[10px]">Ambos Anotan: Sí</span>
+                    <span className="text-slate-400 block text-[10px]">+4.5 Goles (Over)</span>
                     <span className="text-base font-bold text-teal-300">
-                      <NumberCounter value={match.probabilities?.bttsYes || 55} suffix="%" />
+                      <NumberCounter value={match.probabilities?.over45 != null ? Math.round(match.probabilities.over45) : Math.round(Math.max(6, (match.probabilities?.over35 || 32) * 0.45))} suffix="%" />
                     </span>
                     <div className="h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                      <div style={{ width: `${match.probabilities?.bttsYes || 55}%` }} className="h-full bg-teal-400" />
+                      <div style={{ width: `${match.probabilities?.over45 != null ? Math.round(match.probabilities.over45) : Math.round(Math.max(6, (match.probabilities?.over35 || 32) * 0.45))}%` }} className="h-full bg-teal-400" />
                     </div>
                   </div>
 
-                  {/* BTTS No (Negativo) */}
-                  <div className="bg-[#141b29] p-2.5 rounded-lg border border-rose-500/20 text-center">
-                    <span className="text-slate-400 block text-[10px]">Ambos Anotan: No</span>
-                    <span className="text-base font-bold text-rose-300">
-                      <NumberCounter value={100 - (match.probabilities?.bttsYes || 55)} suffix="%" />
+                  {/* -4.5 Goles (Negativo) */}
+                  <div className="bg-[#141b29] p-2.5 rounded-lg border border-amber-500/20 text-center">
+                    <span className="text-slate-400 block text-[10px]">-4.5 Goles (Under)</span>
+                    <span className="text-base font-bold text-amber-300">
+                      <NumberCounter value={match.probabilities?.under45 != null ? Math.round(match.probabilities.under45) : (100 - Math.round(Math.max(6, (match.probabilities?.over35 || 32) * 0.45)))} suffix="%" />
                     </span>
                     <div className="h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                      <div style={{ width: `${100 - (match.probabilities?.bttsYes || 55)}%` }} className="h-full bg-rose-400" />
+                      <div style={{ width: `${match.probabilities?.under45 != null ? Math.round(match.probabilities.under45) : (100 - Math.round(Math.max(6, (match.probabilities?.over35 || 32) * 0.45)))}%` }} className="h-full bg-amber-400" />
+                    </div>
+                  </div>
+
+                  {/* Mercado Sí y No (Ambos Anotan) & Líneas Correlativas */}
+                  <div className="col-span-2 sm:col-span-4 pt-3.5 mt-1 border-t border-white/10">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <span className="text-xs font-mono text-slate-200 font-bold flex items-center space-x-1.5">
+                        <span>🎯 Mercado Sí / No (Ambos Anotan) & Líneas Correlativas</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        +4.5 bajo Sí • -2.5 bajo No
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Columna Lado SÍ */}
+                      <div className="space-y-2">
+                        {/* Ambos Anotan: SÍ */}
+                        <div className="bg-[#141b29] p-2.5 rounded-lg border border-teal-500/30 text-center">
+                          <span className="text-slate-300 block text-[10.5px] font-semibold">Ambos Anotan: SÍ</span>
+                          <span className="text-base font-bold text-teal-300">
+                            <NumberCounter value={match.probabilities?.bttsYes || 55} suffix="%" />
+                          </span>
+                          <div className="h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
+                            <div style={{ width: `${match.probabilities?.bttsYes || 55}%` }} className="h-full bg-teal-400" />
+                          </div>
+                        </div>
+
+                        {/* Abajito de Ambos Anotan Sí: Más de 4.5 Goles */}
+                        <div className="bg-[#141b29] p-2.5 rounded-lg border border-teal-500/20 text-center">
+                          <div className="flex items-center justify-center space-x-1 mb-0.5">
+                            <span className="text-teal-400 font-bold text-[10px]">▲</span>
+                            <span className="text-slate-300 block text-[10px] font-semibold">Más de 4.5 Goles (+4.5 Over)</span>
+                          </div>
+                          <span className="text-base font-bold text-teal-300">
+                            <NumberCounter value={match.probabilities?.over45 != null ? Math.round(match.probabilities.over45) : Math.round(Math.max(6, (match.probabilities?.over35 || 32) * 0.45))} suffix="%" />
+                          </span>
+                          <div className="h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
+                            <div style={{ width: `${match.probabilities?.over45 != null ? Math.round(match.probabilities.over45) : Math.round(Math.max(6, (match.probabilities?.over35 || 32) * 0.45))}%` }} className="h-full bg-teal-400 transition-all duration-500" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Columna Lado NO */}
+                      <div className="space-y-2">
+                        {/* Ambos Anotan: NO */}
+                        <div className="bg-[#141b29] p-2.5 rounded-lg border border-rose-500/30 text-center">
+                          <span className="text-slate-300 block text-[10.5px] font-semibold">Ambos Anotan: NO</span>
+                          <span className="text-base font-bold text-rose-300">
+                            <NumberCounter value={100 - (match.probabilities?.bttsYes || 55)} suffix="%" />
+                          </span>
+                          <div className="h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
+                            <div style={{ width: `${100 - (match.probabilities?.bttsYes || 55)}%` }} className="h-full bg-rose-400" />
+                          </div>
+                        </div>
+
+                        {/* Abajito de Ambos Anotan No: Menos de 2.5 Goles */}
+                        <div className="bg-[#141b29] p-2.5 rounded-lg border border-amber-500/20 text-center">
+                          <div className="flex items-center justify-center space-x-1 mb-0.5">
+                            <span className="text-amber-400 font-bold text-[10px]">▼</span>
+                            <span className="text-slate-300 block text-[10px] font-semibold">Menos de 2.5 Goles (-2.5 Under)</span>
+                          </div>
+                          <span className="text-base font-bold text-amber-300">
+                            <NumberCounter value={match.probabilities?.under25 != null ? Math.round(match.probabilities.under25) : (100 - Math.round(match.probabilities?.over25 || 56))} suffix="%" />
+                          </span>
+                          <div className="h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
+                            <div style={{ width: `${match.probabilities?.under25 != null ? Math.round(match.probabilities.under25) : (100 - Math.round(match.probabilities?.over25 || 56))}%` }} className="h-full bg-amber-400 transition-all duration-500" />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

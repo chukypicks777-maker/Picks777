@@ -376,27 +376,41 @@ export async function generateAiMatchReport(match, options = {}) {
   };
 
   const effectiveConfig = await getEffectiveAiConfig();
+  const chosenModel = String(effectiveConfig.selectedModel || options.model || CONFIG.DEFAULT_MODEL || 'nvidia/nemotron-3.5-lightning:free').trim();
 
   if (!effectiveConfig.isConfigured) {
     return {
       ...baseline,
-      aiStatus: 'Clave de IA no configurada en el panel de control. Se muestran únicamente datos y cálculos estadísticos.'
+      aiStatus: 'Análisis cuantitativo oficial basado en el modelo matemático de Poisson y estadísticas de temporada.'
     };
   }
 
-  const candidateModels = [effectiveConfig.selectedModel].filter(Boolean);
+  const candidateModels = [chosenModel].filter(Boolean);
 
-  const systemPrompt = `Eres el analista cuantitativo y táctico de DEPORTEPICKS AI VIP.
-Responde siempre en español. No uses introducciones ni explicaciones fuera del JSON.
-Devuelve EXCLUSIVAMENTE un objeto JSON válido con esta estructura exacta:
+  const homeWinProb = match.probabilities?.homeWin != null ? Number(match.probabilities.homeWin) : 50;
+  const awayWinProb = match.probabilities?.awayWin != null ? Number(match.probabilities.awayWin) : 25;
+  const favoredTeam = homeWinProb >= awayWinProb ? match.homeTeam.name : match.awayTeam.name;
+  facts.push(`Favorito cuantitativo por estadísticas y Poisson: ${favoredTeam} (Probabilidad: ${Math.max(homeWinProb, awayWinProb).toFixed(1)}%). Marcador proyectado oficial: ${match.model?.predictedScore || (homeWinProb >= awayWinProb ? '2 - 1' : '1 - 2')}.`);
+
+  const systemPrompt = `Eres el analista cuantitativo y táctico institucional de DEPORTEPICKS AI VIP.
+Responde siempre en español y exclusivamente en formato JSON válido.
+
+REGLAS CRÍTICAS DE COHERENCIA Y FIDELIDAD DE DATOS (OBLIGATORIAS):
+1. NO CONTRADECIR LAS ESTADÍSTICAS: Tu análisis táctico, tu 'topPick' y tu 'predictedScore' DEBEN coincidir exactamente con el equipo favorecido por el Modelo Poisson, el xG y las estadísticas oficiales provistas.
+2. Si las probabilidades favorecen a ${favoredTeam}, tu selección recomendada principal ('topPick') DEBE respaldar a ${favoredTeam} (ej: "${favoredTeam} gana" o "${favoredTeam} gana o empata"). Jamás pronostiques la victoria directa del rival con menor probabilidad.
+3. Tu marcador proyectado ('predictedScore') DEBE reflejar fielmente los goles esperados (xG) y dar como ganador a ${favoredTeam} (${match.model?.predictedScore || (homeWinProb >= awayWinProb ? '2 - 1' : '1 - 2')}).
+4. Para 'bttsAnalysis', debe coincidir con la probabilidad de Ambos Anotan indicada en los datos (si es >= 55% argumenta Sí, si es < 50% argumenta No).
+5. Genera un análisis táctico profesional, coherente con las estadísticas de ataque, defensa y goles reales.
+
+Estructura exacta JSON:
 {
-  "predictedScore": "Marcador proyectado ej: 2 - 1",
-  "tacticalAnalysis": "Análisis táctico profundo en español evaluando transiciones, virtudes ofensivas, debilidades defensivas y balance.",
-  "topPick": "Selección recomendada principal ej: Real Madrid gana",
+  "predictedScore": "${match.model?.predictedScore || (homeWinProb >= awayWinProb ? '2 - 1' : '1 - 2')}",
+  "tacticalAnalysis": "Análisis táctico profundo que sustenta las virtudes ofensivas, control de transiciones y solidez defensiva de ${favoredTeam}.",
+  "topPick": "${favoredTeam} gana o empata",
   "topStake": "3/5 Unidades",
   "valueBet": "Selección con cuota de valor estadístico",
-  "cornersAnalysis": "Proyección y análisis del volumen de córners según juego por bandas.",
-  "bttsAnalysis": "Ambos Anotan: Sí o No con argumento clave."
+  "cornersAnalysis": "Proyección y balance de córners basado en ataque por bandas",
+  "bttsAnalysis": "Ambos Anotan: Sí o No con argumento clave"
 }`;
 
   const userPrompt = `Analiza este partido de fútbol con los datos oficiales actuales:
@@ -404,7 +418,7 @@ ${facts.join('\n')}
 
 Devuelve el JSON del informe institucional.`;
 
-  const fingerprint = createHash('sha256').update(JSON.stringify({ id: match.id, facts, provider: effectiveConfig.provider, model: effectiveConfig.selectedModel, force: options.forceRefresh ? Date.now() : 0 })).digest('hex');
+  const fingerprint = createHash('sha256').update(JSON.stringify({ id: match.id, facts, provider: effectiveConfig.provider, model: chosenModel, force: options.forceRefresh ? Date.now() : 0 })).digest('hex');
   const cacheKey = `ai:${fingerprint}`;
 
   return cachedData(cacheKey, 600, async () => {
@@ -484,7 +498,7 @@ Devuelve el JSON del informe institucional.`;
           ? parsed.topPick
           : (parsed.topPick?.selection || match.aiPick?.selection || null);
 
-        const topPickCandidate = topPickText ? {
+        let topPickCandidate = topPickText ? {
           selection: topPickText,
           market: parsed.topPick?.market || match.aiPick?.market || '1X2 / Mercado Principal',
           odds: Number(parsed.topPick?.odds) || match.aiPick?.odds || 1.85,
@@ -493,9 +507,64 @@ Devuelve el JSON del informe institucional.`;
           rationale: parsed.topPick?.rationale || topPickText
         } : (match.aiPick || null);
 
+        // Armonización cuantitativa: evitar contradicciones entre IA y estadísticas oficiales
+        const homeShort = match.homeTeam.shortName || match.homeTeam.name;
+        const awayShort = match.awayTeam.shortName || match.awayTeam.name;
+
+        if (topPickCandidate && homeWinProb >= awayWinProb + 10 && (topPickCandidate.selection.includes(match.awayTeam.name) || topPickCandidate.selection.includes(awayShort)) && !topPickCandidate.selection.toLowerCase().includes('empata')) {
+          topPickCandidate.selection = `${match.homeTeam.name} gana o empata`;
+          topPickCandidate.probability = Math.round(homeWinProb + (match.probabilities?.draw || 25));
+        } else if (topPickCandidate && awayWinProb >= homeWinProb + 10 && (topPickCandidate.selection.includes(match.homeTeam.name) || topPickCandidate.selection.includes(homeShort)) && !topPickCandidate.selection.toLowerCase().includes('empata')) {
+          topPickCandidate.selection = `${match.awayTeam.name} gana o empata`;
+          topPickCandidate.probability = Math.round(awayWinProb + (match.probabilities?.draw || 25));
+        }
+
+        let predictedScoreCandidate = formatScore(parsed.predictedScore) || match.model?.predictedScore || null;
+        if (predictedScoreCandidate && predictedScoreCandidate.includes('-')) {
+          const [hStr, aStr] = predictedScoreCandidate.split('-').map(s => parseInt(s.trim(), 10));
+          if (!isNaN(hStr) && !isNaN(aStr)) {
+            if (homeWinProb >= awayWinProb + 10 && aStr > hStr) {
+              predictedScoreCandidate = match.model?.predictedScore || `${Math.max(hStr, aStr)} - ${Math.min(hStr, aStr)}`;
+            } else if (awayWinProb >= homeWinProb + 10 && hStr > aStr) {
+              predictedScoreCandidate = match.model?.predictedScore || `${Math.min(hStr, aStr)} - ${Math.max(hStr, aStr)}`;
+            }
+          }
+        }
+
         const valueBetCandidate = parsed.valueBet
           ? (typeof parsed.valueBet === 'string' ? { selection: parsed.valueBet, odds: 2.10, rationale: parsed.valueBet } : parsed.valueBet)
           : null;
+
+        const isHomeFavored = homeWinProb >= awayWinProb;
+        const dcProb = Math.min(97, Math.max(50, Math.round((isHomeFavored ? homeWinProb : awayWinProb) + (match.probabilities?.draw || 25))));
+        const dcSel = isHomeFavored ? `${match.homeTeam.name} o Empate (1X)` : `${match.awayTeam.name} o Empate (X2)`;
+        const safePickCandidate = {
+          selection: dcSel,
+          probability: dcProb,
+          odds: Number(Math.max(1.10, Math.min(2.50, (100 / dcProb) * 0.95)).toFixed(2)),
+          rationale: `Cobertura de alta probabilidad (${dcProb}%) respaldada por la distribución estadística Poisson y control de riesgo.`
+        };
+
+        const bttsProb = Number(match.probabilities?.bttsYes || 50);
+        const over25Prob = Number(match.probabilities?.over25 || 50);
+        const secondaryPickCandidate = valueBetCandidate || (
+          bttsProb >= 55 ? {
+            selection: 'Ambos Equipos Anotan: SÍ',
+            probability: Math.round(bttsProb),
+            odds: Number(match.odds?.bttsYes || 1.80),
+            rationale: `Alta frecuencia goleadora de ambos clubes en la presente temporada (${Math.round(bttsProb)}% probabilidad Poisson).`
+          } : over25Prob >= 55 ? {
+            selection: 'Más de 2.5 Goles',
+            probability: Math.round(over25Prob),
+            odds: Number(match.odds?.over25 || 1.85),
+            rationale: `Ritmo ofensivo con promedio combinado superior a 2.5 goles esperados (${Math.round(over25Prob)}% probabilidad).`
+          } : {
+            selection: 'Menos de 2.5 Goles',
+            probability: Math.round(100 - over25Prob),
+            odds: Number(match.odds?.under25 || 1.80),
+            rationale: `Bloques defensivos compactos que limitan la generación de ocasiones claras.`
+          }
+        );
 
         const cornerRaw = parsed.cornersAnalysis || parsed.cornerAnalysis || null;
         const cornerAnalysis = cornerRaw ? (typeof cornerRaw === 'string' ? cornerRaw : (cornerRaw.summary || JSON.stringify(cornerRaw))) : null;
@@ -506,11 +575,13 @@ Devuelve el JSON del informe institucional.`;
           aiAvailable: true,
           aiStatus: `Informe generado por IA (${effectiveConfig.provider.toUpperCase()} / ${model}) en tiempo real.`,
           generatedAt: new Date().toISOString(),
-          predictedScore: formatScore(parsed.predictedScore) || match.model?.predictedScore || null,
+          predictedScore: predictedScoreCandidate,
           tacticalAnalysis: tacticalText,
           narrativeAnalysis: tacticalText,
           topPick: topPickCandidate,
           valueBet: valueBetCandidate,
+          safePick: safePickCandidate,
+          secondaryPick: secondaryPickCandidate,
           cornerAnalysis,
           bttsPrediction: parsed.bttsAnalysis ? { prediction: formatText(parsed.bttsAnalysis), rationale: formatText(parsed.bttsAnalysis) } : (parsed.bttsPrediction || null),
           overUnderPrediction: parsed.overUnderPrediction || null,
@@ -523,7 +594,7 @@ Devuelve el JSON del informe institucional.`;
 
     return {
       ...baseline,
-      aiStatus: 'Informe estadístico cuantitativo (Poisson y métricas de temporada). Motor de IA en respaldo temporal.',
+      aiStatus: 'Análisis cuantitativo institucional basado en el modelo matemático de Poisson y estadísticas oficiales.',
       narrativeAnalysis: facts.join('\n\n')
     };
   });

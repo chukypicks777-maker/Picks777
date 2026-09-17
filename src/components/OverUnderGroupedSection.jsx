@@ -20,8 +20,8 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
   const over35 = probs.over35 || diff.over35 || 34;
   const under35 = 100 - over35;
 
-  const over45 = Math.round(Math.max(8, over35 - 18));
-  const under45 = 100 - over45;
+  const over45 = probs.over45 != null ? Math.round(probs.over45) : Math.round(Math.max(6, over35 * 0.45));
+  const under45 = probs.under45 != null ? Math.round(probs.under45) : (100 - over45);
 
   // Córners Over & Under
   const homeCornersOver5 = homeStats?.cornerOver5 || 74;

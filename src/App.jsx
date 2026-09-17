@@ -14,7 +14,7 @@ import StatsCenterModal from './components/StatsCenterModal';
 import FooterCommunityShowcase from './components/FooterCommunityShowcase';
 import { sounds } from './utils/audioEffects';
 import { Layers, Radio, Zap, AlertCircle } from 'lucide-react';
-import { getMatchSafetyScore } from './utils/mathProbabilities';
+import { getMatchSafetyScore, getBestBankerPick } from './utils/mathProbabilities';
 
 export default function App() {
   // Auth state
@@ -39,6 +39,7 @@ export default function App() {
   const [matchStatusFilter, setMatchStatusFilter] = useState('all'); // 'all' | 'LIVE' | 'FINISHED'
   const [searchQuery, setSearchQuery] = useState('');
   const [marketFilter, setMarketFilter] = useState('all');
+  const [bankerSubFilter, setBankerSubFilter] = useState('highest_safety'); // 'highest_safety' | 'recent' | 'live' | 'all_profit'
 
   // Match Data & Modals
   const [matches, setMatches] = useState([]);
@@ -294,16 +295,49 @@ export default function App() {
     // Si no está seleccionada la pestaña de 'Resultados' (FINISHED),
     // no mezclar partidos pasados/finalizados con los partidos activos o próximos para apostar
     if (matchStatusFilter !== 'FINISHED' && m.status === 'FINISHED') return false;
-    if (marketFilter === 'safe') return true; // En modo banquero se ordenan todos de mayor a menor seguridad
+    if (marketFilter === 'safe') {
+      if (bankerSubFilter === 'live') {
+        return m.status === 'LIVE';
+      }
+      return true;
+    }
     if (marketFilter === 'btts') return (m.probabilities?.bttsYes || 0) >= 55;
     if (marketFilter === 'over') return (m.probabilities?.over25 || 0) >= 55;
     if (marketFilter === 'under') return (m.probabilities?.under25 || (100 - (m.probabilities?.over25 || 50))) >= 50;
     return true;
   });
 
-  // When 'safe' (Picks Banqueros) is active, sort from highest safety to lowest ("de lo mejor a lo menor, lo más seguro")
+  // When 'safe' (Picks Banqueros) is active, apply sub-filter sorting and ranking
   if (marketFilter === 'safe') {
-    filteredMatches = [...filteredMatches].sort((a, b) => getMatchSafetyScore(b) - getMatchSafetyScore(a));
+    if (bankerSubFilter === 'all_profit') {
+      // Mayor ganancia: ordenar por cuota (odds) del pick banquero descendente sin importar la fecha
+      filteredMatches = [...filteredMatches].sort((a, b) => {
+        const pickA = getBestBankerPick(a);
+        const pickB = getBestBankerPick(b);
+        const oddsA = Number(pickA?.odds || a.odds?.homeWin || 1.25);
+        const oddsB = Number(pickB?.odds || b.odds?.homeWin || 1.25);
+        if (oddsB !== oddsA) return oddsB - oddsA;
+        return getMatchSafetyScore(b) - getMatchSafetyScore(a);
+      });
+    } else if (bankerSubFilter === 'recent') {
+      // Recientes / Próximos: ordenar cronológicamente (más cercanos a jugarse primero)
+      const getMatchTime = m => {
+        if (!m) return 0;
+        const raw = m.kickoff || m.date || m.timestamp;
+        if (!raw) return 0;
+        const t = new Date(raw).getTime();
+        return Number.isFinite(t) ? t : 0;
+      };
+      filteredMatches = [...filteredMatches].sort((a, b) => {
+        const timeA = getMatchTime(a);
+        const timeB = getMatchTime(b);
+        if (timeA && timeB && timeA !== timeB) return timeA - timeB;
+        return getMatchSafetyScore(b) - getMatchSafetyScore(a);
+      });
+    } else {
+      // 'highest_safety' (default) o 'live': ordenados de mayor a menor seguridad
+      filteredMatches = [...filteredMatches].sort((a, b) => getMatchSafetyScore(b) - getMatchSafetyScore(a));
+    }
   }
 
   const liveMatchesCount = matches.filter(m => m && m.status === 'LIVE').length;
@@ -406,21 +440,91 @@ export default function App() {
         <div className="mb-12">
           {/* Banner Exclusivo de Picks Banqueros cuando el filtro está activo */}
           {marketFilter === 'safe' && (
-            <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-[#0d1522] to-sky-500/20 border border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.15)] flex flex-wrap items-center justify-between gap-3">
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl">💎</span>
-                  <h4 className="font-black text-sm md:text-base text-white uppercase tracking-wider font-sans">
-                    Picks Banqueros Oficiales — Ordenados de Mayor a Menor Seguridad
-                  </h4>
+            <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-[#0d1522] to-sky-500/20 border border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.15)] space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl">💎</span>
+                    <h4 className="font-black text-sm md:text-base text-white uppercase tracking-wider font-sans">
+                      Picks Banqueros Oficiales — {bankerSubFilter === 'highest_safety' ? 'Más Asegurados (Máxima Probabilidad)' : bankerSubFilter === 'recent' ? 'Recientes / Próximos' : bankerSubFilter === 'live' ? 'En Vivo' : 'Mayor Ganancia (Sin Filtro de Fecha)'}
+                    </h4>
+                  </div>
+                  <p className="text-xs text-emerald-300/90 font-mono">
+                    {bankerSubFilter === 'highest_safety' && `Selección cuantitativa de máxima confianza y menor varianza. Priorizados de mayor a menor probabilidad (${filteredMatches.length} pronósticos clasificados).`}
+                    {bankerSubFilter === 'recent' && `Partidos programados por fecha y horario de inicio más próximos (${filteredMatches.length} pronósticos listos para jugar).`}
+                    {bankerSubFilter === 'live' && `Partidos en disputa activa en tiempo real con líneas banqueras en juego (${filteredMatches.length} encuentros en vivo).`}
+                    {bankerSubFilter === 'all_profit' && `Maximizador de rendimiento: picks banqueros ordenados por mayor cuota y retorno sin importar la fecha (${filteredMatches.length} pronósticos clasificados).`}
+                  </p>
                 </div>
-                <p className="text-xs text-emerald-300/90 font-mono">
-                  Selección cuantitativa de máxima confianza y menor varianza. Priorizados de lo mejor a lo menor ({filteredMatches.length} pronósticos clasificados).
-                </p>
+                <span className="px-3 py-1.5 rounded-xl bg-emerald-500/30 text-emerald-200 border border-emerald-500/50 font-mono text-xs font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                  {filteredMatches.length} PICKS BANQUEROS
+                </span>
               </div>
-              <span className="px-3 py-1.5 rounded-xl bg-emerald-500/30 text-emerald-200 border border-emerald-500/50 font-mono text-xs font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                RANKING ACTIVADO (1 AL {filteredMatches.length})
-              </span>
+
+              {/* Sub-filtros para Picks Banqueros */}
+              <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-emerald-500/20">
+                <span className="text-xs font-mono text-slate-300 mr-1 font-bold">Filtro Banquero:</span>
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    setBankerSubFilter('highest_safety');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+                    bankerSubFilter === 'highest_safety'
+                      ? 'bg-emerald-500 text-slate-950 font-bold shadow-[0_0_12px_rgba(16,185,129,0.4)]'
+                      : 'bg-[#121824] text-slate-300 hover:bg-emerald-500/20 border border-white/10'
+                  }`}
+                >
+                  <span>🛡️ Más Asegurados</span>
+                </button>
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    setBankerSubFilter('recent');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+                    bankerSubFilter === 'recent'
+                      ? 'bg-sky-500 text-slate-950 font-bold shadow-[0_0_12px_rgba(14,165,233,0.4)]'
+                      : 'bg-[#121824] text-slate-300 hover:bg-sky-500/20 border border-white/10'
+                  }`}
+                >
+                  <span>⏱️ Recientes / Próximos</span>
+                </button>
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    setBankerSubFilter('live');
+                    if (matchStatusFilter === 'FINISHED') setMatchStatusFilter('all');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+                    bankerSubFilter === 'live'
+                      ? 'bg-rose-500 text-white font-bold shadow-[0_0_12px_rgba(244,63,94,0.4)]'
+                      : 'bg-[#121824] text-slate-300 hover:bg-rose-500/20 border border-white/10'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse inline-block mr-0.5" />
+                  <span>🔴 En Vivo</span>
+                  {liveMatchesCount > 0 && (
+                    <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-rose-600 text-white rounded-full">
+                      {liveMatchesCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => {
+                    sounds.playClick();
+                    setBankerSubFilter('all_profit');
+                    if (timeframe !== 'all') setTimeframe('all');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+                    bankerSubFilter === 'all_profit'
+                      ? 'bg-amber-400 text-slate-950 font-bold shadow-[0_0_12px_rgba(251,191,36,0.4)]'
+                      : 'bg-[#121824] text-slate-300 hover:bg-amber-400/20 border border-white/10'
+                  }`}
+                >
+                  <span>💰 Mayor Ganancia (Sin Filtro de Fecha)</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -469,7 +573,7 @@ export default function App() {
                 Prueba seleccionando otra liga o limpiando los filtros.
               </p>
               <button
-                onClick={() => { setSelectedLeague('all'); setTimeframe('all'); setMatchStatusFilter('all'); setSearchQuery(''); setMarketFilter('all'); }}
+                onClick={() => { setSelectedLeague('all'); setTimeframe('all'); setMatchStatusFilter('all'); setSearchQuery(''); setMarketFilter('all'); setBankerSubFilter('highest_safety'); }}
                 className="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-xs font-mono transition cursor-pointer"
               >
                 Restablecer Filtros
