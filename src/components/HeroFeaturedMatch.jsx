@@ -5,7 +5,7 @@ import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
 import RadarScanner from './RadarScanner';
-import { getTop3Opportunities } from '../utils/mathProbabilities';
+import { getTop3Opportunities, getCoherentPredictedScore } from '../utils/mathProbabilities';
 
 export default function HeroFeaturedMatch({ 
   match, 
@@ -139,7 +139,7 @@ export default function HeroFeaturedMatch({
                           ? `${match.liveScore?.home ?? 0} - ${match.liveScore?.away ?? 0}`
                           : match.status === 'FINISHED'
                           ? `${match.finalScore?.home ?? 0} - ${match.finalScore?.away ?? 0}`
-                          : match.aiPick?.predictedScore || match.model?.predictedScore || ((match.probabilities?.awayWin || 0) > (match.probabilities?.homeWin || 0) ? '1 - 2' : '2 - 1')}
+                          : getCoherentPredictedScore(match)}
                       </span>
                     </div>
                   </div>

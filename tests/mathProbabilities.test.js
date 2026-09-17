@@ -8,8 +8,11 @@ import {
   calculateDifferential,
   getMatchSafetyScore,
   getTop3Opportunities,
-  getBestBankerPick
+  getBestBankerPick,
+  getCoherentPredictedScore,
+  calculateRealPoissonScore
 } from '../src/utils/mathProbabilities.js';
+import { poissonModel } from '../server/services/probabilityModel.js';
 
 test('poisson cumulative and probability functions behave correctly', () => {
   assert.equal(poissonProbability(0, 0), 0);
@@ -64,6 +67,10 @@ test('calculateTeamDetailedStats provides complete positive and negative lines, 
   assert.ok(stats.cardsOver05 > 0 && stats.cardsOver05 <= 100);
   assert.ok(stats.cardsOver15 > 0 && stats.cardsOver15 <= 100);
   assert.ok(stats.cardsOver25 > 0 && stats.cardsOver25 <= 100);
+  assert.ok(stats.cardsOver35 >= 0 && stats.cardsOver35 <= 100);
+  assert.ok(stats.cardsOver45 >= 0 && stats.cardsOver45 <= 100);
+  assert.ok(stats.cardsOver25 >= stats.cardsOver35);
+  assert.ok(stats.cardsOver35 >= stats.cardsOver45);
 
   // Corners ladder
   assert.ok(stats.cornerOver15 >= stats.cornerOver25);
@@ -219,3 +226,79 @@ test('getBestBankerPick returns rich AI justification, safetyScore, realistic od
   assert.ok(bankerFallback.safetyScore >= 60);
   assert.ok(bankerFallback.rationale.includes('seguridad'));
 });
+
+test('getCoherentPredictedScore guarantees alignment with favored team and resolves contradictions', () => {
+  // Home heavily favored (60% vs 18%), but candidate was draw 1-1
+  const homeFavMatch = { probabilities: { homeWin: 60, awayWin: 18 } };
+  assert.equal(getCoherentPredictedScore(homeFavMatch, '1 - 1'), '2 - 1', 'Draw 1-1 should be converted to 2-1 for favored home');
+  assert.equal(getCoherentPredictedScore(homeFavMatch, '1 - 2'), '2 - 1', 'Inverted 1-2 should be flipped to 2-1 for favored home');
+  assert.equal(getCoherentPredictedScore(homeFavMatch, '2 - 0'), '2 - 0', 'Coherent 2-0 should be preserved');
+
+  // Away heavily favored (65% vs 15%), but candidate was home win 2-1 or draw 1-1
+  const awayFavMatch = { probabilities: { homeWin: 15, awayWin: 65 } };
+  assert.equal(getCoherentPredictedScore(awayFavMatch, '1 - 1'), '1 - 2', 'Draw 1-1 should be converted to 1-2 for favored away');
+  assert.equal(getCoherentPredictedScore(awayFavMatch, '2 - 1'), '1 - 2', 'Inverted 2-1 should be flipped to 1-2 for favored away');
+  assert.equal(getCoherentPredictedScore(awayFavMatch, '0 - 2'), '0 - 2', 'Coherent 0-2 should be preserved');
+
+  // Balanced match (neither favored by >= 4%)
+  const balancedMatch = { probabilities: { homeWin: 35, awayWin: 34 } };
+  assert.equal(getCoherentPredictedScore(balancedMatch, '1 - 1'), '1 - 1', 'Draw 1-1 should be preserved in balanced match');
+
+  // Fallback on null
+  assert.equal(getCoherentPredictedScore(null), '2 - 1');
+});
+
+test('calculateRealPoissonScore calculates genuine Poisson score aligned with team attack and defense', () => {
+  const matchHighHome = {
+    homeTeam: { avgGoalsScored: 2.5, avgGoalsConceded: 0.6, gamesPlayed: 20 },
+    awayTeam: { avgGoalsScored: 0.7, avgGoalsConceded: 2.1, gamesPlayed: 20 },
+    probabilities: { homeWin: 72, draw: 18, awayWin: 10 }
+  };
+  const score = calculateRealPoissonScore(matchHighHome);
+  assert.ok(score.includes('-'));
+  const [h, a] = score.split('-').map(s => parseInt(s.trim(), 10));
+  assert.ok(h > a, `Favored home team must have higher goals: got ${score}`);
+
+  const matchHighAway = {
+    homeTeam: { avgGoalsScored: 0.5, avgGoalsConceded: 2.2, gamesPlayed: 20 },
+    awayTeam: { avgGoalsScored: 2.8, avgGoalsConceded: 0.5, gamesPlayed: 20 },
+    probabilities: { homeWin: 12, draw: 18, awayWin: 70 }
+  };
+  const awayScore = calculateRealPoissonScore(matchHighAway);
+  const [ah, aa] = awayScore.split('-').map(s => parseInt(s.trim(), 10));
+  assert.ok(aa > ah, `Favored away team must have higher goals: got ${awayScore}`);
+});
+
+test('poissonModel handles record { w, d, l } and produces monotonic scoreDistribution', () => {
+  const homeWithRecord = {
+    name: 'AEK Athens',
+    goalsFor: 39,
+    goalsAgainst: 16,
+    homeRecord: { w: 11, d: 0, l: 0 }
+  };
+  const awayWithRecord = {
+    name: 'LASK Linz',
+    goalsFor: 18,
+    goalsAgainst: 22,
+    awayRecord: { w: 4, d: 2, l: 5 }
+  };
+
+  const model = poissonModel(homeWithRecord, awayWithRecord, 1);
+  assert.ok(model, 'poissonModel should successfully compute with record fallback');
+  assert.equal(model.sampleSize.home, 11);
+  assert.equal(model.sampleSize.away, 11);
+  assert.ok(model.predictedScore);
+  assert.ok(model.scoreDistribution.length > 0);
+
+  // Verify monotonicity: index 0 (topScore) has the highest probability, and probabilities descend
+  const dist = model.scoreDistribution;
+  assert.equal(dist[0].score, model.predictedScore, 'Top score in distribution must match predictedScore');
+  for (let i = 0; i < dist.length - 1; i++) {
+    assert.ok(
+      dist[i].probability >= dist[i + 1].probability - 1e-6,
+      `scoreDistribution must be descending: item ${i} (${dist[i].probability}%) vs item ${i + 1} (${dist[i + 1].probability}%)`
+    );
+  }
+});
+
+

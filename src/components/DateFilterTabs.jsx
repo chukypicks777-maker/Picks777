@@ -30,9 +30,7 @@ export default function DateFilterTabs({
   const markets = [
     { id: 'all', label: 'Todos los Mercados' },
     { id: 'safe', label: '💎 Picks Banqueros (Más Seguros)' },
-    { id: 'btts', label: 'Ambos Anotan (BTTS)' },
     { id: 'over', label: '+2.5 Goles (Over)' },
-    { id: 'under', label: '-2.5 Goles (Under)' },
   ];
 
   return (

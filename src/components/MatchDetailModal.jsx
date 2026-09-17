@@ -22,7 +22,7 @@ import NumberCounter from './NumberCounter';
 import TeamDetailedStatsCard from './TeamDetailedStatsCard';
 import DifferentialAnalysisSection from './DifferentialAnalysisSection';
 import OverUnderGroupedSection from './OverUnderGroupedSection';
-import { calculateTeamDetailedStats, calculateDifferential, getBestBankerPick } from '../utils/mathProbabilities';
+import { calculateTeamDetailedStats, calculateDifferential, getBestBankerPick, getCoherentPredictedScore } from '../utils/mathProbabilities';
 import { getCachedAnalysis, setCachedAnalysis, computeMatchFingerprint, clearAllAnalysisCache } from '../utils/analysisCache';
 
 function escapeRegex(str) {
@@ -31,38 +31,76 @@ function escapeRegex(str) {
 
 function calculateMatchSimulation(match, withJitter = false) {
   if (!match) return { "2 - 1": 18.0, "1 - 1": 15.0, "2 - 0": 13.0, "Otros": 54.0 };
-  const home = match.homeTeam || {};
-  const away = match.awayTeam || {};
-  const homeGoalsAvg = home.goalsFor && home.gamesPlayed ? (home.goalsFor / Math.max(1, home.gamesPlayed)) * 1.08 : 1.6;
-  const awayGoalsAvg = away.goalsFor && away.gamesPlayed ? (away.goalsFor / Math.max(1, away.gamesPlayed)) * 0.95 : 1.2;
+  const canonicalScore = getCoherentPredictedScore(match);
 
-  const lambda = Math.max(0.4, Math.min(4.2, homeGoalsAvg));
-  const mu = Math.max(0.4, Math.min(3.8, awayGoalsAvg));
+  let candidateScores = [];
 
-  const poisson = (l, k) => {
-    let p = Math.exp(-l);
-    for (let i = 1; i <= k; i++) p *= l / i;
-    return p;
-  };
+  if (match.model?.scoreDistribution && Array.isArray(match.model.scoreDistribution) && match.model.scoreDistribution.length > 0) {
+    const distList = match.model.scoreDistribution;
+    const topItem = distList.find(d => d.score === canonicalScore) || { score: canonicalScore, probability: 14 };
+    const restItems = distList.filter(d => d.score !== canonicalScore).sort((a, b) => (Number(b.probability) || 0) - (Number(a.probability) || 0));
+    const highestRest = Number(restItems[0]?.probability) || 12;
+    const topProb = Math.max(Number(topItem.probability) || 12, highestRest + 1.5);
+    candidateScores = [
+      { score: canonicalScore, probability: topProb },
+      ...restItems.slice(0, 8)
+    ];
+  } else {
+    const home = match.homeTeam || {};
+    const away = match.awayTeam || {};
+    const homeGP = Math.max(1, home.gamesPlayed || (home.homeRecord ? (home.homeRecord.w + home.homeRecord.d + home.homeRecord.l) : null) || 15);
+    const awayGP = Math.max(1, away.gamesPlayed || (away.awayRecord ? (away.awayRecord.w + away.awayRecord.d + away.awayRecord.l) : null) || 15);
+    const homeGoalsAvg = home.avgGoalsScored != null ? Number(home.avgGoalsScored) : ((home.goalsFor != null ? home.goalsFor : 24) / homeGP);
+    const awayGoalsAvg = away.avgGoalsScored != null ? Number(away.avgGoalsScored) : ((away.goalsFor != null ? away.goalsFor : 20) / awayGP);
 
-  const dist = {};
-  for (let h = 0; h <= 6; h++) {
-    for (let a = 0; a <= 6; a++) {
-      dist[`${h} - ${a}`] = poisson(lambda, h) * poisson(mu, a);
+    const lambda = Math.max(0.4, Math.min(4.2, homeGoalsAvg));
+    const mu = Math.max(0.4, Math.min(3.8, awayGoalsAvg));
+
+    const poisson = (l, k) => {
+      let p = Math.exp(-l);
+      for (let i = 1; i <= k; i++) p *= l / i;
+      return p;
+    };
+
+    const dist = {};
+    for (let h = 0; h <= 6; h++) {
+      for (let a = 0; a <= 6; a++) {
+        dist[`${h} - ${a}`] = poisson(lambda, h) * poisson(mu, a);
+      }
     }
+
+    const sorted = Object.entries(dist).sort(([, a], [, b]) => b - a);
+    const otherScores = sorted.filter(([score]) => score !== canonicalScore);
+    const maxOtherProb = (otherScores[0] ? otherScores[0][1] : 0.12) * 100;
+    const canonicalProb = Math.max((dist[canonicalScore] || 0.10) * 100, maxOtherProb + 1.5);
+
+    candidateScores = [
+      { score: canonicalScore, probability: canonicalProb },
+      ...otherScores.slice(0, 8).map(([score, p]) => ({ score, probability: p * 100 }))
+    ];
   }
 
-  const sorted = Object.entries(dist).sort(([, a], [, b]) => b - a);
-  const topScores = sorted.slice(0, 9);
-  const topSum = topScores.reduce((acc, [, p]) => acc + p, 0);
-  const otrosVal = Math.max(0.5, parseFloat(((1 - topSum) * 100).toFixed(1)));
-
+  // Ensure strict monotonicity: each score probability must be strictly less than the previous
   const result = {};
-  topScores.forEach(([score, p]) => {
-    const jitter = withJitter ? (Math.random() - 0.5) * 0.6 : 0;
-    result[score] = parseFloat(Math.max(0.5, (p * 100) + jitter).toFixed(1));
+  let currentMax = 999;
+  let sum = 0;
+
+  candidateScores.forEach((item, idx) => {
+    const jitter = withJitter ? (Math.random() - 0.5) * 0.2 : 0;
+    let prob = parseFloat((item.probability + jitter).toFixed(1));
+    if (idx === 0) {
+      prob = Math.max(14.0, prob);
+    } else {
+      if (prob >= currentMax) {
+        prob = parseFloat(Math.max(1.0, currentMax - 0.4).toFixed(1));
+      }
+    }
+    currentMax = prob;
+    result[item.score] = prob;
+    sum += prob;
   });
-  result["Otros"] = otrosVal;
+
+  result["Otros"] = parseFloat(Math.max(1.0, 100 - sum).toFixed(1));
   return result;
 }
 
@@ -285,8 +323,6 @@ export default function MatchDetailModal({
   const h2hDrawPct = h2hList.length > 0 ? Math.round((draws / h2hList.length) * 100) : 0;
   const h2hAwayWinPct = h2hList.length > 0 ? Math.round((awayWins / h2hList.length) * 100) : 0;
 
-  const bttsH2HCount = h2hList.filter(h => h.btts).length;
-  const bttsH2HPct = h2hList.length > 0 ? Math.round((bttsH2HCount / h2hList.length) * 100) : 0;
 
   const over25H2HCount = h2hList.filter(h => {
     const parts = (h.score || '').split('-').map(s => parseInt(s.trim(), 10));
@@ -391,7 +427,7 @@ export default function MatchDetailModal({
                     ? `${match.liveScore?.home ?? 0} - ${match.liveScore?.away ?? 0}`
                     : match.status === 'FINISHED'
                     ? `${match.finalScore?.home ?? 0} - ${match.finalScore?.away ?? 0}`
-                    : aiReport?.predictedScore || m.model?.predictedScore || match.aiPick?.predictedScore || ((match.probabilities?.awayWin || 0) > (match.probabilities?.homeWin || 0) ? '1 - 2' : '2 - 1')}
+                    : getCoherentPredictedScore(m, aiReport?.predictedScore || m.model?.predictedScore || match.aiPick?.predictedScore)}
                 </span>
               </div>
             </div>
@@ -584,12 +620,12 @@ export default function MatchDetailModal({
 
                 // 3. Línea Segura / Doble Oportunidad (Complementaria a Card 1 para evitar duplicados)
                 const isBankerNowDC = /gana o empata|o empate|1x|x2|doble oportunidad/i.test(bankerSelection);
-                const over15ProbVal = m.probabilities?.over15 != null
-                  ? Number(m.probabilities.over15)
-                  : (m.probabilities?.over25 != null ? Math.min(96, Math.round(Number(m.probabilities.over25) + 26)) : 82);
-                const under35ProbVal = m.probabilities?.under35 != null
-                  ? Number(m.probabilities.under35)
-                  : (m.probabilities?.over25 != null ? Math.min(94, Math.round(100 - (Number(m.probabilities.over25) - 24))) : 78);
+                const over15ProbVal = Math.round(Number(m.probabilities?.over15 != null
+                  ? m.probabilities.over15
+                  : (m.probabilities?.over25 != null ? Math.min(96, Math.round(Number(m.probabilities.over25) + 26)) : 82)));
+                const under35ProbVal = Math.round(Number(m.probabilities?.under35 != null
+                  ? m.probabilities.under35
+                  : (m.probabilities?.over25 != null ? Math.min(94, Math.round(100 - (Number(m.probabilities.over25) - 24))) : 78)));
 
                 let safeTitle = '🛡️ Doble Oportunidad Segura';
                 let safeSubtitle = 'Apuesta de Cobertura y Bajo Riesgo';
@@ -640,56 +676,38 @@ export default function MatchDetailModal({
                     : `Cobertura de alta probabilidad (${safeProb}%) ante escenarios de paridad según distribución Poisson.`;
                 }
 
-                // 2. Pick de Valor
-                const bttsProbVal = Math.round(Number(m.probabilities?.bttsYes || 55));
+                // 2. Pick de Valor (Líneas cuantitativas de goles de valor positivo)
                 const over25ProbVal = Math.round(Number(m.probabilities?.over25 || 52));
+                const under25ProbVal = Math.round(Number(m.probabilities?.under25 != null ? m.probabilities.under25 : (100 - over25ProbVal)));
 
-                let defaultValueSelection = 'Ambos Equipos Anotan: SÍ';
-                let defaultValueOdds = Number((m.odds?.bttsYes || 1.75).toFixed(2));
-                let defaultValueProb = bttsProbVal;
-                let defaultValueRationale = `Frecuencia anotadora mutua (${bttsProbVal}% prob Poisson): Ambos clubes promedian llegada constante.`;
+                let defaultValueSelection = over25ProbVal >= 50 ? 'Más de 2.5 Goles' : 'Menos de 2.5 Goles';
+                let defaultValueOdds = Number((over25ProbVal >= 50 ? (m.odds?.over25 || 1.85) : (m.odds?.under25 || 1.80)).toFixed(2));
+                let defaultValueProb = over25ProbVal >= 50 ? over25ProbVal : under25ProbVal;
+                let defaultValueRationale = over25ProbVal >= 50
+                  ? `Volumen de ataque proyectado con ${over25ProbVal}% de probabilidad de registrar 3 o más goles.`
+                  : `Trámite táctico cerrado con ${under25ProbVal}% de probabilidad de 2 goles o menos.`;
 
-                if (bttsProbVal >= 52) {
-                  defaultValueSelection = 'Ambos Equipos Anotan: SÍ';
-                  defaultValueOdds = Number((m.odds?.bttsYes || 1.75).toFixed(2));
-                  defaultValueProb = bttsProbVal;
-                  defaultValueRationale = `Frecuencia anotadora mutua (${bttsProbVal}% prob Poisson): Ambos clubes promedian llegada constante.`;
-                } else if (over25ProbVal >= 52) {
-                  defaultValueSelection = 'Más de 2.5 Goles';
-                  defaultValueOdds = Number((m.odds?.over25 || 1.85).toFixed(2));
-                  defaultValueProb = over25ProbVal;
-                  defaultValueRationale = `Volumen de ataque proyectado con ${over25ProbVal}% de probabilidad de registrar 3 o más goles.`;
-                } else {
-                  defaultValueSelection = 'Menos de 2.5 Goles';
-                  defaultValueOdds = Number((m.odds?.under25 || 1.80).toFixed(2));
-                  defaultValueProb = Math.round(100 - over25ProbVal);
-                  defaultValueRationale = `Trámite táctico cerrado con ${Math.round(100 - over25ProbVal)}% de probabilidad de 2 goles o menos.`;
+                let rawValueSelection = aiReport?.secondaryPick?.selection || aiReport?.valueBet?.selection;
+                if (rawValueSelection && /ambos anotan|btts/i.test(rawValueSelection)) {
+                  rawValueSelection = null;
                 }
-
-                let valueSelection = aiReport?.secondaryPick?.selection || aiReport?.valueBet?.selection || defaultValueSelection;
+                let valueSelection = rawValueSelection || defaultValueSelection;
                 let valueOdds = Number(Number(aiReport?.secondaryPick?.odds || aiReport?.valueBet?.odds || defaultValueOdds).toFixed(2));
                 let valueProb = Math.round(Number(aiReport?.secondaryPick?.probability || aiReport?.valueBet?.probability || defaultValueProb));
                 let valueRationale = aiReport?.secondaryPick?.rationale || aiReport?.valueBet?.rationale || defaultValueRationale;
+                if (!valueRationale || /ambos anotan|btts/i.test(valueRationale)) {
+                  valueRationale = defaultValueRationale;
+                }
 
                 // Evitar colisión de valor con banquero o safePick
                 if (valueSelection === bankerSelection || valueSelection === safeSelection) {
-                  valueSelection = defaultValueSelection !== safeSelection && defaultValueSelection !== bankerSelection
-                    ? defaultValueSelection
-                    : (bttsProbVal >= 50 && bankerSelection !== 'Ambos Equipos Anotan: SÍ' && safeSelection !== 'Ambos Equipos Anotan: SÍ'
-                        ? 'Ambos Equipos Anotan: SÍ'
-                        : (over25ProbVal >= 50 && bankerSelection !== 'Más de 2.5 Goles' && safeSelection !== 'Más de 2.5 Goles'
-                            ? 'Más de 2.5 Goles'
-                            : 'Menos de 2.5 Goles'));
-                  valueOdds = valueSelection === 'Ambos Equipos Anotan: SÍ'
-                    ? Number((m.odds?.bttsYes || 1.75).toFixed(2))
-                    : valueSelection === 'Más de 2.5 Goles'
+                  valueSelection = (bankerSelection !== 'Más de 2.5 Goles' && safeSelection !== 'Más de 2.5 Goles')
+                    ? 'Más de 2.5 Goles'
+                    : 'Menos de 2.5 Goles';
+                  valueOdds = valueSelection === 'Más de 2.5 Goles'
                     ? Number((m.odds?.over25 || 1.85).toFixed(2))
                     : Number((m.odds?.under25 || 1.80).toFixed(2));
-                  valueProb = valueSelection === 'Ambos Equipos Anotan: SÍ'
-                    ? bttsProbVal
-                    : valueSelection === 'Más de 2.5 Goles'
-                    ? over25ProbVal
-                    : Math.round(100 - over25ProbVal);
+                  valueProb = valueSelection === 'Más de 2.5 Goles' ? over25ProbVal : under25ProbVal;
                   valueRationale = `Selección de valor estadístico con ventaja matemática calculada sobre el modelo Poisson.`;
                 }
 
@@ -860,7 +878,7 @@ export default function MatchDetailModal({
                 );
               })()}
 
-              {/* Comprehensive Over/Under & BTTS Probabilities Matrix (Positivo y Negativo sin Córners) */}
+              {/* Comprehensive Over/Under Probabilities Matrix (Positivo y Negativo sin Córners) */}
               <div className="bg-[#111723] rounded-xl p-5 border border-white/5 space-y-3">
                 <div className="flex items-center justify-between">
                   <h5 className="font-bold text-xs uppercase tracking-wide text-slate-300 font-mono flex items-center space-x-2">
@@ -881,8 +899,6 @@ export default function MatchDetailModal({
                   const under35Prob = 100 - over35Prob;
                   const over45Prob = Math.round(m.probabilities?.over45 != null ? m.probabilities.over45 : Math.max(6, over35Prob * 0.45));
                   const under45Prob = 100 - over45Prob;
-                  const bttsYesProb = Math.round(m.probabilities?.bttsYes || 55);
-                  const bttsNoProb = 100 - bttsYesProb;
 
                   return (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs">
@@ -973,76 +989,6 @@ export default function MatchDetailModal({
                           <div style={{ width: `${under45Prob}%` }} className="h-full bg-amber-400" />
                         </div>
                       </div>
-
-                      {/* Mercado Sí y No (Ambos Anotan) & Líneas Correlativas */}
-                      <div className="col-span-2 sm:col-span-4 pt-3.5 mt-1 border-t border-white/10">
-                        <div className="flex items-center justify-between mb-2.5">
-                          <span className="text-xs font-mono text-slate-200 font-bold flex items-center space-x-1.5">
-                            <span>🎯 Mercado Sí / No (Ambos Anotan) & Líneas Correlativas</span>
-                          </span>
-                          <span className="text-[10px] font-mono text-slate-400">
-                            +4.5 bajo Sí • -2.5 bajo No
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          {/* Columna Lado SÍ */}
-                          <div className="space-y-2">
-                            {/* Ambos Anotan: SÍ */}
-                            <div className="bg-[#141b29] p-2.5 rounded-lg border border-teal-500/30 text-center">
-                              <span className="text-slate-300 block text-[10.5px] font-semibold">Ambos Anotan: SÍ</span>
-                              <span className="text-base font-bold text-teal-300">
-                                <NumberCounter value={bttsYesProb} suffix="%" />
-                              </span>
-                              <div className="h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                                <div style={{ width: `${bttsYesProb}%` }} className="h-full bg-teal-400" />
-                              </div>
-                            </div>
-
-                            {/* Abajito de Ambos Anotan Sí: Más de 4.5 Goles */}
-                            <div className="bg-[#141b29] p-2.5 rounded-lg border border-teal-500/20 text-center">
-                              <div className="flex items-center justify-center space-x-1 mb-0.5">
-                                <span className="text-teal-400 font-bold text-[10px]">▲</span>
-                                <span className="text-slate-300 block text-[10px] font-semibold">Más de 4.5 Goles (+4.5 Over)</span>
-                              </div>
-                              <span className="text-base font-bold text-teal-300">
-                                <NumberCounter value={over45Prob} suffix="%" />
-                              </span>
-                              <div className="h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                                <div style={{ width: `${over45Prob}%` }} className="h-full bg-teal-400 transition-all duration-500" />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Columna Lado NO */}
-                          <div className="space-y-2">
-                            {/* Ambos Anotan: NO */}
-                            <div className="bg-[#141b29] p-2.5 rounded-lg border border-rose-500/30 text-center">
-                              <span className="text-slate-300 block text-[10.5px] font-semibold">Ambos Anotan: NO</span>
-                              <span className="text-base font-bold text-rose-300">
-                                <NumberCounter value={bttsNoProb} suffix="%" />
-                              </span>
-                              <div className="h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                                <div style={{ width: `${bttsNoProb}%` }} className="h-full bg-rose-400" />
-                              </div>
-                            </div>
-
-                            {/* Abajito de Ambos Anotan No: Menos de 2.5 Goles */}
-                            <div className="bg-[#141b29] p-2.5 rounded-lg border border-amber-500/20 text-center">
-                              <div className="flex items-center justify-center space-x-1 mb-0.5">
-                                <span className="text-amber-400 font-bold text-[10px]">▼</span>
-                                <span className="text-slate-300 block text-[10px] font-semibold">Menos de 2.5 Goles (-2.5 Under)</span>
-                              </div>
-                              <span className="text-base font-bold text-amber-300">
-                                <NumberCounter value={under25Prob} suffix="%" />
-                              </span>
-                              <div className="h-1.5 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                                <div style={{ width: `${under25Prob}%` }} className="h-full bg-amber-400 transition-all duration-500" />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   );
                 })()}
@@ -1117,8 +1063,8 @@ export default function MatchDetailModal({
                   {/* Quick Metric Pills */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-center text-[10px]">
                     <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
-                      <span className="text-slate-400 block mb-0.5">Ambos Anotan (BTTS)</span>
-                      <span className="text-sm font-bold text-emerald-400">{bttsH2HPct}% ({bttsH2HCount}/{h2hList.length})</span>
+                      <span className="text-slate-400 block mb-0.5">Menos de 2.5 Goles</span>
+                      <span className="text-sm font-bold text-emerald-400">{100 - over25H2HPct}% ({h2hList.length - over25H2HCount}/{h2hList.length})</span>
                     </div>
                     <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
                       <span className="text-slate-400 block mb-0.5">Más de 2.5 Goles</span>
@@ -1162,7 +1108,7 @@ export default function MatchDetailModal({
                         <th className="py-2.5 px-3">Local</th>
                         <th className="py-2.5 px-3 text-center">Marcador</th>
                         <th className="py-2.5 px-3">Visitante</th>
-                        <th className="py-2.5 px-3 text-center">BTTS</th>
+                        <th className="py-2.5 px-3 text-center">Línea 2.5</th>
                         <th className="py-2.5 px-3 text-center">Corners</th>
                         <th className="py-2.5 px-3 text-center">Tarjetas</th>
                       </tr>
@@ -1170,6 +1116,8 @@ export default function MatchDetailModal({
                     <tbody className="divide-y divide-white/5 text-slate-300">
                       {h2hList.map((h, i) => {
                         const dateFormatted = h.date ? new Date(h.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                        const scoreParts = (h.score || '').split('-').map(s => parseInt(s.trim(), 10));
+                        const isOver25 = (scoreParts[0] + scoreParts[1]) > 2;
                         return (
                           <tr key={i} className="hover:bg-white/5 transition">
                             <td className="py-2.5 px-3 text-slate-500 font-bold">{i + 1}</td>
@@ -1186,9 +1134,9 @@ export default function MatchDetailModal({
                             <td className="py-2.5 px-3 font-semibold text-white">{h.away}</td>
                             <td className="py-2.5 px-3 text-center">
                               <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                h.btts ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
+                                isOver25 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
                               }`}>
-                                {h.btts ? 'SÍ' : 'NO'}
+                                {isOver25 ? '+2.5' : '-2.5'}
                               </span>
                             </td>
                             <td className="py-2.5 px-3 text-center text-sky-300 font-mono">
@@ -1367,16 +1315,16 @@ export default function MatchDetailModal({
                   </div>
                 </div>
 
-                {/* Metric 5: Ambos Anotan % */}
+                {/* Metric 5: Valla Invicta (Clean Sheet) % */}
                 <div>
                   <div className="flex justify-between text-slate-300 mb-1">
-                    <span>{Math.round(Number(homeDetailed.bttsRate || 0))}%</span>
-                    <span className="text-slate-400 text-[11px]">Tasa Ambos Anotan (BTTS) Temporada</span>
-                    <span>{Math.round(Number(awayDetailed.bttsRate || 0))}%</span>
+                    <span>{Math.round(Number(homeDetailed.cleanSheetRate || 0))}%</span>
+                    <span className="text-slate-400 text-[11px]">Tasa Valla Invicta (Clean Sheet) Temporada</span>
+                    <span>{Math.round(Number(awayDetailed.cleanSheetRate || 0))}%</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
-                    <div style={{ width: `${homeDetailed.bttsRate}%` }} className="h-full bg-sky-500" />
-                    <div style={{ width: `${awayDetailed.bttsRate}%` }} className="h-full bg-indigo-500" />
+                    <div style={{ width: `${homeDetailed.cleanSheetRate}%` }} className="h-full bg-sky-500" />
+                    <div style={{ width: `${awayDetailed.cleanSheetRate}%` }} className="h-full bg-indigo-500" />
                   </div>
                 </div>
               </div>

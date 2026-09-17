@@ -110,6 +110,7 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
   match.model = status === 'SCHEDULED' && Date.parse(event.date) > Date.now() ? poissonModel(match.homeTeam, match.awayTeam, 1) : null;
   if (match.model) {
     match.probabilities = match.model.probabilities;
+    match.probabilities.predictedScore = match.model.predictedScore;
   } else if (odds.homeWin && odds.draw && odds.awayWin) {
     const invH = 1 / odds.homeWin, invD = 1 / odds.draw, invA = 1 / odds.awayWin;
     const tot = invH + invD + invA;

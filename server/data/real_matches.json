@@ -1984,7 +1984,7 @@
       "bttsNo": 72,
       "cornerOver95": 56,
       "confidence": 76,
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "odds": {
         "homeWin": 1.24,
         "draw": 7,
@@ -2004,7 +2004,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que VfB Stuttgart tiene una ventaja del 37% en base a forma reciente y métricas de xG."
     },
@@ -2521,7 +2521,7 @@
       "bttsNo": 38,
       "cornerOver95": 62,
       "confidence": 80,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 4.7,
         "draw": 3.75,
@@ -2541,7 +2541,7 @@
       "units": 3,
       "confidence": "80%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Napoli tiene una ventaja del 30% en base a forma reciente y métricas de xG."
     },
@@ -3328,7 +3328,7 @@
       "bttsNo": 43,
       "cornerOver95": 61,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 2,
         "draw": 3.9,
@@ -3348,7 +3348,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Atlanta United FC tiene una ventaja del 31% en base a forma reciente y métricas de xG."
     },
@@ -3594,7 +3594,7 @@
       "bttsNo": 39,
       "cornerOver95": 61,
       "confidence": 77,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 2.2,
         "draw": 3.7,
@@ -3614,7 +3614,7 @@
       "units": 3,
       "confidence": "77%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que CF Montréal tiene una ventaja del 33% en base a forma reciente y métricas de xG."
     },
@@ -4126,7 +4126,7 @@
       "bttsNo": 30,
       "cornerOver95": 63,
       "confidence": 88,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 2.85,
         "draw": 3.5,
@@ -4146,7 +4146,7 @@
       "units": 3,
       "confidence": "88%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Toronto FC tiene una ventaja del 35% en base a forma reciente y métricas de xG."
     },
@@ -4658,7 +4658,7 @@
       "bttsNo": 36,
       "cornerOver95": 62,
       "confidence": 81,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.2,
         "draw": 3.55,
@@ -4678,7 +4678,7 @@
       "units": 3,
       "confidence": "81%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que New York City FC tiene una ventaja del 42% en base a forma reciente y métricas de xG."
     },
@@ -5190,7 +5190,7 @@
       "bttsNo": 21,
       "cornerOver95": 66,
       "confidence": 94,
-      "predictedScore": "2 - 2",
+      "predictedScore": "2 - 3",
       "odds": {
         "homeWin": 2.1,
         "draw": 4.1,
@@ -5210,7 +5210,7 @@
       "units": 3,
       "confidence": "94%",
       "risk": "Moderado",
-      "predictedScore": "2 - 2",
+      "predictedScore": "2 - 3",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Chicago Fire FC tiene una ventaja del 36% en base a forma reciente y métricas de xG."
     },
@@ -8680,7 +8680,7 @@
       "bttsNo": 45,
       "cornerOver95": 60,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.05,
         "draw": 3.55,
@@ -8700,7 +8700,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Pumas UNAM tiene una ventaja del 42% en base a forma reciente y métricas de xG."
     },
@@ -8946,7 +8946,7 @@
       "bttsNo": 72,
       "cornerOver95": 56,
       "confidence": 76,
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "odds": {
         "homeWin": 2.85,
         "draw": 3.3,
@@ -8966,7 +8966,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Venezia tiene una ventaja del 37% en base a forma reciente y métricas de xG."
     },
@@ -10011,7 +10011,7 @@
       "bttsNo": 51,
       "cornerOver95": 59,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 3,
         "draw": 3.4,
@@ -10031,7 +10031,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Atlante tiene una ventaja del 30% en base a forma reciente y métricas de xG."
     },
@@ -10277,7 +10277,7 @@
       "bttsNo": 36,
       "cornerOver95": 62,
       "confidence": 81,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2,
         "draw": 3.3,
@@ -10297,7 +10297,7 @@
       "units": 3,
       "confidence": "81%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Tijuana tiene una ventaja del 47% en base a forma reciente y métricas de xG."
     },
@@ -11075,7 +11075,7 @@
       "bttsNo": 39,
       "cornerOver95": 61,
       "confidence": 77,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 2.45,
         "draw": 3.55,
@@ -11095,7 +11095,7 @@
       "units": 3,
       "confidence": "77%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que AFC Bournemouth tiene una ventaja del 35% en base a forma reciente y métricas de xG."
     },
@@ -11873,7 +11873,7 @@
       "bttsNo": 45,
       "cornerOver95": 60,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 1.91,
         "draw": 3.75,
@@ -11893,7 +11893,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Crystal Palace tiene una ventaja del 42% en base a forma reciente y métricas de xG."
     },
@@ -12937,7 +12937,7 @@
       "bttsNo": 39,
       "cornerOver95": 61,
       "confidence": 77,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 3.15,
         "draw": 3.1,
@@ -12957,7 +12957,7 @@
       "units": 3,
       "confidence": "77%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Lazio tiene una ventaja del 35% en base a forma reciente y métricas de xG."
     },
@@ -13469,7 +13469,7 @@
       "bttsNo": 44,
       "cornerOver95": 61,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 1.42,
         "draw": 4.9,
@@ -13489,7 +13489,7 @@
       "units": 4.5,
       "confidence": "76%",
       "risk": "Muy Bajo",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Athletic Club tiene una ventaja del 48% en base a forma reciente y métricas de xG."
     },
@@ -14533,7 +14533,7 @@
       "bttsNo": 72,
       "cornerOver95": 56,
       "confidence": 76,
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "odds": {
         "homeWin": 2.6,
         "draw": 3.25,
@@ -14553,7 +14553,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Lorient tiene una ventaja del 36% en base a forma reciente y métricas de xG."
     },
@@ -15068,7 +15068,7 @@
       "bttsNo": 44,
       "cornerOver95": 61,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 7,
         "draw": 4.3,
@@ -15088,7 +15088,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Sunderland tiene una ventaja del 22% en base a forma reciente y métricas de xG."
     },
@@ -15866,7 +15866,7 @@
       "bttsNo": 41,
       "cornerOver95": 61,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.12,
         "draw": 3.97,
@@ -15886,7 +15886,7 @@
       "units": 4.5,
       "confidence": "76%",
       "risk": "Muy Bajo",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Columbus Crew tiene una ventaja del 45% en base a forma reciente y métricas de xG."
     },
@@ -16132,7 +16132,7 @@
       "bttsNo": 49,
       "cornerOver95": 60,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.21,
         "draw": 3.53,
@@ -16152,7 +16152,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que D.C. United tiene una ventaja del 43% en base a forma reciente y métricas de xG."
     },
@@ -16930,7 +16930,7 @@
       "bttsNo": 35,
       "cornerOver95": 62,
       "confidence": 82,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.12,
         "draw": 4.14,
@@ -16950,7 +16950,7 @@
       "units": 3,
       "confidence": "82%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Orlando City SC tiene una ventaja del 45% en base a forma reciente y métricas de xG."
     },
@@ -19590,7 +19590,7 @@
       "bttsNo": 72,
       "cornerOver95": 56,
       "confidence": 76,
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "odds": {
         "homeWin": 1.71,
         "draw": 3.75,
@@ -19610,7 +19610,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Celta Vigo tiene una ventaja del 37% en base a forma reciente y métricas de xG."
     },
@@ -20388,7 +20388,7 @@
       "bttsNo": 40,
       "cornerOver95": 61,
       "confidence": 78,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 1.4,
         "draw": 4.7,
@@ -20408,7 +20408,7 @@
       "units": 3.5,
       "confidence": "78%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Lille tiene una ventaja del 51% en base a forma reciente y métricas de xG."
     },
@@ -21186,7 +21186,7 @@
       "bttsNo": 20,
       "cornerOver95": 66,
       "confidence": 94,
-      "predictedScore": "2 - 2",
+      "predictedScore": "3 - 2",
       "odds": {
         "homeWin": 2.95,
         "draw": 3.9,
@@ -21206,7 +21206,7 @@
       "units": 3,
       "confidence": "94%",
       "risk": "Moderado",
-      "predictedScore": "2 - 2",
+      "predictedScore": "3 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Manchester United tiene una ventaja del 46% en base a forma reciente y métricas de xG."
     },
@@ -21984,7 +21984,7 @@
       "bttsNo": 40,
       "cornerOver95": 61,
       "confidence": 78,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 5,
         "draw": 3.85,
@@ -22004,7 +22004,7 @@
       "units": 3.5,
       "confidence": "78%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Sassuolo tiene una ventaja del 51% en base a forma reciente y métricas de xG."
     },
@@ -22516,7 +22516,7 @@
       "bttsNo": 41,
       "cornerOver95": 61,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 2.8,
         "draw": 3.6,
@@ -22536,7 +22536,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Real Sociedad tiene una ventaja del 31% en base a forma reciente y métricas de xG."
     },
@@ -23314,7 +23314,7 @@
       "bttsNo": 72,
       "cornerOver95": 56,
       "confidence": 76,
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "odds": {
         "homeWin": 2.57,
         "draw": 2.8,
@@ -23334,7 +23334,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Santos tiene una ventaja del 37% en base a forma reciente y métricas de xG."
     },
@@ -23851,7 +23851,7 @@
       "bttsNo": 39,
       "cornerOver95": 61,
       "confidence": 79,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 1.83,
         "draw": 4.14,
@@ -23871,7 +23871,7 @@
       "units": 3.5,
       "confidence": "79%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Guadalajara tiene una ventaja del 52% en base a forma reciente y métricas de xG."
     },
@@ -24915,7 +24915,7 @@
       "bttsNo": 44,
       "cornerOver95": 61,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 2.4,
         "draw": 3.4,
@@ -24935,7 +24935,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Leeds United tiene una ventaja del 22% en base a forma reciente y métricas de xG."
     },
@@ -25181,7 +25181,7 @@
       "bttsNo": 44,
       "cornerOver95": 61,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 1.91,
         "draw": 3.8,
@@ -25201,7 +25201,7 @@
       "units": 4.5,
       "confidence": "76%",
       "risk": "Muy Bajo",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Villarreal tiene una ventaja del 48% en base a forma reciente y métricas de xG."
     },
@@ -25447,7 +25447,7 @@
       "bttsNo": 49,
       "cornerOver95": 60,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.07,
         "draw": 3.66,
@@ -25467,7 +25467,7 @@
       "units": 4.5,
       "confidence": "76%",
       "risk": "Muy Bajo",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que León tiene una ventaja del 46% en base a forma reciente y métricas de xG."
     },
@@ -25713,7 +25713,7 @@
       "bttsNo": 35,
       "cornerOver95": 62,
       "confidence": 83,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 1.94,
         "draw": 4.33,
@@ -25733,7 +25733,7 @@
       "units": 3,
       "confidence": "83%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Rayo Vallecano tiene una ventaja del 49% en base a forma reciente y métricas de xG."
     },
@@ -26511,7 +26511,7 @@
       "bttsNo": 32,
       "cornerOver95": 63,
       "confidence": 86,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 4.5,
         "draw": 4.2,
@@ -26531,7 +26531,7 @@
       "units": 3,
       "confidence": "86%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Puebla tiene una ventaja del 34% en base a forma reciente y métricas de xG."
     },
@@ -26777,7 +26777,7 @@
       "bttsNo": 41,
       "cornerOver95": 61,
       "confidence": 78,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 1.76,
         "draw": 4.33,
@@ -26797,7 +26797,7 @@
       "units": 3.5,
       "confidence": "78%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "PENDING",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Atlético Madrid tiene una ventaja del 54% en base a forma reciente y métricas de xG."
     },
@@ -28413,7 +28413,7 @@
       "bttsNo": 35,
       "cornerOver95": 62,
       "confidence": 83,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 3.17,
         "draw": 4.33,
@@ -28433,7 +28433,7 @@
       "units": 3,
       "confidence": "83%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "LOST",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Ipswich Town tiene una ventaja del 30% en base a forma reciente y métricas de xG."
     },
@@ -28985,7 +28985,7 @@
       "bttsNo": 34,
       "cornerOver95": 62,
       "confidence": 84,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.16,
         "draw": 4.14,
@@ -29005,7 +29005,7 @@
       "units": 3,
       "confidence": "84%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Paris Saint-Germain tiene una ventaja del 44% en base a forma reciente y métricas de xG."
     },
@@ -29271,7 +29271,7 @@
       "bttsNo": 30,
       "cornerOver95": 63,
       "confidence": 88,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 2.72,
         "draw": 4.33,
@@ -29291,7 +29291,7 @@
       "units": 3,
       "confidence": "88%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "LOST",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que New York City FC tiene una ventaja del 35% en base a forma reciente y métricas de xG."
     },
@@ -30987,7 +30987,7 @@
       "bttsNo": 45,
       "cornerOver95": 60,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.27,
         "draw": 3.66,
@@ -31007,7 +31007,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Fulham tiene una ventaja del 42% en base a forma reciente y métricas de xG."
     },
@@ -32992,7 +32992,7 @@
       "bttsNo": 31,
       "cornerOver95": 63,
       "confidence": 87,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.16,
         "draw": 4.33,
@@ -33012,7 +33012,7 @@
       "units": 3,
       "confidence": "87%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Rayo Vallecano tiene una ventaja del 44% en base a forma reciente y métricas de xG."
     },
@@ -34136,7 +34136,7 @@
       "bttsNo": 32,
       "cornerOver95": 63,
       "confidence": 86,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 2.8,
         "draw": 4.33,
@@ -34156,7 +34156,7 @@
       "units": 3,
       "confidence": "86%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Villarreal tiene una ventaja del 34% en base a forma reciente y métricas de xG."
     },
@@ -34422,7 +34422,7 @@
       "bttsNo": 43,
       "cornerOver95": 61,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 3.17,
         "draw": 3.97,
@@ -34442,7 +34442,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Atlético de San Luis tiene una ventaja del 30% en base a forma reciente y métricas de xG."
     },
@@ -34708,7 +34708,7 @@
       "bttsNo": 33,
       "cornerOver95": 62,
       "confidence": 85,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.07,
         "draw": 4.33,
@@ -34728,7 +34728,7 @@
       "units": 3,
       "confidence": "85%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "LOST",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Charlotte FC tiene una ventaja del 46% en base a forma reciente y métricas de xG."
     },
@@ -35282,7 +35282,7 @@
       "bttsNo": 36,
       "cornerOver95": 62,
       "confidence": 81,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.07,
         "draw": 4.14,
@@ -35302,7 +35302,7 @@
       "units": 3,
       "confidence": "81%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "LOST",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Orlando City SC tiene una ventaja del 46% en base a forma reciente y métricas de xG."
     },
@@ -35573,7 +35573,7 @@
       "bttsNo": 42,
       "cornerOver95": 61,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 1.94,
         "draw": 3.97,
@@ -35593,7 +35593,7 @@
       "units": 4.5,
       "confidence": "76%",
       "risk": "Muy Bajo",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Philadelphia Union tiene una ventaja del 49% en base a forma reciente y métricas de xG."
     },
@@ -35859,7 +35859,7 @@
       "bttsNo": 31,
       "cornerOver95": 63,
       "confidence": 87,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 2.65,
         "draw": 4.33,
@@ -35879,7 +35879,7 @@
       "units": 3,
       "confidence": "87%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Toronto FC tiene una ventaja del 36% en base a forma reciente y métricas de xG."
     },
@@ -37003,7 +37003,7 @@
       "bttsNo": 47,
       "cornerOver95": 60,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.32,
         "draw": 3.66,
@@ -37023,7 +37023,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Tigres UANL tiene una ventaja del 41% en base a forma reciente y métricas de xG."
     },
@@ -41008,7 +41008,7 @@
       "bttsNo": 20,
       "cornerOver95": 66,
       "confidence": 94,
-      "predictedScore": "2 - 2",
+      "predictedScore": "2 - 3",
       "odds": {
         "homeWin": 2.72,
         "draw": 5.01,
@@ -41028,7 +41028,7 @@
       "units": 3,
       "confidence": "94%",
       "risk": "Moderado",
-      "predictedScore": "2 - 2",
+      "predictedScore": "2 - 3",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Arsenal tiene una ventaja del 35% en base a forma reciente y métricas de xG."
     },
@@ -42152,7 +42152,7 @@
       "bttsNo": 39,
       "cornerOver95": 61,
       "confidence": 77,
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "odds": {
         "homeWin": 2.72,
         "draw": 3.97,
@@ -42172,7 +42172,7 @@
       "units": 3,
       "confidence": "77%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "1 - 2",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Juventus tiene una ventaja del 35% en base a forma reciente y métricas de xG."
     },
@@ -43871,7 +43871,7 @@
       "bttsNo": 72,
       "cornerOver95": 56,
       "confidence": 76,
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "odds": {
         "homeWin": 2.65,
         "draw": 2.8,
@@ -43891,7 +43891,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "settlement": "LOST",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Cagliari tiene una ventaja del 36% en base a forma reciente y métricas de xG."
     },
@@ -44157,7 +44157,7 @@
       "bttsNo": 72,
       "cornerOver95": 56,
       "confidence": 76,
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "odds": {
         "homeWin": 2.57,
         "draw": 2.8,
@@ -44177,7 +44177,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "0 - 0",
+      "predictedScore": "1 - 0",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Getafe tiene una ventaja del 37% en base a forma reciente y métricas de xG."
     },
@@ -44443,7 +44443,7 @@
       "bttsNo": 40,
       "cornerOver95": 61,
       "confidence": 78,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 1.87,
         "draw": 4.14,
@@ -44463,7 +44463,7 @@
       "units": 3.5,
       "confidence": "78%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Udinese tiene una ventaja del 51% en base a forma reciente y métricas de xG."
     },
@@ -44729,7 +44729,7 @@
       "bttsNo": 49,
       "cornerOver95": 60,
       "confidence": 76,
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "odds": {
         "homeWin": 2.27,
         "draw": 3.53,
@@ -44749,7 +44749,7 @@
       "units": 3,
       "confidence": "76%",
       "risk": "Moderado",
-      "predictedScore": "1 - 1",
+      "predictedScore": "2 - 1",
       "settlement": "WON",
       "summaryRationale": "Modelo predictivo cuantitativo evalúa que Elche tiene una ventaja del 42% en base a forma reciente y métricas de xG."
     },

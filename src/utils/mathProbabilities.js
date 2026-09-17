@@ -120,13 +120,15 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, _match = {}
   const fouls = Number((team.avgFouls || (isHome ? Math.min(16.0, Math.max(9.5, 10.5 + avgGC * 0.7)) : Math.min(16.5, Math.max(10.0, 11.2 + avgGC * 0.8)))).toFixed(1));
   const cards = Number((team.avgYellowCards || (isHome ? Math.min(3.6, Math.max(1.4, 1.8 + avgGC * 0.3)) : Math.min(3.8, Math.max(1.6, 2.1 + avgGC * 0.3)))).toFixed(1));
 
-  // Probabilidades de Tarjetas (-0.5, +0.5, +1.5, +2.5)
+  // Probabilidades de Tarjetas (-0.5, +0.5, +1.5, +2.5, +3.5, +4.5)
   const lambdaCards = Math.max(0.5, cards);
   const probCardsUnder05Raw = Math.round(poissonProbability(lambdaCards, 0) * 100);
   const cardsUnder05 = Math.max(1, Math.min(55, probCardsUnder05Raw));
   const cardsOver05 = 100 - cardsUnder05;
   const cardsOver15 = Math.max(1, Math.min(cardsOver05 - 1, Math.round((1 - poissonCumulative(lambdaCards, 1)) * 100)));
   const cardsOver25 = Math.max(1, Math.min(cardsOver15 - 1, Math.round((1 - poissonCumulative(lambdaCards, 2)) * 100)));
+  const cardsOver35 = Math.max(1, Math.min(cardsOver25 - 1, Math.round((1 - poissonCumulative(lambdaCards, 3)) * 100)));
+  const cardsOver45 = Math.max(1, Math.min(cardsOver35 - 1, Math.round((1 - poissonCumulative(lambdaCards, 4)) * 100)));
 
   return {
     name: team.name || (isHome ? 'Equipo Local' : 'Equipo Visitante'),
@@ -170,6 +172,8 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, _match = {}
     cardsOver05,
     cardsOver15,
     cardsOver25,
+    cardsOver35,
+    cardsOver45,
     // Disciplina
     fouls,
     cards
@@ -647,5 +651,92 @@ export function getTop3Opportunities(match) {
     odds: Number(Number(sel.odds).toFixed(2)),
     probability: Math.round(Number(sel.probability))
   }));
+}
+
+/**
+ * Calcula el marcador más probable derivado de Poisson y los goles esperados reales de ambos clubes.
+ */
+export function calculateRealPoissonScore(match) {
+  if (!match) return '1 - 0';
+  const home = match.homeTeam || {};
+  const away = match.awayTeam || {};
+  const homeGP = Math.max(1, home.gamesPlayed || (home.homeRecord ? (home.homeRecord.w + home.homeRecord.d + home.homeRecord.l) : null) || 15);
+  const awayGP = Math.max(1, away.gamesPlayed || (away.awayRecord ? (away.awayRecord.w + away.awayRecord.d + away.awayRecord.l) : null) || 15);
+
+  const homeGF = home.avgGoalsScored != null ? Number(home.avgGoalsScored) : ((home.goalsFor != null ? home.goalsFor : 24) / homeGP);
+  const homeGC = home.avgGoalsConceded != null ? Number(home.avgGoalsConceded) : ((home.goalsAgainst != null ? home.goalsAgainst : 18) / homeGP);
+  const awayGF = away.avgGoalsScored != null ? Number(away.avgGoalsScored) : ((away.goalsFor != null ? away.goalsFor : 20) / awayGP);
+  const awayGC = away.avgGoalsConceded != null ? Number(away.avgGoalsConceded) : ((away.goalsAgainst != null ? away.goalsAgainst : 22) / awayGP);
+
+  const lambda = Math.max(0.4, Math.min(4.0, (homeGF + awayGC) / 2));
+  const mu = Math.max(0.4, Math.min(4.0, (awayGF + homeGC) / 2));
+
+  const poisson = (l, k) => {
+    let p = Math.exp(-l);
+    for (let i = 1; i <= k; i++) p *= l / i;
+    return p;
+  };
+
+  const homeProb = Number(match.probabilities?.homeWin != null ? match.probabilities.homeWin : 50);
+  const awayProb = Number(match.probabilities?.awayWin != null ? match.probabilities.awayWin : 25);
+  const isHomeFavored = homeProb >= awayProb + 4;
+  const isAwayFavored = awayProb >= homeProb + 4;
+
+  let bestScore = isHomeFavored ? '2 - 1' : isAwayFavored ? '1 - 2' : '1 - 1';
+  let maxProb = -1;
+
+  for (let h = 0; h <= 5; h++) {
+    for (let a = 0; a <= 5; a++) {
+      if (isHomeFavored && h <= a) continue;
+      if (isAwayFavored && a <= h) continue;
+      const p = poisson(lambda, h) * poisson(mu, a);
+      if (p > maxProb) {
+        maxProb = p;
+        bestScore = `${h} - ${a}`;
+      }
+    }
+  }
+  return bestScore;
+}
+
+/**
+ * Garantiza coherencia matemática estricta entre el marcador proyectado y las estadísticas:
+ * El equipo favorecido cuantitativamente siempre debe tener ventaja goleadora en el marcador predicho,
+ * evitando contradicciones donde un equipo es favorito por 60% pero se predice que pierde o empata sin fundamento.
+ */
+export function getCoherentPredictedScore(match, preferredScore = null) {
+  if (!match) return '2 - 1';
+  const homeProb = Number(match.probabilities?.homeWin != null ? match.probabilities.homeWin : 50);
+  const awayProb = Number(match.probabilities?.awayWin != null ? match.probabilities.awayWin : 25);
+  const candidate = preferredScore || match.probabilities?.predictedScore || match.aiPick?.predictedScore || match.model?.predictedScore;
+
+  if (candidate && typeof candidate === 'string' && candidate.includes('-')) {
+    const parts = candidate.split('-').map(s => parseInt(s.trim(), 10));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      const [h, a] = parts;
+      if (homeProb >= awayProb + 4 && a >= h) {
+        return a > h ? `${a} - ${h}` : `${h + 1} - ${a}`;
+      }
+      if (awayProb >= homeProb + 4 && h >= a) {
+        return h > a ? `${a} - ${h}` : `${h} - ${a + 1}`;
+      }
+      return `${h} - ${a}`;
+    }
+  }
+
+  // Recurrir a la distribución real de Poisson si no hay candidato o si el candidato es incoherente
+  if (match.model?.scoreDistribution && Array.isArray(match.model.scoreDistribution) && match.model.scoreDistribution.length > 0) {
+    const isHomeFavored = homeProb >= awayProb + 4;
+    const isAwayFavored = awayProb >= homeProb + 4;
+    const matchScore = match.model.scoreDistribution.find(item => {
+      const [h, a] = item.score.split('-').map(s => parseInt(s.trim(), 10));
+      if (isHomeFavored) return h > a;
+      if (isAwayFavored) return a > h;
+      return true;
+    });
+    if (matchScore?.score) return matchScore.score;
+  }
+
+  return calculateRealPoissonScore(match) || (homeProb >= awayProb ? '2 - 1' : '1 - 2');
 }
 

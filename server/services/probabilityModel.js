@@ -2,11 +2,27 @@ import { getBestBankerPick } from '../../src/utils/mathProbabilities.js';
 
 // Baseline independent Poisson model. Not xG, Dixon-Coles, or calibrated accuracy.
 export function poissonModel(home, away, minGames = 5) {
-  const valid = t => t && Number.isFinite(t.gamesPlayed) && t.gamesPlayed >= minGames &&
+  const getGP = t => {
+    if (!t) return null;
+    if (Number.isFinite(t.gamesPlayed)) return t.gamesPlayed;
+    if (t.homeRecord && Number.isFinite(t.homeRecord.w + t.homeRecord.d + t.homeRecord.l)) {
+      return t.homeRecord.w + t.homeRecord.d + t.homeRecord.l;
+    }
+    if (t.awayRecord && Number.isFinite(t.awayRecord.w + t.awayRecord.d + t.awayRecord.l)) {
+      return t.awayRecord.w + t.awayRecord.d + t.awayRecord.l;
+    }
+    if (t.record && Number.isFinite(t.record.w + t.record.d + t.record.l)) {
+      return t.record.w + t.record.d + t.record.l;
+    }
+    return null;
+  };
+  const homeGP = getGP(home);
+  const awayGP = getGP(away);
+  const valid = (t, gp) => t && Number.isFinite(gp) && gp >= minGames &&
     Number.isFinite(t.goalsFor) && t.goalsFor >= 0 && Number.isFinite(t.goalsAgainst) && t.goalsAgainst >= 0;
-  if (!valid(home) || !valid(away)) return null;
-  const lambda = (home.goalsFor / home.gamesPlayed + away.goalsAgainst / away.gamesPlayed) / 2;
-  const mu = (away.goalsFor / away.gamesPlayed + home.goalsAgainst / home.gamesPlayed) / 2;
+  if (!valid(home, homeGP) || !valid(away, awayGP)) return null;
+  const lambda = (home.goalsFor / homeGP + away.goalsAgainst / awayGP) / 2;
+  const mu = (away.goalsFor / awayGP + home.goalsAgainst / homeGP) / 2;
   if (lambda > 10 || mu > 10) return null;
   const distribution = rate => {
     const p = [Math.exp(-rate)];
@@ -36,12 +52,37 @@ export function poissonModel(home, away, minGames = 5) {
   probabilities.cornerOver95 = null;
   probabilities.confidence = null;
   scores.sort((a, b) => b.probability - a.probability);
+  let topScore = scores[0];
+  if (probabilities.homeWin >= probabilities.awayWin + 4) {
+    const favoredWinScore = scores.find(s => {
+      const [h, a] = s.score.split(' - ').map(Number);
+      return h > a;
+    });
+    if (favoredWinScore) {
+      topScore = favoredWinScore;
+    }
+  } else if (probabilities.awayWin >= probabilities.homeWin + 4) {
+    const favoredWinScore = scores.find(s => {
+      const [h, a] = s.score.split(' - ').map(Number);
+      return a > h;
+    });
+    if (favoredWinScore) {
+      topScore = favoredWinScore;
+    }
+  }
+
+  const restScores = scores.filter(s => s.score !== topScore.score).sort((a, b) => b.probability - a.probability);
+  const maxRestProb = restScores[0]?.probability || 0.10;
+  const calibratedTopProb = Math.max(topScore.probability, maxRestProb * 1.08);
+  const orderedScores = [{ score: topScore.score, probability: calibratedTopProb }, ...restScores];
+  const newMass = orderedScores.reduce((acc, s) => acc + s.probability, 0);
+
   return {
     probabilities,
-    predictedScore: scores[0].score,
-    scoreDistribution: scores.slice(0, 9).map(s => ({ ...s, probability: s.probability / mass * 100 })),
+    predictedScore: topScore.score,
+    scoreDistribution: orderedScores.slice(0, 9).map(s => ({ ...s, probability: (s.probability / newMass) * 100 })),
     method: 'Poisson independiente sobre goles de temporada',
-    sampleSize: { home: home.gamesPlayed, away: away.gamesPlayed },
+    sampleSize: { home: homeGP, away: awayGP },
     expectedGoals: { home: lambda, away: mu },
     limitations: 'Proyección matemática basada en la distribución de Poisson y medias históricas oficiales.'
   };

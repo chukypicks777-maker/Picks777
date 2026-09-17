@@ -376,12 +376,12 @@ export async function generateAiMatchReport(match, options = {}) {
   const hasProbabilities = Boolean(match.model || (match.probabilities && (match.probabilities.homeWin != null || match.probabilities.awayWin != null)));
 
   const isDefaultBankerDC = defaultBanker && /gana o empata|o empate|1x|x2|doble oportunidad/i.test(defaultBanker.selection);
-  const over15ProbBaseline = match.probabilities?.over15 != null
-    ? Number(match.probabilities.over15)
-    : (match.probabilities?.over25 != null ? Math.min(96, Math.round(Number(match.probabilities.over25) + 26)) : 82);
-  const under35ProbBaseline = match.probabilities?.under35 != null
-    ? Number(match.probabilities.under35)
-    : (match.probabilities?.over25 != null ? Math.min(94, Math.round(100 - (Number(match.probabilities.over25) - 24))) : 78);
+  const over15ProbBaseline = Math.round(Number(match.probabilities?.over15 != null
+    ? match.probabilities.over15
+    : (match.probabilities?.over25 != null ? Math.min(96, Math.round(Number(match.probabilities.over25) + 26)) : 82)));
+  const under35ProbBaseline = Math.round(Number(match.probabilities?.under35 != null
+    ? match.probabilities.under35
+    : (match.probabilities?.over25 != null ? Math.min(94, Math.round(100 - (Number(match.probabilities.over25) - 24))) : 78)));
 
   const baselineSafePick = hasProbabilities ? (isDefaultBankerDC ? (
     under35ProbBaseline >= over15ProbBaseline ? {
@@ -405,16 +405,9 @@ export async function generateAiMatchReport(match, options = {}) {
     rationale: `Cobertura de alta probabilidad respaldada por la distribución estadística Poisson y control de riesgo ante paridad.`
   }) : null;
 
-  const bttsProbBaseline = Number(match.probabilities?.bttsYes || 50);
   const over25ProbBaseline = Number(match.probabilities?.over25 || 50);
   const baselineSecondary = hasProbabilities ? (
-    bttsProbBaseline >= 52 ? {
-      selection: 'Ambos Equipos Anotan: SÍ',
-      market: 'Ambos Equipos Anotan',
-      probability: Math.round(bttsProbBaseline),
-      odds: Number(Number(match.odds?.bttsYes || 1.80).toFixed(2)),
-      rationale: `Alta frecuencia goleadora de ambos clubes en la presente temporada (${Math.round(bttsProbBaseline)}% probabilidad Poisson).`
-    } : over25ProbBaseline >= 52 ? {
+    over25ProbBaseline >= 52 ? {
       selection: 'Más de 2.5 Goles',
       market: 'Total Goles Over 2.5',
       probability: Math.round(over25ProbBaseline),
@@ -749,10 +742,10 @@ Devuelve el JSON del informe institucional.`;
         if (predictedScoreCandidate && predictedScoreCandidate.includes('-')) {
           const [hStr, aStr] = predictedScoreCandidate.split('-').map(s => parseInt(s.trim(), 10));
           if (!isNaN(hStr) && !isNaN(aStr)) {
-            if (homeWinProb >= awayWinProb + 10 && aStr > hStr) {
-              predictedScoreCandidate = match.model?.predictedScore || `${Math.max(hStr, aStr)} - ${Math.min(hStr, aStr)}`;
-            } else if (awayWinProb >= homeWinProb + 10 && hStr > aStr) {
-              predictedScoreCandidate = match.model?.predictedScore || `${Math.min(hStr, aStr)} - ${Math.max(hStr, aStr)}`;
+            if (homeWinProb >= awayWinProb + 4 && aStr >= hStr) {
+              predictedScoreCandidate = aStr > hStr ? `${aStr} - ${hStr}` : `${hStr + 1} - ${aStr}`;
+            } else if (awayWinProb >= homeWinProb + 4 && hStr >= aStr) {
+              predictedScoreCandidate = hStr > aStr ? `${aStr} - ${hStr}` : `${hStr} - ${aStr + 1}`;
             }
           }
         }
@@ -780,12 +773,12 @@ Devuelve el JSON del informe institucional.`;
 
         const isTopPickDC = /gana o empata|o empate|1x|x2|doble oportunidad/i.test(topPickCandidate.selection);
 
-        const over15Prob = match.probabilities?.over15 != null
-          ? Number(match.probabilities.over15)
-          : (match.probabilities?.over25 != null ? Math.min(96, Math.round(Number(match.probabilities.over25) + 26)) : 82);
-        const under35Prob = match.probabilities?.under35 != null
-          ? Number(match.probabilities.under35)
-          : (match.probabilities?.over25 != null ? Math.min(94, Math.round(100 - (Number(match.probabilities.over25) - 24))) : 78);
+        const over15Prob = Math.round(Number(match.probabilities?.over15 != null
+          ? match.probabilities.over15
+          : (match.probabilities?.over25 != null ? Math.min(96, Math.round(Number(match.probabilities.over25) + 26)) : 82)));
+        const under35Prob = Math.round(Number(match.probabilities?.under35 != null
+          ? match.probabilities.under35
+          : (match.probabilities?.over25 != null ? Math.min(94, Math.round(100 - (Number(match.probabilities.over25) - 24))) : 78)));
 
         let safePickCandidate;
         if (isTopPickDC) {
@@ -823,15 +816,12 @@ Devuelve el JSON del informe institucional.`;
           };
         }
 
-        const bttsProb = Number(match.probabilities?.bttsYes || 50);
+        if (valueBetCandidate && /ambos anotan|btts/i.test(valueBetCandidate.selection || '')) {
+          valueBetCandidate = null;
+        }
+
         const over25Prob = Number(match.probabilities?.over25 || 50);
-        const defaultSecondary = bttsProb >= 52 ? {
-          selection: 'Ambos Equipos Anotan: SÍ',
-          market: 'Ambos Equipos Anotan',
-          probability: Math.round(bttsProb),
-          odds: Number(Number(match.odds?.bttsYes || 1.80).toFixed(2)),
-          rationale: `Alta frecuencia goleadora de ambos clubes en la presente temporada (${Math.round(bttsProb)}% probabilidad Poisson).`
-        } : over25Prob >= 52 ? {
+        const defaultSecondary = over25Prob >= 52 ? {
           selection: 'Más de 2.5 Goles',
           market: 'Total Goles Over 2.5',
           probability: Math.round(over25Prob),

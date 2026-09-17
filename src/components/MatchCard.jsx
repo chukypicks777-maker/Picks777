@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles } from 'lucide-react';
+import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles, Lock, Crown } from 'lucide-react';
 import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
@@ -11,14 +11,16 @@ export default function MatchCard({
   onOpenModal, 
   onAddToParlay, 
   oddsFormat = 'decimal',
-  bankerRank = null
+  bankerRank = null,
+  isLocked = false,
+  onUnlockVip = null
 }) {
   const homeProb = Math.round(match.probabilities?.homeWin || 50);
   const drawProb = Math.round(match.probabilities?.draw || 25);
   const awayProb = Math.round(match.probabilities?.awayWin || 25);
-  const bttsProb = Math.round(match.probabilities?.bttsYes || 55);
   const over25Prob = Math.round(match.probabilities?.over25 || 60);
   const under25Prob = match.probabilities?.under25 != null ? Math.round(match.probabilities.under25) : (100 - over25Prob);
+  const over15Prob = Math.round(match.probabilities?.over15 != null ? match.probabilities.over15 : Math.min(96, over25Prob + 24));
   const confidenceScore = Math.round(match.probabilities?.confidence || match.aiPick?.probability || Math.max(homeProb, awayProb, over25Prob, under25Prob, 65));
   
   const bankerPick = getBestBankerPick(match);
@@ -39,234 +41,266 @@ export default function MatchCard({
       role="button"
       tabIndex={0}
       onClick={() => {
-        sounds.playClick();
-        onOpenModal(match);
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
+        if (isLocked) {
+          sounds.playClick();
+          onUnlockVip?.();
+        } else {
           sounds.playClick();
           onOpenModal(match);
         }
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (isLocked) {
+            sounds.playClick();
+            onUnlockVip?.();
+          } else {
+            sounds.playClick();
+            onOpenModal(match);
+          }
+        }
+      }}
       className="terminal-card rounded-xl p-4 flex flex-col justify-between border border-white/10 hover:border-sky-500/40 cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-400/50"
     >
-      <div>
-        {/* Card Header: League & Match Status / Time */}
-        <div className="flex items-center justify-between text-xs mb-3 pb-2.5 border-b border-white/5">
-          <div className="flex items-center space-x-1.5 text-slate-300 font-sans">
-            <span>{match.leagueFlag}</span>
-            <span className="font-medium text-xs truncate max-w-[150px]">
-              {match.leagueName}
-            </span>
-          </div>
-
-          <div>
-            {match.status === 'LIVE' ? (
-              <span className="px-2 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded text-[10px] font-mono font-bold flex items-center space-x-1 shadow-[0_0_8px_rgba(244,63,94,0.3)]">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 live-dot"></span>
-                <span>{match.liveMinute}</span>
-              </span>
-            ) : match.status === 'FINISHED' ? (
-              <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-mono font-bold">
-                FT Final
-              </span>
-            ) : (
-              <span className="px-2 py-0.5 bg-[#141b28] text-slate-400 rounded text-[10px] font-mono border border-white/5 flex items-center space-x-1">
-                <Clock className="w-3 h-3 text-sky-400" />
-                <span>{formatMatchTime(match.kickoff)}</span>
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Teams Matchup Rows */}
-        <div className="space-y-2.5 mb-3.5">
-          
-          {/* Home Team */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2.5 flex-1 min-w-0">
-              <img
-                src={match.homeTeam?.logo}
-                alt={match.homeTeam?.name}
-                className="w-6 h-6 object-contain shrink-0 filter drop-shadow"
-              />
-              <span className="font-semibold text-xs text-white truncate">
-                {match.homeTeam?.name}
+      <div className={`flex flex-col justify-between h-full transition duration-300 ${isLocked ? 'filter blur-[4px] select-none pointer-events-none opacity-25' : ''}`}>
+        <div>
+          {/* Card Header: League & Match Status / Time */}
+          <div className="flex items-center justify-between text-xs mb-3 pb-2.5 border-b border-white/5">
+            <div className="flex items-center space-x-1.5 text-slate-300 font-sans">
+              <span>{match.leagueFlag}</span>
+              <span className="font-medium text-xs truncate max-w-[150px]">
+                {match.leagueName}
               </span>
             </div>
 
-            <div className="flex items-center space-x-2 shrink-0">
+            <div className="flex items-center space-x-1 font-mono text-[11px]">
               {match.status === 'LIVE' ? (
-                <span className="text-base font-black font-mono text-white">
-                  {match.liveScore?.home ?? 0}
+                <span className="flex items-center space-x-1 text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                  <span>{match.minute ? `${match.minute}'` : 'EN VIVO'}</span>
                 </span>
               ) : match.status === 'FINISHED' ? (
-                <span className="text-base font-black font-mono text-white">
-                  {match.finalScore?.home ?? 0}
+                <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  FINALIZADO
                 </span>
-              ) : null}
-              <span className="px-2 py-0.5 bg-[#141b28] border border-white/5 rounded text-xs font-mono font-semibold text-sky-300">
-                {formatOdds(match.odds?.homeWin, oddsFormat)}
-              </span>
+              ) : (
+                <span className="text-slate-400 flex items-center space-x-1">
+                  <Clock className="w-3 h-3 text-slate-500" />
+                  <span>{formatMatchTime(match.kickoff)}</span>
+                </span>
+              )}
             </div>
           </div>
 
-          {/* Away Team */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2.5 flex-1 min-w-0">
-              <img
-                src={match.awayTeam?.logo}
-                alt={match.awayTeam?.name}
-                className="w-6 h-6 object-contain shrink-0 filter drop-shadow"
-              />
-              <span className="font-semibold text-xs text-white truncate">
-                {match.awayTeam?.name}
+          {/* Teams and Logos */}
+          <div className="space-y-2 mb-3">
+            {/* Home Team */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <img
+                  src={match.homeTeam?.logo}
+                  alt={match.homeTeam?.name}
+                  className="w-5 h-5 object-contain"
+                />
+                <span className="font-semibold text-xs text-white">
+                  {match.homeTeam?.name}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2 font-mono text-xs">
+                {match.status === 'LIVE' || match.status === 'FINISHED' ? (
+                  <span className="font-bold text-white text-sm">
+                    {match.status === 'LIVE' ? match.liveScore?.home ?? 0 : match.finalScore?.home ?? 0}
+                  </span>
+                ) : (
+                  <span className="text-slate-400 text-[11px]">
+                    {formatOdds(match.odds?.homeWin, oddsFormat)}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Away Team */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <img
+                  src={match.awayTeam?.logo}
+                  alt={match.awayTeam?.name}
+                  className="w-5 h-5 object-contain"
+                />
+                <span className="font-semibold text-xs text-white">
+                  {match.awayTeam?.name}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2 font-mono text-xs">
+                {match.status === 'LIVE' || match.status === 'FINISHED' ? (
+                  <span className="font-bold text-white text-sm">
+                    {match.status === 'LIVE' ? match.liveScore?.away ?? 0 : match.finalScore?.away ?? 0}
+                  </span>
+                ) : (
+                  <span className="text-slate-400 text-[11px]">
+                    {formatOdds(match.odds?.awayWin, oddsFormat)}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Win Probabilities Bar (1 X 2) */}
+          <div className="mb-3">
+            <div className="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
+              <span>1: <strong><NumberCounter value={homeProb} suffix="%" /></strong></span>
+              <span>X: <strong><NumberCounter value={drawProb} suffix="%" /></strong></span>
+              <span>2: <strong><NumberCounter value={awayProb} suffix="%" /></strong></span>
+            </div>
+            <div className="h-1.5 w-full bg-[#161c28] rounded-full overflow-hidden flex gap-0.5">
+              <div style={{ width: `${homeProb}%` }} className="bg-sky-500 h-full rounded-l-full transition-all duration-500 shadow-[0_0_6px_rgba(56,189,248,0.4)]" />
+              <div style={{ width: `${drawProb}%` }} className="bg-slate-500 h-full transition-all duration-500" />
+              <div style={{ width: `${awayProb}%` }} className="bg-indigo-500 h-full rounded-r-full transition-all duration-500 shadow-[0_0_6px_rgba(129,140,248,0.4)]" />
+            </div>
+          </div>
+
+          {/* Banker Rank Banner if in Banker Mode */}
+          {bankerRank != null && (
+            <div className="mb-2.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-500/20 via-sky-500/15 to-transparent border border-emerald-500/35 flex items-center justify-between font-mono text-[10px]">
+              <span className="font-bold text-emerald-300 flex items-center space-x-1">
+                <span>💎 TOP #{bankerRank} BANQUERO</span>
+              </span>
+              <span className="text-sky-300 font-bold">
+                {displayProb}% Seguridad
+              </span>
+            </div>
+          )}
+
+          {/* Quick Stats Pills: Goles Over (+1.5 y +2.5) */}
+          <div className="grid grid-cols-2 gap-1.5 mb-3 text-center text-[10px] font-mono">
+            <div className="bg-[#121824] p-1.5 rounded border border-white/5">
+              <span className="text-slate-400 block text-[9px]">+1.5 Over</span>
+              <span className="font-bold text-sky-300">{over15Prob}%</span>
+            </div>
+            <div className="bg-[#121824] p-1.5 rounded border border-white/5">
+              <span className="text-slate-400 block text-[9px]">+2.5 Over</span>
+              <span className="font-bold text-emerald-400">{over25Prob}%</span>
+            </div>
+          </div>
+
+          {/* Pick Recommendation Capsule */}
+          <div className="bg-[#121824] border border-sky-500/20 rounded-lg p-2.5 mb-3">
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[9.5px] font-mono font-bold text-sky-400 uppercase tracking-wide flex items-center space-x-1">
+                <Zap className="w-2.5 h-2.5 fill-sky-400" />
+                <span>{isBankerMode || confidenceScore >= 80 ? 'Pick Banquero IA' : 'Pronóstico IA'}</span>
+              </span>
+              {match.aiPick?.settlement === 'WON' ? (
+                <span className="text-[9.5px] font-mono text-emerald-400 font-bold flex items-center space-x-0.5">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>ACERTADO</span>
+                </span>
+              ) : (
+                <span className="text-[9.5px] font-mono text-slate-400">
+                  {displayProb}% Conf.
+                </span>
+              )}
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-white truncate">
+                {displayPick}
+              </p>
+              <span className="text-[11px] font-mono font-bold text-emerald-400 shrink-0 ml-1.5">
+                @{formatOdds(displayOdds, oddsFormat)}
               </span>
             </div>
 
-            <div className="flex items-center space-x-2 shrink-0">
-              {match.status === 'LIVE' ? (
-                <span className="text-base font-black font-mono text-white">
-                  {match.liveScore?.away ?? 0}
-                </span>
-              ) : match.status === 'FINISHED' ? (
-                <span className="text-base font-black font-mono text-white">
-                  {match.finalScore?.away ?? 0}
-                </span>
-              ) : null}
-              <span className="px-2 py-0.5 bg-[#141b28] border border-white/5 rounded text-xs font-mono font-semibold text-sky-300">
-                {formatOdds(match.odds?.awayWin, oddsFormat)}
-              </span>
+            {/* Justificación por IA de por qué es el seguro (tendencias de goles y datos de temporada) */}
+            <div className="mt-2 pt-2 border-t border-white/10 flex items-start space-x-1.5 text-[10px] text-emerald-300/90 font-mono leading-snug">
+              <Sparkles className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
+              <p className="line-clamp-2">
+                <strong className="text-emerald-400 font-sans">Justificación IA: </strong>
+                {isBankerMode
+                  ? (bankerPick?.rationale || match.aiPick?.summaryRationale || 'Alta probabilidad estadística respaldada por xG, goles anotados y rendimiento en temporada.')
+                  : (match.aiPick?.summaryRationale || bankerPick?.rationale || 'Alta probabilidad estadística respaldada por xG, goles anotados y rendimiento en temporada.')}
+              </p>
             </div>
           </div>
 
         </div>
 
-        {/* Probabilities Segment Bar */}
-        <div className="space-y-1 mb-3">
-          <div className="flex justify-between text-[10px] font-mono text-slate-400">
-            <span>1: <strong><NumberCounter value={homeProb} suffix="%" /></strong></span>
-            <span>X: <strong><NumberCounter value={drawProb} suffix="%" /></strong></span>
-            <span>2: <strong><NumberCounter value={awayProb} suffix="%" /></strong></span>
-          </div>
-          <div className="h-1.5 w-full bg-[#161c28] rounded-full overflow-hidden flex gap-0.5">
-            <div style={{ width: `${homeProb}%` }} className="bg-sky-500 h-full rounded-l-full transition-all duration-500 shadow-[0_0_6px_rgba(56,189,248,0.4)]" />
-            <div style={{ width: `${drawProb}%` }} className="bg-slate-500 h-full transition-all duration-500" />
-            <div style={{ width: `${awayProb}%` }} className="bg-indigo-500 h-full rounded-r-full transition-all duration-500 shadow-[0_0_6px_rgba(129,140,248,0.4)]" />
-          </div>
-        </div>
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+          {match.status === 'FINISHED' ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                sounds.playClick();
+                onOpenModal(match);
+              }}
+              className="py-1.5 px-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-white/5 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
+            >
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              <span>Finalizado</span>
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                sounds.playAddParlay();
+                const topOpportunities = getTop3Opportunities(match);
+                onAddToParlay(topOpportunities);
+              }}
+              className="py-1.5 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
+            >
+              <Plus className="w-3 h-3" />
+              <span>Al Parlay</span>
+            </button>
+          )}
 
-        {/* Banker Rank Banner if in Banker Mode */}
-        {bankerRank != null && (
-          <div className="mb-2.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-500/20 via-sky-500/15 to-transparent border border-emerald-500/35 flex items-center justify-between font-mono text-[10px]">
-            <span className="font-bold text-emerald-300 flex items-center space-x-1">
-              <span>💎 TOP #{bankerRank} BANQUERO</span>
-            </span>
-            <span className="text-sky-300 font-bold">
-              {displayProb}% Seguridad
-            </span>
-          </div>
-        )}
-
-        {/* Quick Stats Pills: BTTS, +2.5 Over & -2.5 Under */}
-        <div className="grid grid-cols-3 gap-1 mb-3 text-center text-[10px] font-mono">
-          <div className="bg-[#121824] p-1.5 rounded border border-white/5">
-            <span className="text-slate-400 block text-[9px]">BTTS</span>
-            <span className="font-bold text-amber-300">{bttsProb}%</span>
-          </div>
-          <div className="bg-[#121824] p-1.5 rounded border border-white/5">
-            <span className="text-slate-400 block text-[9px]">+2.5 Over</span>
-            <span className="font-bold text-emerald-400">{over25Prob}%</span>
-          </div>
-          <div className="bg-[#121824] p-1.5 rounded border border-white/5">
-            <span className="text-slate-400 block text-[9px]">-2.5 Under</span>
-            <span className="font-bold text-sky-300">{under25Prob}%</span>
-          </div>
-        </div>
-
-        {/* Pick Recommendation Capsule */}
-        <div className="bg-[#121824] border border-sky-500/20 rounded-lg p-2.5 mb-3">
-          <div className="flex items-center justify-between mb-0.5">
-            <span className="text-[9.5px] font-mono font-bold text-sky-400 uppercase tracking-wide flex items-center space-x-1">
-              <Zap className="w-2.5 h-2.5 fill-sky-400" />
-              <span>{isBankerMode || confidenceScore >= 80 ? 'Pick Banquero IA' : 'Pronóstico IA'}</span>
-            </span>
-            {match.aiPick?.settlement === 'WON' ? (
-              <span className="text-[9.5px] font-mono text-emerald-400 font-bold flex items-center space-x-0.5">
-                <CheckCircle2 className="w-3 h-3" />
-                <span>ACERTADO</span>
-              </span>
-            ) : (
-              <span className="text-[9.5px] font-mono text-slate-400">
-                {displayProb}% Conf.
-              </span>
-            )}
-          </div>
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-white truncate">
-              {displayPick}
-            </p>
-            <span className="text-[11px] font-mono font-bold text-emerald-400 shrink-0 ml-1.5">
-              @{formatOdds(displayOdds, oddsFormat)}
-            </span>
-          </div>
-
-          {/* Justificación por IA de por qué es el seguro (tendencias de goles y datos de temporada) */}
-          <div className="mt-2 pt-2 border-t border-white/10 flex items-start space-x-1.5 text-[10px] text-emerald-300/90 font-mono leading-snug">
-            <Sparkles className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
-            <p className="line-clamp-2">
-              <strong className="text-emerald-400 font-sans">Justificación IA: </strong>
-              {isBankerMode
-                ? (bankerPick?.rationale || match.aiPick?.summaryRationale || 'Alta probabilidad estadística respaldada por xG, goles anotados y rendimiento en temporada.')
-                : (match.aiPick?.summaryRationale || bankerPick?.rationale || 'Alta probabilidad estadística respaldada por xG, goles anotados y rendimiento en temporada.')}
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Action Buttons */}
-      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
-        {match.status === 'FINISHED' ? (
           <button
             onClick={(e) => {
               e.stopPropagation();
               sounds.playClick();
               onOpenModal(match);
             }}
-            className="py-1.5 px-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-white/5 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
+            className="py-1.5 px-2 bg-sky-400 hover:bg-sky-300 text-black rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(56,189,248,0.3)]"
           >
-            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-            <span>Finalizado</span>
+            <Eye className="w-3 h-3" />
+            <span>Detalle</span>
           </button>
-        ) : (
+        </div>
+      </div>
+
+      {/* VIP Locked Overlay */}
+      {isLocked && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center p-4 text-center bg-[#090d16]/88 backdrop-blur-[3px] border border-amber-500/35 rounded-xl shadow-2xl">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/25 to-amber-600/10 border border-amber-500/40 flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+            <Lock className="w-5 h-5 text-amber-400" />
+          </div>
+
+          <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-mono font-bold mb-1.5">
+            <Crown className="w-3 h-3 text-amber-400" />
+            <span>SOLO ACCESO VIP • PICK #{bankerRank}</span>
+          </div>
+
+          <h5 className="text-xs sm:text-sm font-bold text-white font-sans mb-1">
+            Pick Banquero Exclusivo
+          </h5>
+          <p className="text-[10px] text-slate-300 max-w-[210px] mb-3 leading-tight font-sans">
+            Desbloquea este pick y el TOP 10 completo de máxima seguridad con tu Pase VIP.
+          </p>
+
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
-              sounds.playAddParlay();
-              const topOpportunities = getTop3Opportunities(match);
-              onAddToParlay(topOpportunities);
+              sounds.playClick();
+              onUnlockVip?.();
             }}
-            className="py-1.5 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
+            className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold font-mono text-[11px] rounded-lg shadow-[0_0_15px_rgba(245,158,11,0.35)] transition transform hover:scale-[1.03] cursor-pointer flex items-center space-x-1"
           >
-            <Plus className="w-3 h-3" />
-            <span>Al Parlay</span>
+            <Sparkles className="w-3 h-3 text-slate-950" />
+            <span>Desbloquear con VIP</span>
           </button>
-        )}
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            sounds.playClick();
-            onOpenModal(match);
-          }}
-          className="py-1.5 px-2 bg-sky-400 hover:bg-sky-300 text-black rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(56,189,248,0.3)]"
-        >
-          <Eye className="w-3 h-3" />
-          <span>Detalle</span>
-        </button>
-      </div>
+        </div>
+      )}
 
     </TiltCard>
   );

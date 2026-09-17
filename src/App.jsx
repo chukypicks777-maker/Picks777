@@ -13,7 +13,7 @@ import AdminDashboardModal from './components/AdminDashboardModal';
 import StatsCenterModal from './components/StatsCenterModal';
 import FooterCommunityShowcase from './components/FooterCommunityShowcase';
 import { sounds } from './utils/audioEffects';
-import { Layers, Radio, Zap, AlertCircle } from 'lucide-react';
+import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
 import { getMatchSafetyScore, getBestBankerPick } from './utils/mathProbabilities';
 
 export default function App() {
@@ -343,7 +343,20 @@ export default function App() {
       // 'highest_safety' (default) o 'live': ordenados de mayor a menor seguridad
       filteredMatches = [...filteredMatches].sort((a, b) => getMatchSafetyScore(b) - getMatchSafetyScore(a));
     }
+    // Máximo de 10 mejores picks banqueros oficiales
+    filteredMatches = filteredMatches.slice(0, 10);
   }
+
+  const isVipUser = Boolean(
+    auth?.isAdmin || 
+    auth?.role === 'owner' || 
+    auth?.role === 'vip' || 
+    auth?.role === 'vip_user' || 
+    auth?.user?.plan === 'VIP' || 
+    auth?.user?.plan === 'Owner' ||
+    auth?.user?.hasCode ||
+    auth?.code
+  );
 
   const liveMatchesCount = matches.filter(m => m && m.status === 'LIVE').length;
   const featuredMatch = matches.find(m => m && m.isFeatured && m.status !== 'FINISHED') || matches.find(m => m && m.status !== 'FINISHED') || matches[0] || null;
@@ -530,6 +543,24 @@ export default function App() {
                   <span>💰 Mayor Ganancia (Sin Filtro de Fecha)</span>
                 </button>
               </div>
+
+              {/* Aviso para usuarios invitados / prueba de 3 días (no VIP) */}
+              {!isVipUser && (
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-mono">
+                  <div className="flex items-center space-x-2">
+                    <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      <strong>Acceso Invitado / Prueba (3 Días):</strong> Tienes acceso a los 3 mejores picks banqueros de hoy. Los picks #4 al #10 están reservados para miembros VIP.
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => { sounds.playClick(); setShowUpgradeModal(true); }}
+                    className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold rounded-lg text-xs font-mono shrink-0 cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.35)] transition"
+                  >
+                    👑 Desbloquear VIP
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -594,6 +625,8 @@ export default function App() {
                   onAddToParlay={handleAddToParlay}
                   oddsFormat={oddsFormat}
                   bankerRank={marketFilter === 'safe' ? idx + 1 : null}
+                  isLocked={marketFilter === 'safe' && !isVipUser && idx >= 3}
+                  onUnlockVip={() => setShowUpgradeModal(true)}
                 />
               ))}
             </div>

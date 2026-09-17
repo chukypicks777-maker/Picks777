@@ -89,14 +89,15 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
             </div>
 
             <div className="grid grid-cols-2 gap-1.5 text-left">
-              {/* +0.5 */}
+              {/* Row 1: +1.5 y +2.5 */}
+              {/* +1.5 */}
               <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
                 <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+0.5</span>
-                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over05Rate} suffix="%" /></span>
+                  <span className="text-slate-200 font-bold">+1.5</span>
+                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over15Rate} suffix="%" /></span>
                 </div>
                 <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.over05Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
+                  <div style={{ width: `${stats.over15Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
                 </div>
               </div>
 
@@ -111,14 +112,38 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
                 </div>
               </div>
 
-              {/* +1.5 */}
-              <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
+              {/* Row 2: -1.5 (Abajo del +1.5) y -2.5 (Abajo del +2.5) */}
+              {/* -1.5 */}
+              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
                 <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+1.5</span>
-                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over15Rate} suffix="%" /></span>
+                  <span className="text-slate-200 font-bold">-1.5</span>
+                  <span className="font-bold text-amber-400"><NumberCounter value={stats.under15Rate != null ? stats.under15Rate : (100 - (stats.over15Rate || 80))} suffix="%" /></span>
                 </div>
                 <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.over15Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
+                  <div style={{ width: `${stats.under15Rate != null ? stats.under15Rate : (100 - (stats.over15Rate || 80))}%` }} className="h-full bg-amber-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* -2.5 */}
+              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">-2.5</span>
+                  <span className="font-bold text-amber-400"><NumberCounter value={stats.under25Rate != null ? stats.under25Rate : (100 - (stats.over25Rate || 60))} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.under25Rate != null ? stats.under25Rate : (100 - (stats.over25Rate || 60))}%` }} className="h-full bg-amber-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* Row 3: +0.5 y +3.5 */}
+              {/* +0.5 */}
+              <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+0.5</span>
+                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over05Rate} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.over05Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
                 </div>
               </div>
 
@@ -189,6 +214,28 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
                 </div>
                 <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
                   <div style={{ width: `${stats.cardsOver25}%` }} className="h-full bg-amber-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* +3.5 */}
+              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+3.5</span>
+                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsOver35 != null ? stats.cardsOver35 : Math.round(Math.max(1, (stats.cardsOver25 || 25) * 0.55))} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cardsOver35 != null ? stats.cardsOver35 : Math.round(Math.max(1, (stats.cardsOver25 || 25) * 0.55))}%` }} className="h-full bg-amber-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* +4.5 */}
+              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
+                <div className="flex justify-between items-center text-[10.5px]">
+                  <span className="text-slate-200 font-bold">+4.5</span>
+                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsOver45 != null ? stats.cardsOver45 : Math.round(Math.max(1, (stats.cardsOver35 || 15) * 0.45))} suffix="%" /></span>
+                </div>
+                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
+                  <div style={{ width: `${stats.cardsOver45 != null ? stats.cardsOver45 : Math.round(Math.max(1, (stats.cardsOver35 || 15) * 0.45))}%` }} className="h-full bg-amber-400 rounded-full" />
                 </div>
               </div>
             </div>
@@ -278,12 +325,8 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
         </div>
       </div>
 
-      {/* Footer Metrics: BTTS, Valla Invicta, Disciplina */}
-      <div className="pt-2 border-t border-white/5 grid grid-cols-4 gap-1 text-center text-[9px]">
-        <div className="bg-[#121824] p-1 rounded">
-          <span className="text-slate-500 block">BTTS</span>
-          <span className="font-bold text-teal-300">{stats.bttsRate}%</span>
-        </div>
+      {/* Footer Metrics: Valla Invicta, Faltas, Disciplina */}
+      <div className="pt-2 border-t border-white/5 grid grid-cols-3 gap-1.5 text-center text-[9px]">
         <div className="bg-[#121824] p-1 rounded">
           <span className="text-slate-500 block">Valla 0</span>
           <span className="font-bold text-sky-300">{stats.cleanSheetRate}%</span>
