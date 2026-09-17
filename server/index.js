@@ -9,6 +9,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import matchRoutes from './routes/matchRoutes.js';
 import parlayRoutes from './routes/parlayRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
+import { getEffectiveAiConfig } from './services/aiService.js';
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '32kb' }));
@@ -19,6 +20,26 @@ app.use('/api', (req, res, next) => {
   next();
 });
 app.use('/api/auth', authRoutes);
+app.get('/api/settings/active-model', async (req, res) => {
+  try {
+    const config = await getEffectiveAiConfig();
+    res.json({
+      success: true,
+      provider: config.provider,
+      selectedModel: config.selectedModel,
+      modelName: config.modelName || config.selectedModel,
+      isConfigured: config.isConfigured
+    });
+  } catch {
+    res.json({
+      success: true,
+      provider: 'openrouter',
+      selectedModel: 'nvidia/nemotron-3.5-lightning:free',
+      modelName: 'nvidia/nemotron-3.5-lightning:free',
+      isConfigured: false
+    });
+  }
+});
 app.use('/api', requireSession);
 app.use('/api/admin', adminRoutes);
 app.use('/api/matches', matchRoutes);

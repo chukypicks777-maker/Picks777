@@ -252,20 +252,35 @@ export class StorageManager {
   }
   async getAiConfig() {
     const data = await this.load();
-    return data.aiConfig || null;
+    if (data.aiConfig) return data.aiConfig;
+    if (data.settings?.selectedModel) {
+      return {
+        provider: 'openrouter',
+        apiKey: data.settings.openRouterApiKey || '',
+        baseUrl: 'https://openrouter.ai/api/v1',
+        selectedModel: data.settings.selectedModel,
+        modelName: data.settings.selectedModel,
+        updatedAt: null
+      };
+    }
+    return null;
   }
   async updateAiConfig(updates = {}) {
     return this.transaction(db => {
       const existing = db.aiConfig || {};
       const newApiKey = updates.apiKey !== undefined && updates.apiKey !== null ? String(updates.apiKey).trim() : existing.apiKey;
+      const selectedModel = String(updates.selectedModel || existing.selectedModel || 'nvidia/nemotron-3.5-lightning:free').trim();
       db.aiConfig = {
         provider: String(updates.provider || existing.provider || 'openrouter').trim().toLowerCase(),
         apiKey: newApiKey || '',
         baseUrl: String(updates.baseUrl || existing.baseUrl || 'https://openrouter.ai/api/v1').trim(),
-        selectedModel: String(updates.selectedModel || existing.selectedModel || 'nvidia/nemotron-3.5-lightning:free').trim(),
-        modelName: String(updates.modelName || existing.modelName || '').trim(),
+        selectedModel,
+        modelName: String(updates.modelName || existing.modelName || selectedModel).trim(),
         updatedAt: new Date().toISOString()
       };
+      if (db.settings) {
+        db.settings.selectedModel = selectedModel;
+      }
       return db.aiConfig;
     });
   }

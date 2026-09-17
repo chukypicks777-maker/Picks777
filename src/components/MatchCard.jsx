@@ -177,7 +177,7 @@ export default function MatchCard({
           <div className="flex items-center justify-between mb-0.5">
             <span className="text-[9.5px] font-mono font-bold text-sky-400 uppercase tracking-wide flex items-center space-x-1">
               <Zap className="w-2.5 h-2.5 fill-sky-400" />
-              <span>{isBankerMode || confidenceScore >= 80 ? '💎 Pick Banquero IA' : 'Pronóstico IA'}</span>
+              <span>{isBankerMode || confidenceScore >= 80 ? 'Pick Banquero IA' : 'Pronóstico IA'}</span>
             </span>
             {match.aiPick?.settlement === 'WON' ? (
               <span className="text-[9.5px] font-mono text-emerald-400 font-bold flex items-center space-x-0.5">

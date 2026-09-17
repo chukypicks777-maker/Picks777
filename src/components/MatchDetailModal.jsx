@@ -75,6 +75,41 @@ export default function MatchDetailModal({
 
   const [enrichedMatch, setEnrichedMatch] = useState(match);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [activeModelInfo, setActiveModelInfo] = useState({ provider: '', selectedModel: '', isConfigured: false });
+
+  useEffect(() => {
+    let active = true;
+    const loadActiveModel = async () => {
+      try {
+        const res = await fetch('/api/settings/active-model');
+        const data = await res.json();
+        if (active && data.success) {
+          setActiveModelInfo({
+            provider: data.provider || '',
+            selectedModel: data.selectedModel || '',
+            isConfigured: Boolean(data.isConfigured)
+          });
+        }
+      } catch {}
+    };
+    loadActiveModel();
+
+    const handleSettingsUpdated = (e) => {
+      if (e.detail?.selectedModel) {
+        setActiveModelInfo(prev => ({
+          ...prev,
+          selectedModel: e.detail.selectedModel,
+          provider: e.detail.provider || prev.provider,
+          isConfigured: e.detail.isConfigured ?? prev.isConfigured
+        }));
+      }
+    };
+    window.addEventListener('ai-settings-updated', handleSettingsUpdated);
+    return () => {
+      active = false;
+      window.removeEventListener('ai-settings-updated', handleSettingsUpdated);
+    };
+  }, []);
 
   // Derive simulation data; reset custom jitter simulation if match changes
   const [lastMatchId, setLastMatchId] = useState(match?.id);
@@ -309,20 +344,71 @@ export default function MatchDetailModal({
               
               {/* Top AI Controls */}
               <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-[#111723] rounded-xl border border-white/5">
-                <div className="flex items-center space-x-2 text-xs font-mono text-slate-300">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 live-dot"></span>
-                  <span>Motor IA: <strong>{aiReport?.modelUsed || 'z-ai/glm-5.2:free'}</strong></span>
-                </div>
+                {loadingAi ? (
+                  <div className="flex items-center space-x-2 text-xs font-mono text-sky-300">
+                    <RotateCw className="w-3.5 h-3.5 animate-spin text-sky-400 shrink-0" />
+                    <span>Analizando con IA en tiempo real ({activeModelInfo.selectedModel || 'motor activo'})...</span>
+                  </div>
+                ) : aiReport?.aiAvailable ? (
+                  <div className="flex items-center space-x-2 text-xs font-mono text-slate-200">
+                    <Cpu className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                    <span>Motor: <strong className="text-sky-300">{aiReport.modelUsed || activeModelInfo.selectedModel}</strong></span>
+                    <span className="px-1.5 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-sky-300 text-[10px] font-mono font-medium">
+                      Procesado por IA
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2 text-xs font-mono text-slate-300">
+                    <Activity className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>Motor: <strong className="text-slate-200">Cálculo Cuantitativo Poisson</strong></span>
+                    <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-mono">
+                      Modo Estadístico
+                    </span>
+                  </div>
+                )}
 
                 <button
                   onClick={() => fetchAiAnalysis(true)}
                   disabled={loadingAi}
-                  className="px-3 py-1 bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 rounded-lg text-xs font-mono font-semibold transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 shadow-[0_0_10px_rgba(56,189,248,0.2)]"
+                  className="px-3 py-1 bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 rounded-lg text-xs font-mono font-medium transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  <RotateCw className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin' : ''}`} />
-                  <span>{loadingAi ? 'Generando Algoritmo...' : 'Regenerar con IA'}</span>
+                  <RotateCw className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin text-sky-400' : ''}`} />
+                  <span>{loadingAi ? 'Procesando...' : 'Regenerar con IA'}</span>
                 </button>
               </div>
+
+              {/* Banner de procesamiento en vivo cuando la IA está calculando */}
+              {loadingAi && (
+                <div className="p-4 rounded-xl bg-[#0d1424] border border-sky-500/20 text-center flex flex-col items-center justify-center space-y-1.5 py-4">
+                  <div className="flex items-center space-x-2 text-sky-400">
+                    <RotateCw className="w-4 h-4 animate-spin" />
+                    <span className="text-xs font-mono font-semibold uppercase tracking-wider text-sky-300">
+                      Generando Pronóstico Táctico
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 font-mono">
+                    Conectando con el motor {activeModelInfo.selectedModel ? `[${activeModelInfo.selectedModel}]` : 'configurado'} • Analizando probabilidades, xG y táctica...
+                  </p>
+                </div>
+              )}
+
+              {/* Mensaje informativo si está en respaldo cuantitativo */}
+              {!loadingAi && !aiReport?.aiAvailable && (
+                <div className="p-3 rounded-xl bg-slate-800/40 border border-white/5 text-slate-300 text-xs font-mono flex items-center justify-between">
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <Activity className="w-4 h-4 text-slate-400 shrink-0" />
+                    <span className="truncate">
+                      {aiReport?.aiStatus || 'Pronóstico generado mediante modelo cuantitativo de Poisson con métricas oficiales.'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => fetchAiAnalysis(true)}
+                    className="ml-3 px-2.5 py-1 bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 rounded text-[11px] font-medium shrink-0 cursor-pointer transition"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              )}
 
               {/* Top Pick Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">

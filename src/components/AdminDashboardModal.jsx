@@ -16,9 +16,7 @@ import {
   Globe,
   Key,
   Zap,
-  Shield,
   Search,
-  ExternalLink,
   Cpu
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -279,9 +277,10 @@ export default function AdminDashboardModal({ onClose }) {
       if (data.success) {
         sounds.playSuccess();
         confetti({ particleCount: 35, spread: 50, origin: { y: 0.6 } });
-        setSavedSettingsMsg('✅ Configuración de IA guardada exitosamente.');
+        setSavedSettingsMsg('Configuración del motor de IA guardada exitosamente.');
         setSettings(data.settings);
         setNewApiKey('');
+        window.dispatchEvent(new CustomEvent('ai-settings-updated', { detail: data.settings }));
         setTimeout(() => setSavedSettingsMsg(''), 4000);
       } else {
         alert(data.message || 'Error al guardar la configuración.');
@@ -702,10 +701,10 @@ export default function AdminDashboardModal({ onClose }) {
                   <div>
                     <h4 className="font-bold text-sm text-white font-sans flex items-center space-x-2">
                       <span>Motor de Inteligencia Artificial</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                        settings.isConfigured ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                        settings.isConfigured ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30' : 'bg-slate-800 text-slate-300 border border-white/10'
                       }`}>
-                        {settings.isConfigured ? '🟢 CONECTADO' : '⚪ MODO ESTADÍSTICO'}
+                        {settings.isConfigured ? 'CONECTADO' : 'MODO ESTADÍSTICO'}
                       </span>
                     </h4>
                     <p className="text-[11px] text-slate-400 font-mono mt-0.5">
@@ -821,12 +820,17 @@ export default function AdminDashboardModal({ onClose }) {
                 </div>
 
                 {/* 4. Modelos Reales del Proveedor */}
-                <div className="space-y-2 pt-2 border-t border-white/5">
+                <div className="space-y-3 pt-2 border-t border-white/5">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                    <label className="text-slate-300 font-bold font-sans flex items-center space-x-1.5">
-                      <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>4. Catálogo de Modelos Reales del Proveedor:</span>
-                    </label>
+                    <div>
+                      <label className="text-slate-200 font-bold font-sans flex items-center space-x-1.5">
+                        <Cpu className="w-3.5 h-3.5 text-sky-400" />
+                        <span>4. Modelos Extraídos de la API ({availableModelsList.length}):</span>
+                      </label>
+                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                        Extraídos en vivo directamente de la cuenta del proveedor sin listas predefinidas
+                      </p>
+                    </div>
 
                     <button
                       type="button"
@@ -835,22 +839,44 @@ export default function AdminDashboardModal({ onClose }) {
                         fetchModelsForProvider(provider, newApiKey || undefined, baseUrl);
                       }}
                       disabled={loadingModels}
-                      className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 rounded-lg text-[10px] font-bold flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-lg text-xs font-mono font-medium flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 transition"
                     >
-                      <RefreshCw className={`w-3 h-3 ${loadingModels ? 'animate-spin text-sky-400' : ''}`} />
-                      <span>{loadingModels ? 'Cargando modelos...' : `🔄 Cargar Modelos (${availableModelsList.length})`}</span>
+                      <RefreshCw className={`w-3.5 h-3.5 ${loadingModels ? 'animate-spin text-sky-400' : ''}`} />
+                      <span>{loadingModels ? 'Extrayendo...' : 'Cargar Modelos'}</span>
                     </button>
                   </div>
 
-                  {/* Filtros Rápidos (Especialmente útil para OpenRouter con 400+ modelos) */}
-                  {provider === 'openrouter' && (
-                    <div className="space-y-1.5">
-                      <div className="flex flex-wrap gap-1">
+                  {/* Banner de Modelo Actualmente Activo */}
+                  <div className="p-3 bg-[#0d1424] rounded-xl border border-sky-500/30 flex items-center justify-between">
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 shrink-0">
+                        <Cpu className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-sans">
+                          Modelo Seleccionado
+                        </span>
+                        <span className="font-bold text-sky-300 font-mono text-xs truncate block">
+                          {customModelInput.trim() || newModel}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-bold font-mono shrink-0 ml-2">
+                      ACTIVO
+                    </span>
+                  </div>
+
+                  {/* Filtros Rápidos y Buscador si hay modelos */}
+                  {availableModelsList.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-1.5">
                         <button
                           type="button"
                           onClick={() => setModelCategoryFilter('all')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                            modelCategoryFilter === 'all' ? 'bg-white text-black' : 'bg-white/5 text-slate-400 hover:text-white'
+                          className={`px-2.5 py-1 rounded text-[11px] font-mono transition cursor-pointer ${
+                            modelCategoryFilter === 'all' 
+                              ? 'bg-sky-400 text-black font-bold' 
+                              : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'
                           }`}
                         >
                           Todos ({availableModelsList.length})
@@ -858,131 +884,161 @@ export default function AdminDashboardModal({ onClose }) {
                         <button
                           type="button"
                           onClick={() => setModelCategoryFilter('reasoning')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer flex items-center space-x-1 ${
-                            modelCategoryFilter === 'reasoning' ? 'bg-amber-400 text-black shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-amber-400/10 text-amber-300 border border-amber-400/20 hover:bg-amber-400/20'
+                          className={`px-2.5 py-1 rounded text-[11px] font-mono transition cursor-pointer flex items-center space-x-1 ${
+                            modelCategoryFilter === 'reasoning' 
+                              ? 'bg-amber-400 text-black font-bold' 
+                              : 'bg-amber-400/10 text-amber-300 border border-amber-400/20 hover:bg-amber-400/20'
                           }`}
                         >
-                          <span>🧠 Razonamiento (GLM, GPT, Claude, R1)</span>
+                          <span>Razonamiento</span>
+                          <span>({availableModelsList.filter(m => m.isReasoning).length})</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setModelCategoryFilter('free')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer flex items-center space-x-1 ${
-                            modelCategoryFilter === 'free' ? 'bg-emerald-500 text-black' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                          className={`px-2.5 py-1 rounded text-[11px] font-mono transition cursor-pointer flex items-center space-x-1 ${
+                            modelCategoryFilter === 'free' 
+                              ? 'bg-emerald-500 text-black font-bold' 
+                              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
                           }`}
                         >
-                          <span>🎁 Solo Gratis (:free)</span>
-                          <span className="font-mono">({availableModelsList.filter(m => m.isFree || m.id.includes(':free')).length})</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setModelCategoryFilter('nvidia')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                            modelCategoryFilter === 'nvidia' ? 'bg-lime-500 text-black' : 'bg-white/5 text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          NVIDIA Nemotron
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setModelCategoryFilter('deepseek')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                            modelCategoryFilter === 'deepseek' ? 'bg-sky-500 text-black' : 'bg-white/5 text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          DeepSeek
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setModelCategoryFilter('gemini')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                            modelCategoryFilter === 'gemini' ? 'bg-indigo-500 text-white' : 'bg-white/5 text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          Google
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setModelCategoryFilter('llama')}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
-                            modelCategoryFilter === 'llama' ? 'bg-purple-500 text-white' : 'bg-white/5 text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          Meta Llama
+                          <span>Gratis (:free)</span>
+                          <span>({availableModelsList.filter(m => m.isFree).length})</span>
                         </button>
                       </div>
 
                       {/* Buscador de modelos */}
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500">
-                          <Search className="w-3 h-3" />
+                          <Search className="w-3.5 h-3.5" />
                         </div>
                         <input
                           type="text"
                           value={modelSearchQuery}
                           onChange={(e) => setModelSearchQuery(e.target.value)}
-                          placeholder="Buscar por nombre o ID (ej: nemotron, dots, free, llama)..."
-                          className="w-full pl-7 pr-3 py-1 bg-[#090d15] border border-white/10 rounded-lg text-slate-200 text-xs placeholder:text-slate-600 focus:outline-none focus:border-sky-400"
+                          placeholder="Buscar modelo por nombre o ID (ej: deepseek, glm, flash, mini)..."
+                          className="w-full pl-8 pr-3 py-1.5 bg-[#090d15] border border-white/10 rounded-lg text-slate-200 text-xs placeholder:text-slate-600 focus:outline-none focus:border-sky-400 font-mono"
                         />
                       </div>
                     </div>
                   )}
 
-                  {/* Selector de modelos desplegable */}
-                  <select
-                    value={newModel}
-                    onChange={(e) => {
-                      setNewModel(e.target.value);
-                      setCustomModelInput('');
-                    }}
-                    className="w-full px-3 py-2 bg-[#090d15] border border-white/10 rounded-lg text-sky-300 font-bold focus:outline-none focus:border-sky-400"
-                  >
-                    {availableModelsList
-                      .filter(m => {
-                        const id = (m.id || '').toLowerCase();
-                        const name = (m.name || '').toLowerCase();
-                        const query = modelSearchQuery.toLowerCase().trim();
-                        if (query && !id.includes(query) && !name.includes(query)) return false;
+                  {/* Catálogo Visual de Modelos */}
+                  {loadingModels ? (
+                    <div className="p-6 rounded-xl bg-[#090d15] border border-white/5 text-center flex flex-col items-center justify-center space-y-2">
+                      <RefreshCw className="w-5 h-5 text-sky-400 animate-spin" />
+                      <span className="text-xs font-mono text-slate-400">
+                        Extrayendo catálogo de modelos desde la API del proveedor...
+                      </span>
+                    </div>
+                  ) : availableModelsList.length === 0 ? (
+                    <div className="p-4 rounded-xl bg-[#090d15] border border-white/5 text-center space-y-1">
+                      <p className="text-xs text-slate-300 font-sans">
+                        No hay modelos extraídos todavía.
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-mono">
+                        Ingresa tu API Key arriba y haz clic en <strong>"Cargar Modelos"</strong> para listar los modelos habilitados en tu cuenta, o escribe el ID directamente abajo.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="max-h-64 overflow-y-auto space-y-1.5 p-1 rounded-xl bg-[#090d15] border border-white/5 pr-1.5">
+                      {availableModelsList
+                        .filter(m => {
+                          const id = (m.id || '').toLowerCase();
+                          const name = (m.name || '').toLowerCase();
+                          const query = modelSearchQuery.toLowerCase().trim();
+                          if (query && !id.includes(query) && !name.includes(query)) return false;
 
-                        if (modelCategoryFilter === 'reasoning') {
-                          return id.includes('o1') || id.includes('o3') || id.includes('reason') || id.includes('r1') || id.includes('think') || id.includes('glm') || id.includes('opus') || id.includes('sonnet') || id.includes('qwq') || name.includes('reasoning') || name.includes('glm') || name.includes('opus');
-                        }
-                        if (modelCategoryFilter === 'free') {
-                          return m.isFree || id.includes(':free');
-                        }
-                        if (modelCategoryFilter === 'nvidia') {
-                          return id.includes('nvidia') || id.includes('nemotron') || name.includes('nvidia');
-                        }
-                        if (modelCategoryFilter === 'deepseek') {
-                          return id.includes('deepseek') || name.includes('deepseek');
-                        }
-                        if (modelCategoryFilter === 'gemini') {
-                          return id.includes('gemini') || name.includes('gemini') || id.includes('google');
-                        }
-                        if (modelCategoryFilter === 'llama') {
-                          return id.includes('llama') || name.includes('llama');
-                        }
-                        return true;
-                      })
-                      .map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.isFree || m.id.includes(':free') ? '🎁 [GRATIS] ' : ''}{m.name || m.id} ({m.id})
-                        </option>
-                      ))}
-                  </select>
+                          if (modelCategoryFilter === 'reasoning') return m.isReasoning;
+                          if (modelCategoryFilter === 'free') return m.isFree;
+                          return true;
+                        })
+                        .map((m) => {
+                          const isSelected = (newModel === m.id && !customModelInput.trim());
+                          return (
+                            <div
+                              key={m.id}
+                              onClick={() => {
+                                sounds.playClick();
+                                setNewModel(m.id);
+                                setCustomModelInput('');
+                              }}
+                              className={`p-2.5 rounded-lg border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                                isSelected
+                                  ? 'bg-sky-500/15 border-sky-400/60 shadow-[0_0_12px_rgba(56,189,248,0.15)] text-white'
+                                  : 'bg-[#0c121e] border-white/5 text-slate-300 hover:border-white/20 hover:bg-white/5'
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center space-x-2 flex-wrap gap-y-1 mb-0.5">
+                                  <span className="font-bold text-xs text-white truncate font-sans">
+                                    {m.name || m.id}
+                                  </span>
+                                  {m.isReasoning && (
+                                    <span className="px-1.5 py-0.2 rounded bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[9px] font-mono font-medium">
+                                      Razonamiento
+                                    </span>
+                                  )}
+                                  {m.isFree && (
+                                    <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[9px] font-mono font-medium">
+                                      Gratis
+                                    </span>
+                                  )}
+                                  {m.contextLength && (
+                                    <span className="px-1.5 py-0.2 rounded bg-white/5 text-slate-400 text-[9px] font-mono">
+                                      {Math.round(m.contextLength / 1000)}k ctx
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-[11px] font-mono text-sky-400/80 block truncate">
+                                  {m.id}
+                                </span>
+                              </div>
+
+                              <div className="shrink-0">
+                                {isSelected ? (
+                                  <span className="px-2.5 py-1 rounded bg-sky-400 text-black font-bold text-[10px] font-mono">
+                                    Activo
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-1 rounded bg-white/5 text-slate-400 hover:text-white text-[10px] font-mono">
+                                    Elegir
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
 
                   {/* Entrada manual de modelo */}
-                  <div className="pt-1">
-                    <span className="text-[10px] text-slate-400 block mb-1">
+                  <div className="pt-2 border-t border-white/5">
+                    <span className="text-[11px] text-slate-300 block mb-1 font-sans">
                       O escribe / pega el ID del modelo manualmente:
                     </span>
-                    <input
-                      type="text"
-                      value={customModelInput}
-                      onChange={(e) => setCustomModelInput(e.target.value)}
-                      placeholder={`Ej: ${newModel || 'nvidia/nemotron-3.5-lightning:free'}`}
-                      className="w-full px-3 py-1.5 bg-[#090d15] border border-white/10 rounded-lg text-white placeholder:text-slate-600 focus:outline-none focus:border-sky-400"
-                    />
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={customModelInput}
+                        onChange={(e) => setCustomModelInput(e.target.value)}
+                        placeholder={`Ej: ${newModel || 'z-ai/glm-5.2:free'}`}
+                        className="flex-1 px-3 py-1.5 bg-[#090d15] border border-white/10 rounded-lg text-white font-mono text-xs placeholder:text-slate-600 focus:outline-none focus:border-sky-400"
+                      />
+                      {customModelInput.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewModel(customModelInput.trim());
+                            setCustomModelInput('');
+                            sounds.playClick();
+                          }}
+                          className="px-3 py-1.5 bg-sky-400 text-black font-bold text-xs rounded-lg cursor-pointer"
+                        >
+                          Fijar
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1036,7 +1092,7 @@ export default function AdminDashboardModal({ onClose }) {
                       className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg font-semibold transition cursor-pointer flex items-center space-x-1.5 disabled:opacity-50"
                     >
                       <Zap className={`w-3.5 h-3.5 ${isTesting ? 'animate-pulse text-amber-400' : ''}`} />
-                      <span>{isTesting ? 'Probando...' : '🧪 Probar Conexión'}</span>
+                      <span>{isTesting ? 'Probando...' : 'Probar Conexión'}</span>
                     </button>
                   </div>
 

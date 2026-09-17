@@ -38,122 +38,116 @@ export async function getEffectiveAiConfig() {
 
 export async function fetchProviderModels(provider = 'openrouter', apiKey = '', baseUrl = '') {
   const normProvider = String(provider || 'openrouter').trim().toLowerCase();
+  const keyHash = createHash('md5').update(`${normProvider}:${apiKey || 'public'}:${baseUrl || ''}`).digest('hex').slice(0, 8);
 
   if (normProvider === 'openrouter') {
-    return cachedData('models:openrouter', 600, async () => {
+    return cachedData(`models:openrouter:${keyHash}`, 300, async () => {
       try {
         const headers = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
         const url = `${(baseUrl || 'https://openrouter.ai/api/v1').replace(/\/+$/, '')}/models`;
-        const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
+        const res = await fetch(url, { headers, signal: AbortSignal.timeout(10000) });
         if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}`);
         const data = await res.json();
         if (!Array.isArray(data?.data)) return [];
+
         return data.data.map(m => {
-          const isFree = m.id.endsWith(':free') || (m.pricing?.prompt === '0' && m.pricing?.completion === '0');
+          const idLower = String(m.id || '').toLowerCase();
+          const nameLower = String(m.name || '').toLowerCase();
+          const isFree = idLower.endsWith(':free') || idLower.includes(':free') ||
+            (m.pricing && parseFloat(m.pricing.prompt) === 0 && parseFloat(m.pricing.completion) === 0);
+          const isReasoning = /o1|o3|r1|reason|think|glm|opus|qwq|sonnet.*think/i.test(idLower) ||
+            /reason|pensamiento|thinking/i.test(nameLower);
+
           return {
             id: m.id,
             name: m.name || m.id,
             description: m.description || '',
             contextLength: m.context_length || null,
-            isFree,
+            isFree: Boolean(isFree),
+            isReasoning: Boolean(isReasoning),
             pricing: m.pricing || null
           };
         });
       } catch (err) {
-        console.warn('Error fetching OpenRouter models:', err);
-        return [
-          { id: 'nvidia/nemotron-3.5-lightning:free', name: 'NVIDIA: Nemotron 3.5 Lightning (free)', isFree: true },
-          { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', name: 'NVIDIA: Nemotron 3 Ultra (free)', isFree: true },
-          { id: 'dots-studio/dots-3-note-preview:free', name: 'Dots Studio: Dots3-Note Preview (free)', isFree: true },
-          { id: 'liquid/lfm-2.5-2.6b:free', name: 'LiquidAI: LFM 2.5 2.6B (free)', isFree: true },
-          { id: 'inclusionai/ling-3.0-flash-vl:free', name: 'inclusionAI: Ling 3.0 Flash VL (free)', isFree: true },
-          { id: 'nex-agi/nex-n2.5-mini:free', name: 'Nex AGI: Nex-N2.5-Mini (free)', isFree: true },
-          { id: 'openrouter/free', name: 'OpenRouter Free Router (Automático)', isFree: true }
-        ];
+        console.warn('Error al consultar modelos de OpenRouter:', err.message);
+        return [];
       }
     });
   }
 
   if (normProvider === 'gemini') {
-    const curatedGemini = [
-      { id: 'gemini-2.0-flash', name: 'Google Gemini 2.0 Flash (Última generación recomendada)', isFree: false, contextLength: 1048576 },
-      { id: 'gemini-1.5-flash', name: 'Google Gemini 1.5 Flash (Ultra veloz y económico)', isFree: false, contextLength: 1048576 },
-      { id: 'gemini-1.5-pro', name: 'Google Gemini 1.5 Pro (Razonamiento profundo)', isFree: false, contextLength: 2097152 },
-      { id: 'gemini-2.0-flash-lite', name: 'Google Gemini 2.0 Flash Lite (Alta velocidad)', isFree: false, contextLength: 1048576 },
-      { id: 'gemini-2.5-flash', name: 'Google Gemini 2.5 Flash Preview', isFree: false, contextLength: 1048576 }
-    ];
-    if (!apiKey) return curatedGemini;
+    if (!apiKey) return [];
     try {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
-        signal: AbortSignal.timeout(6000)
+        signal: AbortSignal.timeout(8000)
       });
-      if (!res.ok) return curatedGemini;
+      if (!res.ok) return [];
       const data = await res.json();
-      const dynamicList = (data.models || [])
-        .filter(m => m.supportedGenerationMethods?.includes('generateContent') && m.name?.includes('gemini'))
+      return (data.models || [])
+        .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
         .map(m => {
           const cleanId = m.name.replace(/^models\//, '');
+          const idLower = cleanId.toLowerCase();
           return {
             id: cleanId,
-            name: m.displayName ? `Google ${m.displayName}` : cleanId,
+            name: m.displayName || cleanId,
             description: m.description || '',
             isFree: false,
+            isReasoning: /pro|think|reason/i.test(idLower),
             contextLength: m.inputTokenLimit || null
           };
         });
-      return dynamicList.length > 0 ? dynamicList : curatedGemini;
     } catch {
-      return curatedGemini;
+      return [];
     }
   }
 
   if (normProvider === 'deepseek') {
-    const curatedDeepseek = [
-      { id: 'deepseek-chat', name: 'DeepSeek V3 (Chat General & Código)', isFree: false, contextLength: 65536 },
-      { id: 'deepseek-reasoner', name: 'DeepSeek R1 (Razonamiento Lógico Profundo)', isFree: false, contextLength: 65536 },
-      { id: 'qwen-plus', name: 'Qwen Plus (Alibaba DashScope)', isFree: false, contextLength: 131072 },
-      { id: 'qwen-turbo', name: 'Qwen Turbo (Alibaba DashScope)', isFree: false, contextLength: 131072 },
-      { id: 'qwen-max', name: 'Qwen Max (Alibaba DashScope)', isFree: false, contextLength: 32768 },
-      { id: 'glm-4-flash', name: 'GLM 4 Flash (Zhipu AI)', isFree: false, contextLength: 128000 },
-      { id: 'moonshot-v1-8k', name: 'Moonshot Kimi (Moonshot AI)', isFree: false, contextLength: 8192 }
-    ];
-    if (baseUrl && apiKey) {
-      try {
-        const url = `${baseUrl.replace(/\/+$/, '')}/models`;
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(6000) });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data?.data)) {
-            return data.data.map(m => ({ id: m.id, name: m.id, isFree: false }));
-          }
+    if (!apiKey) return [];
+    try {
+      const url = `${(baseUrl || 'https://api.deepseek.com/v1').replace(/\/+$/, '')}/models`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(8000) });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.data)) {
+          return data.data.map(m => {
+            const idLow = String(m.id || '').toLowerCase();
+            return {
+              id: m.id,
+              name: m.id,
+              isFree: false,
+              isReasoning: /r1|reason|think|glm|qwq/i.test(idLow)
+            };
+          });
         }
-      } catch {}
-    }
-    return curatedDeepseek;
+      }
+    } catch {}
+    return [];
   }
 
   if (normProvider === 'groq') {
-    const curatedGroq = [
-      { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B Versatile (Groq Ultra Rápido)', isFree: false, contextLength: 131072 },
-      { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill Llama 70B (Groq)', isFree: false, contextLength: 131072 },
-      { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B (Groq)', isFree: false, contextLength: 32768 },
-      { id: 'gemma2-9b-it', name: 'Gemma 2 9B IT (Groq)', isFree: false, contextLength: 8192 }
-    ];
-    if (apiKey) {
-      try {
-        const res = await fetch('https://api.groq.com/openai/v1/models', {
-          headers: { Authorization: `Bearer ${apiKey}` },
-          signal: AbortSignal.timeout(6000)
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data?.data)) {
-            return data.data.map(m => ({ id: m.id, name: m.id, isFree: false }));
-          }
+    if (!apiKey) return [];
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/models', {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(8000)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.data)) {
+          return data.data.map(m => {
+            const idLow = String(m.id || '').toLowerCase();
+            return {
+              id: m.id,
+              name: m.id,
+              isFree: false,
+              isReasoning: /r1|reason|think/i.test(idLow)
+            };
+          });
         }
-      } catch {}
-    }
-    return curatedGroq;
+      }
+    } catch {}
+    return [];
   }
 
   // Custom / Terceros

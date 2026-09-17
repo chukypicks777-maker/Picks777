@@ -165,6 +165,13 @@ test('HTTP session and owner flow, access persistence and revocation', async () 
   const request = (url, body, cookie = '') => fetch(base + url, { method: body ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', Cookie: cookie }, ...(body ? { body: JSON.stringify(body) } : {}) });
   try {
     assert.equal((await request('/api/admin/codes')).status, 401);
+    const activeModel = await request('/api/settings/active-model');
+    assert.equal(activeModel.status, 200);
+    const activeModelJson = await activeModel.json();
+    assert.equal(activeModelJson.success, true);
+    assert.equal(activeModelJson.apiKey, undefined);
+    assert.ok(typeof activeModelJson.selectedModel === 'string');
+
     const login = await request('/api/auth/verify-code', { code: 'TestOwnerOnly', username: 'Owner' });
     assert.equal(login.status, 200);
     const owner = login.headers.get('set-cookie').split(';')[0];

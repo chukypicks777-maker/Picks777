@@ -5,6 +5,29 @@ import { fetchProviderModels, testAiConnection, getEffectiveAiConfig } from '../
 import { clearCachePattern } from '../services/dataCache.js';
 
 const router = express.Router();
+
+// GET /api/settings/active-model - Retorna el modelo activo públicamente para la interfaz de partidos
+router.get('/active-model', async (req, res) => {
+  try {
+    const config = await getEffectiveAiConfig();
+    res.json({
+      success: true,
+      provider: config.provider,
+      selectedModel: config.selectedModel,
+      modelName: config.modelName || config.selectedModel,
+      isConfigured: config.isConfigured
+    });
+  } catch {
+    res.json({
+      success: true,
+      provider: 'openrouter',
+      selectedModel: 'nvidia/nemotron-3.5-lightning:free',
+      modelName: 'nvidia/nemotron-3.5-lightning:free',
+      isConfigured: false
+    });
+  }
+});
+
 router.use(requireAdmin);
 
 // GET /api/settings - Retorna la configuración activa
