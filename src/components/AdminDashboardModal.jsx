@@ -18,63 +18,13 @@ import {
   Zap,
   Shield,
   Search,
-  ExternalLink
+  ExternalLink,
+  Cpu
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
+import { PROVIDER_PRESETS } from '../constants/aiProviders';
 
-export const PROVIDER_PRESETS = {
-  openrouter: {
-    id: 'openrouter',
-    name: 'OpenRouter',
-    icon: '🌐',
-    badge: '400+ Modelos',
-    defaultBaseUrl: 'https://openrouter.ai/api/v1',
-    defaultModel: 'nvidia/nemotron-3.5-lightning:free',
-    keyPlaceholder: 'sk-or-v1-...',
-    keyHelp: 'Obtén tu clave gratuita en openrouter.ai/keys'
-  },
-  gemini: {
-    id: 'gemini',
-    name: 'Google Gemini',
-    icon: '🔷',
-    badge: 'Google AI Studio',
-    defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-    defaultModel: 'gemini-2.0-flash',
-    keyPlaceholder: 'AIzaSy...',
-    keyHelp: 'Obtén tu clave oficial en aistudio.google.com/apikey'
-  },
-  deepseek: {
-    id: 'deepseek',
-    name: 'DeepSeek / Chinos',
-    icon: '🇨🇳',
-    badge: 'DeepSeek & Qwen',
-    defaultBaseUrl: 'https://api.deepseek.com/v1',
-    defaultModel: 'deepseek-chat',
-    keyPlaceholder: 'sk-...',
-    keyHelp: 'Compatible con DeepSeek, Alibaba Qwen (DashScope) y Moonshot'
-  },
-  groq: {
-    id: 'groq',
-    name: 'Groq (Ultra Rápido)',
-    icon: '⚡',
-    badge: 'LPU Inferencia',
-    defaultBaseUrl: 'https://api.groq.com/openai/v1',
-    defaultModel: 'llama-3.3-70b-versatile',
-    keyPlaceholder: 'gsk_...',
-    keyHelp: 'Inferencia en milisegundos en console.groq.com/keys'
-  },
-  custom: {
-    id: 'custom',
-    name: 'Personalizado / 3ros',
-    icon: '🛠️',
-    badge: 'Cualquier API OpenAI',
-    defaultBaseUrl: 'https://api.together.xyz/v1',
-    defaultModel: 'meta-llama/Llama-3-70b-chat-hf',
-    keyPlaceholder: 'Clave API personalizada...',
-    keyHelp: 'Cualquier servidor compatible con /chat/completions (Ollama, Together, etc.)'
-  }
-};
 
 export default function AdminDashboardModal({ onClose }) {
   const [activeTab, setActiveTab] = useState('generator');
@@ -907,6 +857,15 @@ export default function AdminDashboardModal({ onClose }) {
                         </button>
                         <button
                           type="button"
+                          onClick={() => setModelCategoryFilter('reasoning')}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer flex items-center space-x-1 ${
+                            modelCategoryFilter === 'reasoning' ? 'bg-amber-400 text-black shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-amber-400/10 text-amber-300 border border-amber-400/20 hover:bg-amber-400/20'
+                          }`}
+                        >
+                          <span>🧠 Razonamiento (GLM, GPT, Claude, R1)</span>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => setModelCategoryFilter('free')}
                           className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer flex items-center space-x-1 ${
                             modelCategoryFilter === 'free' ? 'bg-emerald-500 text-black' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
@@ -985,6 +944,9 @@ export default function AdminDashboardModal({ onClose }) {
                         const query = modelSearchQuery.toLowerCase().trim();
                         if (query && !id.includes(query) && !name.includes(query)) return false;
 
+                        if (modelCategoryFilter === 'reasoning') {
+                          return id.includes('o1') || id.includes('o3') || id.includes('reason') || id.includes('r1') || id.includes('think') || id.includes('glm') || id.includes('opus') || id.includes('sonnet') || id.includes('qwq') || name.includes('reasoning') || name.includes('glm') || name.includes('opus');
+                        }
                         if (modelCategoryFilter === 'free') {
                           return m.isFree || id.includes(':free');
                         }

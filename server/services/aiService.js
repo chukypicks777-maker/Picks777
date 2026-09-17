@@ -175,49 +175,55 @@ export async function fetchProviderModels(provider = 'openrouter', apiKey = '', 
 
 export async function executeAiChatCompletion({ provider = 'openrouter', apiKey, baseUrl, model, systemPrompt, userPrompt }) {
   const normProvider = String(provider || 'openrouter').trim().toLowerCase();
+  const modelStr = String(model || '').toLowerCase();
+  const isReasoning = /o1|o3|r1|reason|think|glm|opus|sonnet.*think|qwq/i.test(modelStr);
+  const timeoutMs = 50000; // 50 segundos para modelos de razonamiento profundo
 
   if (normProvider === 'gemini') {
-    const cleanModel = String(model || 'gemini-1.5-flash').replace(/^models\//, '');
-    // 1. First try Gemini OpenAI-compatible endpoint
+    const cleanModel = String(model || 'gemini-2.0-flash').replace(/^models\//, '');
+    // 1. Primero intentar endpoint OpenAI-compatible de Gemini
     try {
       const openaiUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+      const geminiBody = {
+        model: cleanModel,
+        max_tokens: 4000,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ]
+      };
+      if (!isReasoning) geminiBody.temperature = 0.2;
+
       const resp = await fetch(openaiUrl, {
         method: 'POST',
-        signal: AbortSignal.timeout(10000),
+        signal: AbortSignal.timeout(timeoutMs),
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          model: cleanModel,
-          temperature: 0.2,
-          max_tokens: 2500,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ]
-        })
+        body: JSON.stringify(geminiBody)
       });
       if (resp.ok) {
         const data = await resp.json();
-        const content = data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.reasoning;
+        const msg = data.choices?.[0]?.message || {};
+        const content = (typeof msg.content === 'string' && msg.content.trim()) ? msg.content : (msg.reasoning_content || msg.reasoning);
         if (content) return content;
       }
     } catch {}
 
-    // 2. Fallback to Gemini native REST endpoint
+    // 2. Respaldo a endpoint REST nativo de Gemini
     const nativeUrl = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${apiKey}`;
     const nativeResp = await fetch(nativeUrl, {
       method: 'POST',
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(timeoutMs),
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [
           { role: 'user', parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }
         ],
         generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 2500
+          ...(isReasoning ? {} : { temperature: 0.2 }),
+          maxOutputTokens: 4000
         }
       })
     });
@@ -231,7 +237,7 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
     return text;
   }
 
-  // OpenRouter or other OpenAI-compatible endpoints
+  // OpenRouter, DeepSeek, Groq u otros endpoints compatibles con OpenAI
   const finalBaseUrl = (
     baseUrl || (
       normProvider === 'openrouter' ? 'https://openrouter.ai/api/v1' :
@@ -247,23 +253,35 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
   };
 
   if (normProvider === 'openrouter') {
-    headers['HTTP-Referer'] = 'https://deportepicks.vip';
-    headers['X-Title'] = CONFIG.APP_NAME;
+    headers['HTTP-Referer'] = 'https://picks777.vercel.app';
+    headers['X-Title'] = 'Picks777';
+  }
+
+  const requestBody = {
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ]
+  };
+
+  if (!isReasoning) {
+    requestBody.temperature = 0.2;
+    requestBody.max_tokens = 4000;
+  } else {
+    // Modelos de razonamiento (o1, o3, R1, GLM, etc.): usan max_completion_tokens o tokens de razonamiento
+    requestBody.max_completion_tokens = 4000;
+    requestBody.max_tokens = 4000;
+    if (normProvider === 'openrouter') {
+      requestBody.reasoning = { effort: 'medium' };
+    }
   }
 
   const response = await fetch(`${finalBaseUrl}/chat/completions`, {
     method: 'POST',
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(timeoutMs),
     headers,
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      max_tokens: 2500,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ]
-    })
+    body: JSON.stringify(requestBody)
   });
 
   if (!response.ok) {
@@ -272,7 +290,8 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
   }
 
   const data = await response.json();
-  const raw = data.choices?.[0]?.message?.content || data.choices?.[0]?.message?.reasoning;
+  const msg = data.choices?.[0]?.message || {};
+  let raw = (typeof msg.content === 'string' && msg.content.trim()) ? msg.content : (msg.reasoning_content || msg.reasoning || '');
   if (!raw) throw new Error('El proveedor no devolvió contenido.');
   return raw;
 }
@@ -417,16 +436,39 @@ Devuelve el JSON del informe institucional.`;
           userPrompt
         });
 
-        // Strip thinking tags if present
-        const cleaned = rawContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        // Limpieza de etiquetas de razonamiento (DeepSeek, GLM, Claude, Nemotron, etc.)
+        let cleaned = String(rawContent || '')
+          .replace(/<think>[\s\S]*?<\/think>/gi, '')
+          .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+          .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
+          .replace(/```thought[\s\S]*?```/gi, '')
+          .trim();
+
+        // En caso de corte de tokens en un tag <think> sin cerrar:
+        if (cleaned.includes('<think>')) {
+          const lastClose = cleaned.lastIndexOf('</think>');
+          if (lastClose !== -1) {
+            cleaned = cleaned.substring(lastClose + 8).trim();
+          } else {
+            // Si el tag quedó abierto, buscar si ya empezó el JSON
+            const jsonIdx = cleaned.indexOf('{');
+            if (jsonIdx !== -1) {
+              cleaned = cleaned.substring(jsonIdx).trim();
+            }
+          }
+        }
 
         let jsonString = cleaned;
         const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
         if (fenceMatch) {
           jsonString = fenceMatch[1];
         } else {
-          const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-          if (jsonMatch) jsonString = jsonMatch[0];
+          // Extraer el objeto JSON delimitado más externo { ... }
+          const firstOpen = cleaned.indexOf('{');
+          const lastClose = cleaned.lastIndexOf('}');
+          if (firstOpen !== -1 && lastClose > firstOpen) {
+            jsonString = cleaned.substring(firstOpen, lastClose + 1);
+          }
         }
 
         let parsed;

@@ -290,6 +290,7 @@ export default function App() {
 
   // Filter by market if active
   let filteredMatches = matches.filter(m => {
+    if (!m) return false;
     // Si no está seleccionada la pestaña de 'Resultados' (FINISHED),
     // no mezclar partidos pasados/finalizados con los partidos activos o próximos para apostar
     if (matchStatusFilter !== 'FINISHED' && m.status === 'FINISHED') return false;
@@ -305,19 +306,19 @@ export default function App() {
     filteredMatches = [...filteredMatches].sort((a, b) => getMatchSafetyScore(b) - getMatchSafetyScore(a));
   }
 
-  const liveMatchesCount = matches.filter(m => m.status === 'LIVE').length;
-  const featuredMatch = matches.find(m => m.isFeatured && m.status !== 'FINISHED') || matches.find(m => m.status !== 'FINISHED') || matches[0];
+  const liveMatchesCount = matches.filter(m => m && m.status === 'LIVE').length;
+  const featuredMatch = matches.find(m => m && m.isFeatured && m.status !== 'FINISHED') || matches.find(m => m && m.status !== 'FINISHED') || matches[0] || null;
 
   const leagueMatchCounts = {
     total: matches.length,
-    inglaterra: matches.filter(m => m.leagueId === 'inglaterra').length,
-    espana: matches.filter(m => m.leagueId === 'espana').length,
-    mexico: matches.filter(m => m.leagueId === 'mexico').length,
-    mls: matches.filter(m => m.leagueId === 'mls').length,
-    italia: matches.filter(m => m.leagueId === 'italia').length,
-    francia: matches.filter(m => m.leagueId === 'francia').length,
-    champions: matches.filter(m => m.leagueId === 'champions').length,
-    leagues_cup: matches.filter(m => m.leagueId === 'leagues_cup').length,
+    inglaterra: matches.filter(m => m?.leagueId === 'inglaterra').length,
+    espana: matches.filter(m => m?.leagueId === 'espana').length,
+    mexico: matches.filter(m => m?.leagueId === 'mexico').length,
+    mls: matches.filter(m => m?.leagueId === 'mls').length,
+    italia: matches.filter(m => m?.leagueId === 'italia').length,
+    francia: matches.filter(m => m?.leagueId === 'francia').length,
+    champions: matches.filter(m => m?.leagueId === 'champions').length,
+    leagues_cup: matches.filter(m => m?.leagueId === 'leagues_cup').length,
   };
 
   return (
