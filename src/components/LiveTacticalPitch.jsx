@@ -4,8 +4,9 @@ import { Activity, ArrowUpRight } from 'lucide-react';
 export default function LiveTacticalPitch({ match }) {
   if (!match) return null;
 
-  const homePressure = match.probabilities?.homeWin || 54;
-  const awayPressure = match.probabilities?.awayWin || 20;
+  const homePressure = Math.round(match.probabilities?.homeWin || 54);
+  const awayPressure = Math.round(match.probabilities?.awayWin || 20);
+  const diffPressure = Math.abs(homePressure - awayPressure);
 
   return (
     <div className="w-full bg-[#0a0f19] border border-white/10 rounded-xl p-4 font-mono text-xs overflow-hidden relative">
@@ -52,9 +53,9 @@ export default function LiveTacticalPitch({ match }) {
         <div className="relative z-10 bg-[#070b12]/90 border border-white/10 px-3 py-1.5 rounded-lg text-center backdrop-blur-sm">
           <span className="text-[9px] text-slate-400 block uppercase">Dominio Táctico</span>
           <span className="text-xs font-bold text-white">
-            {homePressure > awayPressure 
-              ? `${match.homeTeam?.shortName || match.homeTeam?.name?.substring(0, 3)?.toUpperCase() || 'LOC'} +${(homePressure - awayPressure)}%` 
-              : `${match.awayTeam?.shortName || match.awayTeam?.name?.substring(0, 3)?.toUpperCase() || 'VIS'} +${(awayPressure - homePressure)}%`}
+            {homePressure >= awayPressure 
+              ? `${match.homeTeam?.shortName || match.homeTeam?.name?.substring(0, 3)?.toUpperCase() || 'LOC'} +${diffPressure}%` 
+              : `${match.awayTeam?.shortName || match.awayTeam?.name?.substring(0, 3)?.toUpperCase() || 'VIS'} +${diffPressure}%`}
           </span>
         </div>
 
@@ -74,7 +75,7 @@ export default function LiveTacticalPitch({ match }) {
       {/* Footer Momentum Bar */}
       <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400">
         <span>Tasa de Corners: <strong className="text-sky-400">{((match.homeTeam?.avgCorners ?? 4.8) + (match.awayTeam?.avgCorners ?? 4.5)).toFixed(1)} / partido</strong></span>
-        <span>xG Esperado: <strong className="text-emerald-400">2.68 goles</strong></span>
+        <span>xG Esperado: <strong className="text-emerald-400">{match.model?.expectedGoals ? (Number(match.model.expectedGoals.home) + Number(match.model.expectedGoals.away)).toFixed(2) : '2.65'} goles</strong></span>
       </div>
 
     </div>

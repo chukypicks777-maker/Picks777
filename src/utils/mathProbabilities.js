@@ -112,10 +112,10 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, _match = {}
   const over35Rate = team.over35Rate || Math.round(Math.min(over25Rate - 2, Math.max(10, over25Rate - 26)));
   const under35Rate = 100 - over35Rate;
 
-  const bttsRate = team.bttsRate || Math.round(Math.min(85, Math.max(30, (avgGF > 0.8 && avgGC > 0.8 ? 62 : 45))));
+  const bttsRate = Math.round(Number(team.bttsRate || Math.min(85, Math.max(30, (avgGF > 0.8 && avgGC > 0.8 ? 62 : 45)))));
 
   // Estimación de Clean Sheet (valla invicta)
-  const cleanSheetRate = Math.round(Math.exp(-avgGC) * 100);
+  const cleanSheetRate = Math.round(Number(team.cleanSheetRate || (Math.exp(-avgGC) * 100)));
 
   const fouls = Number((team.avgFouls || (isHome ? Math.min(16.0, Math.max(9.5, 10.5 + avgGC * 0.7)) : Math.min(16.5, Math.max(10.0, 11.2 + avgGC * 0.8)))).toFixed(1));
   const cards = Number((team.avgYellowCards || (isHome ? Math.min(3.6, Math.max(1.4, 1.8 + avgGC * 0.3)) : Math.min(3.8, Math.max(1.6, 2.1 + avgGC * 0.3)))).toFixed(1));
@@ -644,8 +644,8 @@ export function getTop3Opportunities(match) {
     league,
     selection: sel.selection,
     market: sel.market,
-    odds: sel.odds,
-    probability: sel.probability
+    odds: Number(Number(sel.odds).toFixed(2)),
+    probability: Math.round(Number(sel.probability))
   }));
 }
 

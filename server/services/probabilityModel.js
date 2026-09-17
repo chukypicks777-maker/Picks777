@@ -93,8 +93,8 @@ export function buildPick(match) {
   return {
     market: top.market,
     selection: top.selection,
-    odds: top.odds,
-    probability: top.probability,
+    odds: Number(Number(top.odds || 1.45).toFixed(2)),
+    probability: Math.round(top.probability),
     type: '💎 Pick Banquero Principal',
     confidence: `${Math.round(top.probability)}%`,
     settlement: 'PENDING',

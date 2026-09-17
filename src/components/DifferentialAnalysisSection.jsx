@@ -5,16 +5,16 @@ import NumberCounter from './NumberCounter';
 export default function DifferentialAnalysisSection({ homeStats, awayStats, diff }) {
   if (!homeStats || !awayStats || !diff) return null;
 
-  const homeCorners = homeStats.avgCorners;
-  const awayCorners = awayStats.avgCorners;
+  const homeCorners = Number(Number(homeStats.avgCorners || 5.0).toFixed(1));
+  const awayCorners = Number(Number(awayStats.avgCorners || 4.5).toFixed(1));
   const totalCorners = (homeCorners + awayCorners).toFixed(1);
-  const cornerGap = diff.cornerGap; // home - away
+  const cornerGap = Number((diff.cornerGap != null ? diff.cornerGap : (homeCorners - awayCorners)).toFixed(1));
   const homePct = Math.round((homeCorners / (homeCorners + awayCorners || 1)) * 100);
   const awayPct = 100 - homePct;
 
   // Diferencial de gol
-  const homeGoalDiff = homeStats.goalDiff;
-  const awayGoalDiff = awayStats.goalDiff;
+  const homeGoalDiff = Math.round(Number(homeStats.goalDiff || 0));
+  const awayGoalDiff = Math.round(Number(awayStats.goalDiff || 0));
 
   return (
     <div className="bg-[#111724] rounded-xl p-5 border border-sky-500/30 font-mono text-xs shadow-[0_0_25px_rgba(0,0,0,0.5)] space-y-4">
@@ -105,11 +105,11 @@ export default function DifferentialAnalysisSection({ homeStats, awayStats, diff
             <div className="flex justify-between items-center text-slate-300">
               <span>Ataque Local vs Defensa Visita:</span>
               <span className={`font-bold ${diff.attackDefenseHome >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {diff.attackDefenseHome >= 0 ? `+${diff.attackDefenseHome}` : diff.attackDefenseHome} gol/p
+                {diff.attackDefenseHome >= 0 ? `+${Number(diff.attackDefenseHome || 0).toFixed(2)}` : Number(diff.attackDefenseHome || 0).toFixed(2)} gol/p
               </span>
             </div>
             <p className="text-[9.5px] text-slate-400 leading-snug">
-              {homeStats.name} anota <strong>{homeStats.avgGF}</strong> goles/p frente a los <strong>{awayStats.avgGC}</strong> concedidos por {awayStats.name}.
+              {homeStats.name} anota <strong>{Number(homeStats.avgGF || 0).toFixed(2)}</strong> goles/p frente a los <strong>{Number(awayStats.avgGC || 0).toFixed(2)}</strong> concedidos por {awayStats.name}.
             </p>
           </div>
 
@@ -118,11 +118,11 @@ export default function DifferentialAnalysisSection({ homeStats, awayStats, diff
             <div className="flex justify-between items-center text-slate-300">
               <span>Ataque Visita vs Defensa Local:</span>
               <span className={`font-bold ${diff.attackDefenseAway >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                {diff.attackDefenseAway >= 0 ? `+${diff.attackDefenseAway}` : diff.attackDefenseAway} gol/p
+                {diff.attackDefenseAway >= 0 ? `+${Number(diff.attackDefenseAway || 0).toFixed(2)}` : Number(diff.attackDefenseAway || 0).toFixed(2)} gol/p
               </span>
             </div>
             <p className="text-[9.5px] text-slate-400 leading-snug">
-              {awayStats.name} anota <strong>{awayStats.avgGF}</strong> goles/p frente a los <strong>{homeStats.avgGC}</strong> concedidos por {homeStats.name}.
+              {awayStats.name} anota <strong>{Number(awayStats.avgGF || 0).toFixed(2)}</strong> goles/p frente a los <strong>{Number(homeStats.avgGC || 0).toFixed(2)}</strong> concedidos por {homeStats.name}.
             </p>
           </div>
         </div>
@@ -136,7 +136,7 @@ export default function DifferentialAnalysisSection({ homeStats, awayStats, diff
             <span>{awayStats.shortName}: <strong className="text-indigo-400">{awayGoalDiff >= 0 ? `+${awayGoalDiff}` : awayGoalDiff}</strong></span>
             <span>•</span>
             <span className="text-emerald-400 font-bold">
-              Brecha: {diff.goalDiffGap >= 0 ? `+${diff.goalDiffGap}` : diff.goalDiffGap}
+              Brecha: {diff.goalDiffGap >= 0 ? `+${Number(diff.goalDiffGap || 0).toFixed(1)}` : Number(diff.goalDiffGap || 0).toFixed(1)}
             </span>
           </div>
         </div>
@@ -150,18 +150,18 @@ export default function DifferentialAnalysisSection({ homeStats, awayStats, diff
             <span>Balanza Diferencial Over vs Under (Línea 2.5 Goles)</span>
           </span>
           <span className="text-[10.5px] font-bold text-teal-300">
-            {diff.overUnderTendency} ({diff.overUnderMargin >= 0 ? `+${diff.overUnderMargin}%` : `${diff.overUnderMargin}%`})
+            {diff.overUnderTendency} ({Math.round(diff.overUnderMargin || 0) >= 0 ? `+${Math.round(diff.overUnderMargin || 0)}%` : `${Math.round(diff.overUnderMargin || 0)}%`})
           </span>
         </div>
 
         <div className="space-y-1">
           <div className="flex justify-between text-[10px] text-slate-300">
-            <span className="text-emerald-400 font-bold">+2.5 Goles (Over): {diff.over25}%</span>
-            <span className="text-amber-400 font-bold">-2.5 Goles (Under): {diff.under25}%</span>
+            <span className="text-emerald-400 font-bold">+2.5 Goles (Over): {Math.round(diff.over25 || 50)}%</span>
+            <span className="text-amber-400 font-bold">-2.5 Goles (Under): {Math.round(diff.under25 || 50)}%</span>
           </div>
           <div className="h-2 w-full bg-slate-900 rounded-full overflow-hidden flex gap-0.5">
-            <div style={{ width: `${diff.over25}%` }} className="bg-emerald-500 h-full rounded-l-full" />
-            <div style={{ width: `${diff.under25}%` }} className="bg-amber-500 h-full rounded-r-full" />
+            <div style={{ width: `${Math.round(diff.over25 || 50)}%` }} className="bg-emerald-500 h-full rounded-l-full" />
+            <div style={{ width: `${Math.round(diff.under25 || 50)}%` }} className="bg-amber-500 h-full rounded-r-full" />
           </div>
         </div>
       </div>

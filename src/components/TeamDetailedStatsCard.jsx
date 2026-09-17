@@ -5,7 +5,6 @@ import NumberCounter from './NumberCounter';
 export default function TeamDetailedStatsCard({ stats, isHome }) {
   if (!stats) return null;
 
-  const accentColor = isHome ? 'sky' : 'indigo';
   const borderClass = isHome ? 'border-sky-500/30' : 'border-indigo-500/30';
   const glowClass = isHome ? 'shadow-[0_0_15px_rgba(56,189,248,0.1)]' : 'shadow-[0_0_15px_rgba(129,140,248,0.1)]';
 
@@ -57,18 +56,18 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
         <div className="grid grid-cols-3 gap-1.5 text-center text-[11px] mb-3">
           <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
             <span className="text-slate-400 block text-[9px]">Goles Favor</span>
-            <span className="font-bold text-emerald-400">{stats.avgGF} / p</span>
+            <span className="font-bold text-emerald-400">{Number(stats.avgGF || 0).toFixed(2)} / p</span>
             <span className="text-[8px] text-slate-500 block">({stats.goalsFor} tot)</span>
           </div>
           <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
             <span className="text-slate-400 block text-[9px]">Goles Contra</span>
-            <span className="font-bold text-rose-400">{stats.avgGC} / p</span>
+            <span className="font-bold text-rose-400">{Number(stats.avgGC || 0).toFixed(2)} / p</span>
             <span className="text-[8px] text-slate-500 block">({stats.goalsAgainst} tot)</span>
           </div>
           <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
             <span className="text-slate-400 block text-[9px]">Diferencial</span>
-            <span className={`font-bold ${stats.goalDiff >= 0 ? 'text-sky-400' : 'text-amber-400'}`}>
-              {stats.goalDiff >= 0 ? `+${stats.goalDiff}` : stats.goalDiff}
+            <span className={`font-bold ${Math.round(stats.goalDiff || 0) >= 0 ? 'text-sky-400' : 'text-amber-400'}`}>
+              {Math.round(stats.goalDiff || 0) >= 0 ? `+${Math.round(stats.goalDiff || 0)}` : Math.round(stats.goalDiff || 0)}
             </span>
             <span className="text-[8px] text-slate-500 block">{stats.gamesPlayed} PJ</span>
           </div>
@@ -144,7 +143,7 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
                 <span>Tarjetas</span>
               </span>
               <span className="text-[9.5px] text-slate-400 font-mono">
-                Prom: <strong className="text-amber-300">{stats.cards}</strong> / p
+                Prom: <strong className="text-amber-300">{Number(stats.cards || 0).toFixed(1)}</strong> / p
               </span>
             </div>
 
@@ -203,7 +202,7 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
                 <span>Córners</span>
               </span>
               <span className="text-[9.5px] text-slate-400 font-mono">
-                Fav: <strong className="text-white">{stats.avgCorners}</strong> | Conced: <strong className="text-slate-300">{stats.avgCornersConceded}</strong>
+                Fav: <strong className="text-white">{Number(stats.avgCorners || 0).toFixed(1)}</strong> | Conced: <strong className="text-slate-300">{Number(stats.avgCornersConceded || 0).toFixed(1)}</strong>
               </span>
             </div>
 

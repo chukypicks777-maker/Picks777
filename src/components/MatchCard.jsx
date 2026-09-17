@@ -25,7 +25,7 @@ export default function MatchCard({
   const isBankerMode = bankerRank != null;
   const displayPick = isBankerMode ? bankerPick.selection : (match.aiPick?.selection || bankerPick.selection);
   const displayOdds = isBankerMode ? bankerPick.odds : (match.aiPick?.odds || match.odds?.homeWin || bankerPick.odds);
-  const displayProb = isBankerMode ? bankerPick.safetyScore : confidenceScore;
+  const displayProb = Math.round(isBankerMode ? (bankerPick.safetyScore || bankerPick.probability || 70) : confidenceScore);
 
   const formatMatchTime = (iso) => {
     const d = new Date(iso);
@@ -36,7 +36,20 @@ export default function MatchCard({
     <TiltCard 
       maxTilt={6} 
       scale={1.018}
-      className="terminal-card rounded-xl p-4 flex flex-col justify-between border border-white/10 hover:border-sky-500/40"
+      role="button"
+      tabIndex={0}
+      onClick={() => {
+        sounds.playClick();
+        onOpenModal(match);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          sounds.playClick();
+          onOpenModal(match);
+        }
+      }}
+      className="terminal-card rounded-xl p-4 flex flex-col justify-between border border-white/10 hover:border-sky-500/40 cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-400/50"
     >
       <div>
         {/* Card Header: League & Match Status / Time */}

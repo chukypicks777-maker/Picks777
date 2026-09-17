@@ -159,6 +159,11 @@ export default function App() {
             return updated ? { ...m, ...updated } : m;
           });
         });
+        setSelectedMatch(prev => {
+          if (!prev) return null;
+          const updated = data.matches.find(u => u.id === prev.id);
+          return updated ? { ...prev, ...updated } : prev;
+        });
       }
     } catch {}
   }, []);

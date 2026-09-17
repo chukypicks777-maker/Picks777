@@ -11,30 +11,30 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
   const over05 = 96;
   const under05 = 4;
 
-  const over15 = probs.over15 || diff.over15 || 85;
+  const over15 = Math.round(probs.over15 || diff.over15 || 85);
   const under15 = 100 - over15;
 
-  const over25 = probs.over25 || diff.over25 || 62;
-  const under25 = probs.under25 != null ? probs.under25 : (100 - over25);
+  const over25 = Math.round(probs.over25 || diff.over25 || 62);
+  const under25 = Math.round(probs.under25 != null ? probs.under25 : (100 - over25));
 
-  const over35 = probs.over35 || diff.over35 || 34;
+  const over35 = Math.round(probs.over35 || diff.over35 || 34);
   const under35 = 100 - over35;
 
   const over45 = probs.over45 != null ? Math.round(probs.over45) : Math.round(Math.max(6, over35 * 0.45));
   const under45 = probs.under45 != null ? Math.round(probs.under45) : (100 - over45);
 
   // Córners Over & Under
-  const homeCornersOver5 = homeStats?.cornerOver5 || 74;
+  const homeCornersOver5 = Math.round(homeStats?.cornerOver5 || 74);
   const homeCornersUnder5 = 100 - homeCornersOver5;
 
-  const awayCornersOver5 = awayStats?.cornerOver5 || 58;
+  const awayCornersOver5 = Math.round(awayStats?.cornerOver5 || 58);
   const awayCornersUnder5 = 100 - awayCornersOver5;
 
   // Córners totales partido
-  const matchCornersOver5 = diff.matchCornersProbs?.over5 || 95;
+  const matchCornersOver5 = Math.round(diff.matchCornersProbs?.over5 || 95);
   const matchCornersUnder5 = 100 - matchCornersOver5;
 
-  const matchCornersOver85 = diff.matchCornersProbs?.over85 || 68;
+  const matchCornersOver85 = Math.round(diff.matchCornersProbs?.over85 || 68);
   const matchCornersUnder85 = 100 - matchCornersOver85;
 
   const lines = [

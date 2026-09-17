@@ -29,7 +29,24 @@ export default function HeroFeaturedMatch({
           onScanComplete={() => setIsScanning(false)}
         />
       ) : (
-        <TiltCard maxTilt={5} scale={1.01} className="rounded-2xl border border-sky-500/20 bg-[#0c111a] shadow-[0_10px_35px_rgba(0,0,0,0.6)]">
+        <TiltCard 
+          maxTilt={5} 
+          scale={1.01} 
+          role="button"
+          tabIndex={0}
+          onClick={() => {
+            sounds.playClick();
+            onOpenMatch(match);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              sounds.playClick();
+              onOpenMatch(match);
+            }
+          }}
+          className="rounded-2xl border border-sky-500/20 bg-[#0c111a] shadow-[0_10px_35px_rgba(0,0,0,0.6)] cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-400/50"
+        >
           <div className="p-6 md:p-7 relative overflow-hidden">
             
             {/* Header Info */}
@@ -183,7 +200,12 @@ export default function HeroFeaturedMatch({
                       <span>{match.aiPick?.type || 'Pick Principal'}</span>
                     </span>
                     <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 text-[10px] font-mono font-bold border border-sky-500/30">
-                      {match.aiPick?.confidence || '88% Conf.'}
+                      {(() => {
+                        const confRaw = match.aiPick?.confidence;
+                        if (typeof confRaw === 'number') return `${Math.round(confRaw)}% Conf.`;
+                        const parsed = parseFloat(String(confRaw || '').replace('%', ''));
+                        return Number.isFinite(parsed) ? `${Math.round(parsed)}% Conf.` : (confRaw || '88% Conf.');
+                      })()}
                     </span>
                   </div>
 

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { CONFIG } from '../config.js';
 import { storage } from '../storage.js';
-import { cachedData, fetchJson } from './dataCache.js';
+import { cachedData } from './dataCache.js';
 
 export async function getEffectiveAiConfig() {
   let dbConfig = null;
@@ -501,8 +501,8 @@ Devuelve el JSON del informe institucional.`;
         let topPickCandidate = topPickText ? {
           selection: topPickText,
           market: parsed.topPick?.market || match.aiPick?.market || '1X2 / Mercado Principal',
-          odds: Number(parsed.topPick?.odds) || match.aiPick?.odds || 1.85,
-          probability: Number(parsed.topPick?.probability) || match.aiPick?.probability || 65,
+          odds: Number(Number(parsed.topPick?.odds || match.aiPick?.odds || 1.85).toFixed(2)),
+          probability: Math.round(Number(parsed.topPick?.probability || match.aiPick?.probability || 65)),
           stake: parsed.topStake || parsed.topPick?.stake || '3/5 Unidades',
           rationale: parsed.topPick?.rationale || topPickText
         } : (match.aiPick || null);
@@ -532,7 +532,13 @@ Devuelve el JSON del informe institucional.`;
         }
 
         const valueBetCandidate = parsed.valueBet
-          ? (typeof parsed.valueBet === 'string' ? { selection: parsed.valueBet, odds: 2.10, rationale: parsed.valueBet } : parsed.valueBet)
+          ? (typeof parsed.valueBet === 'string'
+              ? { selection: parsed.valueBet, odds: 2.10, probability: 50, rationale: parsed.valueBet }
+              : {
+                  ...parsed.valueBet,
+                  odds: Number(Number(parsed.valueBet.odds || 2.10).toFixed(2)),
+                  probability: Math.round(Number(parsed.valueBet.probability || 50))
+                })
           : null;
 
         const isHomeFavored = homeWinProb >= awayWinProb;
@@ -551,17 +557,17 @@ Devuelve el JSON del informe institucional.`;
           bttsProb >= 55 ? {
             selection: 'Ambos Equipos Anotan: SÍ',
             probability: Math.round(bttsProb),
-            odds: Number(match.odds?.bttsYes || 1.80),
+            odds: Number(Number(match.odds?.bttsYes || 1.80).toFixed(2)),
             rationale: `Alta frecuencia goleadora de ambos clubes en la presente temporada (${Math.round(bttsProb)}% probabilidad Poisson).`
           } : over25Prob >= 55 ? {
             selection: 'Más de 2.5 Goles',
             probability: Math.round(over25Prob),
-            odds: Number(match.odds?.over25 || 1.85),
+            odds: Number(Number(match.odds?.over25 || 1.85).toFixed(2)),
             rationale: `Ritmo ofensivo con promedio combinado superior a 2.5 goles esperados (${Math.round(over25Prob)}% probabilidad).`
           } : {
             selection: 'Menos de 2.5 Goles',
             probability: Math.round(100 - over25Prob),
-            odds: Number(match.odds?.under25 || 1.80),
+            odds: Number(Number(match.odds?.under25 || 1.80).toFixed(2)),
             rationale: `Bloques defensivos compactos que limitan la generación de ocasiones claras.`
           }
         );

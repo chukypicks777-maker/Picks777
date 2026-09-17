@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { sounds } from '../utils/audioEffects';
 
-export default function TiltCard({ children, className = '', maxTilt = 8, scale = 1.015, onClick }) {
+export default function TiltCard({ children, className = '', maxTilt = 8, scale = 1.015, onClick, ...rest }) {
   const cardRef = useRef(null);
   const [transform, setTransform] = useState('');
   const [glarePos, setGlarePos] = useState({ x: 50, y: 50, opacity: 0 });
@@ -44,6 +44,7 @@ export default function TiltCard({ children, className = '', maxTilt = 8, scale 
       onClick={onClick}
       style={{ transform }}
       className={`tilt-card-inner relative overflow-hidden transition-all duration-200 cursor-pointer ${className}`}
+      {...rest}
     >
       {/* Dynamic Radial Glare */}
       <div
