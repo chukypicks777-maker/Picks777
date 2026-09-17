@@ -1,3 +1,5 @@
+import { getBestBankerPick } from '../../src/utils/mathProbabilities.js';
+
 // Baseline independent Poisson model. Not xG, Dixon-Coles, or calibrated accuracy.
 export function poissonModel(home, away, minGames = 5) {
   const valid = t => t && Number.isFinite(t.gamesPlayed) && t.gamesPlayed >= minGames &&
@@ -48,57 +50,20 @@ export function poissonModel(home, away, minGames = 5) {
 export function buildPick(match) {
   if (!match || match.status !== 'SCHEDULED' || Date.parse(match.kickoff) <= Date.now()) return null;
   const probs = match.model?.probabilities || match.probabilities;
-  if (!probs || !Object.keys(probs).length) return null;
+  if (!probs || !Object.keys(probs).length || (probs.homeWin == null && probs.awayWin == null)) return null;
 
-  const homeName = match.homeTeam?.name || 'Local';
-  const awayName = match.awayTeam?.name || 'Visita';
-  const homeShort = match.homeTeam?.shortName || homeName;
-  const awayShort = match.awayTeam?.shortName || awayName;
-  const homeGP = match.homeTeam?.gamesPlayed || (match.homeTeam?.homeRecord ? (match.homeTeam.homeRecord.w + match.homeTeam.homeRecord.d + match.homeTeam.homeRecord.l) : null) || 15;
-  const awayGP = match.awayTeam?.gamesPlayed || (match.awayTeam?.awayRecord ? (match.awayTeam.awayRecord.w + match.awayTeam.awayRecord.d + match.awayTeam.awayRecord.l) : null) || 15;
-  const homeAvgGF = match.homeTeam?.avgGoalsScored ? Number(match.homeTeam.avgGoalsScored).toFixed(1) : ((match.homeTeam?.goalsFor != null && homeGP) ? (match.homeTeam.goalsFor / homeGP).toFixed(1) : null);
-  const awayAvgGF = match.awayTeam?.avgGoalsScored ? Number(match.awayTeam.avgGoalsScored).toFixed(1) : ((match.awayTeam?.goalsFor != null && awayGP) ? (match.awayTeam.goalsFor / awayGP).toFixed(1) : null);
-  const combinedGF = (homeAvgGF && awayAvgGF) ? (parseFloat(homeAvgGF) + parseFloat(awayAvgGF)).toFixed(1) : null;
-
-  const labels = {
-    homeWin: `${homeName} Victoria Directa (1)`,
-    draw: 'Empate (X)',
-    awayWin: `${awayName} Victoria Directa (2)`,
-    over25: 'Más de 2.5 goles',
-    under25: 'Menos de 2.5 goles'
-  };
-
-  const rationales = {
-    homeWin: `Ventaja de local marcada: ${homeShort} ${homeAvgGF ? `promedia ${homeAvgGF} goles/p y ` : ''}sostiene ${Math.round(probs.homeWin || 50)}% de probabilidad de triunfo según Poisson.`,
-    awayWin: `Superioridad técnica visitante: ${awayShort} ${awayAvgGF ? `promedia ${awayAvgGF} goles/p con ` : ''}${Math.round(probs.awayWin || 50)}% de probabilidad estadística de triunfo.`,
-    draw: `Escenario de paridad alta con defensas compactas y ${Math.round(probs.draw || 28)}% de probabilidad de empate.`,
-    over25: `Tendencia ofensiva acelerada: ${combinedGF ? `Promedio conjunto de ${combinedGF} goles/p y ` : ''}${Math.round(probs.over25 || 55)}% de probabilidad de 3 o más goles.`,
-    under25: `Perfil defensivo cerrado: Solidez en repliegue y baja tasa de conversión rival (${Math.round(probs.under25 || 55)}% de probabilidad de Under 2.5).`
-  };
-
-  const candidates = Object.entries(labels)
-    .filter(([key]) => Number.isFinite(match.odds?.[key]) && match.odds[key] > 1 && Number.isFinite(probs[key]))
-    .map(([market, selection]) => ({
-      market,
-      selection,
-      odds: match.odds[market],
-      probability: probs[market],
-      rationale: rationales[market]
-    }))
-    .sort((a, b) => b.probability - a.probability);
-
-  if (!candidates.length) return null;
-  const top = candidates[0];
+  const banker = getBestBankerPick(match);
+  if (!banker) return null;
 
   return {
-    market: top.market,
-    selection: top.selection,
-    odds: Number(Number(top.odds || 1.45).toFixed(2)),
-    probability: Math.round(top.probability),
+    market: banker.market || 'Doble Oportunidad',
+    selection: banker.selection,
+    odds: Number(Number(banker.odds || 1.35).toFixed(2)),
+    probability: Math.round(banker.probability || 70),
     type: '💎 Pick Banquero Principal',
-    confidence: `${Math.round(top.probability)}%`,
+    confidence: `${Math.round(banker.probability || 70)}%`,
     settlement: 'PENDING',
     predictedScore: match.model?.predictedScore || null,
-    summaryRationale: top.rationale || `Selección cuantitativa con ${Math.round(top.probability)}% de probabilidad estadística respaldada por el modelo Poisson.`
+    summaryRationale: banker.rationale || `Selección cuantitativa de máxima seguridad con ${Math.round(banker.probability || 70)}% de probabilidad estadística.`
   };
 }
