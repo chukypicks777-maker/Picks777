@@ -330,15 +330,6 @@ export async function availableModels() {
   return fetchProviderModels('openrouter', CONFIG.OPENROUTER_API_KEY, CONFIG.OPENROUTER_BASE_URL);
 }
 
-const FALLBACK_MODELS = [
-  'nvidia/nemotron-3.5-lightning:free',
-  'dots-studio/dots-3-note-preview:free',
-  'liquid/lfm-2.5-2.6b:free',
-  'openrouter/free',
-  'nex-agi/nex-n2.5-mini:free',
-  'inclusionai/ling-3.0-flash-vl:free'
-];
-
 export async function generateAiMatchReport(match, options = {}) {
   const facts = [
     `Partido: ${match.homeTeam.name} vs ${match.awayTeam.name}. Competición: ${match.leagueName}. Inicio: ${match.kickoff}. Estado ESPN: ${match.status}.`,
@@ -393,9 +384,7 @@ export async function generateAiMatchReport(match, options = {}) {
     };
   }
 
-  const candidateModels = effectiveConfig.provider === 'openrouter'
-    ? [effectiveConfig.selectedModel, ...FALLBACK_MODELS.filter(m => m !== effectiveConfig.selectedModel)]
-    : [effectiveConfig.selectedModel];
+  const candidateModels = [effectiveConfig.selectedModel].filter(Boolean);
 
   const systemPrompt = `Eres el analista cuantitativo y táctico de DEPORTEPICKS AI VIP.
 Responde siempre en español. No uses introducciones ni explicaciones fuera del JSON.
