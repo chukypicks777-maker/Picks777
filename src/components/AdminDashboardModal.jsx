@@ -1022,7 +1022,7 @@ export default function AdminDashboardModal({ onClose }) {
                         type="text"
                         value={customModelInput}
                         onChange={(e) => setCustomModelInput(e.target.value)}
-                        placeholder={`Ej: ${newModel || 'z-ai/glm-5.2:free'}`}
+                        placeholder={`Ej: ${newModel || 'deepseek/deepseek-r1'}`}
                         className="flex-1 px-3 py-1.5 bg-[#090d15] border border-white/10 rounded-lg text-white font-mono text-xs placeholder:text-slate-600 focus:outline-none focus:border-sky-400"
                       />
                       {customModelInput.trim() && (
