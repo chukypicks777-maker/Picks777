@@ -205,18 +205,32 @@ export default function HeroFeaturedMatch({
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        sounds.playAddParlay();
-                        const topOpportunities = getTop3Opportunities(match);
-                        onAddToParlay(topOpportunities);
-                      }}
-                      className="py-2 px-3 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Al Parlay</span>
-                    </button>
+                    {match.status === 'FINISHED' ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sounds.playClick();
+                          onOpenMatch(match);
+                        }}
+                        className="py-2 px-3 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-white/5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 cursor-pointer"
+                      >
+                        <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Finalizado</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sounds.playAddParlay();
+                          const topOpportunities = getTop3Opportunities(match);
+                          onAddToParlay(topOpportunities);
+                        }}
+                        className="py-2 px-3 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Al Parlay</span>
+                      </button>
+                    )}
 
                     <button
                       onClick={(e) => {

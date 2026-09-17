@@ -290,6 +290,9 @@ export default function App() {
 
   // Filter by market if active
   let filteredMatches = matches.filter(m => {
+    // Si no está seleccionada la pestaña de 'Resultados' (FINISHED),
+    // no mezclar partidos pasados/finalizados con los partidos activos o próximos para apostar
+    if (matchStatusFilter !== 'FINISHED' && m.status === 'FINISHED') return false;
     if (marketFilter === 'safe') return true; // En modo banquero se ordenan todos de mayor a menor seguridad
     if (marketFilter === 'btts') return (m.probabilities?.bttsYes || 0) >= 55;
     if (marketFilter === 'over') return (m.probabilities?.over25 || 0) >= 55;
@@ -303,7 +306,7 @@ export default function App() {
   }
 
   const liveMatchesCount = matches.filter(m => m.status === 'LIVE').length;
-  const featuredMatch = matches.find(m => m.isFeatured && m.status !== 'FINISHED') || matches[0];
+  const featuredMatch = matches.find(m => m.isFeatured && m.status !== 'FINISHED') || matches.find(m => m.status !== 'FINISHED') || matches[0];
 
   const leagueMatchCounts = {
     total: matches.length,

@@ -60,6 +60,6 @@ router.post('/:id/ai-analysis', rateLimit('ai'), async (req, res) => {
   if (!match) return res.status(404).json({ success: false, message: 'Partido no disponible en el feed actual.' });
   const enriched = await enrichMatchWithRealData(match);
   const forceRefresh = Boolean(req.query.force === '1' || req.body?.forceRefresh);
-  res.json({ success: true, report: await generateAiMatchReport(enriched, { forceRefresh }) });
+  res.json({ success: true, match: enriched, report: await generateAiMatchReport(enriched, { forceRefresh }) });
 });
 export default router;

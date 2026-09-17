@@ -89,10 +89,10 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, _match = {}
   const avgGC = Number((team.avgGoalsConceded || goalsAgainst / gamesPlayed).toFixed(2));
   const goalDiff = Number((goalsFor - goalsAgainst).toFixed(0));
 
-  // Promedio de córners
-  const avgCorners = Number((team.avgCorners || (isHome ? 5.8 : 4.8)).toFixed(1));
-  // Córners concedidos estimados o derivados
-  const avgCornersConceded = Number(Math.max(2.5, (10.5 - avgCorners)).toFixed(1));
+  // Promedio de córners (usar dato real del equipo o calcular dinámicamente por volumen ofensivo)
+  const avgCorners = Number((team.avgCorners || (isHome ? Math.min(7.5, Math.max(3.8, 4.2 + avgGF * 0.8)) : Math.min(7.2, Math.max(3.5, 3.8 + avgGF * 0.7)))).toFixed(1));
+  // Córners concedidos estimados o derivados por volumen defensivo
+  const avgCornersConceded = Number((team.avgCornersConceded || Math.max(2.8, Math.min(7.5, 3.6 + avgGC * 0.7))).toFixed(1));
 
   const cornerProbs = calculateCornerProbabilities(avgCorners);
 
@@ -117,8 +117,8 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, _match = {}
   // Estimación de Clean Sheet (valla invicta)
   const cleanSheetRate = Math.round(Math.exp(-avgGC) * 100);
 
-  const fouls = Number((team.avgFouls || (isHome ? 11.2 : 12.8)).toFixed(1));
-  const cards = Number((team.avgYellowCards || (isHome ? 2.1 : 2.6)).toFixed(1));
+  const fouls = Number((team.avgFouls || (isHome ? Math.min(16.0, Math.max(9.5, 10.5 + avgGC * 0.7)) : Math.min(16.5, Math.max(10.0, 11.2 + avgGC * 0.8)))).toFixed(1));
+  const cards = Number((team.avgYellowCards || (isHome ? Math.min(3.6, Math.max(1.4, 1.8 + avgGC * 0.3)) : Math.min(3.8, Math.max(1.6, 2.1 + avgGC * 0.3)))).toFixed(1));
 
   // Probabilidades de Tarjetas (-0.5, +0.5, +1.5, +2.5)
   const lambdaCards = Math.max(0.5, cards);

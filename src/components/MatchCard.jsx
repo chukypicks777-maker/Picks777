@@ -204,18 +204,32 @@ export default function MatchCard({
 
       {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            sounds.playAddParlay();
-            const topOpportunities = getTop3Opportunities(match);
-            onAddToParlay(topOpportunities);
-          }}
-          className="py-1.5 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
-        >
-          <Plus className="w-3 h-3" />
-          <span>Al Parlay</span>
-        </button>
+        {match.status === 'FINISHED' ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              sounds.playClick();
+              onOpenModal(match);
+            }}
+            className="py-1.5 px-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-white/5 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
+          >
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+            <span>Finalizado</span>
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              sounds.playAddParlay();
+              const topOpportunities = getTop3Opportunities(match);
+              onAddToParlay(topOpportunities);
+            }}
+            className="py-1.5 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
+          >
+            <Plus className="w-3 h-3" />
+            <span>Al Parlay</span>
+          </button>
+        )}
 
         <button
           onClick={(e) => {

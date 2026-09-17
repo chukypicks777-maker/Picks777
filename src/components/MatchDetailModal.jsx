@@ -73,13 +73,17 @@ export default function MatchDetailModal({
   const [simulating, setSimulating] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
 
+  const [enrichedMatch, setEnrichedMatch] = useState(match);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
   // Derive simulation data; reset custom jitter simulation if match changes
   const [lastMatchId, setLastMatchId] = useState(match?.id);
   if (match?.id !== lastMatchId) {
     setLastMatchId(match?.id);
     setCustomSim(null);
   }
-  const simulationData = customSim || calculateMatchSimulation(match, false);
+  const m = enrichedMatch || match;
+  const simulationData = customSim || calculateMatchSimulation(m, false);
 
   const fetchAiAnalysis = useCallback(async (forceRefresh = false) => {
     if (!match?.id) return;
@@ -92,66 +96,85 @@ export default function MatchDetailModal({
         body: JSON.stringify({ forceRefresh })
       });
       const data = await res.json();
-      if (data.success && data.report) {
-        setAiReport(data.report);
+      if (data.success) {
+        if (data.report) setAiReport(data.report);
+        if (data.match) setEnrichedMatch(prev => ({ ...prev, ...data.match }));
       }
     } catch (err) {
       console.error('Error fetching AI analysis:', err);
     } finally {
       setLoadingAi(false);
     }
-  }, [match]);
+  }, [match?.id]);
 
   const runMonteCarloSimulation = useCallback(() => {
     setSimulating(true);
     sounds.playRadarScan();
     setTimeout(() => {
-      setCustomSim(calculateMatchSimulation(match, true));
+      setCustomSim(calculateMatchSimulation(m, true));
       setSimulating(false);
     }, 450);
-  }, [match]);
+  }, [m]);
 
   useEffect(() => {
     let active = true;
-    (async () => {
-      if (active && match) {
-        await fetchAiAnalysis(false);
+    setEnrichedMatch(match);
+    async function loadDetails() {
+      if (!match?.id) return;
+      try {
+        setLoadingDetails(true);
+        const res = await fetch(`/api/matches/${match.id}`, { credentials: 'same-origin' });
+        if (res.ok) {
+          const data = await res.json();
+          if (active && data.success && data.match) {
+            setEnrichedMatch(prev => ({ ...prev, ...data.match }));
+          }
+        }
+      } catch (err) {
+        console.warn('Error loading match details:', err);
+      } finally {
+        if (active) setLoadingDetails(false);
       }
-    })();
+    }
+    loadDetails();
+    fetchAiAnalysis(false);
     return () => {
       active = false;
     };
-  }, [match, fetchAiAnalysis]);
+  }, [match?.id, fetchAiAnalysis]);
 
   if (!match) return null;
 
   // Compute 10-match H2H historical statistics
-  const h2hList = match.h2h || [];
-  const totalH2H = h2hList.length || 1;
-  const homeWins = h2hList.filter(h => h.winner === match.homeTeam?.shortName || (h.home === match.homeTeam?.name && h.score?.split('-')[0]?.trim() > h.score?.split('-')[1]?.trim())).length;
-  const awayWins = h2hList.filter(h => h.winner === match.awayTeam?.shortName || (h.away === match.awayTeam?.name && h.score?.split('-')[1]?.trim() > h.score?.split('-')[0]?.trim())).length;
-  const draws = h2hList.filter(h => h.winner === 'Draw' || h.score?.split('-')[0]?.trim() === h.score?.split('-')[1]?.trim()).length;
+  const h2hList = m.h2h || [];
+  const homeWins = h2hList.filter(h => h.winner === m.homeTeam?.name || h.winner === m.homeTeam?.shortName || (h.home === m.homeTeam?.name && parseInt(h.score?.split('-')[0], 10) > parseInt(h.score?.split('-')[1], 10))).length;
+  const awayWins = h2hList.filter(h => h.winner === m.awayTeam?.name || h.winner === m.awayTeam?.shortName || (h.away === m.awayTeam?.name && parseInt(h.score?.split('-')[1], 10) > parseInt(h.score?.split('-')[0], 10))).length;
+  const draws = h2hList.filter(h => h.winner === 'Draw' || h.winner === 'Empate' || parseInt(h.score?.split('-')[0], 10) === parseInt(h.score?.split('-')[1], 10)).length;
 
-  const h2hHomeWinPct = Math.round((homeWins / totalH2H) * 100);
-  const h2hDrawPct = Math.round((draws / totalH2H) * 100);
-  const h2hAwayWinPct = Math.round((awayWins / totalH2H) * 100);
+  const h2hHomeWinPct = h2hList.length > 0 ? Math.round((homeWins / h2hList.length) * 100) : 0;
+  const h2hDrawPct = h2hList.length > 0 ? Math.round((draws / h2hList.length) * 100) : 0;
+  const h2hAwayWinPct = h2hList.length > 0 ? Math.round((awayWins / h2hList.length) * 100) : 0;
 
   const bttsH2HCount = h2hList.filter(h => h.btts).length;
-  const bttsH2HPct = Math.round((bttsH2HCount / totalH2H) * 100);
+  const bttsH2HPct = h2hList.length > 0 ? Math.round((bttsH2HCount / h2hList.length) * 100) : 0;
 
   const over25H2HCount = h2hList.filter(h => {
     const parts = (h.score || '').split('-').map(s => parseInt(s.trim(), 10));
     return (parts[0] + parts[1]) > 2;
   }).length;
-  const over25H2HPct = Math.round((over25H2HCount / totalH2H) * 100);
+  const over25H2HPct = h2hList.length > 0 ? Math.round((over25H2HCount / h2hList.length) * 100) : 0;
 
-  const avgH2HCorners = (h2hList.reduce((acc, h) => acc + (h.totalCorners || 10), 0) / totalH2H).toFixed(1);
-  const avgH2HYellowCards = (h2hList.reduce((acc, h) => acc + (h.yellowCards || 4), 0) / totalH2H).toFixed(1);
-  const avgH2HFouls = (h2hList.reduce((acc, h) => acc + (h.totalFouls || 22), 0) / totalH2H).toFixed(1);
+  const hasCornersData = h2hList.some(h => h.totalCorners != null);
+  const hasCardsData = h2hList.some(h => h.yellowCards != null);
+  const hasFoulsData = h2hList.some(h => h.totalFouls != null);
 
-  const homeDetailed = calculateTeamDetailedStats(match.homeTeam, true, match);
-  const awayDetailed = calculateTeamDetailedStats(match.awayTeam, false, match);
-  const diff = calculateDifferential(homeDetailed, awayDetailed, match);
+  const avgH2HCorners = hasCornersData ? (h2hList.reduce((acc, h) => acc + (h.totalCorners || 0), 0) / h2hList.filter(h => h.totalCorners != null).length).toFixed(1) : '-';
+  const avgH2HYellowCards = hasCardsData ? (h2hList.reduce((acc, h) => acc + (h.yellowCards || 0), 0) / h2hList.filter(h => h.yellowCards != null).length).toFixed(1) : '-';
+  const avgH2HFouls = hasFoulsData ? (h2hList.reduce((acc, h) => acc + (h.totalFouls || 0), 0) / h2hList.filter(h => h.totalFouls != null).length).toFixed(1) : '-';
+
+  const homeDetailed = calculateTeamDetailedStats(m.homeTeam, true, m);
+  const awayDetailed = calculateTeamDetailedStats(m.awayTeam, false, m);
+  const diff = calculateDifferential(homeDetailed, awayDetailed, m);
 
   const tabs = [
     { id: 'ai_report', label: 'Pronóstico IA & Picks', icon: <FileText className="w-3.5 h-3.5 text-sky-400" /> },
@@ -585,114 +608,191 @@ export default function MatchDetailModal({
             </div>
           )}
 
-          {/* TAB 2: H2H (CARA A CARA - ÚLTIMOS 10 PARTIDOS) */}
+          {/* TAB 2: H2H (CARA A CARA & PARTIDOS RECIENTES) */}
           {activeTab === 'h2h' && (
             <div className="space-y-4">
               
-              {/* Rivalry Balance Bar */}
-              <div className="bg-[#111723] rounded-xl p-4 border border-white/5 space-y-2.5 font-mono text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-white text-sm font-sans flex items-center space-x-2">
-                    <Users className="w-4 h-4 text-amber-400" />
-                    <span>Balance de los Últimos {h2hList.length} Enfrentamientos Directos</span>
-                  </span>
-                  <span className="text-slate-400 text-[11px]">
-                    {h2hList.length} partidos oficiales
-                  </span>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] text-slate-300">
-                    <span className="font-bold text-sky-400">
-                      {match.homeTeam?.name || 'Local'}: {homeWins} ({h2hHomeWinPct}%)
+              {/* Rivalry Balance Bar if H2H exists */}
+              {h2hList.length > 0 ? (
+                <div className="bg-[#111723] rounded-xl p-4 border border-white/5 space-y-2.5 font-mono text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-white text-sm font-sans flex items-center space-x-2">
+                      <Users className="w-4 h-4 text-amber-400" />
+                      <span>Balance de los Últimos {h2hList.length} Enfrentamientos Directos</span>
                     </span>
-                    <span className="text-slate-400">
-                      Empates: {draws} ({h2hDrawPct}%)
-                    </span>
-                    <span className="font-bold text-indigo-400">
-                      {match.awayTeam?.name || 'Visita'}: {awayWins} ({h2hAwayWinPct}%)
+                    <span className="text-slate-400 text-[11px]">
+                      {h2hList.length} partidos oficiales
                     </span>
                   </div>
 
-                  <div className="h-2.5 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5 p-0.5 border border-white/5">
-                    <div style={{ width: `${h2hHomeWinPct}%` }} className="bg-sky-500 h-full rounded-l-full" />
-                    <div style={{ width: `${h2hDrawPct}%` }} className="bg-slate-500 h-full" />
-                    <div style={{ width: `${h2hAwayWinPct}%` }} className="bg-indigo-500 h-full rounded-r-full" />
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] text-slate-300">
+                      <span className="font-bold text-sky-400">
+                        {m.homeTeam?.name || 'Local'}: {homeWins} ({h2hHomeWinPct}%)
+                      </span>
+                      <span className="text-slate-400">
+                        Empates: {draws} ({h2hDrawPct}%)
+                      </span>
+                      <span className="font-bold text-indigo-400">
+                        {m.awayTeam?.name || 'Visita'}: {awayWins} ({h2hAwayWinPct}%)
+                      </span>
+                    </div>
+
+                    <div className="h-2.5 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5 p-0.5 border border-white/5">
+                      <div style={{ width: `${h2hHomeWinPct}%` }} className="bg-sky-500 h-full rounded-l-full" />
+                      <div style={{ width: `${h2hDrawPct}%` }} className="bg-slate-500 h-full" />
+                      <div style={{ width: `${h2hAwayWinPct}%` }} className="bg-indigo-500 h-full rounded-r-full" />
+                    </div>
+                  </div>
+
+                  {/* Quick Metric Pills */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-center text-[10px]">
+                    <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
+                      <span className="text-slate-400 block mb-0.5">Ambos Anotan (BTTS)</span>
+                      <span className="text-sm font-bold text-emerald-400">{bttsH2HPct}% ({bttsH2HCount}/{h2hList.length})</span>
+                    </div>
+                    <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
+                      <span className="text-slate-400 block mb-0.5">Más de 2.5 Goles</span>
+                      <span className="text-sm font-bold text-sky-400">{over25H2HPct}% ({over25H2HCount}/{h2hList.length})</span>
+                    </div>
+                    <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
+                      <span className="text-slate-400 block mb-0.5">Promedio Córners</span>
+                      <span className="text-sm font-bold text-amber-300">
+                        {avgH2HCorners !== '-' ? `${avgH2HCorners} 🚩` : 'N/D'}
+                      </span>
+                    </div>
+                    <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
+                      <span className="text-slate-400 block mb-0.5">Promedio Tarjetas</span>
+                      <span className="text-sm font-bold text-rose-400">
+                        {avgH2HYellowCards !== '-' ? `${avgH2HYellowCards} 🟨` : 'N/D'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                {/* 5 Quick Metric Pills */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 text-center text-[10px]">
-                  <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
-                    <span className="text-slate-400 block mb-0.5">Ambos Anotan (BTTS)</span>
-                    <span className="text-sm font-bold text-emerald-400">{bttsH2HPct}% ({bttsH2HCount}/{h2hList.length})</span>
-                  </div>
-                  <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
-                    <span className="text-slate-400 block mb-0.5">Más de 2.5 Goles</span>
-                    <span className="text-sm font-bold text-sky-400">{over25H2HPct}% ({over25H2HCount}/{h2hList.length})</span>
-                  </div>
-                  <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
-                    <span className="text-slate-400 block mb-0.5">Promedio Córners</span>
-                    <span className="text-sm font-bold text-amber-300">{avgH2HCorners} 🚩</span>
-                  </div>
-                  <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
-                    <span className="text-slate-400 block mb-0.5">Promedio Tarjetas</span>
-                    <span className="text-sm font-bold text-rose-400">{avgH2HYellowCards} 🟨</span>
-                  </div>
-                  <div className="bg-[#141b29] p-2 rounded-lg border border-white/5 col-span-2 sm:col-span-1">
-                    <span className="text-slate-400 block mb-0.5">Promedio Faltas</span>
-                    <span className="text-sm font-bold text-slate-200">{avgH2HFouls}</span>
-                  </div>
+              ) : (
+                <div className="p-6 text-center bg-[#111723] rounded-xl border border-white/5 space-y-2 font-mono">
+                  <Users className="w-7 h-7 text-amber-400/60 mx-auto" />
+                  <h5 className="font-bold text-xs uppercase tracking-wider text-slate-200 font-sans">
+                    Sin Enfrentamientos Directos Recientes
+                  </h5>
+                  <p className="text-xs text-slate-400 max-w-md mx-auto font-sans">
+                    No existen enfrentamientos directos oficiales registrados en temporadas recientes entre <strong>{m.homeTeam?.name}</strong> y <strong>{m.awayTeam?.name}</strong>. A continuación puedes consultar el historial de partidos recientes de cada equipo contra sus últimos rivales.
+                  </p>
                 </div>
-              </div>
+              )}
 
-              {/* Detailed 10 Matches Table */}
-              <div className="overflow-x-auto rounded-xl border border-white/5 bg-[#111723]">
-                <table className="w-full text-left text-xs font-mono">
-                  <thead className="bg-[#141b29] text-slate-400 border-b border-white/5">
-                    <tr>
-                      <th className="py-2.5 px-3">#</th>
-                      <th className="py-2.5 px-3">Fecha</th>
-                      <th className="py-2.5 px-3">Torneo</th>
-                      <th className="py-2.5 px-3">Local</th>
-                      <th className="py-2.5 px-3 text-center">Marcador</th>
-                      <th className="py-2.5 px-3">Visitante</th>
-                      <th className="py-2.5 px-3 text-center">BTTS</th>
-                      <th className="py-2.5 px-3 text-center">Corners</th>
-                      <th className="py-2.5 px-3 text-center">Tarjetas</th>
-                      <th className="py-2.5 px-3 text-center">Faltas</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5 text-slate-300">
-                    {h2hList.map((h, i) => (
-                      <tr key={i} className="hover:bg-white/5 transition">
-                        <td className="py-2.5 px-3 text-slate-500 font-bold">{i + 1}</td>
-                        <td className="py-2.5 px-3 text-slate-400">{h.date}</td>
-                        <td className="py-2.5 px-3">
-                          <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">
-                            {h.competition || 'Oficial'}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 font-semibold text-white">{h.home}</td>
-                        <td className="py-2.5 px-3 text-center font-bold text-white bg-black/20">
-                          {h.score}
-                        </td>
-                        <td className="py-2.5 px-3 font-semibold text-white">{h.away}</td>
-                        <td className="py-2.5 px-3 text-center">
-                          <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                            h.btts ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
-                          }`}>
-                            {h.btts ? 'SÍ' : 'NO'}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 text-center text-sky-300">{h.totalCorners || 10} 🚩</td>
-                        <td className="py-2.5 px-3 text-center text-amber-400">{h.yellowCards || 4} 🟨</td>
-                        <td className="py-2.5 px-3 text-center text-slate-400">{h.totalFouls || 22}</td>
+              {/* Detailed Direct Matches Table if H2H exists */}
+              {h2hList.length > 0 && (
+                <div className="overflow-x-auto rounded-xl border border-white/5 bg-[#111723]">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead className="bg-[#141b29] text-slate-400 border-b border-white/5">
+                      <tr>
+                        <th className="py-2.5 px-3">#</th>
+                        <th className="py-2.5 px-3">Fecha</th>
+                        <th className="py-2.5 px-3">Torneo</th>
+                        <th className="py-2.5 px-3">Local</th>
+                        <th className="py-2.5 px-3 text-center">Marcador</th>
+                        <th className="py-2.5 px-3">Visitante</th>
+                        <th className="py-2.5 px-3 text-center">BTTS</th>
+                        <th className="py-2.5 px-3 text-center">Corners</th>
+                        <th className="py-2.5 px-3 text-center">Tarjetas</th>
                       </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-slate-300">
+                      {h2hList.map((h, i) => {
+                        const dateFormatted = h.date ? new Date(h.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                        return (
+                          <tr key={i} className="hover:bg-white/5 transition">
+                            <td className="py-2.5 px-3 text-slate-500 font-bold">{i + 1}</td>
+                            <td className="py-2.5 px-3 text-slate-400 whitespace-nowrap">{dateFormatted}</td>
+                            <td className="py-2.5 px-3">
+                              <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded truncate max-w-[140px] block">
+                                {h.competition || 'Oficial'}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 font-semibold text-white">{h.home}</td>
+                            <td className="py-2.5 px-3 text-center font-bold text-white bg-black/20 font-mono">
+                              {h.score}
+                            </td>
+                            <td className="py-2.5 px-3 font-semibold text-white">{h.away}</td>
+                            <td className="py-2.5 px-3 text-center">
+                              <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                h.btts ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'
+                              }`}>
+                                {h.btts ? 'SÍ' : 'NO'}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-center text-sky-300 font-mono">
+                              {h.totalCorners != null ? `${h.totalCorners} 🚩` : '-'}
+                            </td>
+                            <td className="py-2.5 px-3 text-center text-amber-400 font-mono">
+                              {h.yellowCards != null ? `${h.yellowCards} 🟨` : '-'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* ÚLTIMOS PARTIDOS Y RIVALES RECIENTES DE CADA EQUIPO */}
+              {Array.isArray(m.recentMatches) && m.recentMatches.length > 0 && (
+                <div className="space-y-2.5 pt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs uppercase tracking-wider text-slate-200 font-mono flex items-center space-x-1.5">
+                      <Activity className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Partidos Recientes de Cada Equipo (Contra Quién Jugaron)</span>
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      Forma y resultados oficiales
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {m.recentMatches.map((group, gIdx) => (
+                      <div key={gIdx} className="bg-[#111723] rounded-xl p-3.5 border border-white/5 space-y-2">
+                        <span className="font-bold text-xs text-white flex items-center justify-between pb-1.5 border-b border-white/5 font-sans">
+                          <span>{group.team}</span>
+                          <span className="text-[10px] font-mono text-slate-400 font-normal">
+                            Últimos {group.events?.length || 0} partidos
+                          </span>
+                        </span>
+
+                        <div className="space-y-1.5 font-mono text-xs">
+                          {(group.events || []).map((ev, eIdx) => {
+                            const dateFormatted = ev.date ? new Date(ev.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '-';
+                            return (
+                              <div key={eIdx} className="flex items-center justify-between p-2 rounded-lg bg-[#141b29] border border-white/5 text-[11px]">
+                                <div className="flex items-center space-x-2 min-w-0">
+                                  <span className={`w-4 h-4 rounded text-[9px] font-bold flex items-center justify-center shrink-0 ${
+                                    ev.result === 'W' ? 'bg-emerald-600 text-white' : ev.result === 'D' ? 'bg-amber-600 text-white' : 'bg-rose-600 text-white'
+                                  }`}>
+                                    {ev.result || '-'}
+                                  </span>
+                                  <span className="text-slate-400 text-[10px] shrink-0">{ev.atVs}</span>
+                                  <span className="text-slate-200 font-medium truncate max-w-[130px] sm:max-w-[160px]">
+                                    {ev.opponent}
+                                  </span>
+                                </div>
+                                <div className="flex items-center space-x-2 shrink-0">
+                                  <span className="font-bold text-white font-mono bg-black/40 px-1.5 py-0.2 rounded border border-white/5">
+                                    {ev.score || '-'}
+                                  </span>
+                                  <span className="text-[9.5px] text-slate-500">
+                                    {dateFormatted}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
 
