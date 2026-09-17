@@ -120,7 +120,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
       } else if (err?.code === 'auth/cancelled-popup-request') {
         setError('Solicitud cancelada. Por favor haz clic de nuevo.');
       } else if (err?.code === 'auth/unauthorized-domain') {
-        setError('Dominio no autorizado en Firebase. Contacta al soporte técnico.');
+        setError('Dominio no autorizado en Firebase. Por favor ingresa desde el dominio oficial https://picks777.vercel.app (o agrega este enlace en los Dominios Autorizados de tu consola de Firebase).');
       } else {
         setError(err?.message || 'Error al abrir la ventana oficial de Google.');
       }
