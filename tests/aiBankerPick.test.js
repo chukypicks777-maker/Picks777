@@ -1,5 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+
+process.env.NODE_ENV = 'test';
+process.env.OPENROUTER_API_KEY = '';
+
 import { generateAiMatchReport } from '../server/services/aiService.js';
 import { storage } from '../server/storage.js';
 
@@ -288,6 +292,193 @@ test('AI service converts weak straight win (<60%) to safe Double Chance and pre
 
     // 3. safePick is not duplicate DC
     assert.ok(report.safePick.selection.includes('Goles'));
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalAiConfig) {
+      await storage.updateAiConfig(originalAiConfig);
+    }
+  }
+});
+
+test('AI service correctly recognizes away Double Chance ("Visita o Empate") without inverting to home team, and preserves real DC market odds', async () => {
+  const originalAiConfig = await storage.getAiConfig();
+  await storage.updateAiConfig({
+    provider: 'openrouter',
+    apiKey: 'sk-test-away-dc',
+    selectedModel: 'test-model'
+  });
+
+  const awayFavoredMatch = {
+    id: 'test-mallorca-realmadrid',
+    homeTeam: { name: 'Mallorca', shortName: 'MAL', gamesPlayed: 24, goalsFor: 19, goalsAgainst: 28, points: 22, position: 15, form: ['L', 'D', 'L'] },
+    awayTeam: { name: 'Real Madrid', shortName: 'RMA', gamesPlayed: 24, goalsFor: 52, goalsAgainst: 18, points: 58, position: 1, form: ['W', 'W', 'W'] },
+    leagueName: 'La Liga',
+    kickoff: new Date(Date.now() + 86400000).toISOString(),
+    status: 'SCHEDULED',
+    source: 'ESPN',
+    probabilities: {
+      homeWin: 16,
+      draw: 22,
+      awayWin: 62,
+      over25: 58,
+      under25: 42,
+      over15: 84,
+      under35: 76,
+      bttsYes: 48
+    },
+    odds: {
+      homeWin: 5.50,
+      draw: 3.80,
+      awayWin: 1.62,
+      dc1X: 2.30,
+      dcX2: 1.16
+    },
+    model: {
+      predictedScore: '0 - 2',
+      expectedGoals: { home: 0.7, away: 2.1 }
+    }
+  };
+
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async (url) => {
+      if (String(url).includes('/chat/completions')) {
+        return new Response(JSON.stringify({
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                predictedScore: '0 - 2',
+                tacticalAnalysis: 'Con un xG de 2.1 goles esperados, Real Madrid ejerce control absoluto frente al repliegue bajo local.',
+                topPick: {
+                  selection: 'Visita o Empate', // Away DC phrase without exact team name -> must NOT invert to Mallorca (1X)!
+                  market: 'Doble Oportunidad',
+                  rationale: 'Real Madrid sostiene superioridad de posesión y efectividad en transiciones ofensivas.',
+                  probability: 84,
+                  odds: 1.16
+                },
+                topStake: '4/5 Unidades',
+                valueBet: {
+                  selection: 'Más de 2.5 Goles',
+                  odds: 1.85,
+                  probability: 58,
+                  rationale: 'Capacidad rematadora de los atacantes blancos.'
+                }
+              })
+            }
+          }]
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return new Response('{}', { status: 200 });
+    };
+
+    const report = await generateAiMatchReport(awayFavoredMatch, { forceRefresh: true });
+
+    assert.ok(report.aiAvailable);
+    // Selection must be Real Madrid (X2), NOT Mallorca (1X)!
+    assert.ok(report.topPick.selection.includes('Real Madrid') && report.topPick.selection.includes('X2'));
+    assert.ok(!report.topPick.selection.includes('Mallorca'), 'Must NOT invert away DC to home team');
+    assert.equal(report.topPick.probability, 84); // 62 + 22 = 84%
+    assert.equal(report.topPick.odds, 1.16); // Preserved real market dcX2 odds
+    assert.ok(report.safePick.selection.includes('Goles'), 'safePick should provide complementary goals line');
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalAiConfig) {
+      await storage.updateAiConfig(originalAiConfig);
+    }
+  }
+});
+
+test('AI service does not overwrite legitimate goals pick with team harmonization and baseline includes complete distinct picks', async () => {
+  const originalAiConfig = await storage.getAiConfig();
+  await storage.updateAiConfig({
+    provider: 'openrouter',
+    apiKey: 'sk-test-goals-banker',
+    selectedModel: 'test-model'
+  });
+
+  const defensiveMatch = {
+    id: 'test-getafe-leganes',
+    homeTeam: { name: 'Getafe', shortName: 'GET', gamesPlayed: 20, goalsFor: 14, goalsAgainst: 16, points: 24, position: 12, form: ['D', 'D', 'W'] },
+    awayTeam: { name: 'Leganés', shortName: 'LEG', gamesPlayed: 20, goalsFor: 12, goalsAgainst: 18, points: 21, position: 14, form: ['L', 'D', 'D'] },
+    leagueName: 'La Liga',
+    kickoff: new Date(Date.now() + 86400000).toISOString(),
+    status: 'SCHEDULED',
+    source: 'ESPN',
+    probabilities: {
+      homeWin: 45,
+      draw: 35,
+      awayWin: 20,
+      over25: 28,
+      under25: 72,
+      over15: 55,
+      under35: 86,
+      bttsYes: 38
+    },
+    odds: {
+      homeWin: 2.15,
+      draw: 2.90,
+      awayWin: 4.20,
+      under25: 1.48,
+      under35: 1.18,
+      dc1X: 1.25
+    },
+    model: {
+      predictedScore: '1 - 0',
+      expectedGoals: { home: 1.0, away: 0.6 }
+    }
+  };
+
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async (url) => {
+      if (String(url).includes('/chat/completions')) {
+        return new Response(JSON.stringify({
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                predictedScore: '1 - 0',
+                tacticalAnalysis: 'Con un xG combinado de 1.6 goles esperados, ambos equipos forman bloques ultradefensivos con poca llegada.',
+                topPick: {
+                  selection: 'Menos de 2.5 Goles',
+                  market: 'Total Goles Under 2.5',
+                  rationale: 'Con 1.6 xG proyectado y defensas férreas, la probabilidad de menos de 3 goles es altísima.',
+                  probability: 72,
+                  odds: 1.48
+                },
+                topStake: '3/5 Unidades',
+                valueBet: {
+                  selection: 'Getafe o Empate (1X)',
+                  odds: 1.25,
+                  probability: 80,
+                  rationale: 'Ventaja de localía de Getafe en el Coliseum.'
+                }
+              })
+            }
+          }]
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return new Response('{}', { status: 200 });
+    };
+
+    const report = await generateAiMatchReport(defensiveMatch, { forceRefresh: true });
+
+    assert.ok(report.aiAvailable);
+    // 1. Goal line pick was NOT overwritten by team harmonization
+    assert.equal(report.topPick.selection, 'Menos de 2.5 Goles');
+    assert.equal(report.topPick.probability, 72);
+    assert.equal(report.topPick.odds, 1.48);
+
+    // 2. safePick should be Double Chance because topPick was NOT Double Chance
+    assert.ok(report.safePick.selection.includes('Getafe') && report.safePick.selection.includes('Empate'));
+
+    // 3. Baseline check when AI is disabled
+    await storage.updateAiConfig({ apiKey: '' });
+    const baselineReport = await generateAiMatchReport(defensiveMatch, { forceRefresh: true });
+    assert.equal(baselineReport.aiAvailable, false);
+    assert.ok(baselineReport.topPick, 'Baseline must have topPick when match has probabilities');
+    assert.ok(baselineReport.safePick, 'Baseline must have safePick when match has probabilities');
+    assert.ok(baselineReport.secondaryPick, 'Baseline must have secondaryPick when match has probabilities');
+    assert.notEqual(baselineReport.topPick.selection, baselineReport.safePick.selection, 'Baseline picks must be complementary');
   } finally {
     globalThis.fetch = originalFetch;
     if (originalAiConfig) {

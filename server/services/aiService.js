@@ -4,6 +4,17 @@ import { storage } from '../storage.js';
 import { cachedData } from './dataCache.js';
 import { getBestBankerPick } from '../../src/utils/mathProbabilities.js';
 
+function escapeRegex(str) {
+  return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractFirstSentence(text) {
+  if (!text || typeof text !== 'string') return '';
+  const sentences = text.trim().split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ])/);
+  const first = sentences[0]?.trim() || '';
+  return first.length > 20 ? first : text.trim().slice(0, 180);
+}
+
 export async function getEffectiveAiConfig() {
   let dbConfig = null;
   try {
@@ -11,7 +22,7 @@ export async function getEffectiveAiConfig() {
   } catch {}
 
   const provider = String(dbConfig?.provider || 'openrouter').trim().toLowerCase();
-  const apiKey = String(dbConfig?.apiKey || (provider === 'gemini' ? (process.env.GEMINI_API_KEY || '') : (CONFIG.OPENROUTER_API_KEY || ''))).trim();
+  const apiKey = String(dbConfig?.apiKey != null ? dbConfig.apiKey : (provider === 'gemini' ? (process.env.GEMINI_API_KEY || '') : (CONFIG.OPENROUTER_API_KEY || ''))).trim();
   const baseUrl = String(dbConfig?.baseUrl || (
     provider === 'openrouter' ? 'https://openrouter.ai/api/v1' :
     provider === 'gemini' ? 'https://generativelanguage.googleapis.com/v1beta' :
@@ -364,6 +375,60 @@ export async function generateAiMatchReport(match, options = {}) {
 
   const hasProbabilities = Boolean(match.model || (match.probabilities && (match.probabilities.homeWin != null || match.probabilities.awayWin != null)));
 
+  const isDefaultBankerDC = defaultBanker && /gana o empata|o empate|1x|x2|doble oportunidad/i.test(defaultBanker.selection);
+  const over15ProbBaseline = match.probabilities?.over15 != null
+    ? Number(match.probabilities.over15)
+    : (match.probabilities?.over25 != null ? Math.min(96, Math.round(Number(match.probabilities.over25) + 26)) : 82);
+  const under35ProbBaseline = match.probabilities?.under35 != null
+    ? Number(match.probabilities.under35)
+    : (match.probabilities?.over25 != null ? Math.min(94, Math.round(100 - (Number(match.probabilities.over25) - 24))) : 78);
+
+  const baselineSafePick = hasProbabilities ? (isDefaultBankerDC ? (
+    under35ProbBaseline >= over15ProbBaseline ? {
+      selection: 'Menos de 3.5 Goles',
+      market: 'Total de Goles Asegurado',
+      probability: under35ProbBaseline,
+      odds: Number((match.odds?.under35 || Math.max(1.15, Math.min(1.48, (100 / under35ProbBaseline) * 0.96))).toFixed(2)),
+      rationale: `Línea defensiva segura: ${under35ProbBaseline}% de probabilidad de registrar un máximo de 3 anotaciones según distribución Poisson.`
+    } : {
+      selection: 'Más de 1.5 Goles',
+      market: 'Total de Goles Asegurado',
+      probability: over15ProbBaseline,
+      odds: Number((match.odds?.over15 || Math.max(1.15, Math.min(1.48, (100 / over15ProbBaseline) * 0.96))).toFixed(2)),
+      rationale: `Línea ofensiva segura: ${over15ProbBaseline}% de probabilidad estadística de ver al menos dos goles en el partido.`
+    }
+  ) : {
+    selection: homeWinProb >= awayWinProb ? `${match.homeTeam?.shortName || match.homeTeam?.name || 'Local'} o Empate (1X)` : `${match.awayTeam?.shortName || match.awayTeam?.name || 'Visita'} o Empate (X2)`,
+    market: homeWinProb >= awayWinProb ? 'Doble Oportunidad (1X)' : 'Doble Oportunidad (X2)',
+    probability: Math.min(97, Math.max(50, Math.round(Math.max(homeWinProb, awayWinProb) + drawProb))),
+    odds: Number(Math.max(1.12, Math.min(1.60, (100 / Math.min(97, Math.max(50, Math.round(Math.max(homeWinProb, awayWinProb) + drawProb)))) * 0.96)).toFixed(2)),
+    rationale: `Cobertura de alta probabilidad respaldada por la distribución estadística Poisson y control de riesgo ante paridad.`
+  }) : null;
+
+  const bttsProbBaseline = Number(match.probabilities?.bttsYes || 50);
+  const over25ProbBaseline = Number(match.probabilities?.over25 || 50);
+  const baselineSecondary = hasProbabilities ? (
+    bttsProbBaseline >= 52 ? {
+      selection: 'Ambos Equipos Anotan: SÍ',
+      market: 'Ambos Equipos Anotan',
+      probability: Math.round(bttsProbBaseline),
+      odds: Number(Number(match.odds?.bttsYes || 1.80).toFixed(2)),
+      rationale: `Alta frecuencia goleadora de ambos clubes en la presente temporada (${Math.round(bttsProbBaseline)}% probabilidad Poisson).`
+    } : over25ProbBaseline >= 52 ? {
+      selection: 'Más de 2.5 Goles',
+      market: 'Total Goles Over 2.5',
+      probability: Math.round(over25ProbBaseline),
+      odds: Number(Number(match.odds?.over25 || 1.85).toFixed(2)),
+      rationale: `Ritmo ofensivo con promedio combinado superior a 2.5 goles esperados (${Math.round(over25ProbBaseline)}% probabilidad).`
+    } : {
+      selection: 'Menos de 2.5 Goles',
+      market: 'Total Goles Under 2.5',
+      probability: Math.round(100 - over25ProbBaseline),
+      odds: Number(Number(match.odds?.under25 || 1.80).toFixed(2)),
+      rationale: `Bloques defensivos compactos que limitan la generación de ocasiones claras.`
+    }
+  ) : null;
+
   const baseline = {
     modelUsed: null,
     aiAvailable: false,
@@ -381,7 +446,9 @@ export async function generateAiMatchReport(match, options = {}) {
       stake: '3/5 Unidades',
       rationale: defaultBanker.rationale
     } : match.aiPick) : null,
-    valueBet: null,
+    valueBet: baselineSecondary,
+    safePick: baselineSafePick,
+    secondaryPick: baselineSecondary,
     cornerAnalysis: null,
     bttsPrediction: null,
     overUnderPrediction: null,
@@ -565,35 +632,45 @@ Devuelve el JSON del informe institucional.`;
           topPickSel = defaultBanker?.selection || match.aiPick?.selection || `${favoredTeam} o Empate (1X)`;
         }
 
-        // Armonización cuantitativa: evitar contradicciones entre IA y estadísticas oficiales
-        if (homeWinProb >= awayWinProb + 10 && (topPickSel.includes(match.awayTeam.name) || topPickSel.includes(awayShort)) && !/empata|1x|x2/i.test(topPickSel)) {
+        // Armonización cuantitativa: evitar contradicciones entre IA y estadísticas oficiales (solo para selecciones de victoria directa 1X2 del rival)
+        const isAwayDirectWin = (/gana|victoria/i.test(topPickSel) || topPickMkt?.includes('1X2') || topPickMkt?.includes('Victoria')) &&
+          (topPickSel.toLowerCase().includes(awayNameLower) || (awayShortLower && new RegExp(`\\b${escapeRegex(awayShortLower)}\\b`, 'i').test(topPickSel))) &&
+          !/empata|1x|x2|doble oportunidad/i.test(topPickSel);
+        const isHomeDirectWin = (/gana|victoria/i.test(topPickSel) || topPickMkt?.includes('1X2') || topPickMkt?.includes('Victoria')) &&
+          (topPickSel.toLowerCase().includes(homeNameLower) || (homeShortLower && new RegExp(`\\b${escapeRegex(homeShortLower)}\\b`, 'i').test(topPickSel))) &&
+          !/empata|1x|x2|doble oportunidad/i.test(topPickSel);
+
+        if (homeWinProb >= awayWinProb + 10 && isAwayDirectWin) {
           topPickSel = `${homeShort} o Empate (1X)`;
           topPickMkt = 'Doble Oportunidad (1X)';
           topPickProb = Math.min(97, Math.max(50, Math.round(homeWinProb + drawProb)));
-          topPickOdds = null;
-        } else if (awayWinProb >= homeWinProb + 10 && (topPickSel.includes(match.homeTeam.name) || topPickSel.includes(homeShort)) && !/empata|1x|x2/i.test(topPickSel)) {
+          topPickOdds = match.odds?.dc1X && match.odds.dc1X <= 1.65 ? match.odds.dc1X : null;
+          topPickRationale = defaultBanker?.rationale || null;
+        } else if (awayWinProb >= homeWinProb + 10 && isHomeDirectWin) {
           topPickSel = `${awayShort} o Empate (X2)`;
           topPickMkt = 'Doble Oportunidad (X2)';
           topPickProb = Math.min(97, Math.max(50, Math.round(awayWinProb + drawProb)));
-          topPickOdds = null;
+          topPickOdds = match.odds?.dcX2 && match.odds.dcX2 <= 1.65 ? match.odds.dcX2 : null;
+          topPickRationale = defaultBanker?.rationale || null;
         }
 
         const isDC = /gana o empata|o empate|1x|x2|doble oportunidad/i.test(topPickSel);
         if (isDC) {
-          const isAwayDC = /x2/i.test(topPickSel) ||
-            (awayNameLower && topPickSel.toLowerCase().includes(awayNameLower)) ||
-            (awayShortLower && topPickSel.toLowerCase().includes(awayShortLower));
-          const isHomeDC = /1x/i.test(topPickSel) ||
-            (homeNameLower && topPickSel.toLowerCase().includes(homeNameLower)) ||
-            (homeShortLower && topPickSel.toLowerCase().includes(homeShortLower)) ||
-            !isAwayDC;
+          const normSel = topPickSel.toLowerCase();
+          const isAwayDC = /x2|\bvisita\b|\bvisitante\b|\baway\b/i.test(normSel) ||
+            (awayNameLower && normSel.includes(awayNameLower)) ||
+            (awayShortLower && new RegExp(`\\b${escapeRegex(awayShortLower)}\\b`, 'i').test(normSel));
+          const isHomeDC = /1x|\blocal\b|\bhome\b/i.test(normSel) ||
+            (homeNameLower && normSel.includes(homeNameLower)) ||
+            (homeShortLower && new RegExp(`\\b${escapeRegex(homeShortLower)}\\b`, 'i').test(normSel));
 
-          const teamLabel = isAwayDC ? (match.awayTeam.name || awayShort) : (match.homeTeam.name || homeShort);
-          const tag = isAwayDC ? '(X2)' : '(1X)';
+          const isTargetAway = isAwayDC ? true : (isHomeDC ? false : (awayWinProb > homeWinProb));
+          const teamLabel = isTargetAway ? (match.awayTeam.name || awayShort) : (match.homeTeam.name || homeShort);
+          const tag = isTargetAway ? '(X2)' : '(1X)';
           topPickSel = `${teamLabel} o Empate ${tag}`;
-          topPickMkt = isAwayDC ? 'Doble Oportunidad (X2)' : 'Doble Oportunidad (1X)';
+          topPickMkt = isTargetAway ? 'Doble Oportunidad (X2)' : 'Doble Oportunidad (1X)';
 
-          const dcProb = isAwayDC
+          const dcProb = isTargetAway
             ? Math.min(97, Math.max(50, Math.round(awayWinProb + drawProb)))
             : Math.min(97, Math.max(50, Math.round(homeWinProb + drawProb)));
 
@@ -602,16 +679,17 @@ Devuelve el JSON del informe institucional.`;
           }
 
           const dcFairOdds = Number(Math.max(1.12, Math.min(1.60, (100 / topPickProb) * 0.96)).toFixed(2));
-          const marketDcOdds = isAwayDC ? match.odds?.dcX2 : match.odds?.dc1X;
+          const marketDcOdds = isTargetAway ? match.odds?.dcX2 : match.odds?.dc1X;
 
           if (!Number.isFinite(topPickOdds) || topPickOdds > 1.65 || topPickOdds < 1.05 ||
-              (isHomeDC && match.odds?.homeWin && Math.abs(topPickOdds - match.odds.homeWin) < 0.05) ||
-              (isAwayDC && match.odds?.awayWin && Math.abs(topPickOdds - match.odds.awayWin) < 0.05)) {
+              (!isTargetAway && match.odds?.homeWin && Math.abs(topPickOdds - match.odds.homeWin) < 0.05) ||
+              (isTargetAway && match.odds?.awayWin && Math.abs(topPickOdds - match.odds.awayWin) < 0.05)) {
             topPickOdds = marketDcOdds && marketDcOdds <= 1.65 ? marketDcOdds : dcFairOdds;
           }
         } else {
-          const isHomeWin = /gana|victoria/i.test(topPickSel) && (topPickSel.toLowerCase().includes(homeNameLower) || (homeShortLower && topPickSel.toLowerCase().includes(homeShortLower)));
-          const isAwayWin = /gana|victoria/i.test(topPickSel) && (topPickSel.toLowerCase().includes(awayNameLower) || (awayShortLower && topPickSel.toLowerCase().includes(awayShortLower)));
+          const normSel = topPickSel.toLowerCase();
+          const isHomeWin = /gana|victoria/i.test(topPickSel) && (normSel.includes(homeNameLower) || (homeShortLower && new RegExp(`\\b${escapeRegex(homeShortLower)}\\b`, 'i').test(normSel)));
+          const isAwayWin = /gana|victoria/i.test(topPickSel) && (normSel.includes(awayNameLower) || (awayShortLower && new RegExp(`\\b${escapeRegex(awayShortLower)}\\b`, 'i').test(normSel)));
 
           if (isHomeWin || isAwayWin) {
             const straightProb = isAwayWin ? Math.round(awayWinProb) : Math.round(homeWinProb);
@@ -621,7 +699,9 @@ Devuelve el JSON del informe institucional.`;
               topPickSel = `${teamLabel} o Empate ${tag}`;
               topPickMkt = isAwayWin ? 'Doble Oportunidad (X2)' : 'Doble Oportunidad (1X)';
               topPickProb = isAwayWin ? Math.min(97, Math.max(50, Math.round(awayWinProb + drawProb))) : Math.min(97, Math.max(50, Math.round(homeWinProb + drawProb)));
-              topPickOdds = Number(Math.max(1.12, Math.min(1.60, (100 / topPickProb) * 0.96)).toFixed(2));
+              const marketDcOdds = isAwayWin ? match.odds?.dcX2 : match.odds?.dc1X;
+              const dcFairOdds = Number(Math.max(1.12, Math.min(1.60, (100 / topPickProb) * 0.96)).toFixed(2));
+              topPickOdds = marketDcOdds && marketDcOdds <= 1.65 ? marketDcOdds : dcFairOdds;
             } else {
               topPickProb = straightProb;
               topPickOdds = (isAwayWin ? match.odds?.awayWin : match.odds?.homeWin) || topPickOdds || Number((100 / straightProb * 0.95).toFixed(2));
@@ -652,7 +732,7 @@ Devuelve el JSON del informe institucional.`;
 
         if (isRationaleInvalid) {
           topPickRationale = defaultBanker?.rationale ||
-            (tacticalText ? tacticalText.split('.')[0] + '.' : null) ||
+            (tacticalText ? extractFirstSentence(tacticalText) : null) ||
             `Selección de máxima seguridad respaldada por ${topPickProb}% de probabilidad estadística y solidez táctica de temporada.`;
         }
 
@@ -728,13 +808,17 @@ Devuelve el JSON del informe institucional.`;
           }
         } else {
           const isHomeFavored = homeWinProb >= awayWinProb;
+          const teamLabel = isHomeFavored ? (match.homeTeam.name || homeShort) : (match.awayTeam.name || awayShort);
+          const tag = isHomeFavored ? '(1X)' : '(X2)';
           const dcProb = Math.min(97, Math.max(50, Math.round((isHomeFavored ? homeWinProb : awayWinProb) + drawProb)));
-          const dcSel = isHomeFavored ? `${homeShort} o Empate (1X)` : `${awayShort} o Empate (X2)`;
+          const marketDcOdds = isHomeFavored ? match.odds?.dc1X : match.odds?.dcX2;
+          const dcFairOdds = Number(Math.max(1.12, Math.min(1.60, (100 / dcProb) * 0.96)).toFixed(2));
+          const dcOdds = marketDcOdds && marketDcOdds <= 1.65 ? marketDcOdds : dcFairOdds;
           safePickCandidate = {
-            selection: dcSel,
+            selection: `${teamLabel} o Empate ${tag}`,
             market: isHomeFavored ? 'Doble Oportunidad (1X)' : 'Doble Oportunidad (X2)',
             probability: dcProb,
-            odds: Number(Math.max(1.12, Math.min(1.60, (100 / dcProb) * 0.96)).toFixed(2)),
+            odds: dcOdds,
             rationale: `Cobertura de alta probabilidad (${dcProb}%) respaldada por la distribución estadística Poisson y control de riesgo ante paridad.`
           };
         }

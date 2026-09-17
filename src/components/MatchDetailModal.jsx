@@ -25,6 +25,10 @@ import OverUnderGroupedSection from './OverUnderGroupedSection';
 import { calculateTeamDetailedStats, calculateDifferential, getBestBankerPick } from '../utils/mathProbabilities';
 import { getCachedAnalysis, setCachedAnalysis, computeMatchFingerprint, clearAllAnalysisCache } from '../utils/analysisCache';
 
+function escapeRegex(str) {
+  return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function calculateMatchSimulation(match, withJitter = false) {
   if (!match) return { "2 - 1": 18.0, "1 - 1": 15.0, "2 - 0": 13.0, "Otros": 54.0 };
   const home = match.homeTeam || {};
@@ -526,19 +530,20 @@ export default function MatchDetailModal({
                 const isBankerDC = /gana o empata|o empate|1x|x2|doble oportunidad/i.test(bankerSelection);
 
                 if (isBankerDC) {
-                  const isAwayDC = /x2/i.test(bankerSelection) ||
-                    (awayNameLower && bankerSelection.toLowerCase().includes(awayNameLower)) ||
-                    (awayShortLower && bankerSelection.toLowerCase().includes(awayShortLower));
-                  const isHomeDC = /1x/i.test(bankerSelection) ||
-                    (homeNameLower && bankerSelection.toLowerCase().includes(homeNameLower)) ||
-                    (homeShortLower && bankerSelection.toLowerCase().includes(homeShortLower)) ||
-                    !isAwayDC;
+                  const normSel = bankerSelection.toLowerCase();
+                  const isAwayDC = /x2|\bvisita\b|\bvisitante\b|\baway\b/i.test(normSel) ||
+                    (awayNameLower && normSel.includes(awayNameLower)) ||
+                    (awayShortLower && new RegExp(`\\b${escapeRegex(awayShortLower)}\\b`, 'i').test(normSel));
+                  const isHomeDC = /1x|\blocal\b|\bhome\b/i.test(normSel) ||
+                    (homeNameLower && normSel.includes(homeNameLower)) ||
+                    (homeShortLower && new RegExp(`\\b${escapeRegex(homeShortLower)}\\b`, 'i').test(normSel));
 
-                  const targetLabel = isAwayDC ? (m.awayTeam?.name || awayShort) : (m.homeTeam?.name || homeShort);
-                  const tag = isAwayDC ? '(X2)' : '(1X)';
+                  const isTargetAway = isAwayDC ? true : (isHomeDC ? false : (awayProbVal > homeProbVal));
+                  const targetLabel = isTargetAway ? (m.awayTeam?.name || awayShort) : (m.homeTeam?.name || homeShort);
+                  const tag = isTargetAway ? '(X2)' : '(1X)';
                   bankerSelection = `${targetLabel} o Empate ${tag}`;
 
-                  const dcProbCalculated = isAwayDC
+                  const dcProbCalculated = isTargetAway
                     ? Math.min(97, Math.max(50, Math.round(awayProbVal + drawProbVal)))
                     : Math.min(97, Math.max(50, Math.round(homeProbVal + drawProbVal)));
 
@@ -547,10 +552,10 @@ export default function MatchDetailModal({
                   }
 
                   const fairDcOdds = Number(Math.max(1.12, Math.min(1.60, (100 / bankerProb) * 0.96)).toFixed(2));
-                  const marketDcOdds = isAwayDC ? m.odds?.dcX2 : m.odds?.dc1X;
+                  const marketDcOdds = isTargetAway ? m.odds?.dcX2 : m.odds?.dc1X;
                   if (bankerOdds > 1.65 || bankerOdds < 1.05 ||
-                      (isHomeDC && m.odds?.homeWin && Math.abs(bankerOdds - m.odds.homeWin) < 0.05) ||
-                      (isAwayDC && m.odds?.awayWin && Math.abs(bankerOdds - m.odds.awayWin) < 0.05)) {
+                      (!isTargetAway && m.odds?.homeWin && Math.abs(bankerOdds - m.odds.homeWin) < 0.05) ||
+                      (isTargetAway && m.odds?.awayWin && Math.abs(bankerOdds - m.odds.awayWin) < 0.05)) {
                     bankerOdds = marketDcOdds && marketDcOdds <= 1.65 ? marketDcOdds : (defaultBanker?.odds && defaultBanker.selection.includes(tag) ? defaultBanker.odds : fairDcOdds);
                   }
                 } else {
@@ -575,7 +580,7 @@ export default function MatchDetailModal({
 
                 const bankerRationale = !isBankerRationaleBad
                   ? rawBankerRationale
-                  : (defaultBanker?.rationale || (aiReport?.tacticalAnalysis ? aiReport.tacticalAnalysis.split('.')[0] + '.' : null) || 'Alta probabilidad estadística respaldada por xG, goles anotados y solidez defensiva en temporada.');
+                  : (defaultBanker?.rationale || (aiReport?.tacticalAnalysis ? (aiReport.tacticalAnalysis.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ])/)[0] || aiReport.tacticalAnalysis) : null) || 'Alta probabilidad estadística respaldada por xG, goles anotados y solidez defensiva en temporada.');
 
                 // 3. Línea Segura / Doble Oportunidad (Complementaria a Card 1 para evitar duplicados)
                 const isBankerNowDC = /gana o empata|o empate|1x|x2|doble oportunidad/i.test(bankerSelection);
@@ -597,7 +602,15 @@ export default function MatchDetailModal({
                   // Banker is already DC: provide complementary safe Goals line so cards are distinct
                   safeTitle = '🛡️ Línea Asegurada (Goles)';
                   safeSubtitle = 'Total de Goles de Máxima Cobertura';
-                  if (under35ProbVal >= over15ProbVal) {
+                  const aiSafeSel = aiReport?.safePick?.selection;
+                  const isAiSafeGoals = aiSafeSel && !/gana o empata|o empate|1x|x2|doble oportunidad/i.test(aiSafeSel);
+
+                  if (isAiSafeGoals) {
+                    safeSelection = aiReport.safePick.selection;
+                    safeProb = Math.round(Number(aiReport.safePick.probability || (safeSelection.includes('3.5') ? under35ProbVal : over15ProbVal)));
+                    safeOdds = Number(Number(aiReport.safePick.odds || (safeSelection.includes('3.5') ? (m.odds?.under35 || 1.30) : (m.odds?.over15 || 1.25))).toFixed(2));
+                    safeRationale = aiReport.safePick.rationale || `Línea segura de goles (${safeProb}% de probabilidad) calculada por Poisson para minimizar varianza.`;
+                  } else if (under35ProbVal >= over15ProbVal) {
                     safeSelection = 'Menos de 3.5 Goles';
                     safeProb = under35ProbVal;
                     safeOdds = Number((m.odds?.under35 || Math.max(1.15, Math.min(1.48, (100 / under35ProbVal) * 0.96))).toFixed(2));
@@ -662,9 +675,21 @@ export default function MatchDetailModal({
                 if (valueSelection === bankerSelection || valueSelection === safeSelection) {
                   valueSelection = defaultValueSelection !== safeSelection && defaultValueSelection !== bankerSelection
                     ? defaultValueSelection
-                    : (bttsProbVal >= 50 ? 'Ambos Equipos Anotan: SÍ' : 'Más de 2.5 Goles');
-                  valueOdds = Number((m.odds?.bttsYes || 1.75).toFixed(2));
-                  valueProb = bttsProbVal;
+                    : (bttsProbVal >= 50 && bankerSelection !== 'Ambos Equipos Anotan: SÍ' && safeSelection !== 'Ambos Equipos Anotan: SÍ'
+                        ? 'Ambos Equipos Anotan: SÍ'
+                        : (over25ProbVal >= 50 && bankerSelection !== 'Más de 2.5 Goles' && safeSelection !== 'Más de 2.5 Goles'
+                            ? 'Más de 2.5 Goles'
+                            : 'Menos de 2.5 Goles'));
+                  valueOdds = valueSelection === 'Ambos Equipos Anotan: SÍ'
+                    ? Number((m.odds?.bttsYes || 1.75).toFixed(2))
+                    : valueSelection === 'Más de 2.5 Goles'
+                    ? Number((m.odds?.over25 || 1.85).toFixed(2))
+                    : Number((m.odds?.under25 || 1.80).toFixed(2));
+                  valueProb = valueSelection === 'Ambos Equipos Anotan: SÍ'
+                    ? bttsProbVal
+                    : valueSelection === 'Más de 2.5 Goles'
+                    ? over25ProbVal
+                    : Math.round(100 - over25ProbVal);
                   valueRationale = `Selección de valor estadístico con ventaja matemática calculada sobre el modelo Poisson.`;
                 }
 
