@@ -90,7 +90,11 @@ export default function AdminDashboardModal({ onClose }) {
   const fetchModelsForProvider = useCallback(async (p = 'openrouter', key = '', url = '') => {
     setLoadingModels(true);
     const cleanUrl = (url || '').trim();
-    const isAgentRouter = p === 'agentrouter' || cleanUrl.includes('agentrouter.org') || cleanUrl.includes('co.agentrouter.org');
+    let effectiveProvider = p;
+    if (cleanUrl.includes('agentrouter.org') || cleanUrl.includes('co.agentrouter.org')) {
+      effectiveProvider = 'agentrouter';
+    }
+    const isAgentRouter = effectiveProvider === 'agentrouter';
     
     if (isAgentRouter) {
       setAvailableModelsList(AGENTROUTER_KNOWN_MODELS);
@@ -106,10 +110,10 @@ export default function AdminDashboardModal({ onClose }) {
 
     try {
       const stored = getStoredAiConfig();
-      const keyToSend = key.trim() || (stored?.provider === p ? stored.apiKey : '');
+      const keyToSend = key.trim() || (stored?.provider === effectiveProvider ? stored.apiKey : '');
       const res = await fetch('/api/settings/models', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: p, apiKey: keyToSend, baseUrl: cleanUrl })
+        body: JSON.stringify({ provider: effectiveProvider, apiKey: keyToSend, baseUrl: cleanUrl })
       });
       const data = await res.json();
       if (data.success && Array.isArray(data.models) && data.models.length > 0) {
@@ -327,7 +331,15 @@ export default function AdminDashboardModal({ onClose }) {
     setSavedSettingsMsg('');
     try {
       const cleanBaseUrl = (baseUrl || '').trim();
-      const isAgentRouter = provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org');
+      let effectiveProvider = provider;
+      if (cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org')) {
+        effectiveProvider = 'agentrouter';
+        if (provider !== 'agentrouter') setProvider('agentrouter');
+      } else if (cleanBaseUrl.includes('openrouter.ai') && effectiveProvider === 'agentrouter') {
+        effectiveProvider = 'openrouter';
+        if (provider !== 'openrouter') setProvider('openrouter');
+      }
+      const isAgentRouter = effectiveProvider === 'agentrouter';
       let targetModel = customModelInput.trim() || newModel;
       if (isAgentRouter && (!targetModel || targetModel === 'gpt-4o-mini' || targetModel.startsWith('~') || targetModel.includes(':free') || targetModel.includes('nemotron'))) {
         targetModel = 'deepseek-v4-flash';
@@ -340,7 +352,7 @@ export default function AdminDashboardModal({ onClose }) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          provider,
+          provider: effectiveProvider,
           selectedModel: targetModel,
           modelName: targetModel,
           baseUrl: cleanBaseUrl,
@@ -354,13 +366,13 @@ export default function AdminDashboardModal({ onClose }) {
         setSavedSettingsMsg('Configuración del motor de IA guardada exitosamente.');
         setSettings(data.settings);
         saveStoredAiConfig({
-          provider,
+          provider: effectiveProvider,
           selectedModel: targetModel,
           modelName: targetModel,
           baseUrl: cleanBaseUrl,
           apiKey: newApiKey.trim() || undefined,
-          apiKeyMasked: data.settings.apiKeyMasked,
-          isConfigured: data.settings.isConfigured
+          apiKeyMasked: data.settings?.apiKeyMasked,
+          isConfigured: data.settings?.isConfigured
         });
         setNewApiKey('');
         setTimeout(() => setSavedSettingsMsg(''), 4000);
@@ -369,13 +381,18 @@ export default function AdminDashboardModal({ onClose }) {
       }
     } catch {
       const cleanBaseUrl = (baseUrl || '').trim();
-      const isAgentRouter = provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org');
+      let effectiveProvider = provider;
+      if (cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org')) {
+        effectiveProvider = 'agentrouter';
+        if (provider !== 'agentrouter') setProvider('agentrouter');
+      }
+      const isAgentRouter = effectiveProvider === 'agentrouter';
       let targetModel = customModelInput.trim() || newModel;
       if (isAgentRouter && (!targetModel || targetModel === 'gpt-4o-mini' || targetModel.startsWith('~') || targetModel.includes(':free') || targetModel.includes('nemotron'))) {
         targetModel = 'deepseek-v4-flash';
       }
       saveStoredAiConfig({
-        provider,
+        provider: effectiveProvider,
         selectedModel: targetModel,
         modelName: targetModel,
         baseUrl: cleanBaseUrl,
@@ -394,7 +411,15 @@ export default function AdminDashboardModal({ onClose }) {
     setTestResult(null);
     try {
       const cleanBaseUrl = (baseUrl || '').trim();
-      const isAgentRouter = provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org');
+      let effectiveProvider = provider;
+      if (cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org')) {
+        effectiveProvider = 'agentrouter';
+        if (provider !== 'agentrouter') setProvider('agentrouter');
+      } else if (cleanBaseUrl.includes('openrouter.ai') && effectiveProvider === 'agentrouter') {
+        effectiveProvider = 'openrouter';
+        if (provider !== 'openrouter') setProvider('openrouter');
+      }
+      const isAgentRouter = effectiveProvider === 'agentrouter';
       let targetModel = customModelInput.trim() || newModel;
       if (isAgentRouter && (!targetModel || targetModel === 'gpt-4o-mini' || targetModel.startsWith('~') || targetModel.includes(':free') || targetModel.includes('nemotron'))) {
         targetModel = 'deepseek-v4-flash';
@@ -409,7 +434,7 @@ export default function AdminDashboardModal({ onClose }) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          provider,
+          provider: effectiveProvider,
           apiKey: keyToSend,
           baseUrl: cleanBaseUrl,
           selectedModel: targetModel
@@ -449,6 +474,17 @@ export default function AdminDashboardModal({ onClose }) {
               sample: sampleText,
               message: `✅ Conexión exitosa con ${targetModel} (${latency}ms)`
             };
+          } else if (directData?.error?.message) {
+            let errMsg = directData.error.message;
+            if (errMsg.includes('无可用渠道') || errMsg.includes('no available channel')) {
+              errMsg = `El modelo '${targetModel}' no está habilitado en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
+            } else if (errMsg.includes('Budget pool quota has been exhausted') || errMsg.includes('quota has been exhausted')) {
+              errMsg = `La cuota para '${targetModel}' está agotada en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
+            }
+            data = {
+              success: false,
+              message: `⚠️ ${errMsg}`
+            };
           }
         } catch (clientErr) {
           console.warn('Fallback directo de navegador no completó:', clientErr);
@@ -459,7 +495,7 @@ export default function AdminDashboardModal({ onClose }) {
       if (data.success) {
         sounds.playSuccess();
         saveStoredAiConfig({
-          provider,
+          provider: effectiveProvider,
           selectedModel: data.model || targetModel,
           modelName: data.model || targetModel,
           baseUrl: cleanBaseUrl,
@@ -979,7 +1015,8 @@ export default function AdminDashboardModal({ onClose }) {
                     onChange={(e) => {
                       const val = e.target.value;
                       setBaseUrl(val);
-                      if (val.includes('agentrouter.org')) {
+                      if (val.includes('agentrouter.org') || val.includes('co.agentrouter.org')) {
+                        setProvider('agentrouter');
                         setAvailableModelsList(AGENTROUTER_KNOWN_MODELS);
                         setNewModel(curr => {
                           if (!curr || curr === 'gpt-4o-mini' || curr.startsWith('~') || curr.includes(':free') || curr.includes('nemotron')) {
@@ -987,6 +1024,14 @@ export default function AdminDashboardModal({ onClose }) {
                           }
                           return curr;
                         });
+                      } else if (val.includes('openrouter.ai')) {
+                        setProvider('openrouter');
+                      } else if (val.includes('deepseek.com')) {
+                        setProvider('deepseek');
+                      } else if (val.includes('groq.com')) {
+                        setProvider('groq');
+                      } else if (val.includes('generativelanguage.googleapis.com')) {
+                        setProvider('gemini');
                       }
                     }}
                     placeholder="https://api..."

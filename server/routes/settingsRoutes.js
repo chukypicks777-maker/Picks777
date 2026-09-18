@@ -73,6 +73,7 @@ router.post('/models', async (req, res) => {
     if (baseUrl) {
       try {
         const validated = validateAiConfig({ provider, apiKey: apiKey || 'dummy-key-safe', baseUrl });
+        provider = validated.provider;
         baseUrl = validated.baseUrl;
       } catch {}
     }
@@ -127,7 +128,9 @@ router.post('/test', async (req, res) => {
   try {
     const current = await getEffectiveAiConfig();
     let provider = req.body?.provider || current.provider || 'openrouter';
-    let apiKey = req.body?.apiKey || (provider === current.provider ? current.apiKey : '');
+    let apiKey = (req.body?.apiKey && typeof req.body.apiKey === 'string' && req.body.apiKey.trim())
+      ? req.body.apiKey.trim()
+      : (current.apiKey || '');
     let baseUrl = req.body?.baseUrl || current.baseUrl || '';
     let selectedModel = req.body?.selectedModel || current.selectedModel || '';
 

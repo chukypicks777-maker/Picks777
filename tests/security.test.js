@@ -28,6 +28,8 @@ test('AI destinations reject SSRF, credentials, queries and type confusion', () 
   assert.equal(validateAiConfig({ provider: 'openrouter' }).baseUrl, 'https://openrouter.ai/api/v1');
   assert.equal(validateAiConfig({ provider: 'custom', baseUrl: 'https://my-custom-proxy.com/v1' }).baseUrl, 'https://my-custom-proxy.com/v1');
   assert.equal(validateAiConfig({ provider: 'agentrouter', baseUrl: 'https://agentrouter.org' }).baseUrl, 'https://agentrouter.org/v1');
+  assert.equal(validateAiConfig({ provider: 'openrouter', baseUrl: 'https://agentrouter.org' }).provider, 'agentrouter');
+  assert.equal(validateAiConfig({ baseUrl: 'https://agentrouter.org' }).provider, 'agentrouter');
   for (const badCustom of ['http://custom-proxy.com', 'https://10.0.0.1/v1', 'https://localhost/v1', 'https://custom-proxy.com:8080/v1']) {
     assert.throws(() => validateAiConfig({ provider: 'custom', baseUrl: badCustom }));
   }

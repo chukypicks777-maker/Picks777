@@ -1,7 +1,7 @@
 import { PROVIDER_PRESETS } from '../src/constants/aiProviders.js';
 export function validateAiConfig(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Configuración inválida.');
-  const provider = input.provider || 'openrouter';
+  let provider = input.provider || 'openrouter';
   if (!Object.hasOwn(PROVIDER_PRESETS, provider)) throw new Error('Proveedor inválido.');
   for (const [key, max] of [['apiKey', 2048], ['selectedModel', 200], ['modelName', 200], ['baseUrl', 500]]) {
     if (input[key] !== undefined && (typeof input[key] !== 'string' || input[key].length > max || [...input[key]].some(c => c.charCodeAt(0) < 32))) throw new Error(`Campo ${key} inválido.`);
@@ -12,6 +12,22 @@ export function validateAiConfig(input = {}) {
   }
   const url = new URL(rawUrl);
   const h = url.hostname.toLowerCase();
+
+  // Si no es un proveedor 'custom' explícito, inferir automáticamente el proveedor si el host pertenece a uno conocido
+  if (provider !== 'custom') {
+    if (h === 'agentrouter.org' || h === 'co.agentrouter.org') {
+      provider = 'agentrouter';
+    } else if (h === 'openrouter.ai') {
+      provider = 'openrouter';
+    } else if (h === 'api.deepseek.com') {
+      provider = 'deepseek';
+    } else if (h === 'api.groq.com') {
+      provider = 'groq';
+    } else if (h === 'generativelanguage.googleapis.com') {
+      provider = 'gemini';
+    }
+  }
+
   if ((h === 'agentrouter.org' || h === 'co.agentrouter.org') && (url.pathname === '/' || url.pathname === '')) {
     url.pathname = '/v1';
   }
@@ -45,9 +61,9 @@ export function validateAiConfig(input = {}) {
   let selectedModel = input.selectedModel;
   let modelName = input.modelName;
   const isAgentRouter = provider === 'agentrouter' || h === 'agentrouter.org' || h === 'co.agentrouter.org';
-  if (isAgentRouter && (!selectedModel || selectedModel === 'gpt-4o-mini')) {
+  if (isAgentRouter && (!selectedModel || selectedModel === 'gpt-4o-mini' || selectedModel.startsWith('~') || selectedModel.includes(':free') || selectedModel.includes('nemotron'))) {
     selectedModel = 'deepseek-v4-flash';
-    if (!modelName || modelName === 'gpt-4o-mini') modelName = 'deepseek-v4-flash';
+    if (!modelName || modelName === 'gpt-4o-mini' || modelName.startsWith('~') || modelName.includes(':free') || modelName.includes('nemotron')) modelName = 'deepseek-v4-flash';
   }
 
   return { ...input, provider, baseUrl: url.href.replace(/\/+$/, ''), selectedModel, modelName };

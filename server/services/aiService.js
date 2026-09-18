@@ -364,8 +364,8 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
         cleanErr = errObj.error.message;
         if (cleanErr.includes('无可用渠道') || cleanErr.includes('no available channel')) {
           cleanErr = `El modelo '${model}' no está habilitado en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
-        } else if (cleanErr.includes('Budget pool quota has been exhausted')) {
-          cleanErr = `La cuota para '${model}' está agotada en tu cuenta de AgentRouter. Usa 'deepseek-v4-flash'.`;
+        } else if (cleanErr.includes('Budget pool quota has been exhausted') || cleanErr.includes('quota has been exhausted')) {
+          cleanErr = `La cuota para '${model}' está agotada en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
         }
       }
     } catch {}
