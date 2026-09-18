@@ -9,9 +9,6 @@ export default function DateFilterTabs({
   setMatchStatusFilter,
   searchQuery,
   setSearchQuery,
-  marketFilter,
-  setMarketFilter,
-  onNavigate,
   liveCount = 0
 }) {
   const statusOptions = [
@@ -28,13 +25,6 @@ export default function DateFilterTabs({
     { id: 'FINISHED', label: 'Resultados', icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> },
   ];
 
-  const markets = [
-    { id: 'all', label: 'Todos los Mercados', path: '/' },
-    { id: 'safe', label: '⚡ Boost / Banqueros', path: '/boost' },
-    { id: 'goal', label: '⚽ Goles (Goal Hub)', path: '/goal' },
-    { id: 'over', label: '+2.5 Goles (Over)' },
-    { id: 'btts', label: 'Ambos Anotan (BTTS)' },
-  ];
 
   return (
     <div className="w-full space-y-2.5 mb-5">
@@ -104,34 +94,6 @@ export default function DateFilterTabs({
           )}
         </div>
 
-      </div>
-
-      {/* Market Sub-Filters */}
-      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs">
-        <span className="text-[11px] font-mono text-slate-500 mr-1 shrink-0">Categoría:</span>
-        {markets.map((m) => {
-          const isSelected = marketFilter === m.id;
-          return (
-            <button
-              key={m.id}
-              onClick={() => {
-                sounds.playClick();
-                if (onNavigate) {
-                  onNavigate(m.id);
-                } else {
-                  setMarketFilter(m.id);
-                }
-              }}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer whitespace-nowrap border shrink-0 ${
-                isSelected
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-semibold shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-                  : 'bg-[#121620] border-white/[0.06] text-slate-400 hover:text-slate-200 hover:border-white/15'
-              }`}
-            >
-              {m.label}
-            </button>
-          );
-        })}
       </div>
 
     </div>

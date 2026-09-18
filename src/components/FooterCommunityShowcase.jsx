@@ -35,7 +35,7 @@ export default function FooterCommunityShowcase() {
 
         {/* Main Title Required by User */}
         <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white font-sans tracking-tight mb-6 text-center sm:text-left">
-          Únete a la comunidad y consulta los picks compartidos.
+          🚨Está fue la comunidad más efectiva de todo el mes 89% de efectividad, únete y reclama tu código!
         </h2>
 
         {/* Grid: Promo Image + Detailed Info */}

@@ -603,9 +603,6 @@ export default function App() {
           setMatchStatusFilter={setMatchStatusFilter}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          marketFilter={marketFilter}
-          setMarketFilter={setMarketFilter}
-          onNavigate={navigateTo}
           liveCount={liveMatchesCount}
         />
 
