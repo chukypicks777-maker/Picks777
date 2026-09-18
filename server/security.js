@@ -13,11 +13,16 @@ export function validateAiConfig(input = {}) {
   const url = new URL(rawUrl);
   const h = url.hostname.toLowerCase();
 
-  // Si no es un proveedor 'custom' explícito, inferir automáticamente el proveedor si el host pertenece a uno conocido
-  if (provider !== 'custom') {
-    if (h === 'agentrouter.org' || h === 'co.agentrouter.org') {
+  // Inferir automáticamente si el host pertenece a uno conocido
+  if (h === 'agentrouter.org' || h === 'co.agentrouter.org' || h.includes('agentrouter')) {
+    if (provider !== 'custom') {
       provider = 'agentrouter';
-    } else if (h === 'openrouter.ai') {
+    }
+    if (url.pathname === '/' || url.pathname === '' || !url.pathname.includes('/v1')) {
+      url.pathname = '/v1';
+    }
+  } else if (provider !== 'custom') {
+    if (h === 'openrouter.ai') {
       provider = 'openrouter';
     } else if (h === 'api.deepseek.com') {
       provider = 'deepseek';
@@ -26,10 +31,6 @@ export function validateAiConfig(input = {}) {
     } else if (h === 'generativelanguage.googleapis.com') {
       provider = 'gemini';
     }
-  }
-
-  if ((h === 'agentrouter.org' || h === 'co.agentrouter.org') && (url.pathname === '/' || url.pathname === '')) {
-    url.pathname = '/v1';
   }
 
   if (url.protocol !== 'https:' || url.username || url.password || url.port || url.search || url.hash) {

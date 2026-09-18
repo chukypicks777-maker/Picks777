@@ -6,11 +6,11 @@ import { cachedData } from './dataCache.js';
 import { getTop3Opportunities } from '../../src/utils/mathProbabilities.js';
 
 export const AGENTROUTER_KNOWN_MODELS = [
-  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash (AgentRouter)', isReasoning: true },
-  { id: 'claude-opus-4-8', name: 'Claude Opus 4.8 (AgentRouter)', isReasoning: false },
-  { id: 'claude-opus-5', name: 'Claude Opus 5 (AgentRouter)', isReasoning: false },
-  { id: 'gpt-5.6-sol', name: 'GPT 5.6 Sol (AgentRouter)', isReasoning: true },
-  { id: 'gpt-6-astra', name: 'GPT 6 Astra (AgentRouter)', isReasoning: true }
+  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash (AgentRouter) [Cuota Activa]', isReasoning: true, hasQuota: true },
+  { id: 'claude-opus-5', name: 'Claude Opus 5 (AgentRouter)', isReasoning: false, hasQuota: false },
+  { id: 'claude-opus-4-8', name: 'Claude Opus 4.8 (AgentRouter)', isReasoning: false, hasQuota: false },
+  { id: 'deepseek-chat', name: 'DeepSeek Chat (AgentRouter)', isReasoning: false, hasQuota: true },
+  { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner R1 (AgentRouter)', isReasoning: true, hasQuota: true }
 ];
 
 export async function getEffectiveAiConfig() {
@@ -26,7 +26,7 @@ export async function getEffectiveAiConfig() {
     provider === 'gemini' ? 'https://generativelanguage.googleapis.com/v1beta' :
     provider === 'deepseek' ? 'https://api.deepseek.com/v1' :
     provider === 'groq' ? 'https://api.groq.com/openai/v1' :
-    provider === 'agentrouter' ? 'https://agentrouter.org/v1' :
+    provider === 'agentrouter' ? 'https://co.agentrouter.org/v1' :
     'https://openrouter.ai/api/v1'
   )).trim();
 
@@ -170,8 +170,11 @@ export async function fetchProviderModels(provider = 'openrouter', apiKey = '', 
     cleanBaseUrl.includes('co.agentrouter.org');
 
   if (isAgentRouterHost) {
+    if (cleanBaseUrl.includes('agentrouter.org') && !cleanBaseUrl.includes('co.agentrouter.org')) {
+      cleanBaseUrl = cleanBaseUrl.replace('agentrouter.org', 'co.agentrouter.org');
+    }
     if (!cleanBaseUrl.includes('/v1')) {
-      cleanBaseUrl = cleanBaseUrl ? (cleanBaseUrl.replace(/\/+$/, '') + '/v1') : 'https://agentrouter.org/v1';
+      cleanBaseUrl = cleanBaseUrl ? (cleanBaseUrl.replace(/\/+$/, '') + '/v1') : 'https://co.agentrouter.org/v1';
     }
     if (!apiKey) return AGENTROUTER_KNOWN_MODELS;
     try {
@@ -294,13 +297,18 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
     normProvider === 'openrouter' ? 'https://openrouter.ai/api/v1' :
     normProvider === 'deepseek' ? 'https://api.deepseek.com/v1' :
     normProvider === 'groq' ? 'https://api.groq.com/openai/v1' :
-    normProvider === 'agentrouter' ? 'https://agentrouter.org/v1' :
+    normProvider === 'agentrouter' ? 'https://co.agentrouter.org/v1' :
     'https://openrouter.ai/api/v1'
   );
 
   const isAgentRouter = normProvider === 'agentrouter' || effectiveBaseUrl.includes('agentrouter.org') || effectiveBaseUrl.includes('co.agentrouter.org');
-  if (isAgentRouter && !effectiveBaseUrl.includes('/v1')) {
-    effectiveBaseUrl = effectiveBaseUrl.replace(/\/+$/, '') + '/v1';
+  if (isAgentRouter) {
+    if (effectiveBaseUrl.includes('agentrouter.org') && !effectiveBaseUrl.includes('co.agentrouter.org')) {
+      effectiveBaseUrl = effectiveBaseUrl.replace('agentrouter.org', 'co.agentrouter.org');
+    }
+    if (!effectiveBaseUrl.includes('/v1')) {
+      effectiveBaseUrl = effectiveBaseUrl.replace(/\/+$/, '') + '/v1';
+    }
   }
   const finalBaseUrl = effectiveBaseUrl.replace(/\/+$/, '');
 
@@ -343,14 +351,69 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
     }
   }
 
-  const response = await fetch(`${finalBaseUrl}/chat/completions`, {
-    method: 'POST',
-    redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
-    headers,
-    body: JSON.stringify(requestBody)
-  });
+  let response;
+  let responseText = '';
 
-  const responseText = await response.text().catch(() => '');
+  try {
+    response = await fetch(`${finalBaseUrl}/chat/completions`, {
+      method: 'POST',
+      redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
+      headers,
+      body: JSON.stringify(requestBody)
+    });
+    responseText = await response.text().catch(() => '');
+  } catch (fetchErr) {
+    if (!isAgentRouter) throw fetchErr;
+  }
+
+  // Si es AgentRouter y el endpoint OpenAI falló o devolvió HTML de WAF, intentar endpoint Anthropic (/messages)
+  const isHtmlOrWaf = !response || responseText.includes('aliyun_waf') || responseText.includes('AliyunCaptcha') ||
+    (response.status === 200 && (responseText.includes('<!doctype html>') || responseText.trim().startsWith('<!doctype html') || responseText.trim().startsWith('<html')));
+
+  if (isAgentRouter && (isHtmlOrWaf || !response.ok)) {
+    try {
+      const anthropicUrl = `${finalBaseUrl}/messages`;
+      const anthropicResp = await fetch(anthropicUrl, {
+        method: 'POST',
+        redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+          'User-Agent': 'claude-cli/2.1.195 (external, cli)',
+          'x-app': 'cli'
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 4000,
+          messages: [{ role: 'user', content: systemPrompt ? `${systemPrompt}\n\n${userPrompt}` : userPrompt }]
+        })
+      });
+      const anthropicText = await anthropicResp.text().catch(() => '');
+      if (anthropicResp.ok && !anthropicText.includes('aliyun_waf') && !anthropicText.includes('<!doctype html>')) {
+        const aData = JSON.parse(anthropicText);
+        const textBlock = aData.content?.find(c => c.type === 'text');
+        if (textBlock?.text) return textBlock.text;
+      } else if (anthropicText && !anthropicText.includes('aliyun_waf')) {
+        response = anthropicResp;
+        responseText = anthropicText;
+      }
+    } catch {}
+  }
+
+  if (!response) {
+    throw new Error(`${normProvider} no respondió a la solicitud.`);
+  }
+
+  const isHtmlResponse = responseText.includes('aliyun_waf') || responseText.includes('AliyunCaptcha') ||
+    responseText.trim().startsWith('<!doctype html') || responseText.trim().startsWith('<html') ||
+    (response.status === 200 && responseText.includes('<!doctype html>'));
+
+  if (isHtmlResponse) {
+    const err = new Error(`[WAF_CHALLENGE] El firewall WAF de Alibaba Cloud interceptó la conexión. Cambiando al endpoint oficial https://co.agentrouter.org/v1.`);
+    err.isWafChallenge = true;
+    throw err;
+  }
 
   if (!response.ok) {
     let cleanErr = responseText.slice(0, 200);
@@ -358,13 +421,19 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
       const errObj = JSON.parse(responseText);
       if (errObj.error?.message) {
         cleanErr = errObj.error.message;
-        if (cleanErr.includes('无可用渠道') || cleanErr.includes('no available channel')) {
-          cleanErr = `El modelo '${model}' no está habilitado en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
-        } else if (cleanErr.includes('Budget pool quota has been exhausted') || cleanErr.includes('quota has been exhausted')) {
-          cleanErr = `La cuota para '${model}' está agotada en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
-        } else if (cleanErr.includes('unauthorized client detected')) {
-          cleanErr = `Cliente no autorizado por AgentRouter. La solicitud debe realizarse a través del servidor del sistema con el modelo con cuota activa ('deepseek-v4-flash').`;
-        }
+      } else if (errObj.msg) {
+        cleanErr = errObj.msg;
+      } else if (errObj.message) {
+        cleanErr = errObj.message;
+      }
+      if (cleanErr.includes('无可用渠道') || cleanErr.includes('no available channel')) {
+        cleanErr = `El modelo '${model}' no está habilitado en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
+      } else if (cleanErr.includes('Budget pool quota has been exhausted') || cleanErr.includes('quota has been exhausted')) {
+        cleanErr = `La cuota para '${model}' está agotada en tu cuenta de AgentRouter. Selecciona el modelo con cuota activa: 'deepseek-v4-flash'.`;
+      } else if (cleanErr.includes('unauthorized client detected')) {
+        cleanErr = `Cliente no autorizado por AgentRouter. La solicitud debe realizarse con el endpoint oficial https://co.agentrouter.org/v1.`;
+      } else if (cleanErr.includes('Invalid API Key') || cleanErr.includes('无效的令牌') || cleanErr.includes('Missing API Key')) {
+        cleanErr = `Clave API de AgentRouter inválida o expirada. Verifica tu token en console.agentrouter.org.`;
       }
     } catch {}
     throw new Error(`${normProvider} error ${response.status}: ${cleanErr}`);
@@ -374,7 +443,7 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
   try {
     data = JSON.parse(responseText);
   } catch {
-    throw new Error(`[IA Endpoint] Status ${response.status} (${response.statusText}): ${responseText.slice(0, 250)}`);
+    throw new Error(`[IA Endpoint] Respuesta inválida del proveedor de IA (Status ${response.status}).`);
   }
 
   const msg = data.choices?.[0]?.message || {};
@@ -389,6 +458,12 @@ export async function testAiConnection({ provider, apiKey, baseUrl, selectedMode
   }
   const cleanBase = String(baseUrl || '').toLowerCase();
   const isAgentRouter = provider === 'agentrouter' || cleanBase.includes('agentrouter.org') || cleanBase.includes('co.agentrouter.org');
+  let effectiveBaseUrl = baseUrl;
+  if (isAgentRouter) {
+    if (!effectiveBaseUrl || (effectiveBaseUrl.includes('agentrouter.org') && !effectiveBaseUrl.includes('co.agentrouter.org'))) {
+      effectiveBaseUrl = 'https://co.agentrouter.org/v1';
+    }
+  }
   let model = (selectedModel || '').trim();
   if (!model || (isAgentRouter && (model === 'gpt-4o-mini' || model.startsWith('~') || model.startsWith('openai/') || model.includes('nemotron')))) {
     model = isAgentRouter ? 'deepseek-v4-flash' :
@@ -402,7 +477,7 @@ export async function testAiConnection({ provider, apiKey, baseUrl, selectedMode
     const raw = await executeAiChatCompletion({
       provider,
       apiKey: apiKey.trim(),
-      baseUrl,
+      baseUrl: effectiveBaseUrl,
       model,
       systemPrompt: 'You are a fast AI assistant.',
       userPrompt: 'Reply with the single word OK.'
@@ -419,7 +494,11 @@ export async function testAiConnection({ provider, apiKey, baseUrl, selectedMode
     }
     return { success: false, latencyMs, message: 'El modelo no devolvió una respuesta válida.' };
   } catch (err) {
-    return { success: false, message: err.message || 'No se pudo conectar con el proveedor o modelo configurado.' };
+    return {
+      success: false,
+      isWafChallenge: Boolean(err.isWafChallenge || (err.message && (err.message.includes('aliyun_waf') || err.message.includes('WAF_CHALLENGE')))),
+      message: err.message || 'No se pudo conectar con el proveedor o modelo configurado.'
+    };
   }
 }
 

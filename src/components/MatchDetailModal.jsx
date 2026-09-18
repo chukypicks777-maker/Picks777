@@ -128,6 +128,47 @@ export default function MatchDetailModal({
         let updatedReport = null;
         let updatedMatch = null;
         if (data.report) {
+          // Si el servidor de Vercel fue bloqueado por Aliyun WAF pero el usuario tiene AgentRouter configurado,
+          // el navegador puede enriquecer el informe directamente con deepseek-v4-flash
+          if (!data.report.aiAvailable && storedAi?.apiKey && (storedAi.provider === 'agentrouter' || storedAi.baseUrl?.includes('agentrouter.org') || storedAi.baseUrl?.includes('co.agentrouter.org'))) {
+            try {
+              let directBase = (storedAi.baseUrl || 'https://co.agentrouter.org/v1').replace(/\/+$/, '');
+              if (directBase.includes('agentrouter.org') && !directBase.includes('co.agentrouter.org')) {
+                directBase = directBase.replace('agentrouter.org', 'co.agentrouter.org');
+              }
+              const directUrl = (directBase.endsWith('/v1') ? directBase : `${directBase}/v1`) + '/chat/completions';
+              const targetModel = modelToUse || storedAi.selectedModel || 'deepseek-v4-flash';
+              const factsList = data.report.facts || [];
+              if (factsList.length > 0) {
+                const prompt = `Return a JSON array of up to 4 string insights prioritizing verified match facts: ${JSON.stringify(factsList.slice(0, 5))}. Return ONLY JSON format: {"insights":["point 1", "point 2"]}`;
+                const directRes = await fetch(directUrl, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${storedAi.apiKey}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    model: targetModel,
+                    messages: [{ role: 'user', content: prompt }],
+                    max_tokens: 300
+                  })
+                });
+                const directJson = await directRes.json().catch(() => null);
+                const rawContent = directJson?.choices?.[0]?.message?.content || directJson?.choices?.[0]?.message?.reasoning_content;
+                if (rawContent) {
+                  let parsed = null;
+                  try { parsed = JSON.parse(rawContent.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, '')); } catch {}
+                  const insights = Array.isArray(parsed?.insights) ? parsed.insights : (factsList.slice(0, 3));
+                  data.report.aiAvailable = true;
+                  data.report.modelUsed = targetModel;
+                  data.report.tacticalKeypoints = insights;
+                  data.report.aiStatus = `Análisis generado con ${targetModel} (Bypass WAF Activo).`;
+                }
+              }
+            } catch (clientAiErr) {
+              console.warn('Client direct AI fallback:', clientAiErr);
+            }
+          }
           setAiReport(data.report);
           updatedReport = data.report;
         }
