@@ -7,7 +7,7 @@
  */
 
 const memoryCache = new Map();
-const SESSION_STORAGE_KEY = 'picks777_analysis_cache_v1';
+const SESSION_STORAGE_KEY = 'picks777_analysis_cache_v2';
 
 function getStorage() {
   try {
@@ -27,6 +27,7 @@ function getStorage() {
 export function computeMatchFingerprint(m) {
   if (!m) return '';
   return [
+    JSON.stringify([m.kickoff, m.model, m.probabilities, m.odds, m.homeTeam, m.awayTeam]),
     m.id || '',
     m.status || '',
     m.liveScore?.home ?? '',
@@ -63,6 +64,7 @@ export function getCachedAnalysis(matchId, currentMatch) {
   }
 
   if (!entry) return null;
+  if (!entry.timestamp || Date.now() - entry.timestamp > 10 * 60000) { removeCachedAnalysis(matchId); return null; }
 
   // Verificar si el partido cambió (estado, goles o probabilidades principales)
   if (currentFingerprint && entry.fingerprint && entry.fingerprint !== currentFingerprint) {

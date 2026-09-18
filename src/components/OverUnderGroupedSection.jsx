@@ -1,43 +1,23 @@
 import React from 'react';
 import { TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import NumberCounter from './NumberCounter';
+import { percent, complement } from '../utils/probability';
 
 export default function OverUnderGroupedSection({ match, homeStats, awayStats, diff }) {
   if (!match || !diff) return null;
 
-  const probs = match.probabilities || {};
-
-  // Goles Over & Under
-  const over05 = 96;
-  const under05 = 4;
-
-  const over15 = Math.round(probs.over15 || diff.over15 || 85);
-  const under15 = 100 - over15;
-
-  const over25 = Math.round(probs.over25 || diff.over25 || 62);
-  const under25 = Math.round(probs.under25 != null ? probs.under25 : (100 - over25));
-
-  const over35 = Math.round(probs.over35 || diff.over35 || 34);
-  const under35 = 100 - over35;
-
-  const over45 = probs.over45 != null ? Math.round(probs.over45) : Math.round(Math.max(6, over35 * 0.45));
-  const under45 = probs.under45 != null ? Math.round(probs.under45) : (100 - over45);
-
-  // Córners Over & Under
-  const homeCornersOver5 = Math.round(homeStats?.cornerOver5 || 74);
-  const homeCornersUnder5 = 100 - homeCornersOver5;
-
-  const awayCornersOver5 = Math.round(awayStats?.cornerOver5 || 58);
-  const awayCornersUnder5 = 100 - awayCornersOver5;
-
-  // Córners totales partido
-  const matchCornersOver5 = Math.round(diff.matchCornersProbs?.over5 || 95);
-  const matchCornersUnder5 = 100 - matchCornersOver5;
-
-  const matchCornersOver85 = Math.round(diff.matchCornersProbs?.over85 || 68);
-  const matchCornersUnder85 = 100 - matchCornersOver85;
-
+  const probs = match.model?.probabilities || match.probabilities || {};
+  const over05 = percent(probs.over05), under05 = complement(over05);
+  const over15 = percent(probs.over15), under15 = complement(over15);
+  const over25 = percent(probs.over25), under25 = complement(over25);
+  const over35 = percent(probs.over35), under35 = complement(over35);
+  const over45 = percent(probs.over45), under45 = complement(over45);
+  const homeCornersOver5 = homeStats?.cornerOver55, homeCornersUnder5 = complement(homeCornersOver5);
+  const awayCornersOver5 = awayStats?.cornerOver55, awayCornersUnder5 = complement(awayCornersOver5);
+  const matchCornersOver5 = diff.matchCornersProbs?.over55, matchCornersUnder5 = complement(matchCornersOver5);
+  const matchCornersOver85 = diff.matchCornersProbs?.over85, matchCornersUnder85 = complement(matchCornersOver85);
   const lines = [
+    { market: 'Tarjetas amarillas totales', overLabel: '+3.5 Tarjetas', underLabel: '-3.5 Tarjetas', overProb: diff.matchCardsProbs?.over35, underProb: diff.matchCardsProbs?.under35, note: 'Amarillas registradas; no puntos por tarjetas' },
     {
       market: 'Línea de 0.5 Goles',
       overLabel: '+0.5 Goles',
@@ -68,7 +48,7 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
       overProb: over35,
       underLabel: '-3.5 Goles',
       underProb: under35,
-      note: 'Partido de alta intensidad'
+      note: '4 o más goles vs 0–3'
     },
     {
       market: 'Línea de 4.5 Goles',
@@ -76,29 +56,29 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
       overProb: over45,
       underLabel: '-4.5 Goles',
       underProb: under45,
-      note: 'Marcador abultado'
+      note: '5 o más goles vs 0–4'
     },
     {
       market: `Córners ${homeStats?.shortName || 'Local'}`,
-      overLabel: `+5 Córners ${homeStats?.shortName || 'Local'}`,
+      overLabel: `+5.5 Córners ${homeStats?.shortName || 'Local'}`,
       overProb: homeCornersOver5,
-      underLabel: `-5 Córners ${homeStats?.shortName || 'Local'}`,
+      underLabel: `-5.5 Córners ${homeStats?.shortName || 'Local'}`,
       underProb: homeCornersUnder5,
       note: 'Volumen individual local'
     },
     {
       market: `Córners ${awayStats?.shortName || 'Visita'}`,
-      overLabel: `+5 Córners ${awayStats?.shortName || 'Visita'}`,
+      overLabel: `+5.5 Córners ${awayStats?.shortName || 'Visita'}`,
       overProb: awayCornersOver5,
-      underLabel: `-5 Córners ${awayStats?.shortName || 'Visita'}`,
+      underLabel: `-5.5 Córners ${awayStats?.shortName || 'Visita'}`,
       underProb: awayCornersUnder5,
       note: 'Volumen individual visita'
     },
     {
-      market: 'Córners Totales Partido (Línea 5)',
-      overLabel: '+5 Córners Partido',
+      market: 'Córners Totales Partido (Línea 5.5)',
+      overLabel: '+5.5 Córners Partido',
       overProb: matchCornersOver5,
-      underLabel: '-5 Córners Partido',
+      underLabel: '-5.5 Córners Partido',
       underProb: matchCornersUnder5,
       note: 'Total combinado de ambos'
     },
@@ -122,7 +102,7 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
             <span>Agrupación Cuantitativa de Mercados: Lado OVERS (+) vs Lado UNDERS (-)</span>
           </h5>
           <p className="text-[11px] text-slate-400 font-sans mt-0.5">
-            Distribución separada por lados para comparar fácilmente líneas positivas y negativas de goles y córners.
+            Distribución separada por lados para comparar fácilmente líneas positivas y negativas de goles, córners y tarjetas. Estimaciones Poisson sobre datos registrados; N/D indica falta de muestra.
           </p>
         </div>
         <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 rounded text-[10px] font-bold">
@@ -157,7 +137,7 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
                   </span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                  <div style={{ width: `${line.overProb}%` }} className="h-full bg-emerald-400 rounded-full transition-all duration-500" />
+                  <div style={{ width: `${line.overProb ?? 0}%` }} className="h-full bg-emerald-400 rounded-full transition-all duration-500" />
                 </div>
                 <div className="flex justify-between items-center text-[8.5px] text-slate-400 mt-1">
                   <span>{line.market}</span>
@@ -192,7 +172,7 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
                   </span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                  <div style={{ width: `${line.underProb}%` }} className="h-full bg-amber-400 rounded-full transition-all duration-500" />
+                  <div style={{ width: `${line.underProb ?? 0}%` }} className="h-full bg-amber-400 rounded-full transition-all duration-500" />
                 </div>
                 <div className="flex justify-between items-center text-[8.5px] text-slate-400 mt-1">
                   <span>{line.market}</span>

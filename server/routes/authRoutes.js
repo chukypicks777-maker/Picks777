@@ -42,38 +42,25 @@ function publicSession(session) {
   };
 }
 
-async function verifyGoogleToken(credential) {
-  if (!credential || typeof credential !== 'string') return null;
+export async function verifyGoogleToken(credential) {
+  if (typeof credential !== 'string' || credential.length > 12000 || !credential) return null;
   try {
-    const res = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.email) {
-        const expectedClientId = CONFIG.GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
-        if (expectedClientId && data.aud && data.aud !== expectedClientId) {
-          return null;
-        }
-        return data;
-      }
+    const response = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(credential), { signal: AbortSignal.timeout(8000) });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.aud === CONFIG.GOOGLE_CLIENT_ID && ['accounts.google.com', 'https://accounts.google.com'].includes(data.iss) && Number(data.exp) * 1000 > Date.now() && [true, 'true'].includes(data.email_verified) && data.sub && data.email) return data;
     }
   } catch {}
-
-  // Support Firebase Google tokens & dev fallback
   try {
-    const parts = credential.split('.');
-    if (parts.length === 3) {
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
-      if (payload.email && (payload.iss === 'https://securetoken.google.com/ia-luz' || payload.aud === 'ia-luz' || !process.env.VERCEL)) {
-        return {
-          sub: payload.sub || payload.user_id,
-          email: payload.email,
-          name: payload.name || payload.email.split('@')[0],
-          picture: payload.picture || ''
-        };
-      }
-    }
-  } catch {}
-  return null;
+    const key = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8';
+    const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(key), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: credential }), signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) return null;
+    const data = await response.json(), user = data.users?.[0];
+    if (!user?.localId || !user.emailVerified || !user.email || user.disabled || !user.providerUserInfo?.some(p => p.providerId === 'google.com')) return null;
+    return { sub: user.localId, email: user.email, name: user.displayName, picture: user.photoUrl };
+  } catch { return null; }
 }
 
 router.get('/google-config', (req, res) => {
@@ -84,37 +71,7 @@ router.get('/google-config', (req, res) => {
 
 router.post('/google', async (req, res) => {
   try {
-    const { credential, demoUser, googleProfile: clientProfile } = req.body || {};
-    let googleProfile = null;
-
-    if (credential) {
-      googleProfile = await verifyGoogleToken(credential);
-    }
-    if (!googleProfile && clientProfile && clientProfile.email) {
-      googleProfile = {
-        sub: String(clientProfile.id || clientProfile.uid || clientProfile.sub || randomUUID()),
-        email: String(clientProfile.email),
-        name: String(clientProfile.name || clientProfile.displayName || clientProfile.email.split('@')[0]),
-        picture: String(clientProfile.picture || clientProfile.photoURL || '')
-      };
-    } else if (!googleProfile && demoUser && typeof demoUser === 'object' && demoUser.email) {
-      googleProfile = {
-        sub: String(demoUser.id || randomUUID()),
-        email: String(demoUser.email),
-        name: String(demoUser.name || demoUser.email.split('@')[0]),
-        picture: String(demoUser.picture || '')
-      };
-    }
-
-    if (googleProfile && clientProfile) {
-      if (clientProfile.name && (!googleProfile.name || googleProfile.name === googleProfile.email.split('@')[0])) {
-        googleProfile.name = String(clientProfile.name);
-      }
-      if (clientProfile.picture && !googleProfile.picture) {
-        googleProfile.picture = String(clientProfile.picture);
-      }
-    }
-
+    const googleProfile = await verifyGoogleToken(req.body?.credential);
     if (!googleProfile || !googleProfile.email) {
       return res.status(400).json({ success: false, message: 'Autenticación con Google inválida o no proporcionada.' });
     }

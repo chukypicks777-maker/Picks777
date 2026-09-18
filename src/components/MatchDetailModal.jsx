@@ -1,20 +1,18 @@
+import HalfGoalsSection from './HalfGoalsSection';
+import VerifiedPicks from './VerifiedPicks';
+import { scoreSimulation, displayNumber } from '../utils/probability';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   X, 
   RotateCw, 
-  Plus, 
   FileText, 
   Users, 
   BarChart2, 
   Cpu, 
   Target, 
-  Zap, 
   Activity, 
-  TrendingUp, 
   Shield,
-  Sparkles 
 } from 'lucide-react';
-import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
 import LiveTacticalPitch from './LiveTacticalPitch';
 import RadarScanner from './RadarScanner';
@@ -22,87 +20,10 @@ import NumberCounter from './NumberCounter';
 import TeamDetailedStatsCard from './TeamDetailedStatsCard';
 import DifferentialAnalysisSection from './DifferentialAnalysisSection';
 import OverUnderGroupedSection from './OverUnderGroupedSection';
-import { calculateTeamDetailedStats, calculateDifferential, getBestBankerPick, getCoherentPredictedScore } from '../utils/mathProbabilities';
+import { calculateTeamDetailedStats, calculateDifferential, getCoherentPredictedScore } from '../utils/mathProbabilities';
 import { getCachedAnalysis, setCachedAnalysis, computeMatchFingerprint, clearAllAnalysisCache } from '../utils/analysisCache';
 
-function escapeRegex(str) {
-  return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function calculateMatchSimulation(match, withJitter = false) {
-  if (!match) return { "2 - 1": 18.0, "1 - 1": 15.0, "2 - 0": 13.0, "Otros": 54.0 };
-  const canonicalScore = getCoherentPredictedScore(match);
-
-  let candidateScores = [];
-
-  if (match.model?.scoreDistribution && Array.isArray(match.model.scoreDistribution) && match.model.scoreDistribution.length > 0) {
-    const distList = match.model.scoreDistribution;
-    const topItem = distList.find(d => d.score === canonicalScore) || { score: canonicalScore, probability: 14 };
-    const restItems = distList.filter(d => d.score !== canonicalScore).sort((a, b) => (Number(b.probability) || 0) - (Number(a.probability) || 0));
-    const highestRest = Number(restItems[0]?.probability) || 12;
-    const topProb = Math.max(Number(topItem.probability) || 12, highestRest + 1.5);
-    candidateScores = [
-      { score: canonicalScore, probability: topProb },
-      ...restItems.slice(0, 8)
-    ];
-  } else {
-    const home = match.homeTeam || {};
-    const away = match.awayTeam || {};
-    const homeGP = Math.max(1, home.gamesPlayed || (home.homeRecord ? (home.homeRecord.w + home.homeRecord.d + home.homeRecord.l) : null) || 15);
-    const awayGP = Math.max(1, away.gamesPlayed || (away.awayRecord ? (away.awayRecord.w + away.awayRecord.d + away.awayRecord.l) : null) || 15);
-    const homeGoalsAvg = home.avgGoalsScored != null ? Number(home.avgGoalsScored) : ((home.goalsFor != null ? home.goalsFor : 24) / homeGP);
-    const awayGoalsAvg = away.avgGoalsScored != null ? Number(away.avgGoalsScored) : ((away.goalsFor != null ? away.goalsFor : 20) / awayGP);
-
-    const lambda = Math.max(0.4, Math.min(4.2, homeGoalsAvg));
-    const mu = Math.max(0.4, Math.min(3.8, awayGoalsAvg));
-
-    const poisson = (l, k) => {
-      let p = Math.exp(-l);
-      for (let i = 1; i <= k; i++) p *= l / i;
-      return p;
-    };
-
-    const dist = {};
-    for (let h = 0; h <= 6; h++) {
-      for (let a = 0; a <= 6; a++) {
-        dist[`${h} - ${a}`] = poisson(lambda, h) * poisson(mu, a);
-      }
-    }
-
-    const sorted = Object.entries(dist).sort(([, a], [, b]) => b - a);
-    const otherScores = sorted.filter(([score]) => score !== canonicalScore);
-    const maxOtherProb = (otherScores[0] ? otherScores[0][1] : 0.12) * 100;
-    const canonicalProb = Math.max((dist[canonicalScore] || 0.10) * 100, maxOtherProb + 1.5);
-
-    candidateScores = [
-      { score: canonicalScore, probability: canonicalProb },
-      ...otherScores.slice(0, 8).map(([score, p]) => ({ score, probability: p * 100 }))
-    ];
-  }
-
-  // Ensure strict monotonicity: each score probability must be strictly less than the previous
-  const result = {};
-  let currentMax = 999;
-  let sum = 0;
-
-  candidateScores.forEach((item, idx) => {
-    const jitter = withJitter ? (Math.random() - 0.5) * 0.2 : 0;
-    let prob = parseFloat((item.probability + jitter).toFixed(1));
-    if (idx === 0) {
-      prob = Math.max(14.0, prob);
-    } else {
-      if (prob >= currentMax) {
-        prob = parseFloat(Math.max(1.0, currentMax - 0.4).toFixed(1));
-      }
-    }
-    currentMax = prob;
-    result[item.score] = prob;
-    sum += prob;
-  });
-
-  result["Otros"] = parseFloat(Math.max(1.0, 100 - sum).toFixed(1));
-  return result;
-}
+const calculateMatchSimulation = scoreSimulation;
 
 let cachedActiveModel = null;
 
@@ -126,7 +47,7 @@ export default function MatchDetailModal({
   const [_loadingDetails, setLoadingDetails] = useState(!initialCached?.enrichedMatch);
   const [activeModelInfo, setActiveModelInfo] = useState(() => cachedActiveModel || { provider: '', selectedModel: '', isConfigured: false });
 
-  // Derive simulation data; reset custom jitter simulation if match changes
+  // Derive simulation data; reset distribution if match changes
   const [lastMatchId, setLastMatchId] = useState(match?.id);
   const [lastFingerprint, setLastFingerprint] = useState(initialFingerprint);
 
@@ -155,6 +76,7 @@ export default function MatchDetailModal({
   const m = enrichedMatch || match;
   const simulationData = customSim || calculateMatchSimulation(m, false);
 
+  const aiRequestId = useRef(0);
   const matchRef = useRef(match);
   matchRef.current = match;
   const activeModelInfoRef = useRef(activeModelInfo);
@@ -177,6 +99,8 @@ export default function MatchDetailModal({
       }
     }
 
+    const requestId = ++aiRequestId.current;
+    const fingerprint = computeMatchFingerprint(curMatch);
     setLoadingAi(true);
     try {
       const res = await fetch(`/api/matches/${curMatch.id}/ai-analysis`, {
@@ -189,6 +113,7 @@ export default function MatchDetailModal({
         })
       });
       const data = await res.json();
+      if (requestId !== aiRequestId.current || fingerprint !== computeMatchFingerprint(matchRef.current)) return;
       if (data.success) {
         let updatedReport = null;
         let updatedMatch = null;
@@ -212,7 +137,7 @@ export default function MatchDetailModal({
     } catch (err) {
       console.error('Error fetching AI analysis:', err);
     } finally {
-      setLoadingAi(false);
+      if (requestId === aiRequestId.current && fingerprint === computeMatchFingerprint(matchRef.current)) setLoadingAi(false);
     }
   }, []);
 
@@ -346,7 +271,7 @@ export default function MatchDetailModal({
     { id: 'ai_report', label: 'Pronóstico IA & Picks', icon: <FileText className="w-3.5 h-3.5 text-sky-400" /> },
     { id: 'h2h', label: `Cara a Cara (${h2hList.length} Partidos)`, icon: <Users className="w-3.5 h-3.5 text-amber-400" /> },
     { id: 'stats', label: 'Estadísticas & Análisis de Equipos', icon: <BarChart2 className="w-3.5 h-3.5 text-emerald-400" /> },
-    { id: 'simulator', label: 'Simulador Monte Carlo', icon: <Cpu className="w-3.5 h-3.5 text-indigo-400" /> },
+    { id: 'simulator', label: 'Distribución de marcadores', icon: <Cpu className="w-3.5 h-3.5 text-indigo-400" /> },
   ];
 
   return (
@@ -381,7 +306,7 @@ export default function MatchDetailModal({
             </button>
 
             <button
-              onClick={() => { sounds.playClick(); onClose(); }}
+              aria-label="Cerrar panel" onClick={() => { sounds.playClick(); onClose(); }}
               className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
             >
               <X className="w-5 h-5" />
@@ -401,10 +326,10 @@ export default function MatchDetailModal({
 
         {/* Matchup Header Banner */}
         <div className="px-6 py-4 bg-[#0e131e] border-b border-white/5">
-          <div className="flex items-center justify-between max-w-2xl mx-auto">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 max-w-2xl mx-auto">
             
             {/* Team 1 */}
-            <div className="flex items-center space-x-3 text-right flex-1 justify-end">
+            <div className="flex flex-col-reverse sm:flex-row items-center gap-2 text-center sm:text-right min-w-0 justify-end">
               <div>
                 <p className="font-bold text-base md:text-lg text-white font-sans">
                   {match.homeTeam?.name}
@@ -417,23 +342,23 @@ export default function MatchDetailModal({
             </div>
 
             {/* Center Status / Score */}
-            <div className="px-6 text-center">
+            <div className="px-1 sm:px-6 text-center">
               <div className="bg-[#141b29] border border-white/10 px-4 py-2 rounded-xl shadow-inner">
                 <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                  {match.status === 'LIVE' ? 'En Vivo' : match.status === 'FINISHED' ? 'Final' : 'Predicción IA'}
+                  {match.status === 'LIVE' ? 'En Vivo' : match.status === 'FINISHED' ? 'Final' : 'Marcador más probable'}
                 </span>
                 <span className="text-2xl font-black font-mono text-white tracking-wider">
                   {match.status === 'LIVE' 
-                    ? `${match.liveScore?.home ?? 0} - ${match.liveScore?.away ?? 0}`
+                    ? `${match.liveScore?.home ?? 'N/D'} - ${match.liveScore?.away ?? 'N/D'}`
                     : match.status === 'FINISHED'
-                    ? `${match.finalScore?.home ?? 0} - ${match.finalScore?.away ?? 0}`
+                    ? `${match.finalScore?.home ?? 'N/D'} - ${match.finalScore?.away ?? 'N/D'}`
                     : getCoherentPredictedScore(m, aiReport?.predictedScore || m.model?.predictedScore || match.aiPick?.predictedScore)}
                 </span>
               </div>
             </div>
 
             {/* Team 2 */}
-            <div className="flex items-center space-x-3 text-left flex-1 justify-start">
+            <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left min-w-0 justify-start">
               <img src={match.awayTeam?.logo} alt={match.awayTeam?.name} className="w-11 h-11 object-contain filter drop-shadow" />
               <div>
                 <p className="font-bold text-base md:text-lg text-white font-sans">
@@ -518,7 +443,7 @@ export default function MatchDetailModal({
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 font-mono">
-                    Conectando con el motor {activeModelInfo.selectedModel ? `[${activeModelInfo.selectedModel}]` : 'configurado'} • Analizando probabilidades, xG y táctica...
+                    Conectando con el motor {activeModelInfo.selectedModel ? `[${activeModelInfo.selectedModel}]` : 'configurado'} • Consultando registros y probabilidades...
                   </p>
                 </div>
               )}
@@ -541,459 +466,8 @@ export default function MatchDetailModal({
                 </div>
               )}
 
-              {/* Top Pick Cards Grid */}
-              {(() => {
-                const homeProbVal = Math.round(Number(m.probabilities?.homeWin || 50));
-                const awayProbVal = Math.round(Number(m.probabilities?.awayWin || 25));
-                const drawProbVal = Math.round(Number(m.probabilities?.draw || 25));
-                const isHomeFavoredVal = homeProbVal >= awayProbVal;
-
-                const defaultBanker = getBestBankerPick(m);
-                const homeName = m.homeTeam?.name || 'Local';
-                const awayName = m.awayTeam?.name || 'Visita';
-                const homeShort = m.homeTeam?.shortName || homeName;
-                const awayShort = m.awayTeam?.shortName || awayName;
-                const homeNameLower = homeName.toLowerCase();
-                const homeShortLower = homeShort.toLowerCase();
-                const awayNameLower = awayName.toLowerCase();
-                const awayShortLower = awayShort.toLowerCase();
-
-                // 1. Pick Banquero Principal (Máxima Seguridad >= 65% y Cuota Segura 1.15-1.55)
-                let bankerSelection = aiReport?.topPick?.selection || m.aiPick?.selection || defaultBanker?.selection;
-                let bankerProb = Math.round(Number(aiReport?.topPick?.probability || m.aiPick?.probability || defaultBanker?.probability || 70));
-                let bankerOdds = Number(Number(aiReport?.topPick?.odds || m.aiPick?.odds || defaultBanker?.odds || 1.35).toFixed(2));
-
-                const isBankerDC = /gana o empata|o empate|1x|x2|doble oportunidad/i.test(bankerSelection);
-
-                if (isBankerDC) {
-                  const normSel = bankerSelection.toLowerCase();
-                  const isAwayDC = /x2|\bvisita\b|\bvisitante\b|\baway\b/i.test(normSel) ||
-                    (awayNameLower && normSel.includes(awayNameLower)) ||
-                    (awayShortLower && new RegExp(`\\b${escapeRegex(awayShortLower)}\\b`, 'i').test(normSel));
-                  const isHomeDC = /1x|\blocal\b|\bhome\b/i.test(normSel) ||
-                    (homeNameLower && normSel.includes(homeNameLower)) ||
-                    (homeShortLower && new RegExp(`\\b${escapeRegex(homeShortLower)}\\b`, 'i').test(normSel));
-
-                  const isTargetAway = isAwayDC ? true : (isHomeDC ? false : (awayProbVal > homeProbVal));
-                  const targetLabel = isTargetAway ? (m.awayTeam?.name || awayShort) : (m.homeTeam?.name || homeShort);
-                  const tag = isTargetAway ? '(X2)' : '(1X)';
-                  bankerSelection = `${targetLabel} o Empate ${tag}`;
-
-                  const dcProbCalculated = isTargetAway
-                    ? Math.min(97, Math.max(50, Math.round(awayProbVal + drawProbVal)))
-                    : Math.min(97, Math.max(50, Math.round(homeProbVal + drawProbVal)));
-
-                  if (bankerProb < 60 || bankerProb === homeProbVal || bankerProb === awayProbVal) {
-                    bankerProb = dcProbCalculated;
-                  }
-
-                  const fairDcOdds = Number(Math.max(1.12, Math.min(1.60, (100 / bankerProb) * 0.96)).toFixed(2));
-                  const marketDcOdds = isTargetAway ? m.odds?.dcX2 : m.odds?.dc1X;
-                  if (bankerOdds > 1.65 || bankerOdds < 1.05 ||
-                      (!isTargetAway && m.odds?.homeWin && Math.abs(bankerOdds - m.odds.homeWin) < 0.05) ||
-                      (isTargetAway && m.odds?.awayWin && Math.abs(bankerOdds - m.odds.awayWin) < 0.05)) {
-                    bankerOdds = marketDcOdds && marketDcOdds <= 1.65 ? marketDcOdds : (defaultBanker?.odds && defaultBanker.selection.includes(tag) ? defaultBanker.odds : fairDcOdds);
-                  }
-                } else {
-                  if (bankerProb < 65) {
-                    bankerSelection = defaultBanker?.selection || `${homeName} o Empate (1X)`;
-                    bankerProb = defaultBanker?.probability || Math.min(97, Math.max(65, Math.round(homeProbVal + drawProbVal)));
-                    bankerOdds = defaultBanker?.odds || Number(Math.max(1.15, Math.min(1.50, (100 / bankerProb) * 0.96)).toFixed(2));
-                  } else if (bankerOdds > 1.65) {
-                    bankerOdds = Number(Math.max(1.12, Math.min(1.60, (100 / bankerProb) * 0.96)).toFixed(2));
-                  }
-                }
-
-                let rawBankerRationale = aiReport?.topPick?.rationale || m.aiPick?.summaryRationale;
-                const isBankerRationaleBad = !rawBankerRationale ||
-                  typeof rawBankerRationale !== 'string' ||
-                  rawBankerRationale.trim().length <= 15 ||
-                  rawBankerRationale.trim().toLowerCase() === (bankerSelection || '').trim().toLowerCase() ||
-                  rawBankerRationale.trim().toLowerCase().replace(/[()1x2]/gi, '').trim() === (bankerSelection || '').trim().toLowerCase().replace(/[()1x2]/gi, '').trim() ||
-                  rawBankerRationale.trim().toLowerCase() === `${homeNameLower} gana o empata` ||
-                  rawBankerRationale.trim().toLowerCase() === `${awayNameLower} gana o empata` ||
-                  (rawBankerRationale.trim().toLowerCase().includes('gana o empata') && rawBankerRationale.trim().length <= 30);
-
-                const bankerRationale = !isBankerRationaleBad
-                  ? rawBankerRationale
-                  : (defaultBanker?.rationale || (aiReport?.tacticalAnalysis ? (aiReport.tacticalAnalysis.split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ])/)[0] || aiReport.tacticalAnalysis) : null) || 'Alta probabilidad estadística respaldada por xG, goles anotados y solidez defensiva en temporada.');
-
-                // 3. Línea Segura / Doble Oportunidad (Complementaria a Card 1 para evitar duplicados)
-                const isBankerNowDC = /gana o empata|o empate|1x|x2|doble oportunidad/i.test(bankerSelection);
-                const over15ProbVal = Math.round(Number(m.probabilities?.over15 != null
-                  ? m.probabilities.over15
-                  : (m.probabilities?.over25 != null ? Math.min(96, Math.round(Number(m.probabilities.over25) + 26)) : 82)));
-                const under35ProbVal = Math.round(Number(m.probabilities?.under35 != null
-                  ? m.probabilities.under35
-                  : (m.probabilities?.over25 != null ? Math.min(94, Math.round(100 - (Number(m.probabilities.over25) - 24))) : 78)));
-
-                let safeTitle = '🛡️ Doble Oportunidad Segura';
-                let safeSubtitle = 'Apuesta de Cobertura y Bajo Riesgo';
-                let safeSelection = '';
-                let safeOdds = 1.35;
-                let safeProb = 75;
-                let safeRationale = '';
-
-                if (isBankerNowDC) {
-                  // Banker is already DC: provide complementary safe Goals line so cards are distinct
-                  safeTitle = '🛡️ Línea Asegurada (Goles)';
-                  safeSubtitle = 'Total de Goles de Máxima Cobertura';
-                  const aiSafeSel = aiReport?.safePick?.selection;
-                  const isAiSafeGoals = aiSafeSel && !/gana o empata|o empate|1x|x2|doble oportunidad/i.test(aiSafeSel);
-
-                  if (isAiSafeGoals) {
-                    safeSelection = aiReport.safePick.selection;
-                    safeProb = Math.round(Number(aiReport.safePick.probability || (safeSelection.includes('3.5') ? under35ProbVal : over15ProbVal)));
-                    safeOdds = Number(Number(aiReport.safePick.odds || (safeSelection.includes('3.5') ? (m.odds?.under35 || 1.30) : (m.odds?.over15 || 1.25))).toFixed(2));
-                    safeRationale = aiReport.safePick.rationale || `Línea segura de goles (${safeProb}% de probabilidad) calculada por Poisson para minimizar varianza.`;
-                  } else if (under35ProbVal >= over15ProbVal) {
-                    safeSelection = 'Menos de 3.5 Goles';
-                    safeProb = under35ProbVal;
-                    safeOdds = Number((m.odds?.under35 || Math.max(1.15, Math.min(1.48, (100 / under35ProbVal) * 0.96))).toFixed(2));
-                    safeRationale = `Bloque defensivo hermético (${under35ProbVal}% de probabilidad): Índice controlado de goles con alta fiabilidad estadística.`;
-                  } else {
-                    safeSelection = 'Más de 1.5 Goles';
-                    safeProb = over15ProbVal;
-                    safeOdds = Number((m.odds?.over15 || Math.max(1.15, Math.min(1.48, (100 / over15ProbVal) * 0.96))).toFixed(2));
-                    safeRationale = `Frecuencia goleadora constante (${over15ProbVal}% de probabilidad de 2+ goles) ideal para combinadas de bajo riesgo.`;
-                  }
-                } else {
-                  // Banker is NOT DC (e.g. straight win or goals), Card 3 provides Double Chance
-                  safeTitle = '🛡️ Doble Oportunidad Segura';
-                  safeSubtitle = 'Apuesta de Cobertura y Bajo Riesgo';
-                  const dcProbCalculated = Math.min(97, Math.max(50, Math.round((isHomeFavoredVal ? homeProbVal : awayProbVal) + drawProbVal)));
-                  const dcOddsCalculated = Number(Math.max(1.10, Math.min(1.60, (100 / dcProbCalculated) * 0.95)).toFixed(2));
-                  const dcSelectionCalculated = isHomeFavoredVal ? `${homeName} o Empate (1X)` : `${awayName} o Empate (X2)`;
-                  safeSelection = aiReport?.safePick?.selection || dcSelectionCalculated;
-                  safeOdds = Number(Number(aiReport?.safePick?.odds || dcOddsCalculated).toFixed(2));
-                  safeProb = Math.round(Number(aiReport?.safePick?.probability || dcProbCalculated));
-                  safeRationale = aiReport?.safePick?.rationale || `Cobertura de alta probabilidad (${safeProb}%) ante escenarios de paridad según distribución Poisson.`;
-                }
-
-                if (!safeRationale || safeRationale.length <= 15 || safeRationale.toLowerCase() === safeSelection.toLowerCase()) {
-                  safeRationale = isBankerNowDC
-                    ? `Cobertura de alta fiabilidad (${safeProb}%) calculada por Poisson para minimizar varianza.`
-                    : `Cobertura de alta probabilidad (${safeProb}%) ante escenarios de paridad según distribución Poisson.`;
-                }
-
-                // 2. Pick de Valor (Líneas cuantitativas de goles de valor positivo)
-                const over25ProbVal = Math.round(Number(m.probabilities?.over25 || 52));
-                const under25ProbVal = Math.round(Number(m.probabilities?.under25 != null ? m.probabilities.under25 : (100 - over25ProbVal)));
-
-                let defaultValueSelection = over25ProbVal >= 50 ? 'Más de 2.5 Goles' : 'Menos de 2.5 Goles';
-                let defaultValueOdds = Number((over25ProbVal >= 50 ? (m.odds?.over25 || 1.85) : (m.odds?.under25 || 1.80)).toFixed(2));
-                let defaultValueProb = over25ProbVal >= 50 ? over25ProbVal : under25ProbVal;
-                let defaultValueRationale = over25ProbVal >= 50
-                  ? `Volumen de ataque proyectado con ${over25ProbVal}% de probabilidad de registrar 3 o más goles.`
-                  : `Trámite táctico cerrado con ${under25ProbVal}% de probabilidad de 2 goles o menos.`;
-
-                let rawValueSelection = aiReport?.secondaryPick?.selection || aiReport?.valueBet?.selection;
-                if (rawValueSelection && /ambos anotan|btts/i.test(rawValueSelection)) {
-                  rawValueSelection = null;
-                }
-                let valueSelection = rawValueSelection || defaultValueSelection;
-                let valueOdds = Number(Number(aiReport?.secondaryPick?.odds || aiReport?.valueBet?.odds || defaultValueOdds).toFixed(2));
-                let valueProb = Math.round(Number(aiReport?.secondaryPick?.probability || aiReport?.valueBet?.probability || defaultValueProb));
-                let valueRationale = aiReport?.secondaryPick?.rationale || aiReport?.valueBet?.rationale || defaultValueRationale;
-                if (!valueRationale || /ambos anotan|btts/i.test(valueRationale)) {
-                  valueRationale = defaultValueRationale;
-                }
-
-                // Evitar colisión de valor con banquero o safePick
-                if (valueSelection === bankerSelection || valueSelection === safeSelection) {
-                  valueSelection = (bankerSelection !== 'Más de 2.5 Goles' && safeSelection !== 'Más de 2.5 Goles')
-                    ? 'Más de 2.5 Goles'
-                    : 'Menos de 2.5 Goles';
-                  valueOdds = valueSelection === 'Más de 2.5 Goles'
-                    ? Number((m.odds?.over25 || 1.85).toFixed(2))
-                    : Number((m.odds?.under25 || 1.80).toFixed(2));
-                  valueProb = valueSelection === 'Más de 2.5 Goles' ? over25ProbVal : under25ProbVal;
-                  valueRationale = `Selección de valor estadístico con ventaja matemática calculada sobre el modelo Poisson.`;
-                }
-
-                if (!valueRationale || valueRationale.length <= 15 || valueRationale.toLowerCase() === valueSelection.toLowerCase()) {
-                  valueRationale = defaultValueRationale;
-                }
-
-                return (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                    {/* 1. Main Banker Pick */}
-                    <div className="bg-[#111723] rounded-xl p-4 border border-emerald-500/50 flex flex-col justify-between shadow-[0_0_25px_rgba(16,185,129,0.15)] relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider flex items-center space-x-1">
-                            <Zap className="w-3 h-3 fill-emerald-400 text-emerald-400" />
-                            <span>💎 Pick Banquero Principal</span>
-                          </span>
-                          <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold border border-emerald-500/40">
-                            {bankerProb}% Conf.
-                          </span>
-                        </div>
-                        <h4 className="text-sm font-bold text-white mb-1 font-sans">
-                          {bankerSelection}
-                        </h4>
-                        <p className="text-[10px] font-mono text-emerald-400/90 mt-0.5">
-                          Máxima Seguridad Cuantitativa • Stake {aiReport?.topPick?.stake || '3/5 Unidades'}
-                        </p>
-                        {/* Justificación por IA */}
-                        <div className="mt-2 pt-2 border-t border-emerald-500/20 text-[10.5px] text-emerald-300/90 font-mono flex items-start space-x-1.5 leading-snug">
-                          <Sparkles className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
-                          <p>
-                            <strong className="text-white font-sans">Justificación IA: </strong>
-                            {bankerRationale}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-white/5 mt-3 flex items-center justify-between">
-                        <div>
-                          <span className="text-[10px] font-mono text-slate-400 block">Cuota:</span>
-                          <span className="text-base font-mono font-bold text-emerald-400">
-                            {formatOdds(bankerOdds, oddsFormat)}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            sounds.playAddParlay();
-                            onAddToParlay({
-                              matchId: match.id,
-                              matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
-                              league: match.leagueName,
-                              selection: bankerSelection,
-                              odds: bankerOdds,
-                              probability: bankerProb
-                            });
-                          }}
-                          className="px-2.5 py-1 bg-emerald-600 text-white font-semibold text-xs rounded-md hover:bg-emerald-500 transition flex items-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.4)]"
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>Al Parlay</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 2. Secondary Value Pick */}
-                    <div className="bg-[#111723] rounded-xl p-4 border border-amber-500/40 flex flex-col justify-between shadow-[0_0_20px_rgba(245,158,11,0.1)]">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider flex items-center space-x-1">
-                            <Activity className="w-3 h-3 text-amber-400" />
-                            <span>⚡ Pick de Valor</span>
-                          </span>
-                          <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/30">
-                            {valueProb}% Conf.
-                          </span>
-                        </div>
-                        <h4 className="text-sm font-bold text-white mb-1 font-sans">
-                          {valueSelection}
-                        </h4>
-                        <p className="text-[10px] font-mono text-amber-300/80 mt-0.5">
-                          Rentabilidad de Cuota Estadística
-                        </p>
-                        {valueRationale && (
-                          <div className="mt-2 pt-2 border-t border-amber-500/20 text-[10px] text-amber-300/90 font-mono line-clamp-2">
-                            {valueRationale}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="pt-3 border-t border-white/5 mt-3 flex items-center justify-between">
-                        <div>
-                          <span className="text-[10px] font-mono text-slate-400 block">Cuota:</span>
-                          <span className="text-base font-mono font-bold text-amber-400">
-                            {formatOdds(valueOdds, oddsFormat)}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            sounds.playAddParlay();
-                            onAddToParlay({
-                              matchId: match.id,
-                              matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
-                              league: match.leagueName,
-                              selection: valueSelection,
-                              odds: valueOdds,
-                              probability: valueProb
-                            });
-                          }}
-                          className="px-2.5 py-1 bg-amber-500 text-black font-semibold text-xs rounded-md hover:bg-amber-400 transition flex items-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.4)]"
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>Al Parlay</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 3. Safe Pick / Doble Oportunidad o Línea Asegurada */}
-                    <div className="bg-[#111723] rounded-xl p-4 border border-sky-500/40 flex flex-col justify-between shadow-[0_0_20px_rgba(56,189,248,0.1)]">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-mono text-sky-400 font-bold uppercase tracking-wider flex items-center space-x-1">
-                            <Shield className="w-3 h-3 text-sky-400" />
-                            <span>{safeTitle}</span>
-                          </span>
-                          <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 px-1.5 py-0.2 rounded font-bold border border-sky-500/30">
-                            {safeProb}% Conf.
-                          </span>
-                        </div>
-                        <h4 className="text-sm font-bold text-white mb-1 font-sans">
-                          {safeSelection}
-                        </h4>
-                        <p className="text-[10px] font-mono text-sky-300/80 mt-0.5">
-                          {safeSubtitle}
-                        </p>
-                        <div className="mt-2 pt-2 border-t border-sky-500/20 text-[10px] text-sky-300/90 font-mono line-clamp-2">
-                          {safeRationale}
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-white/5 mt-3 flex items-center justify-between">
-                        <div>
-                          <span className="text-[10px] font-mono text-slate-400 block">Cuota:</span>
-                          <span className="text-base font-mono font-bold text-sky-400">
-                            {formatOdds(safeOdds, oddsFormat)}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            sounds.playAddParlay();
-                            onAddToParlay({
-                              matchId: match.id,
-                              matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visita'}`,
-                              league: match.leagueName,
-                              selection: safeSelection,
-                              odds: safeOdds,
-                              probability: safeProb
-                            });
-                          }}
-                          className="px-2.5 py-1 bg-sky-400 text-black font-semibold text-xs rounded-md hover:bg-sky-300 transition flex items-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(56,189,248,0.4)]"
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>Al Parlay</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Comprehensive Over/Under Probabilities Matrix (Positivo y Negativo sin Córners) */}
-              <div className="bg-[#111723] rounded-xl p-5 border border-white/5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h5 className="font-bold text-xs uppercase tracking-wide text-slate-300 font-mono flex items-center space-x-2">
-                    <TrendingUp className="w-4 h-4 text-emerald-400" />
-                    <span>Matriz de Probabilidades Cuantitativas (Líneas Positivas y Negativas)</span>
-                  </h5>
-                  <span className="text-[10px] font-mono text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                    MODELO POISSON CALIBRADO
-                  </span>
-                </div>
-
-                {(() => {
-                  const over15Prob = Math.round(m.probabilities?.over15 || 82);
-                  const under15Prob = 100 - over15Prob;
-                  const over25Prob = Math.round(m.probabilities?.over25 || 56);
-                  const under25Prob = m.probabilities?.under25 != null ? Math.round(m.probabilities.under25) : (100 - over25Prob);
-                  const over35Prob = Math.round(m.probabilities?.over35 || 32);
-                  const under35Prob = 100 - over35Prob;
-                  const over45Prob = Math.round(m.probabilities?.over45 != null ? m.probabilities.over45 : Math.max(6, over35Prob * 0.45));
-                  const under45Prob = 100 - over45Prob;
-
-                  return (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs">
-                      {/* +1.5 Goles */}
-                      <div className="bg-[#141b29] p-2.5 rounded-lg border border-sky-500/20 text-center">
-                        <span className="text-slate-400 block text-[10px]">+1.5 Goles (Over)</span>
-                        <span className="text-base font-bold text-sky-300">
-                          <NumberCounter value={over15Prob} suffix="%" />
-                        </span>
-                        <div className="h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                          <div style={{ width: `${over15Prob}%` }} className="h-full bg-sky-400" />
-                        </div>
-                      </div>
-
-                      {/* -1.5 Goles (Negativo) */}
-                      <div className="bg-[#141b29] p-2.5 rounded-lg border border-amber-500/20 text-center">
-                        <span className="text-slate-400 block text-[10px]">-1.5 Goles (Under)</span>
-                        <span className="text-base font-bold text-amber-300">
-                          <NumberCounter value={under15Prob} suffix="%" />
-                        </span>
-                        <div className="h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                          <div style={{ width: `${under15Prob}%` }} className="h-full bg-amber-400" />
-                        </div>
-                      </div>
-
-                      {/* +2.5 Goles */}
-                      <div className="bg-[#141b29] p-2.5 rounded-lg border border-emerald-500/20 text-center">
-                        <span className="text-slate-400 block text-[10px]">+2.5 Goles (Over)</span>
-                        <span className="text-base font-bold text-emerald-400">
-                          <NumberCounter value={over25Prob} suffix="%" />
-                        </span>
-                        <div className="h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                          <div style={{ width: `${over25Prob}%` }} className="h-full bg-emerald-400" />
-                        </div>
-                      </div>
-
-                      {/* -2.5 Goles (Negativo) */}
-                      <div className="bg-[#141b29] p-2.5 rounded-lg border border-amber-500/20 text-center">
-                        <span className="text-slate-400 block text-[10px]">-2.5 Goles (Under)</span>
-                        <span className="text-base font-bold text-amber-400">
-                          <NumberCounter value={under25Prob} suffix="%" />
-                        </span>
-                        <div className="h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                          <div style={{ width: `${under25Prob}%` }} className="h-full bg-amber-400" />
-                        </div>
-                      </div>
-
-                      {/* +3.5 Goles */}
-                      <div className="bg-[#141b29] p-2.5 rounded-lg border border-purple-500/20 text-center">
-                        <span className="text-slate-400 block text-[10px]">+3.5 Goles (Over)</span>
-                        <span className="text-base font-bold text-purple-400">
-                          <NumberCounter value={over35Prob} suffix="%" />
-                        </span>
-                        <div className="h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                          <div style={{ width: `${over35Prob}%` }} className="h-full bg-purple-400" />
-                        </div>
-                      </div>
-
-                      {/* -3.5 Goles (Negativo) */}
-                      <div className="bg-[#141b29] p-2.5 rounded-lg border border-amber-500/20 text-center">
-                        <span className="text-slate-400 block text-[10px]">-3.5 Goles (Under)</span>
-                        <span className="text-base font-bold text-amber-300">
-                          <NumberCounter value={under35Prob} suffix="%" />
-                        </span>
-                        <div className="h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                          <div style={{ width: `${under35Prob}%` }} className="h-full bg-amber-400" />
-                        </div>
-                      </div>
-
-                      {/* +4.5 Goles */}
-                      <div className="bg-[#141b29] p-2.5 rounded-lg border border-teal-500/20 text-center">
-                        <span className="text-slate-400 block text-[10px]">+4.5 Goles (Over)</span>
-                        <span className="text-base font-bold text-teal-300">
-                          <NumberCounter value={over45Prob} suffix="%" />
-                        </span>
-                        <div className="h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                          <div style={{ width: `${over45Prob}%` }} className="h-full bg-teal-400" />
-                        </div>
-                      </div>
-
-                      {/* -4.5 Goles (Negativo) */}
-                      <div className="bg-[#141b29] p-2.5 rounded-lg border border-amber-500/20 text-center">
-                        <span className="text-slate-400 block text-[10px]">-4.5 Goles (Under)</span>
-                        <span className="text-base font-bold text-amber-300">
-                          <NumberCounter value={under45Prob} suffix="%" />
-                        </span>
-                        <div className="h-1 bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                          <div style={{ width: `${under45Prob}%` }} className="h-full bg-amber-400" />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-
+              <VerifiedPicks match={m} onAddToParlay={onAddToParlay} oddsFormat={oddsFormat} />
+              <OverUnderGroupedSection match={m} homeStats={homeDetailed} awayStats={awayDetailed} diff={diff} />
               {/* Narrative Analysis */}
               <div className="bg-[#111723] rounded-xl p-5 border border-white/5">
                 <h5 className="font-bold text-xs uppercase tracking-wide text-slate-300 mb-2 font-mono">
@@ -1232,7 +706,7 @@ export default function MatchDetailModal({
                     <span>Apartados Detallados por Equipo (Goles, Tarjetas & Córners)</span>
                   </h5>
                   <span className="text-[10px] font-mono text-slate-400">
-                    Métricas Individuales Oficiales
+                    Datos históricos y estimaciones
                   </span>
                 </div>
 
@@ -1242,9 +716,11 @@ export default function MatchDetailModal({
                 </div>
               </div>
 
+              <HalfGoalsSection match={m} />
+
               {/* 3. AGRUPACIÓN SIMÉTRICA: LADO OVERS (+) VS LADO UNDERS (-) */}
               <OverUnderGroupedSection
-                match={match}
+                match={m}
                 homeStats={homeDetailed}
                 awayStats={awayDetailed}
                 diff={diff}
@@ -1266,9 +742,9 @@ export default function MatchDetailModal({
                 {/* Metric 1: Goles por partido */}
                 <div>
                   <div className="flex justify-between text-slate-300 mb-1">
-                    <span>{homeDetailed.avgGF.toFixed(2)}</span>
+                    <span>{displayNumber(homeDetailed.avgGF, 2)}</span>
                     <span className="text-slate-400 text-[11px]">Promedio Goles a Favor / 90min</span>
-                    <span>{awayDetailed.avgGF.toFixed(2)}</span>
+                    <span>{displayNumber(awayDetailed.avgGF, 2)}</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
                     <div style={{ width: `${(homeDetailed.avgGF / (homeDetailed.avgGF + awayDetailed.avgGF || 1)) * 100}%` }} className="h-full bg-sky-500" />
@@ -1279,9 +755,9 @@ export default function MatchDetailModal({
                 {/* Metric 2: Goles Concedidos */}
                 <div>
                   <div className="flex justify-between text-slate-300 mb-1">
-                    <span>{homeDetailed.avgGC.toFixed(2)}</span>
+                    <span>{displayNumber(homeDetailed.avgGC, 2)}</span>
                     <span className="text-slate-400 text-[11px]">Promedio Goles Recibidos / 90min</span>
-                    <span>{awayDetailed.avgGC.toFixed(2)}</span>
+                    <span>{displayNumber(awayDetailed.avgGC, 2)}</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
                     <div style={{ width: `${(homeDetailed.avgGC / (homeDetailed.avgGC + awayDetailed.avgGC || 1)) * 100}%` }} className="h-full bg-sky-500" />
@@ -1292,9 +768,9 @@ export default function MatchDetailModal({
                 {/* Metric 3: Tiros de Esquina */}
                 <div>
                   <div className="flex justify-between text-slate-300 mb-1">
-                    <span>{Number(homeDetailed.avgCorners || 0).toFixed(1)} 🚩</span>
+                    <span>{displayNumber(homeDetailed.avgCorners)} 🚩</span>
                     <span className="text-slate-400 text-[11px]">Promedio de Córners a Favor</span>
-                    <span>{Number(awayDetailed.avgCorners || 0).toFixed(1)} 🚩</span>
+                    <span>{displayNumber(awayDetailed.avgCorners)} 🚩</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
                     <div style={{ width: `${(homeDetailed.avgCorners / (homeDetailed.avgCorners + awayDetailed.avgCorners || 1)) * 100}%` }} className="h-full bg-sky-500" />
@@ -1305,9 +781,9 @@ export default function MatchDetailModal({
                 {/* Metric 4: Faltas Cometidas */}
                 <div>
                   <div className="flex justify-between text-slate-300 mb-1">
-                    <span>{Number(homeDetailed.fouls || 0).toFixed(1)}</span>
+                    <span>{displayNumber(homeDetailed.fouls)}</span>
                     <span className="text-slate-400 text-[11px]">Faltas Cometidas / Partido</span>
-                    <span>{Number(awayDetailed.fouls || 0).toFixed(1)}</span>
+                    <span>{displayNumber(awayDetailed.fouls)}</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
                     <div style={{ width: `${(homeDetailed.fouls / (homeDetailed.fouls + awayDetailed.fouls || 1)) * 100}%` }} className="h-full bg-sky-500" />
@@ -1318,9 +794,9 @@ export default function MatchDetailModal({
                 {/* Metric 5: Valla Invicta (Clean Sheet) % */}
                 <div>
                   <div className="flex justify-between text-slate-300 mb-1">
-                    <span>{Math.round(Number(homeDetailed.cleanSheetRate || 0))}%</span>
+                    <span>{displayNumber(homeDetailed.cleanSheetRate, 0)}%</span>
                     <span className="text-slate-400 text-[11px]">Tasa Valla Invicta (Clean Sheet) Temporada</span>
-                    <span>{Math.round(Number(awayDetailed.cleanSheetRate || 0))}%</span>
+                    <span>{displayNumber(awayDetailed.cleanSheetRate, 0)}%</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
                     <div style={{ width: `${homeDetailed.cleanSheetRate}%` }} className="h-full bg-sky-500" />
@@ -1330,7 +806,7 @@ export default function MatchDetailModal({
               </div>
 
               {/* 5. TACTICAL PITCH COMPONENT */}
-              <LiveTacticalPitch match={match} />
+              <LiveTacticalPitch match={m} />
 
             </div>
           )}
@@ -1341,13 +817,13 @@ export default function MatchDetailModal({
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-sm text-white flex items-center space-x-2 font-sans">
-                    <span>Simulación Cuántica de Monte Carlo</span>
+                    <span>Distribución de marcadores</span>
                     <span className="text-[10px] font-mono text-indigo-400 bg-indigo-500/20 px-1.5 py-0.2 rounded font-bold">
-                      10,000 PARTIDOS
+                      POISSON
                     </span>
                   </h4>
                   <p className="text-slate-400 text-[11px] font-sans">
-                    Distribución de densidades de probabilidad calculada por Dixon-Coles
+                    Probabilidades del mismo modelo de goles del partido.
                   </p>
                 </div>
                 <button
@@ -1356,7 +832,7 @@ export default function MatchDetailModal({
                   className="px-3 py-1 bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 rounded-lg transition cursor-pointer flex items-center space-x-1"
                 >
                   <RotateCw className={`w-3 h-3 ${simulating ? 'animate-spin' : ''}`} />
-                  <span>{simulating ? 'Simulando...' : 'Re-ejecutar'}</span>
+                  <span>{simulating ? 'Calculando...' : 'Re-ejecutar'}</span>
                 </button>
               </div>
 
@@ -1370,7 +846,7 @@ export default function MatchDetailModal({
                       </div>
                       <div className="h-2 w-full bg-[#161c28] rounded-full overflow-hidden p-0.5 border border-white/5">
                         <div
-                          style={{ width: `${prob * 4}%` }}
+                          style={{ width: `${prob}%` }}
                           className={`h-full rounded-full transition-all duration-700 ${
                             idx === 0 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : idx < 3 ? 'bg-sky-500' : 'bg-slate-600'
                           }`}

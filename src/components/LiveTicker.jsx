@@ -40,8 +40,8 @@ export default function LiveTicker({ matches = [] }) {
       type: 'PARLAY',
       minute: 'AI VIP',
       match: 'Parlay Banquero Cuantitativo del Día',
-      pick: 'Filtrado por Poisson & xG (Cuota Verificada)',
-      corners: 'Seguridad Alta'
+      pick: 'Estimaciones con cuotas disponibles del proveedor',
+      corners: 'Probabilidades, sin garantía'
     });
 
     // 4. Recently finished matches

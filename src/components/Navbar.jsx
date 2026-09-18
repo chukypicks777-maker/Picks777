@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
-import { SOCIAL_LINKS } from '../constants/socials';
+import { useSocialLinks } from '../utils/socialSettings';
 
 export default function Navbar({ 
   auth, 
@@ -28,6 +28,7 @@ export default function Navbar({
   onManualSync,
   onOpenUpgrade
 }) {
+  const SOCIAL_LINKS = useSocialLinks();
   const [showSocialMenu, setShowSocialMenu] = useState(false);
 
   const userName = auth?.user?.name || auth?.user?.username || (auth?.isAdmin ? 'Owner' : 'Usuario VIP');
@@ -281,6 +282,11 @@ export default function Navbar({
           </div>
 
         </div>
+        <nav aria-label="Navegación móvil" className="flex md:hidden justify-center gap-2 pb-2 text-xs">
+          <button onClick={onOpenStats} className="px-3 py-2 rounded-lg bg-slate-800 text-sky-300">Estadísticas</button>
+          <button onClick={onOpenParlay} className="px-3 py-2 rounded-lg bg-slate-800 text-emerald-300">Parlay ({parlayCount})</button>
+          {auth?.isAdmin && <button onClick={onOpenAdmin} className="px-3 py-2 rounded-lg bg-amber-500/10 text-amber-300">Panel Owner</button>}
+        </nav>
       </div>
     </header>
   );

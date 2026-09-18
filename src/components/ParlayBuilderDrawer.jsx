@@ -52,14 +52,14 @@ export default function ParlayBuilderDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 w-full max-w-md animate-slide-up">
+    <div className="fixed bottom-4 right-4 z-40 w-[calc(100%_-_2rem)] max-w-md animate-slide-up">
       <div className="bg-[#0e131d]/95 backdrop-blur-xl border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
         
         {/* Drawer Header */}
         <div className="bg-[#121824] px-4 py-3 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <img 
-              src="/logo.jpg" 
+              src="/logo.jpeg"
               alt="777 Picks" 
               className="w-7 h-7 rounded-full object-cover border border-red-500/50 shrink-0"
             />
@@ -182,7 +182,7 @@ export default function ParlayBuilderDrawer({
                   <input
                     type="number"
                     value={stake}
-                    onChange={(e) => setStake(Math.max(1, parseFloat(e.target.value) || 0))}
+                    onChange={(e) => setStake(Math.min(1000000, Math.max(0, parseFloat(e.target.value) || 0)))}
                     className="w-24 px-2.5 py-1 bg-[#090d15] border border-sky-500/30 rounded-lg text-right font-bold text-white text-xs focus:outline-none focus:border-sky-400"
                   />
                 </div>

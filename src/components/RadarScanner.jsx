@@ -4,7 +4,7 @@ import { sounds } from '../utils/audioEffects';
 
 export default function RadarScanner({ matchTitle = '', onScanComplete }) {
   const [scanProgress, setScanProgress] = useState(0);
-  const [telemetry, setTelemetry] = useState('INICIALIZANDO MOTOR CUÁNTICO...');
+  const [telemetry, setTelemetry] = useState('ABRIENDO VISTA DE ANÁLISIS...');
   const onCompleteRef = useRef(onScanComplete);
   useEffect(() => {
     onCompleteRef.current = onScanComplete;
@@ -19,9 +19,9 @@ export default function RadarScanner({ matchTitle = '', onScanComplete }) {
           onCompleteRef.current?.();
           return 100;
         }
-        if (p === 25) setTelemetry('CALCULANDO xG & MOMENTUM...');
-        if (p === 50) setTelemetry('PROCESANDO DIXON-COLES (10,000 ITERACIONES)...');
-        if (p === 75) setTelemetry('VALIDANDO MERCADOS DE VALOR Y CORNERS...');
+        if (p === 25) setTelemetry('PREPARANDO LA VISTA...');
+        if (p === 50) setTelemetry('ANIMACIÓN DE LA INTERFAZ...');
+        if (p === 75) setTelemetry('ABRIENDO DETALLES...');
         return p + 5;
       });
     }, 45);
@@ -56,7 +56,7 @@ export default function RadarScanner({ matchTitle = '', onScanComplete }) {
       </div>
 
       <h4 className="text-white font-bold text-sm mb-1 tracking-wider uppercase font-sans">
-        Escaneo Táctico de IA en Tiempo Real
+        Vista de análisis · animación
       </h4>
       <p className="text-xs text-sky-400 font-bold mb-3 truncate max-w-sm mx-auto">
         {matchTitle}

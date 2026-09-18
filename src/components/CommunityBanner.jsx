@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { ExternalLink, X } from 'lucide-react';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
-import { SOCIAL_LINKS } from '../constants/socials';
+import { useSocialLinks } from '../utils/socialSettings';
 import { sounds } from '../utils/audioEffects';
 
 export default function CommunityBanner() {
+  const SOCIAL_LINKS = useSocialLinks();
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) return null;

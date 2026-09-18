@@ -3,7 +3,7 @@ import { KeyRound, ArrowRight, AlertCircle, CheckCircle2, Crown, ExternalLink, X
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
-import { SOCIAL_LINKS } from '../constants/socials';
+import { useSocialLinks } from '../utils/socialSettings';
 import { loginWithRealGoogle } from '../utils/firebase';
 
 function GoogleIcon({ className = "w-5 h-5" }) {
@@ -18,6 +18,7 @@ function GoogleIcon({ className = "w-5 h-5" }) {
 }
 
 export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
+  const SOCIAL_LINKS = useSocialLinks();
   const [pendingAuth, setPendingAuth] = useState(null);
   const isTrialExpired = Boolean(auth?.trialExpired || pendingAuth?.trialExpired);
   const isAlreadyLoggedIn = Boolean(auth?.valid || auth?.user);
@@ -408,7 +409,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
                       setCode(e.target.value.toUpperCase());
                       setError('');
                     }}
-                    placeholder="EJ: VIP-PREMIUM-777 O DEPORTEPICKS"
+                    placeholder="Ingresa tu código de acceso"
                     className="w-full pl-10 pr-4 py-2.5 bg-[#161b22] border border-white/10 rounded-xl text-sm font-mono font-bold text-emerald-400 placeholder:text-slate-500 tracking-wider focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition"
                   />
                 </div>
@@ -452,13 +453,6 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
               >
                 <Crown className="w-3 h-3" />
                 <span>Owner</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleUseDemoCode('VIP-PREMIUM-777')}
-                className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded cursor-pointer transition"
-              >
-                VIP-PREMIUM-777
               </button>
             </div>
 

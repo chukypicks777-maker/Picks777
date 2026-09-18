@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { redisConfigured, redisCommand } from './services/dataCache.js';
+import { SOCIAL_LINKS } from '../src/constants/socials.js';
+import { validateSocialLinks } from './socialSettings.js';
 const KEY = 'picks:v2:access';
 const clean = code => String(code || '').trim().toUpperCase();
 const initial = () => ({ codes: [], users: [], aiConfig: null });
@@ -203,19 +205,6 @@ export class StorageManager {
       }
 
       let item = db.codes.find(c => c.code === cleanCode);
-      if (!item && cleanCode === 'VIP-PREMIUM-777') {
-        item = {
-          code: 'VIP-PREMIUM-777',
-          durationDays: 30,
-          label: 'Membresía Especial VIP 777',
-          createdAt: new Date(now).toISOString(),
-          isClaimed: false,
-          claimedAt: null,
-          expiresAt: null,
-          devices: []
-        };
-        db.codes.unshift(item);
-      }
       if (!item) return { success: false, message: 'Código o clave VIP inválida.' };
       if (item.revoked || (item.expiresAt && Date.parse(item.expiresAt) <= now)) {
         return { success: false, expired: true, message: 'Este código ha vencido o ha sido revocado.' };
@@ -264,6 +253,19 @@ export class StorageManager {
       };
     }
     return null;
+  }
+  async getSocialSettings() {
+    const data = await this.load();
+    return data.socialSettings || { links: SOCIAL_LINKS, revision: 0, updatedAt: null };
+  }
+  async updateSocialSettings(links, revision) {
+    const validated = validateSocialLinks(links);
+    return this.transaction(db => {
+      const current = db.socialSettings?.revision || 0;
+      if (!Number.isInteger(revision) || revision !== current) throw new Error('Los enlaces cambiaron. Recarga antes de guardar.');
+      db.socialSettings = { links: validated, revision: current + 1, updatedAt: new Date().toISOString() };
+      return db.socialSettings;
+    });
   }
   async updateAiConfig(updates = {}) {
     return this.transaction(db => {

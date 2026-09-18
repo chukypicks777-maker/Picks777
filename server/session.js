@@ -22,18 +22,15 @@ export function readSession(req) {
     const a = Buffer.from(signature || ''), b = Buffer.from(sign(payload));
     if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
     const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString());
+    if (parsed.role === 'owner') return parsed.expires > Date.now() ? parsed : null;
     if (parsed.userId) {
-      const cookieAgeLimit = (parsed.issuedAt || parsed.expires || Date.now()) + 30 * 86400000;
+      const cookieAgeLimit = (parsed.issuedAt || 0) + 30 * 86400000;
       return cookieAgeLimit > Date.now() ? parsed : null;
     }
     return parsed.expires > Date.now() ? parsed : null;
   } catch { return null; }
 }
 export async function currentSession(req) {
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey && adminKey.trim() === (CONFIG.MASTER_ADMIN_CODE || 'DeportePicks').trim()) {
-    return { role: 'owner', code: 'MASTER', ownerVersion: ownerVersion() };
-  }
   const session = readSession(req);
   if (!session) return null;
   if (session.role === 'owner') return session.ownerVersion === ownerVersion() ? session : null;
@@ -107,11 +104,6 @@ export async function requireSession(req, res, next) {
   } catch { res.status(503).json({ success: false, message: 'No se puede validar la sesión; comprueba la configuración del almacenamiento.' }); }
 }
 export function requireAdmin(req, res, next) {
-  const adminKey = req.headers['x-admin-key'] || req.body?.adminKey;
-  const master = (CONFIG.MASTER_ADMIN_CODE || 'DeportePicks').trim().toUpperCase();
-  if (adminKey && String(adminKey).trim().toUpperCase() === master) {
-    return next();
-  }
   if (req.session?.role === 'owner') return next();
   return res.status(403).json({ success: false, message: 'Acceso exclusivo del administrador.' });
 }

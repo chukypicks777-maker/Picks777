@@ -1,10 +1,11 @@
 import React from 'react';
 import { ExternalLink, Flame, Sparkles } from 'lucide-react';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
-import { SOCIAL_LINKS } from '../constants/socials';
+import { useSocialLinks } from '../utils/socialSettings';
 import { sounds } from '../utils/audioEffects';
 
 export default function FooterCommunityShowcase() {
+  const SOCIAL_LINKS = useSocialLinks();
   const tipsters = [
     "Gallitovip", "Japo7ime", "Rodrigopicks", "Abuelo", 
     "Cristian rey", "Gran islam", "Hugowx"
@@ -22,16 +23,16 @@ export default function FooterCommunityShowcase() {
         <div className="flex items-center justify-center sm:justify-start space-x-2 mb-3">
           <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold">
             <Flame className="w-3.5 h-3.5 text-emerald-400" />
-            <span>CANAL #1 EN EFECTIVIDAD</span>
+            <span>COMUNIDAD DE PICKS</span>
           </span>
           <span className="text-[11px] font-mono text-slate-400">
-            Verificado • Mes Actual
+            Enlaces oficiales
           </span>
         </div>
 
         {/* Main Title Required by User */}
         <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white font-sans tracking-tight mb-6 text-center sm:text-left">
-          ¡Este fue el canal con mayor efectividad del mes! 89% de efectividad. 📊
+          Únete a la comunidad y consulta los picks compartidos.
         </h2>
 
         {/* Grid: Promo Image + Detailed Info */}
@@ -49,7 +50,7 @@ export default function FooterCommunityShowcase() {
             >
               <img 
                 src="/promo-tipsters.jpg" 
-                alt="Filtramos las mejores apuestas de los 50 mejores tipsters del mundo" 
+                alt="Comunidad de tipsters y picks"
                 className="w-full h-auto object-cover rounded-2xl transition duration-300 group-hover:scale-[1.02]"
               />
             </a>
@@ -86,7 +87,7 @@ export default function FooterCommunityShowcase() {
                   </span>
                 ))}
                 <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-mono font-bold border border-emerald-500/30">
-                  + 43 Tipsters Élite
+                  Más análisis de la comunidad
                 </span>
               </div>
             </div>

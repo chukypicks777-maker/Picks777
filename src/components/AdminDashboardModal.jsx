@@ -1,3 +1,4 @@
+import AdminGroups from './AdminGroups';
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   X, 
@@ -71,7 +72,7 @@ export default function AdminDashboardModal({ onClose }) {
   const fetchCodes = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/codes', {
-        headers: { 'x-admin-key': 'DeportePicks' }
+        headers: { }
       });
       const data = await res.json();
       if (data.success) {
@@ -85,15 +86,12 @@ export default function AdminDashboardModal({ onClose }) {
     }
   }, []);
 
-  const fetchModelsForProvider = useCallback(async (p = provider, key = newApiKey, url = baseUrl) => {
+  const fetchModelsForProvider = useCallback(async (p = 'openrouter', key = '', url = '') => {
     setLoadingModels(true);
     try {
-      const params = new URLSearchParams();
-      params.append('provider', p);
-      if (key && key.trim()) params.append('apiKey', key.trim());
-      if (url && url.trim()) params.append('baseUrl', url.trim());
-      const res = await fetch(`/api/settings/models?${params.toString()}`, {
-        headers: { 'x-admin-key': 'DeportePicks' }
+      const res = await fetch('/api/settings/models', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: p, apiKey: key.trim(), baseUrl: url.trim() })
       });
       const data = await res.json();
       if (data.success && Array.isArray(data.models)) {
@@ -104,12 +102,12 @@ export default function AdminDashboardModal({ onClose }) {
     } finally {
       setLoadingModels(false);
     }
-  }, [provider, newApiKey, baseUrl]);
+  }, []);
 
   const fetchSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/settings', {
-        headers: { 'x-admin-key': 'DeportePicks' }
+        headers: { }
       });
       const data = await res.json();
       if (data.success && data.settings) {
@@ -143,8 +141,7 @@ export default function AdminDashboardModal({ onClose }) {
       const res = await fetch('/api/admin/codes/batch', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': 'DeportePicks'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           count: parseInt(batchCount, 10),
@@ -174,8 +171,7 @@ export default function AdminDashboardModal({ onClose }) {
       const res = await fetch('/api/admin/codes/create', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-admin-key': 'DeportePicks'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           code: singleCode.trim(),
@@ -203,7 +199,7 @@ export default function AdminDashboardModal({ onClose }) {
       sounds.playClick();
       await fetch(`/api/admin/codes/${encodeURIComponent(codeString)}`, {
         method: 'DELETE',
-        headers: { 'x-admin-key': 'DeportePicks' }
+        headers: { }
       });
       fetchCodes();
     } catch {}
@@ -215,7 +211,7 @@ export default function AdminDashboardModal({ onClose }) {
       sounds.playClick();
       await fetch(`/api/admin/codes/${encodeURIComponent(codeString)}/revoke`, {
         method: 'POST',
-        headers: { 'x-admin-key': 'DeportePicks' }
+        headers: { }
       });
       fetchCodes();
     } catch {}
@@ -262,8 +258,7 @@ export default function AdminDashboardModal({ onClose }) {
       const res = await fetch('/api/settings/update', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'x-admin-key': 'DeportePicks'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           provider,
@@ -285,7 +280,7 @@ export default function AdminDashboardModal({ onClose }) {
       } else {
         alert(data.message || 'Error al guardar la configuración.');
       }
-    } catch (err) {
+    } catch {
       alert('Error de conexión al guardar configuración.');
     } finally {
       setIsSaving(false);
@@ -300,8 +295,7 @@ export default function AdminDashboardModal({ onClose }) {
       const res = await fetch('/api/settings/test', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'x-admin-key': 'DeportePicks'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           provider,
@@ -317,7 +311,7 @@ export default function AdminDashboardModal({ onClose }) {
       } else {
         sounds.playClick();
       }
-    } catch (err) {
+    } catch {
       setTestResult({ success: false, message: 'Error al enviar petición de prueba.' });
     } finally {
       setIsTesting(false);
@@ -330,7 +324,7 @@ export default function AdminDashboardModal({ onClose }) {
       sounds.playClick();
       await fetch('/api/settings/cache/clear', {
         method: 'POST',
-        headers: { 'x-admin-key': 'DeportePicks' }
+        headers: { }
       });
       setSavedSettingsMsg('Caché de IA eliminado.');
       setTimeout(() => setSavedSettingsMsg(''), 3000);
@@ -373,7 +367,7 @@ export default function AdminDashboardModal({ onClose }) {
           </div>
 
           <button
-            onClick={() => { sounds.playClick(); onClose(); }}
+            aria-label="Cerrar panel" onClick={() => { sounds.playClick(); onClose(); }}
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
           >
             <X className="w-5 h-5" />
@@ -401,7 +395,7 @@ export default function AdminDashboardModal({ onClose }) {
         </div>
 
         {/* Tab Selection */}
-        <div className="flex items-center space-x-1 px-6 pt-3 border-b border-white/10 bg-[#0a0d14]">
+        <div className="flex flex-wrap items-center gap-1 px-4 pt-3 border-b border-white/10 bg-[#0a0d14]">
           <button
             onClick={() => { sounds.playClick(); setActiveTab('generator'); }}
             className={`px-4 py-2.5 border-b-2 text-xs font-semibold transition ${
@@ -434,11 +428,13 @@ export default function AdminDashboardModal({ onClose }) {
           >
             Configuración IA
           </button>
+          <button onClick={() => setActiveTab('groups')} className="px-4 py-2.5 text-xs font-bold text-sky-300">Grupos y comunidad</button>
         </div>
 
         {/* Body Container */}
         <div className="p-6 max-h-[55vh] overflow-y-auto">
           
+          {activeTab === 'groups' && <AdminGroups />}
           {/* TAB 1: GENERATOR */}
           {activeTab === 'generator' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

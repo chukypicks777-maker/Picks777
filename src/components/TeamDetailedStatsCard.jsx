@@ -1,345 +1,38 @@
 import React from 'react';
-import { Flag, Flame } from 'lucide-react';
 import NumberCounter from './NumberCounter';
-
+import { displayNumber } from '../utils/probability';
 export default function TeamDetailedStatsCard({ stats, isHome }) {
   if (!stats) return null;
-
-  const borderClass = isHome ? 'border-sky-500/30' : 'border-indigo-500/30';
-  const glowClass = isHome ? 'shadow-[0_0_15px_rgba(56,189,248,0.1)]' : 'shadow-[0_0_15px_rgba(129,140,248,0.1)]';
-
-  return (
-    <div className={`bg-[#0f1522] rounded-xl p-4 border ${borderClass} ${glowClass} flex flex-col justify-between font-mono text-xs space-y-4`}>
-      {/* Header del Equipo */}
-      <div>
-        <div className="flex items-center justify-between border-b border-white/5 pb-2.5 mb-3">
-          <div className="flex items-center space-x-2.5">
-            {stats.logo ? (
-              <img src={stats.logo} alt={stats.name} className="w-8 h-8 object-contain filter drop-shadow" />
-            ) : (
-              <div className={`w-8 h-8 rounded-full ${isHome ? 'bg-sky-500/20 text-sky-300' : 'bg-indigo-500/20 text-indigo-300'} flex items-center justify-center font-bold text-xs`}>
-                {stats.shortName}
-              </div>
-            )}
-            <div>
-              <h4 className="font-bold text-white text-sm font-sans truncate max-w-[160px]">
-                {stats.name}
-              </h4>
-              <span className={`text-[10px] font-bold ${isHome ? 'text-sky-400' : 'text-indigo-400'}`}>
-                {isHome ? 'Local' : 'Visitante'} • #{stats.position} ({stats.points} pts)
-              </span>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <span className="text-[10px] text-slate-400 block">Racha Reciente</span>
-            <div className="flex space-x-1 justify-end mt-0.5">
-              {(stats.form || []).slice(0, 5).map((f, i) => (
-                <span
-                  key={i}
-                  className={`w-3.5 h-3.5 text-[8.5px] font-bold rounded flex items-center justify-center ${
-                    f === 'W'
-                      ? 'bg-emerald-600 text-white'
-                      : f === 'D'
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-rose-600 text-white'
-                  }`}
-                >
-                  {f}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Resumen Goleador y Eficiencia */}
-        <div className="grid grid-cols-3 gap-1.5 text-center text-[11px] mb-3">
-          <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
-            <span className="text-slate-400 block text-[9px]">Goles Favor</span>
-            <span className="font-bold text-emerald-400">{Number(stats.avgGF || 0).toFixed(2)} / p</span>
-            <span className="text-[8px] text-slate-500 block">({stats.goalsFor} tot)</span>
-          </div>
-          <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
-            <span className="text-slate-400 block text-[9px]">Goles Contra</span>
-            <span className="font-bold text-rose-400">{Number(stats.avgGC || 0).toFixed(2)} / p</span>
-            <span className="text-[8px] text-slate-500 block">({stats.goalsAgainst} tot)</span>
-          </div>
-          <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
-            <span className="text-slate-400 block text-[9px]">Diferencial</span>
-            <span className={`font-bold ${Math.round(stats.goalDiff || 0) >= 0 ? 'text-sky-400' : 'text-amber-400'}`}>
-              {Math.round(stats.goalDiff || 0) >= 0 ? `+${Math.round(stats.goalDiff || 0)}` : Math.round(stats.goalDiff || 0)}
-            </span>
-            <span className="text-[8px] text-slate-500 block">{stats.gamesPlayed} PJ</span>
-          </div>
-        </div>
-
-        {/* MÉTRICAS CATEGORIZADAS: GOLES, TARJETAS, CÓRNERS */}
-        <div className="bg-[#121926] p-3 rounded-xl border border-white/10 space-y-3.5">
-          
-          {/* SECCIÓN 1: GOLES */}
-          <div>
-            <div className="flex items-center justify-between border-b border-emerald-500/20 pb-1.5 mb-2">
-              <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-tight flex items-center space-x-1.5">
-                <Flame className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Goles</span>
-              </span>
-              <span className="text-[9.5px] text-slate-400 font-mono">
-                Prom: <strong className="text-emerald-300">{(Number(stats.avgGF || 0) + Number(stats.avgGC || 0)).toFixed(2)}</strong> / p
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-1.5 text-left">
-              {/* Row 1: +1.5 y +2.5 */}
-              {/* +1.5 */}
-              <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+1.5</span>
-                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over15Rate} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.over15Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +2.5 */}
-              <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+2.5</span>
-                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over25Rate} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.over25Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* Row 2: -1.5 (Abajo del +1.5) y -2.5 (Abajo del +2.5) */}
-              {/* -1.5 */}
-              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">-1.5</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.under15Rate != null ? stats.under15Rate : (100 - (stats.over15Rate || 80))} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.under15Rate != null ? stats.under15Rate : (100 - (stats.over15Rate || 80))}%` }} className="h-full bg-amber-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* -2.5 */}
-              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">-2.5</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.under25Rate != null ? stats.under25Rate : (100 - (stats.over25Rate || 60))} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.under25Rate != null ? stats.under25Rate : (100 - (stats.over25Rate || 60))}%` }} className="h-full bg-amber-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* Row 3: +0.5 y +3.5 */}
-              {/* +0.5 */}
-              <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+0.5</span>
-                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over05Rate} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.over05Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +3.5 */}
-              <div className="bg-[#101c2b] p-2 rounded-lg border border-emerald-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+3.5</span>
-                  <span className="font-bold text-emerald-400"><NumberCounter value={stats.over35Rate} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.over35Rate}%` }} className="h-full bg-emerald-400 rounded-full" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* SECCIÓN 2: TARJETAS */}
-          <div>
-            <div className="flex items-center justify-between border-b border-amber-500/20 pb-1.5 mb-2">
-              <span className="text-[11px] font-bold text-amber-400 uppercase tracking-tight flex items-center space-x-1.5">
-                <span className="text-amber-400 text-xs">🟨</span>
-                <span>Tarjetas</span>
-              </span>
-              <span className="text-[9.5px] text-slate-400 font-mono">
-                Prom: <strong className="text-amber-300">{Number(stats.cards || 0).toFixed(1)}</strong> / p
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-1.5 text-left">
-              {/* -0.5 */}
-              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">-0.5</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsUnder05} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cardsUnder05}%` }} className="h-full bg-amber-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +0.5 */}
-              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+0.5</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsOver05} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cardsOver05}%` }} className="h-full bg-amber-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +1.5 */}
-              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+1.5</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsOver15} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cardsOver15}%` }} className="h-full bg-amber-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +2.5 */}
-              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+2.5</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsOver25} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cardsOver25}%` }} className="h-full bg-amber-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +3.5 */}
-              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+3.5</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsOver35 != null ? stats.cardsOver35 : Math.round(Math.max(1, (stats.cardsOver25 || 25) * 0.55))} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cardsOver35 != null ? stats.cardsOver35 : Math.round(Math.max(1, (stats.cardsOver25 || 25) * 0.55))}%` }} className="h-full bg-amber-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +4.5 */}
-              <div className="bg-[#1c160e] p-2 rounded-lg border border-amber-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+4.5</span>
-                  <span className="font-bold text-amber-400"><NumberCounter value={stats.cardsOver45 != null ? stats.cardsOver45 : Math.round(Math.max(1, (stats.cardsOver35 || 15) * 0.45))} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cardsOver45 != null ? stats.cardsOver45 : Math.round(Math.max(1, (stats.cardsOver35 || 15) * 0.45))}%` }} className="h-full bg-amber-400 rounded-full" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* SECCIÓN 3: CÓRNERS */}
-          <div>
-            <div className="flex items-center justify-between border-b border-sky-500/20 pb-1.5 mb-2">
-              <span className="text-[11px] font-bold text-sky-400 uppercase tracking-tight flex items-center space-x-1.5">
-                <Flag className="w-3.5 h-3.5 text-sky-400" />
-                <span>Córners</span>
-              </span>
-              <span className="text-[9.5px] text-slate-400 font-mono">
-                Fav: <strong className="text-white">{Number(stats.avgCorners || 0).toFixed(1)}</strong> | Conced: <strong className="text-slate-300">{Number(stats.avgCornersConceded || 0).toFixed(1)}</strong>
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-1.5 text-left">
-              {/* +1.5 */}
-              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+1.5</span>
-                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver15} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cornerOver15}%` }} className="h-full bg-sky-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +2.5 */}
-              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+2.5</span>
-                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver25} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cornerOver25}%` }} className="h-full bg-sky-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +3.5 */}
-              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+3.5</span>
-                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver35} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cornerOver35}%` }} className="h-full bg-sky-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +4.5 */}
-              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+4.5</span>
-                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver45} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cornerOver45}%` }} className="h-full bg-sky-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +5.5 */}
-              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+5.5</span>
-                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver55} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cornerOver55}%` }} className="h-full bg-sky-400 rounded-full" />
-                </div>
-              </div>
-
-              {/* +6.5 */}
-              <div className="bg-[#0f1b2b] p-2 rounded-lg border border-sky-500/25">
-                <div className="flex justify-between items-center text-[10.5px]">
-                  <span className="text-slate-200 font-bold">+6.5</span>
-                  <span className="font-bold text-sky-400"><NumberCounter value={stats.cornerOver65} suffix="%" /></span>
-                </div>
-                <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-1.5">
-                  <div style={{ width: `${stats.cornerOver65}%` }} className="h-full bg-sky-400 rounded-full" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Footer Metrics: Valla Invicta, Faltas, Disciplina */}
-      <div className="pt-2 border-t border-white/5 grid grid-cols-3 gap-1.5 text-center text-[9px]">
-        <div className="bg-[#121824] p-1 rounded">
-          <span className="text-slate-500 block">Valla 0</span>
-          <span className="font-bold text-sky-300">{stats.cleanSheetRate}%</span>
-        </div>
-        <div className="bg-[#121824] p-1 rounded">
-          <span className="text-slate-500 block">Faltas</span>
-          <span className="font-bold text-slate-300">{stats.fouls}</span>
-        </div>
-        <div className="bg-[#121824] p-1 rounded">
-          <span className="text-slate-500 block">Tarjetas</span>
-          <span className="font-bold text-amber-300">{stats.cards} 🟨</span>
-        </div>
-      </div>
+  const sections = [
+    { title: 'Goles del equipo · estimación para este partido', prefix: '', suffix: 'Rate', lines: ['05', '15', '25', '35'] },
+    { title: 'Tarjetas amarillas · estimación histórica', prefix: 'cards', suffix: '', lines: ['05', '15', '25', '35', '45'] },
+    { title: 'Córners · estimación histórica', prefix: 'corner', suffix: '', lines: ['15', '25', '35', '45', '55', '65'] }
+  ];
+  return <article className="rounded-xl p-4 bg-[#0f1522] border border-sky-500/30 space-y-4 text-xs">
+    <header className="flex items-center gap-3">
+      {stats.logo && <img src={stats.logo} alt="" className="w-9 h-9 object-contain" />}
+      <div><h4 className="font-bold text-white text-base">{stats.name}</h4><p className="text-slate-400">{isHome ? 'Local' : 'Visitante'} · Posición {stats.position ?? 'N/D'} · {stats.points ?? 'N/D'} pts</p></div>
+    </header>
+    <div className="grid grid-cols-3 gap-2 text-slate-300 text-center">
+      <p>Goles a favor<br/><strong>{displayNumber(stats.avgGF)} / p</strong></p>
+      <p>Goles en contra<br/><strong>{displayNumber(stats.avgGC)} / p</strong></p>
+      <p>Partidos<br/><strong>{stats.gamesPlayed ?? 'N/D'}</strong></p>
     </div>
-  );
+    {sections.map(section => <section key={section.title} className="bg-[#121926] border border-white/10 rounded-xl p-3 space-y-2">
+      <h5 className="text-sky-300 font-bold">{section.title}</h5>
+      {section.lines.map(key => <div key={key} className="grid grid-cols-2 gap-2">{['over', 'under'].map(side => {
+        const property = section.prefix ? `${section.prefix}${side[0].toUpperCase()}${side.slice(1)}${key}` : `${side}${key}${section.suffix}`;
+        const value = stats[property];
+        return <div key={side} className="rounded-lg bg-[#0f1724] border border-white/5 p-2">
+          <div className="flex justify-between text-slate-200 gap-2"><span>{side === 'over' ? '+' : '−'}{Number(key)/10}</span><strong className={side === 'over' ? 'text-emerald-400' : 'text-amber-400'}><NumberCounter value={value} suffix="%"/></strong></div>
+          <div className="h-1 bg-slate-800 mt-2 rounded"><div className="h-full bg-sky-400 rounded" style={{width: `${value ?? 0}%`}}/></div>
+        </div>;
+      })}</div>)}
+    </section>)}
+    <footer className="text-slate-400 space-y-2">
+      <p>Córners: {displayNumber(stats.avgCorners)} / p · Amarillas: {displayNumber(stats.cards)} / p · Faltas: {displayNumber(stats.fouls)} / p</p>
+      <p>{stats.statsSource || 'Estadísticas de detalle pendientes'} · Muestra córners: {stats.sampleSizes?.corners ?? 0}; tarjetas: {stats.sampleSizes?.cards ?? 0}.</p>
+      <p>N/D: sin datos suficientes. Las probabilidades son estimaciones Poisson; los promedios corresponden a registros del proveedor.</p>
+    </footer>
+  </article>;
 }

@@ -30,7 +30,7 @@ export function poissonModel(home, away, minGames = 5) {
     return p;
   };
   const hp = distribution(lambda), ap = distribution(mu);
-  const sums = { homeWin: 0, draw: 0, awayWin: 0, bttsYes: 0, over15: 0, over25: 0, over35: 0, over45: 0 };
+  const sums = { homeWin: 0, draw: 0, awayWin: 0, bttsYes: 0, over05: 0, over15: 0, over25: 0, over35: 0, over45: 0 };
   const scores = [];
   let mass = 0;
   hp.forEach((p, h) => ap.forEach((q, a) => {
@@ -38,12 +38,13 @@ export function poissonModel(home, away, minGames = 5) {
     mass += probability;
     sums[h > a ? 'homeWin' : h === a ? 'draw' : 'awayWin'] += probability;
     if (h > 0 && a > 0) sums.bttsYes += probability;
-    for (const [key, line] of [['over15', 1.5], ['over25', 2.5], ['over35', 3.5], ['over45', 4.5]]) {
+    for (const [key, line] of [['over05', 0.5], ['over15', 1.5], ['over25', 2.5], ['over35', 3.5], ['over45', 4.5]]) {
       if (h + a > line) sums[key] += probability;
     }
     scores.push({ score: `${h} - ${a}`, probability });
   }));
   const probabilities = Object.fromEntries(Object.entries(sums).map(([k, v]) => [k, v / mass * 100]));
+  probabilities.under05 = 100 - probabilities.over05;
   probabilities.bttsNo = 100 - probabilities.bttsYes;
   probabilities.under15 = 100 - probabilities.over15;
   probabilities.under25 = 100 - probabilities.over25;
@@ -52,35 +53,12 @@ export function poissonModel(home, away, minGames = 5) {
   probabilities.cornerOver95 = null;
   probabilities.confidence = null;
   scores.sort((a, b) => b.probability - a.probability);
-  let topScore = scores[0];
-  if (probabilities.homeWin >= probabilities.awayWin + 4) {
-    const favoredWinScore = scores.find(s => {
-      const [h, a] = s.score.split(' - ').map(Number);
-      return h > a;
-    });
-    if (favoredWinScore) {
-      topScore = favoredWinScore;
-    }
-  } else if (probabilities.awayWin >= probabilities.homeWin + 4) {
-    const favoredWinScore = scores.find(s => {
-      const [h, a] = s.score.split(' - ').map(Number);
-      return a > h;
-    });
-    if (favoredWinScore) {
-      topScore = favoredWinScore;
-    }
-  }
-
-  const restScores = scores.filter(s => s.score !== topScore.score).sort((a, b) => b.probability - a.probability);
-  const maxRestProb = restScores[0]?.probability || 0.10;
-  const calibratedTopProb = Math.max(topScore.probability, maxRestProb * 1.08);
-  const orderedScores = [{ score: topScore.score, probability: calibratedTopProb }, ...restScores];
-  const newMass = orderedScores.reduce((acc, s) => acc + s.probability, 0);
+  const topScore = scores[0];
 
   return {
     probabilities,
     predictedScore: topScore.score,
-    scoreDistribution: orderedScores.slice(0, 9).map(s => ({ ...s, probability: (s.probability / newMass) * 100 })),
+    scoreDistribution: scores.slice(0, 9).map(s => ({ ...s, probability: (s.probability / mass) * 100 })),
     method: 'Poisson independiente sobre goles de temporada',
     sampleSize: { home: homeGP, away: awayGP },
     expectedGoals: { home: lambda, away: mu },
@@ -99,12 +77,12 @@ export function buildPick(match) {
   return {
     market: banker.market || 'Doble Oportunidad',
     selection: banker.selection,
-    odds: Number(Number(banker.odds || 1.35).toFixed(2)),
-    probability: Math.round(banker.probability || 70),
+    odds: banker.odds,
+    probability: Math.round(banker.probability),
     type: '💎 Pick Banquero Principal',
-    confidence: `${Math.round(banker.probability || 70)}%`,
+    confidence: `${Math.round(banker.probability)}%`,
     settlement: 'PENDING',
     predictedScore: match.model?.predictedScore || null,
-    summaryRationale: banker.rationale || `Selección cuantitativa de máxima seguridad con ${Math.round(banker.probability || 70)}% de probabilidad estadística.`
+    summaryRationale: banker.rationale || `Selección cuantitativa de máxima seguridad con ${Math.round(banker.probability)}% de probabilidad estadística.`
   };
 }

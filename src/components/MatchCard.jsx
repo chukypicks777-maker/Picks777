@@ -1,3 +1,4 @@
+import { percent, roundDistribution } from '../utils/probability';
 import React from 'react';
 import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles, Lock, Crown } from 'lucide-react';
 import { formatOdds } from '../utils/oddsFormatter';
@@ -15,20 +16,17 @@ export default function MatchCard({
   isLocked = false,
   onUnlockVip = null
 }) {
-  const homeProb = Math.round(match.probabilities?.homeWin || 50);
-  const drawProb = Math.round(match.probabilities?.draw || 25);
-  const awayProb = Math.round(match.probabilities?.awayWin || 25);
-  const over25Prob = Math.round(match.probabilities?.over25 || 60);
-  const under25Prob = match.probabilities?.under25 != null ? Math.round(match.probabilities.under25) : (100 - over25Prob);
-  const over15Prob = Math.round(match.probabilities?.over15 != null ? match.probabilities.over15 : Math.min(96, over25Prob + 24));
-  const confidenceScore = Math.round(match.probabilities?.confidence || match.aiPick?.probability || Math.max(homeProb, awayProb, over25Prob, under25Prob, 65));
-  
+  const base = match.model?.probabilities || match.probabilities || {};
+  const p = { ...base, ...roundDistribution({ homeWin: base.homeWin, draw: base.draw, awayWin: base.awayWin }) };
+  const parlayCandidates = getTop3Opportunities(match).filter(p => Number.isFinite(p.odds) && p.odds > 1);
+  const homeProb = percent(p.homeWin), drawProb = percent(p.draw), awayProb = percent(p.awayWin);
+  const over25Prob = percent(p.over25), over15Prob = percent(p.over15);
   const bankerPick = getBestBankerPick(match);
   const isBankerMode = bankerRank != null;
-  const displayPick = isBankerMode ? bankerPick.selection : (match.aiPick?.selection || bankerPick.selection);
-  const displayOdds = isBankerMode ? bankerPick.odds : (match.aiPick?.odds || match.odds?.homeWin || bankerPick.odds);
-  const displayProb = Math.round(isBankerMode ? (bankerPick.safetyScore || bankerPick.probability || 70) : confidenceScore);
-
+  const displayPick = bankerPick?.selection || 'Sin datos suficientes';
+  const displayOdds = bankerPick?.odds;
+  const displayProb = bankerPick?.probability;
+  const confidenceScore = displayProb;
   const formatMatchTime = (iso) => {
     const d = new Date(iso);
     return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -167,7 +165,7 @@ export default function MatchCard({
                 <span>💎 TOP #{bankerRank} BANQUERO</span>
               </span>
               <span className="text-sky-300 font-bold">
-                {displayProb}% Seguridad
+                {displayProb}% Prob.
               </span>
             </div>
           )}
@@ -176,11 +174,11 @@ export default function MatchCard({
           <div className="grid grid-cols-2 gap-1.5 mb-3 text-center text-[10px] font-mono">
             <div className="bg-[#121824] p-1.5 rounded border border-white/5">
               <span className="text-slate-400 block text-[9px]">+1.5 Over</span>
-              <span className="font-bold text-sky-300">{over15Prob}%</span>
+              <span className="font-bold text-sky-300"><NumberCounter value={over15Prob} suffix="%" /></span>
             </div>
             <div className="bg-[#121824] p-1.5 rounded border border-white/5">
               <span className="text-slate-400 block text-[9px]">+2.5 Over</span>
-              <span className="font-bold text-emerald-400">{over25Prob}%</span>
+              <span className="font-bold text-emerald-400"><NumberCounter value={over25Prob} suffix="%" /></span>
             </div>
           </div>
 
@@ -215,10 +213,10 @@ export default function MatchCard({
             <div className="mt-2 pt-2 border-t border-white/10 flex items-start space-x-1.5 text-[10px] text-emerald-300/90 font-mono leading-snug">
               <Sparkles className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
               <p className="line-clamp-2">
-                <strong className="text-emerald-400 font-sans">Justificación IA: </strong>
+                <strong className="text-emerald-400 font-sans">Base del cálculo: </strong>
                 {isBankerMode
-                  ? (bankerPick?.rationale || match.aiPick?.summaryRationale || 'Alta probabilidad estadística respaldada por xG, goles anotados y rendimiento en temporada.')
-                  : (match.aiPick?.summaryRationale || bankerPick?.rationale || 'Alta probabilidad estadística respaldada por xG, goles anotados y rendimiento en temporada.')}
+                  ? (bankerPick?.rationale || match.aiPick?.summaryRationale || 'Sin datos suficientes para justificar una selección.')
+                  : (match.aiPick?.summaryRationale || bankerPick?.rationale || 'Sin datos suficientes para justificar una selección.')}
               </p>
             </div>
           </div>
@@ -240,17 +238,17 @@ export default function MatchCard({
               <span>Finalizado</span>
             </button>
           ) : (
-            <button
+            <button disabled={!parlayCandidates.length}
               onClick={(e) => {
                 e.stopPropagation();
                 sounds.playAddParlay();
-                const topOpportunities = getTop3Opportunities(match);
+                const topOpportunities = parlayCandidates;
                 onAddToParlay(topOpportunities);
               }}
               className="py-1.5 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
             >
               <Plus className="w-3 h-3" />
-              <span>Al Parlay</span>
+              <span>{parlayCandidates.length ? 'Al Parlay' : 'Sin cuota'}</span>
             </button>
           )}
 

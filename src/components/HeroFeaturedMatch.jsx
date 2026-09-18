@@ -1,3 +1,4 @@
+import { percent, roundDistribution } from '../utils/probability';
 import React, { useState } from 'react';
 import { Plus, Eye, Clock, Zap, Target } from 'lucide-react';
 import { formatOdds } from '../utils/oddsFormatter';
@@ -17,9 +18,11 @@ export default function HeroFeaturedMatch({
 
   if (!match) return null;
 
-  const homeProb = Math.round(match.probabilities?.homeWin || 54);
-  const drawProb = Math.round(match.probabilities?.draw || 26);
-  const awayProb = Math.round(match.probabilities?.awayWin || 20);
+  const outcomes = roundDistribution({ homeWin: match.probabilities?.homeWin, draw: match.probabilities?.draw, awayWin: match.probabilities?.awayWin });
+  const parlayCandidates = getTop3Opportunities(match).filter(p => Number.isFinite(p.odds) && p.odds > 1);
+  const homeProb = percent(outcomes.homeWin);
+  const drawProb = percent(outcomes.draw);
+  const awayProb = percent(outcomes.awayWin);
 
   return (
     <div className="mb-8">
@@ -222,7 +225,7 @@ export default function HeroFeaturedMatch({
                   <div className="flex items-center justify-between text-xs font-mono">
                     <span className="text-slate-400">Cuota Recomendada:</span>
                     <span className="text-sky-300 font-bold text-sm">
-                      {formatOdds(match.aiPick?.odds || 1.95, oddsFormat)}
+                      {formatOdds(match.aiPick?.odds, oddsFormat)}
                     </span>
                   </div>
 
@@ -240,17 +243,17 @@ export default function HeroFeaturedMatch({
                         <span>Finalizado</span>
                       </button>
                     ) : (
-                      <button
+                      <button disabled={!parlayCandidates.length}
                         onClick={(e) => {
                           e.stopPropagation();
                           sounds.playAddParlay();
-                          const topOpportunities = getTop3Opportunities(match);
+                          const topOpportunities = parlayCandidates;
                           onAddToParlay(topOpportunities);
                         }}
                         className="py-2 px-3 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Al Parlay</span>
+                        <span>{parlayCandidates.length ? 'Al Parlay' : 'Sin cuota'}</span>
                       </button>
                     )}
 

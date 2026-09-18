@@ -1,3 +1,4 @@
+import { enrichHistoricalStats } from './verifiedStats.js';
 import { cachedData, fetchJson } from './dataCache.js';
 import { poissonModel, buildPick } from './probabilityModel.js';
 
@@ -61,17 +62,6 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
     const candidates = standings.filter(row => row.teamId === String(c.team.id));
     // Grouped competitions can repeat a team: do not silently use the wrong phase.
     const row = candidates.length === 1 ? candidates[0] : {};
-    const hasStats = row.gamesPlayed != null;
-    const gp = hasStats ? Math.max(1, row.gamesPlayed) : null;
-    const gf = row.goalsFor ?? 0;
-    const ga = row.goalsAgainst ?? 0;
-    const avgGfVal = gp ? gf / gp : null;
-    const avgGaVal = gp ? ga / gp : null;
-    const rankVal = row.rank || 10;
-    const calculatedCorners = hasStats ? Number(Math.min(7.5, Math.max(3.8, 4.0 + (avgGfVal * 0.8) + ((20 - rankVal) * 0.05))).toFixed(1)) : null;
-    const calculatedConceded = hasStats ? Number(Math.min(7.5, Math.max(3.2, 3.6 + (avgGaVal * 0.7) + (rankVal * 0.04))).toFixed(1)) : null;
-    const calculatedCards = hasStats ? Number(Math.min(3.8, Math.max(1.4, 1.8 + (avgGaVal * 0.3) + ((rankVal % 5) * 0.1))).toFixed(1)) : null;
-    const calculatedFouls = hasStats ? Number(Math.min(16.5, Math.max(9.5, 10.2 + (avgGaVal * 0.8) + ((rankVal % 4) * 0.4))).toFixed(1)) : null;
     return {
       id: String(c.team.id), name: c.team.displayName || c.team.name,
       shortName: c.team.abbreviation || c.team.shortDisplayName || c.team.name,
@@ -79,8 +69,8 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
       position: row.rank ?? null, points: row.points ?? null,
       goalsFor: row.goalsFor ?? null, goalsAgainst: row.goalsAgainst ?? null,
       gamesPlayed: row.gamesPlayed ?? null, form: form(c.form),
-      avgCorners: calculatedCorners, avgCornersConceded: calculatedConceded,
-      avgFouls: calculatedFouls, avgYellowCards: calculatedCards,
+      avgCorners: null, avgCornersConceded: null,
+      avgFouls: null, avgYellowCards: null,
       bttsRate: null, over25Rate: null,
       keyPlayers: [...new Set((c.leaders || []).flatMap(g => (g.leaders || []).map(l => l.athlete?.displayName).filter(Boolean)))]
     };
@@ -107,11 +97,11 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
     source: 'ESPN', sourceUrl: `https://www.espn.com/soccer/match/_/gameId/${event.id}`,
     fetchedAt, providerUpdatedAt: null, h2h: [], recentMatches: [], realBoxscore: null
   };
-  match.model = status === 'SCHEDULED' && Date.parse(event.date) > Date.now() ? poissonModel(match.homeTeam, match.awayTeam, 1) : null;
+  match.model = status === 'SCHEDULED' && Date.parse(event.date) > Date.now() ? poissonModel(match.homeTeam, match.awayTeam) : null;
   if (match.model) {
     match.probabilities = match.model.probabilities;
     match.probabilities.predictedScore = match.model.predictedScore;
-  } else if (odds.homeWin && odds.draw && odds.awayWin) {
+  } else if (status === 'SCHEDULED' && Date.parse(event.date) > Date.now() && odds.homeWin && odds.draw && odds.awayWin) {
     const invH = 1 / odds.homeWin, invD = 1 / odds.draw, invA = 1 / odds.awayWin;
     const tot = invH + invD + invA;
     const over25P = odds.over25 && odds.under25 ? ((1 / odds.over25) / (1 / odds.over25 + 1 / odds.under25)) * 100 : null;
@@ -261,6 +251,7 @@ export function parseSummaryDetails(data, match) {
   return { realH2H, recentMatches, boxscore: { home: side(match.homeTeamId), away: side(match.awayTeamId) } };
 }
 export async function enrichMatchWithRealData(match) {
+  match = await enrichHistoricalStats(match);
   try {
     const details = await cachedData(`summary:${match.id}:${match.status}`, match.status === 'LIVE' ? 60 : 600, async () => {
       const url = `${BASE}/${match.espnCode}/summary?event=${match.espnEventId}`;

@@ -55,6 +55,7 @@ export default function App() {
 
   // Auto-polling interval reference
   const pollingRef = useRef(null);
+  const feedRequest = useRef(null);
 
   // Check session on mount
   useEffect(() => {
@@ -103,6 +104,9 @@ export default function App() {
   }, []);
 
   const fetchMatches = useCallback(async () => {
+    feedRequest.current?.abort();
+    const controller = new AbortController();
+    feedRequest.current = controller;
     try {
       setLoadingMatches(true);
       setMatchError('');
@@ -114,6 +118,7 @@ export default function App() {
       params.append('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
 
       const res = await fetch(`/api/matches?${params.toString()}`, {
+        signal: controller.signal,
         credentials: 'same-origin'
       });
 
@@ -132,6 +137,7 @@ export default function App() {
       }
 
       const data = await res.json();
+      if (controller.signal.aborted) return;
       if (data.success && Array.isArray(data.matches)) {
         setMatches(data.matches);
         setMatchError('');
@@ -139,10 +145,11 @@ export default function App() {
         setMatchError(data.message || 'No se pudieron procesar los partidos.');
       }
     } catch (err) {
+      if (controller.signal.aborted) return;
       console.error('Error fetching matches:', err);
       setMatchError('Error de conexión al consultar el feed de partidos en vivo.');
     } finally {
-      setLoadingMatches(false);
+      if (feedRequest.current === controller) setLoadingMatches(false);
     }
   }, [selectedLeague, timeframe, matchStatusFilter, searchQuery]);
 
@@ -189,6 +196,7 @@ export default function App() {
     }
     return () => {
       active = false;
+      feedRequest.current?.abort();
     };
   }, [fetchMatches, auth?.valid, auth?.trialExpired, auth?.user?.id]);
 
@@ -254,8 +262,8 @@ export default function App() {
     const updated = [...parlayLegs];
 
     for (const leg of items) {
-      if (!leg || !leg.selection) continue;
-      const exists = updated.some(l => l.matchId === leg.matchId && l.selection === leg.selection);
+      if (!leg?.matchId || !leg.selection || !Number.isFinite(leg.odds) || leg.odds <= 1 || leg.odds > 1000 || updated.length >= 20) continue;
+      const exists = updated.some(l => l.matchId === leg.matchId);
       if (!exists) {
         updated.push(leg);
         addedCount++;
@@ -264,7 +272,7 @@ export default function App() {
 
     if (addedCount === 0) {
       setShowParlayDrawer(true);
-      showToast(items.length > 1 ? 'Las mejores oportunidades ya están en tu Boleto Parlay.' : 'Esta selección ya está en tu Boleto Parlay.');
+      showToast('Se requiere una cuota publicada y solo una selección por partido.');
       return;
     }
 

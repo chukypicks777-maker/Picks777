@@ -1,0 +1,265 @@
+{
+  "checkedAt": "2026-09-17T22:08:49.162Z",
+  "source": "ESPN",
+  "coverage": [
+    {
+      "leagueId": "inglaterra",
+      "name": "Premier League",
+      "status": "available",
+      "count": 10,
+      "fetchedAt": "2026-09-17T22:08:27.103Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "espana",
+      "name": "LaLiga",
+      "status": "available",
+      "count": 15,
+      "fetchedAt": "2026-09-17T22:08:27.584Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "mexico",
+      "name": "Liga MX",
+      "status": "available",
+      "count": 9,
+      "fetchedAt": "2026-09-17T22:08:27.754Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "mls",
+      "name": "MLS",
+      "status": "available",
+      "count": 15,
+      "fetchedAt": "2026-09-17T22:08:27.474Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "italia",
+      "name": "Serie A",
+      "status": "available",
+      "count": 10,
+      "fetchedAt": "2026-09-17T22:08:28.260Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "francia",
+      "name": "Ligue 1",
+      "status": "available",
+      "count": 9,
+      "fetchedAt": "2026-09-17T22:08:27.727Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "champions",
+      "name": "UEFA Champions League",
+      "status": "available",
+      "count": 6,
+      "fetchedAt": "2026-09-17T22:08:27.823Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "leagues_cup",
+      "name": "Leagues Cup",
+      "status": "available",
+      "count": 2,
+      "fetchedAt": "2026-09-17T22:08:27.725Z",
+      "standingsAvailable": true
+    }
+  ],
+  "feedMatches": 76,
+  "scheduledMatches": 63,
+  "checked": [
+    {
+      "id": "espn-401882862",
+      "title": "Espanyol vs Elche",
+      "kickoff": "2026-09-18T19:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401882862",
+      "modelSample": {
+        "home": 6,
+        "away": 6
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 6,
+        "away": 6
+      },
+      "checks": [
+        {
+          "team": "Espanyol",
+          "metric": "avgCorners",
+          "count": 6,
+          "reported": 2.1666666666666665,
+          "recomputed": 2.1666666666666665,
+          "pass": true
+        },
+        {
+          "team": "Espanyol",
+          "metric": "avgYellowCards",
+          "count": 6,
+          "reported": 3,
+          "recomputed": 3,
+          "pass": true
+        },
+        {
+          "team": "Espanyol",
+          "metric": "avgFouls",
+          "count": 6,
+          "reported": 17.666666666666668,
+          "recomputed": 17.666666666666668,
+          "pass": true
+        },
+        {
+          "team": "Elche",
+          "metric": "avgCorners",
+          "count": 6,
+          "reported": 4.833333333333333,
+          "recomputed": 4.833333333333333,
+          "pass": true
+        },
+        {
+          "team": "Elche",
+          "metric": "avgYellowCards",
+          "count": 6,
+          "reported": 2.5,
+          "recomputed": 2.5,
+          "pass": true
+        },
+        {
+          "team": "Elche",
+          "metric": "avgFouls",
+          "count": 6,
+          "reported": 14.333333333333334,
+          "recomputed": 14.333333333333334,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-761815",
+      "title": "New York City FC vs Red Bull New York",
+      "kickoff": "2026-09-18T23:30Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/761815",
+      "modelSample": {
+        "home": 25,
+        "away": 25
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 10,
+        "away": 10
+      },
+      "checks": [
+        {
+          "team": "New York City FC",
+          "metric": "avgCorners",
+          "count": 10,
+          "reported": 3.9,
+          "recomputed": 3.9,
+          "pass": true
+        },
+        {
+          "team": "New York City FC",
+          "metric": "avgYellowCards",
+          "count": 10,
+          "reported": 1.9,
+          "recomputed": 1.9,
+          "pass": true
+        },
+        {
+          "team": "New York City FC",
+          "metric": "avgFouls",
+          "count": 10,
+          "reported": 10.9,
+          "recomputed": 10.9,
+          "pass": true
+        },
+        {
+          "team": "Red Bull New York",
+          "metric": "avgCorners",
+          "count": 10,
+          "reported": 5.1,
+          "recomputed": 5.1,
+          "pass": true
+        },
+        {
+          "team": "Red Bull New York",
+          "metric": "avgYellowCards",
+          "count": 10,
+          "reported": 2,
+          "recomputed": 2,
+          "pass": true
+        },
+        {
+          "team": "Red Bull New York",
+          "metric": "avgFouls",
+          "count": 10,
+          "reported": 11.4,
+          "recomputed": 11.4,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401874756",
+      "title": "Monza vs Sassuolo",
+      "kickoff": "2026-09-18T18:45Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401874756",
+      "modelSample": null,
+      "halvesAvailable": false,
+      "halfSample": null,
+      "checks": [
+        {
+          "team": "Monza",
+          "metric": "avgCorners",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Monza",
+          "metric": "avgYellowCards",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Monza",
+          "metric": "avgFouls",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Sassuolo",
+          "metric": "avgCorners",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Sassuolo",
+          "metric": "avgYellowCards",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Sassuolo",
+          "metric": "avgFouls",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        }
+      ]
+    }
+  ],
+  "failures": [],
+  "limitation": "Cross-check against fresh responses from the same provider, not independent confirmation or predictive-accuracy calibration."
+}

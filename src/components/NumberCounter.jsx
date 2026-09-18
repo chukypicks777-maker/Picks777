@@ -1,35 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React from 'react';
 
-export default function NumberCounter({ value = 0, duration = 600, decimals = 0, prefix = '', suffix = '' }) {
-  const [displayValue, setDisplayValue] = useState(0);
-  const currentValRef = useRef(0);
-
-  useEffect(() => {
-    let animId = null;
-    let startTimestamp = null;
-    const startVal = currentValRef.current;
-    const targetVal = parseFloat(value) || 0;
-
-    const step = (timestamp) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      const current = startVal + (targetVal - startVal) * progress;
-      currentValRef.current = current;
-      setDisplayValue(current);
-      if (progress < 1) {
-        animId = window.requestAnimationFrame(step);
-      }
-    };
-
-    animId = window.requestAnimationFrame(step);
-    return () => {
-      if (animId) window.cancelAnimationFrame(animId);
-    };
-  }, [value, duration]);
-
-  return (
-    <span className="tabular-numbers">
-      {prefix}{displayValue.toFixed(decimals)}{suffix}
-    </span>
-  );
+// Keep displayed probabilities stable: animated intermediate values imply false data.
+export default function NumberCounter({ value = null, decimals = 0, prefix = '', suffix = '' }) {
+  if (value === null || value === undefined || value === '' || !Number.isFinite(Number(value))) return <span title="Sin datos suficientes">N/D</span>;
+  const precision = Number.isFinite(decimals) ? Math.min(2, Math.max(0, Math.floor(decimals))) : 0;
+  return <span className="tabular-numbers">{prefix}{Number(value).toFixed(precision)}{suffix}</span>;
 }

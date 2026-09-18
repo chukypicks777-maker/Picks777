@@ -4,13 +4,14 @@ if (process.env.NODE_ENV !== 'test') dotenv.config({ quiet: true });
 export const isProduction = () => Boolean(process.env.VERCEL || process.env.NODE_ENV === 'production');
 export function secureConfiguration() {
   if (!isProduction()) return true;
-  const owner = process.env.MASTER_ADMIN_CODE || 'DeportePicks';
-  const session = process.env.SESSION_SECRET || 'deportepicks-vip-ultra-secure-key-32chars';
-  const validOwner = owner.trim().length >= 6 && owner.length <= 128;
-  const validSession = session.length >= 16;
+  const owner = process.env.MASTER_ADMIN_CODE || '';
+  const session = process.env.SESSION_SECRET || '';
+  const validOwner = owner !== 'DeportePicks' && owner.trim().length >= 16 && owner.length <= 128;
+  const validSession = session.length >= 32 && session !== 'deportepicks-vip-ultra-secure-key-32chars';
   const validRedis = !process.env.UPSTASH_REDIS_REST_URL ||
     (/^https:\/\//.test(process.env.UPSTASH_REDIS_REST_URL || '') && Boolean(process.env.UPSTASH_REDIS_REST_TOKEN));
-  return validOwner && validSession && validRedis;
+  const durableStorage = !process.env.VERCEL || Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  return validOwner && validSession && validRedis && durableStorage;
 }
 export function positiveInteger(name, fallback, maximum = 1000000) {
   const value = process.env[name] === undefined ? fallback : Number(process.env[name]);

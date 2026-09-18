@@ -12,6 +12,25 @@ process.env.VERCEL = '';
 process.env.MASTER_ADMIN_CODE = 'DeportePicksTestMaster';
 process.env.SESSION_SECRET = 'test-only-secret-session-google-picks-2026';
 
+// The identity provider is mocked; client-supplied profiles remain rejected by production code.
+const realFetch = globalThis.fetch;
+const identities = new Map();
+let identityId = 0;
+globalThis.fetch = async (url, init = {}) => {
+  if (String(url).startsWith('https://oauth2.googleapis.com/tokeninfo')) {
+    const token = new URL(url).searchParams.get('id_token'), user = identities.get(token);
+    return new Response(JSON.stringify(user ? { sub: user.id, email: user.email, name: user.name, picture: user.picture,
+      aud: 'test-google-client', iss: 'https://accounts.google.com', email_verified: 'true', exp: Math.floor(Date.now()/1000)+3600 } : {}), { status: user ? 200 : 401 });
+  }
+  if (String(url).startsWith('https://identitytoolkit.googleapis.com')) return new Response('{}', { status: 401 });
+  if (String(url).includes('espn.com')) throw new Error('Offline test');
+  if (String(url).includes('/api/auth/google') && init.body) {
+    const body = JSON.parse(init.body);
+    if (body.demoUser) { const token = 'verified-test-'+(++identityId); identities.set(token, body.demoUser); init={...init, body:JSON.stringify({credential:token})}; }
+  }
+  return realFetch(url,init);
+};
+process.env.GOOGLE_CLIENT_ID = 'test-google-client';
 const { storage } = await import('../server/storage.js');
 const { default: app } = await import('../server/index.js');
 

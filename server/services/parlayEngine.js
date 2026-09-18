@@ -14,7 +14,7 @@ export function calculateParlay(legs = [], stake = 100) {
   };
 }
 export function getAiDailyParlay(matches = []) {
-  const legs = matches.filter(m => m.status === 'SCHEDULED' && Date.parse(m.kickoff) > Date.now() && m.aiPick && Date.now() - Date.parse(m.oddsFetchedAt) < 120000)
+  const legs = matches.filter(m => m.status === 'SCHEDULED' && Date.parse(m.kickoff) > Date.now() && Number.isFinite(m.aiPick?.odds) && m.aiPick.odds > 1 && Date.now() - Date.parse(m.oddsFetchedAt) < 120000)
     .sort((a, b) => b.aiPick.probability - a.aiPick.probability)
     .slice(0, 3).map(m => ({ matchId: m.id, matchTitle: `${m.homeTeam.name} vs ${m.awayTeam.name}`, league: m.leagueName, ...m.aiPick, oddsFetchedAt: m.oddsFetchedAt }));
   return { bankerParlay: legs.length >= 2 ? { title: 'Combinada experimental', ...calculateParlay(legs) } : null, message: legs.length < 2 ? 'No hay suficientes selecciones con datos y cuotas disponibles.' : 'No constituye una apuesta segura.' };

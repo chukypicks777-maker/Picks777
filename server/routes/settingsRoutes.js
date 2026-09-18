@@ -3,6 +3,7 @@ import { requireAdmin } from '../session.js';
 import { storage, maskApiKey } from '../storage.js';
 import { fetchProviderModels, testAiConnection, getEffectiveAiConfig } from '../services/aiService.js';
 import { clearCachePattern } from '../services/dataCache.js';
+import { validateAiConfig } from '../security.js';
 
 const router = express.Router();
 
@@ -30,6 +31,16 @@ router.get('/active-model', async (req, res) => {
 
 router.use(requireAdmin);
 
+router.get('/groups', async (req, res) => {
+  res.json({ success: true, settings: await storage.getSocialSettings() });
+});
+router.post('/groups', async (req, res) => {
+  try {
+    const settings = await storage.updateSocialSettings(req.body?.links, req.body?.revision);
+    res.json({ success: true, settings });
+  } catch (error) { res.status(400).json({ success: false, message: error.message }); }
+});
+
 // GET /api/settings - Retorna la configuración activa
 router.get('/', async (req, res) => {
   try {
@@ -46,18 +57,18 @@ router.get('/', async (req, res) => {
         updatedAt: config.updatedAt
       }
     });
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Error al consultar la configuración de IA.' });
   }
 });
 
 // GET /api/settings/models - Consulta la lista de modelos reales del proveedor
-router.get('/models', async (req, res) => {
+router.post('/models', async (req, res) => {
   try {
     const current = await getEffectiveAiConfig();
-    const provider = req.query.provider || current.provider || 'openrouter';
-    const apiKey = req.query.apiKey || (provider === current.provider ? current.apiKey : '');
-    const baseUrl = req.query.baseUrl || current.baseUrl || '';
+    const provider = req.body?.provider || current.provider || 'openrouter';
+    const apiKey = req.body?.apiKey || (provider === current.provider ? current.apiKey : '');
+    const baseUrl = req.body?.baseUrl || current.baseUrl || '';
 
     const models = await fetchProviderModels(provider, apiKey, baseUrl);
     res.json({
@@ -66,7 +77,7 @@ router.get('/models', async (req, res) => {
       count: models.length,
       models
     });
-  } catch (err) {
+  } catch {
     res.status(500).json({ success: false, message: 'Error al consultar modelos del proveedor.' });
   }
 });
@@ -74,7 +85,7 @@ router.get('/models', async (req, res) => {
 // POST /api/settings/update - Guarda la configuración de IA de forma segura
 router.post('/update', async (req, res) => {
   try {
-    const { provider, apiKey, baseUrl, selectedModel, modelName } = req.body || {};
+    const { provider, apiKey, baseUrl, selectedModel, modelName } = validateAiConfig(req.body);
     const updated = await storage.updateAiConfig({
       provider,
       apiKey: apiKey !== undefined && apiKey !== null && apiKey !== '' ? apiKey.trim() : undefined,
@@ -99,8 +110,8 @@ router.post('/update', async (req, res) => {
         updatedAt: updated.updatedAt
       }
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message || 'Error al guardar la configuración.' });
+  } catch {
+    res.status(400).json({ success: false, message: 'Configuración inválida. Revisa proveedor, URL HTTPS y modelo.' });
   }
 });
 
@@ -115,8 +126,8 @@ router.post('/test', async (req, res) => {
 
     const result = await testAiConnection({ provider, apiKey, baseUrl, selectedModel });
     res.json(result);
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message || 'Error al probar conexión con la IA.' });
+  } catch {
+    res.status(400).json({ success: false, message: 'No se pudo conectar con el proveedor autorizado.' });
   }
 });
 

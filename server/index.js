@@ -1,3 +1,4 @@
+import { protectMutations } from './security.js';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,9 +11,12 @@ import matchRoutes from './routes/matchRoutes.js';
 import parlayRoutes from './routes/parlayRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import { getEffectiveAiConfig } from './services/aiService.js';
+import { storage } from './storage.js';
 const app = express();
 app.disable('x-powered-by');
+app.use('/api', protectMutations);
 app.use(express.json({ limit: '32kb' }));
+app.use((req, res, next) => { res.set('X-Content-Type-Options', 'nosniff'); res.set('Referrer-Policy', 'same-origin'); res.set('X-Frame-Options', 'DENY'); next(); });
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
 app.get('/api/health', readiness);
 app.use('/api', (req, res, next) => {
@@ -20,6 +24,9 @@ app.use('/api', (req, res, next) => {
   next();
 });
 app.use('/api/auth', authRoutes);
+app.get('/api/community', async (req, res) => {
+  res.json({ success: true, settings: await storage.getSocialSettings() });
+});
 app.get('/api/settings/active-model', async (req, res) => {
   try {
     const config = await getEffectiveAiConfig();
