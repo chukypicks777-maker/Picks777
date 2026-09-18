@@ -51,22 +51,30 @@ export const PROVIDER_PRESETS = {
     name: 'Agent Router',
     icon: '🤖',
     badge: 'Multi-LLM Gateway',
-    defaultBaseUrl: 'https://agentrouter.org/v1',
+    defaultBaseUrl: 'https://agentrouter.org/',
     defaultModel: 'deepseek-v4-flash',
     keyPlaceholder: 'sk-...',
-    keyHelp: 'Compatible con agentrouter.org (Modelo recomendado: deepseek-v4-flash)'
+    keyHelp: 'Compatible con agentrouter.org (Modelo con cuota: deepseek-v4-flash)'
   },
   custom: {
     id: 'custom',
     name: 'Personalizado / 3ros',
     icon: '🛠️',
     badge: 'Cualquier API OpenAI',
-    defaultBaseUrl: 'https://api.openai.com/v1',
-    defaultModel: 'gpt-4o-mini',
+    defaultBaseUrl: 'https://agentrouter.org/',
+    defaultModel: 'deepseek-v4-flash',
     keyPlaceholder: 'sk-...',
-    keyHelp: 'Compatible con AgentRouter (https://agentrouter.org/v1), GLM, Ollama, Together AI, Mistral...'
+    keyHelp: 'Compatible con AgentRouter (https://agentrouter.org/), GLM, Ollama, Together AI, Mistral...'
   }
 };
+
+export const AGENTROUTER_KNOWN_MODELS = [
+  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash (AgentRouter)', isReasoning: true },
+  { id: 'claude-opus-4-8', name: 'Claude Opus 4.8 (AgentRouter)', isReasoning: false },
+  { id: 'claude-opus-5', name: 'Claude Opus 5 (AgentRouter)', isReasoning: false },
+  { id: 'gpt-5.6-sol', name: 'GPT 5.6 Sol (AgentRouter)', isReasoning: true },
+  { id: 'gpt-6-astra', name: 'GPT 6 Astra (AgentRouter)', isReasoning: true }
+];
 
 /**
  * Modelos destacados de razonamiento rápido y profundo

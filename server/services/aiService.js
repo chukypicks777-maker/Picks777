@@ -391,8 +391,8 @@ export async function testAiConnection({ provider, apiKey, baseUrl, selectedMode
   }
   const cleanBase = String(baseUrl || '').toLowerCase();
   const isAgentRouter = provider === 'agentrouter' || cleanBase.includes('agentrouter.org') || cleanBase.includes('co.agentrouter.org');
-  let model = selectedModel;
-  if (!model || (isAgentRouter && (model === 'gpt-4o-mini' || model.trim() === ''))) {
+  let model = (selectedModel || '').trim();
+  if (!model || (isAgentRouter && (model === 'gpt-4o-mini' || model.startsWith('~') || model.startsWith('openai/') || model.includes('nemotron')))) {
     model = isAgentRouter ? 'deepseek-v4-flash' :
       provider === 'gemini' ? 'gemini-1.5-flash' :
       provider === 'deepseek' ? 'deepseek-chat' :

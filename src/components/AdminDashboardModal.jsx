@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
-import { PROVIDER_PRESETS } from '../constants/aiProviders';
+import { PROVIDER_PRESETS, AGENTROUTER_KNOWN_MODELS } from '../constants/aiProviders';
 import { getStoredAiConfig, saveStoredAiConfig, maskKey } from '../utils/aiSettings';
 
 
@@ -89,13 +89,24 @@ export default function AdminDashboardModal({ onClose }) {
 
   const fetchModelsForProvider = useCallback(async (p = 'openrouter', key = '', url = '') => {
     setLoadingModels(true);
+    const cleanUrl = (url || '').trim();
+    const isAgentRouter = p === 'agentrouter' || cleanUrl.includes('agentrouter.org') || cleanUrl.includes('co.agentrouter.org');
+    
+    if (isAgentRouter) {
+      setAvailableModelsList(AGENTROUTER_KNOWN_MODELS);
+      setNewModel(curr => {
+        if (!curr || curr === 'gpt-4o-mini' || curr.startsWith('~') || curr.includes(':free') || curr.includes('nemotron')) {
+          return 'deepseek-v4-flash';
+        }
+        return curr;
+      });
+    } else {
+      setAvailableModelsList([]);
+    }
+
     try {
       const stored = getStoredAiConfig();
       const keyToSend = key.trim() || (stored?.provider === p ? stored.apiKey : '');
-      let cleanUrl = (url || '').trim();
-      if ((p === 'agentrouter' || cleanUrl.includes('agentrouter.org')) && !cleanUrl.includes('/v1')) {
-        cleanUrl = cleanUrl ? cleanUrl.replace(/\/+$/, '') + '/v1' : 'https://agentrouter.org/v1';
-      }
       const res = await fetch('/api/settings/models', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: p, apiKey: keyToSend, baseUrl: cleanUrl })
@@ -105,7 +116,7 @@ export default function AdminDashboardModal({ onClose }) {
         setAvailableModelsList(data.models);
         setNewModel(curr => {
           const exists = data.models.some(m => m.id === curr);
-          if (!exists || curr === 'gpt-4o-mini') {
+          if (!exists || curr === 'gpt-4o-mini' || curr.startsWith('~') || (isAgentRouter && curr.includes(':free'))) {
             const preferred = data.models.find(m => m.id === 'deepseek-v4-flash') || data.models[0];
             return preferred.id;
           }
@@ -294,13 +305,10 @@ export default function AdminDashboardModal({ onClose }) {
     setIsSaving(true);
     setSavedSettingsMsg('');
     try {
-      let cleanBaseUrl = (baseUrl || '').trim();
-      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && !cleanBaseUrl.includes('/v1')) {
-        cleanBaseUrl = cleanBaseUrl ? cleanBaseUrl.replace(/\/+$/, '') + '/v1' : 'https://agentrouter.org/v1';
-        setBaseUrl(cleanBaseUrl);
-      }
+      const cleanBaseUrl = (baseUrl || '').trim();
+      const isAgentRouter = provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org');
       let targetModel = customModelInput.trim() || newModel;
-      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && (!targetModel || targetModel === 'gpt-4o-mini')) {
+      if (isAgentRouter && (!targetModel || targetModel === 'gpt-4o-mini' || targetModel.startsWith('~') || targetModel.includes(':free') || targetModel.includes('nemotron'))) {
         targetModel = 'deepseek-v4-flash';
         setNewModel('deepseek-v4-flash');
       }
@@ -339,12 +347,10 @@ export default function AdminDashboardModal({ onClose }) {
         alert(data.message || 'Error al guardar la configuración.');
       }
     } catch {
-      let cleanBaseUrl = (baseUrl || '').trim();
-      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && !cleanBaseUrl.includes('/v1')) {
-        cleanBaseUrl = cleanBaseUrl ? cleanBaseUrl.replace(/\/+$/, '') + '/v1' : 'https://agentrouter.org/v1';
-      }
+      const cleanBaseUrl = (baseUrl || '').trim();
+      const isAgentRouter = provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org');
       let targetModel = customModelInput.trim() || newModel;
-      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && (!targetModel || targetModel === 'gpt-4o-mini')) {
+      if (isAgentRouter && (!targetModel || targetModel === 'gpt-4o-mini' || targetModel.startsWith('~') || targetModel.includes(':free') || targetModel.includes('nemotron'))) {
         targetModel = 'deepseek-v4-flash';
       }
       saveStoredAiConfig({
@@ -366,13 +372,10 @@ export default function AdminDashboardModal({ onClose }) {
     setIsTesting(true);
     setTestResult(null);
     try {
-      let cleanBaseUrl = (baseUrl || '').trim();
-      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && !cleanBaseUrl.includes('/v1')) {
-        cleanBaseUrl = cleanBaseUrl ? cleanBaseUrl.replace(/\/+$/, '') + '/v1' : 'https://agentrouter.org/v1';
-        setBaseUrl(cleanBaseUrl);
-      }
+      const cleanBaseUrl = (baseUrl || '').trim();
+      const isAgentRouter = provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org');
       let targetModel = customModelInput.trim() || newModel;
-      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && (!targetModel || targetModel === 'gpt-4o-mini')) {
+      if (isAgentRouter && (!targetModel || targetModel === 'gpt-4o-mini' || targetModel.startsWith('~') || targetModel.includes(':free') || targetModel.includes('nemotron'))) {
         targetModel = 'deepseek-v4-flash';
         setNewModel('deepseek-v4-flash');
       }
@@ -916,23 +919,19 @@ export default function AdminDashboardModal({ onClose }) {
                     onChange={(e) => {
                       const val = e.target.value;
                       setBaseUrl(val);
-                      if (val.includes('agentrouter.org') && (newModel === 'gpt-4o-mini' || !newModel)) {
-                        setNewModel('deepseek-v4-flash');
-                      }
-                    }}
-                    onBlur={() => {
-                      if (baseUrl.includes('agentrouter.org') && !baseUrl.includes('/v1')) {
-                        setBaseUrl(baseUrl.replace(/\/+$/, '') + '/v1');
+                      if (val.includes('agentrouter.org')) {
+                        setAvailableModelsList(AGENTROUTER_KNOWN_MODELS);
+                        setNewModel(curr => {
+                          if (!curr || curr === 'gpt-4o-mini' || curr.startsWith('~') || curr.includes(':free') || curr.includes('nemotron')) {
+                            return 'deepseek-v4-flash';
+                          }
+                          return curr;
+                        });
                       }
                     }}
                     placeholder="https://api..."
                     className="w-full px-3 py-1.5 bg-[#090d15] border border-white/10 rounded-lg text-slate-300 font-mono text-xs focus:outline-none focus:border-indigo-400"
                   />
-                  {(provider === 'agentrouter' || baseUrl.includes('agentrouter.org')) && (
-                    <p className="text-[10px] text-sky-400 font-mono">
-                      ℹ️ Conectando a <strong>https://agentrouter.org/v1</strong> • Modelo activo y con cuota: <strong>deepseek-v4-flash</strong>
-                    </p>
-                  )}
                 </div>
 
                 {/* 4. Modelos Reales del Proveedor */}
