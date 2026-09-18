@@ -81,14 +81,35 @@ router.get('/goal', async (req, res) => {
   const goalMatches = list
     .filter(m => {
       const p = m.model?.probabilities || m.probabilities;
-      return m.status !== 'FINISHED' && p && (p.over25 != null || p.over15 != null);
+      return m.status !== 'FINISHED' && p && (p.over25 != null || p.over15 != null || p.bttsYes != null);
     })
     .sort((a, b) => {
       const pA = a.model?.probabilities || a.probabilities || {};
       const pB = b.model?.probabilities || b.probabilities || {};
-      return (((pB.over15 ?? 0) + (pB.over25 ?? 0)) - ((pA.over15 ?? 0) + (pA.over25 ?? 0)));
+      return (((pB.over15 ?? 0) + (pB.over25 ?? 0) + (pB.bttsYes ?? 0)) - ((pA.over15 ?? 0) + (pA.over25 ?? 0) + (pA.bttsYes ?? 0)));
     });
   res.json({ success: true, count: goalMatches.length, matches: goalMatches, coverage: feed.coverage });
+});
+router.get('/btts', async (req, res) => {
+  const feed = await getFootballFeed();
+  if (feed.coverage.every(c => c.status === 'unavailable')) {
+    return res.status(503).json({ ...feed, success: false, message: 'No se puede consultar el proveedor.' });
+  }
+  let list = feed.matches;
+  try {
+    if (Object.keys(req.query || {}).length > 0) list = filterMatches(list, req.query);
+  } catch {}
+  const bttsMatches = list
+    .filter(m => {
+      const p = m.model?.probabilities || m.probabilities;
+      return m.status !== 'FINISHED' && p && p.bttsYes != null;
+    })
+    .sort((a, b) => {
+      const pA = a.model?.probabilities || a.probabilities || {};
+      const pB = b.model?.probabilities || b.probabilities || {};
+      return (pB.bttsYes ?? 0) - (pA.bttsYes ?? 0);
+    });
+  res.json({ success: true, count: bttsMatches.length, matches: bttsMatches, coverage: feed.coverage });
 });
 router.get('/:id', async (req, res) => {
   const feed = await getFootballFeed();

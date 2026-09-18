@@ -7,7 +7,8 @@ import {
   Flame, 
   RefreshCw,
   User,
-  Share2
+  Share2,
+  Zap
 } from 'lucide-react';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
@@ -79,7 +80,7 @@ export default function Navbar({
           {/* Center Navigation Links */}
           <nav className="hidden md:flex items-center space-x-1 bg-[#161b22] p-1 rounded-lg border border-white/5">
             <button
-              onClick={() => { sounds.playClick(); if (onNavigate) { onNavigate('all'); } else { window.scrollTo({ top: 320, behavior: 'smooth' }); } }}
+              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
                 marketFilter === 'all'
                   ? 'bg-white/10 text-white font-semibold'
@@ -91,7 +92,7 @@ export default function Navbar({
             </button>
 
             <button
-              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); }}
+              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
                 marketFilter === 'safe' || marketFilter === 'boost'
                   ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
@@ -103,7 +104,7 @@ export default function Navbar({
             </button>
 
             <button
-              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('goal'); }}
+              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('goal'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
                 marketFilter === 'goal'
                   ? 'bg-sky-500/20 text-sky-300 font-bold border border-sky-500/40 shadow-[0_0_10px_rgba(14,165,233,0.25)]'
@@ -317,7 +318,7 @@ export default function Navbar({
         </div>
         <nav aria-label="Navegación móvil" className="flex md:hidden justify-center flex-wrap gap-1.5 pb-2 text-xs">
           <button
-            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); }}
+            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
             className={`px-2.5 py-1.5 rounded-lg font-medium transition ${
               marketFilter === 'all' ? 'bg-white/10 text-white font-bold' : 'bg-slate-800 text-slate-300'
             }`}
@@ -325,7 +326,7 @@ export default function Navbar({
             Partidos
           </button>
           <button
-            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); }}
+            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
             className={`px-2.5 py-1.5 rounded-lg font-medium transition flex items-center space-x-1 ${
               marketFilter === 'safe' || marketFilter === 'boost'
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold'
@@ -335,7 +336,7 @@ export default function Navbar({
             <span>⚡ Boost</span>
           </button>
           <button
-            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('goal'); }}
+            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('goal'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
             className={`px-2.5 py-1.5 rounded-lg font-medium transition flex items-center space-x-1 ${
               marketFilter === 'goal'
                 ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 font-bold'

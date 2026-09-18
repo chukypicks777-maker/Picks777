@@ -44,6 +44,7 @@ export default function App() {
       if (path.includes('boost')) return 'safe';
       if (path.includes('goal')) return 'goal';
       if (path.includes('btts')) return 'btts';
+      if (path.includes('over')) return 'over';
     }
     return 'all';
   });
@@ -58,6 +59,8 @@ export default function App() {
       window.history.pushState(null, '', '/goal');
     } else if (filterId === 'btts') {
       window.history.pushState(null, '', '/btts');
+    } else if (filterId === 'over') {
+      window.history.pushState(null, '', '/over');
     } else {
       window.history.pushState(null, '', '/');
     }
@@ -69,6 +72,7 @@ export default function App() {
       if (path.includes('boost')) setMarketFilter('safe');
       else if (path.includes('goal')) setMarketFilter('goal');
       else if (path.includes('btts')) setMarketFilter('btts');
+      else if (path.includes('over')) setMarketFilter('over');
       else setMarketFilter('all');
     };
     window.addEventListener('popstate', handlePopState);

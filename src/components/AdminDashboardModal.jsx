@@ -112,7 +112,9 @@ export default function AdminDashboardModal({ onClose }) {
       const stored = getStoredAiConfig();
       const keyToSend = key.trim() || (stored?.provider === effectiveProvider ? stored.apiKey : '');
       const res = await fetch('/api/settings/models', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: effectiveProvider, apiKey: keyToSend, baseUrl: cleanUrl })
       });
       const data = await res.json();
@@ -137,6 +139,7 @@ export default function AdminDashboardModal({ onClose }) {
   const fetchSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/settings', {
+        credentials: 'same-origin',
         headers: { }
       });
       const data = await res.json();
@@ -327,6 +330,7 @@ export default function AdminDashboardModal({ onClose }) {
 
       const res = await fetch('/api/settings/update', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 
           'Content-Type': 'application/json'
         },
@@ -409,6 +413,7 @@ export default function AdminDashboardModal({ onClose }) {
       const keyToSend = newApiKey.trim() || stored?.apiKey || undefined;
       let res = await fetch('/api/settings/test', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 
           'Content-Type': 'application/json'
         },
@@ -463,6 +468,7 @@ export default function AdminDashboardModal({ onClose }) {
       sounds.playClick();
       await fetch('/api/settings/cache/clear', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { }
       });
       setSavedSettingsMsg('Caché de IA eliminado.');

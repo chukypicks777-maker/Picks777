@@ -1,4 +1,4 @@
-import { percent, roundDistribution, validNumber } from '../utils/probability';
+import { percent, roundDistribution } from '../utils/probability';
 import React from 'react';
 import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles, Lock, Crown } from 'lucide-react';
 import { formatOdds } from '../utils/oddsFormatter';
@@ -20,48 +20,47 @@ export default function MatchCard({
   const p = { ...base, ...roundDistribution({ homeWin: base.homeWin, draw: base.draw, awayWin: base.awayWin }) };
   const parlayCandidates = getTop3Opportunities(match).filter(p => Number.isFinite(p.odds) && p.odds > 1);
   const homeProb = percent(p.homeWin), drawProb = percent(p.draw), awayProb = percent(p.awayWin);
-  const over25Prob = percent(p.over25);
-  const over15Prob = (() => {
-    if (percent(p.over15) !== null) return percent(p.over15);
-    if (percent(match.model?.probabilities?.over15) !== null) return percent(match.model.probabilities.over15);
-    if (percent(match.probabilities?.over15) !== null) return percent(match.probabilities.over15);
-    const home = match.homeTeam || {};
-    const away = match.awayTeam || {};
-    const homeGP = Number.isFinite(home.gamesPlayed) ? home.gamesPlayed : (home.homeRecord ? (home.homeRecord.w + home.homeRecord.d + home.homeRecord.l) : null);
-    const awayGP = Number.isFinite(away.gamesPlayed) ? away.gamesPlayed : (away.awayRecord ? (away.awayRecord.w + away.awayRecord.d + away.awayRecord.l) : null);
-    if (Number.isFinite(homeGP) && homeGP > 0 && Number.isFinite(awayGP) && awayGP > 0 &&
-        Number.isFinite(home.goalsFor) && home.goalsFor >= 0 && Number.isFinite(home.goalsAgainst) && home.goalsAgainst >= 0 &&
-        Number.isFinite(away.goalsFor) && away.goalsFor >= 0 && Number.isFinite(away.goalsAgainst) && away.goalsAgainst >= 0) {
-      const totalLambda = (home.goalsFor / homeGP + away.goalsAgainst / awayGP) / 2 + (away.goalsFor / awayGP + home.goalsAgainst / homeGP) / 2;
-      if (totalLambda > 0 && totalLambda <= 20) {
-        const p0 = Math.exp(-totalLambda);
-        const p1 = totalLambda * Math.exp(-totalLambda);
-        return Math.round((1 - p0 - p1) * 100);
-      }
-    }
+  const getGP = t => {
+    if (!t) return null;
+    if (Number.isFinite(t.gamesPlayed)) return t.gamesPlayed;
+    if (t.homeRecord && Number.isFinite(t.homeRecord.w + t.homeRecord.d + t.homeRecord.l)) return t.homeRecord.w + t.homeRecord.d + t.homeRecord.l;
+    if (t.awayRecord && Number.isFinite(t.awayRecord.w + t.awayRecord.d + t.awayRecord.l)) return t.awayRecord.w + t.awayRecord.d + t.awayRecord.l;
+    if (t.record && Number.isFinite(t.record.w + t.record.d + t.record.l)) return t.record.w + t.record.d + t.record.l;
     return null;
-  })();
-  const bttsProb = (() => {
-    if (percent(p.bttsYes) !== null) return percent(p.bttsYes);
-    if (percent(match.model?.probabilities?.bttsYes) !== null) return percent(match.model.probabilities.bttsYes);
-    if (percent(match.probabilities?.bttsYes) !== null) return percent(match.probabilities.bttsYes);
-    const home = match.homeTeam || {};
-    const away = match.awayTeam || {};
-    const homeGP = Number.isFinite(home.gamesPlayed) ? home.gamesPlayed : (home.homeRecord ? (home.homeRecord.w + home.homeRecord.d + home.homeRecord.l) : null);
-    const awayGP = Number.isFinite(away.gamesPlayed) ? away.gamesPlayed : (away.awayRecord ? (away.awayRecord.w + away.awayRecord.d + away.awayRecord.l) : null);
-    if (Number.isFinite(homeGP) && homeGP > 0 && Number.isFinite(awayGP) && awayGP > 0 &&
+  };
+
+  const home = match.homeTeam || {};
+  const away = match.awayTeam || {};
+  const homeGP = getGP(home);
+  const awayGP = getGP(away);
+
+  // Derivación matemática Poisson cuando existen estadísticas de temporada (mínimo 5 partidos)
+  const seasonPoisson = (() => {
+    if (Number.isFinite(homeGP) && homeGP >= 5 && Number.isFinite(awayGP) && awayGP >= 5 &&
         Number.isFinite(home.goalsFor) && home.goalsFor >= 0 && Number.isFinite(home.goalsAgainst) && home.goalsAgainst >= 0 &&
         Number.isFinite(away.goalsFor) && away.goalsFor >= 0 && Number.isFinite(away.goalsAgainst) && away.goalsAgainst >= 0) {
       const lambda = (home.goalsFor / homeGP + away.goalsAgainst / awayGP) / 2;
       const mu = (away.goalsFor / awayGP + home.goalsAgainst / homeGP) / 2;
-      if (lambda > 0 && mu > 0 && lambda <= 10 && mu <= 10) {
+      const totalLambda = lambda + mu;
+      if (lambda > 0 && mu > 0 && lambda <= 10 && mu <= 10 && totalLambda <= 20) {
+        const p0 = Math.exp(-totalLambda);
+        const p1 = totalLambda * p0;
+        const p2 = (totalLambda * totalLambda / 2) * p0;
         const pHome = 1 - Math.exp(-lambda);
         const pAway = 1 - Math.exp(-mu);
-        return Math.round(pHome * pAway * 100);
+        return {
+          over15: Math.round((1 - p0 - p1) * 100),
+          over25: Math.round((1 - p0 - p1 - p2) * 100),
+          bttsYes: Math.round(pHome * pAway * 100)
+        };
       }
     }
     return null;
   })();
+
+  const over15Prob = percent(p.over15) ?? percent(match.model?.probabilities?.over15) ?? percent(match.probabilities?.over15) ?? seasonPoisson?.over15 ?? null;
+  const over25Prob = percent(p.over25) ?? percent(match.model?.probabilities?.over25) ?? percent(match.probabilities?.over25) ?? seasonPoisson?.over25 ?? null;
+  const bttsProb = percent(p.bttsYes) ?? percent(match.model?.probabilities?.bttsYes) ?? percent(match.probabilities?.bttsYes) ?? seasonPoisson?.bttsYes ?? null;
   const bankerPick = getBestBankerPick(match);
   const isBankerMode = bankerRank != null;
   const displayPick = bankerPick?.selection || 'Sin datos suficientes';

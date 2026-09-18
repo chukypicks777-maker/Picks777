@@ -56,6 +56,11 @@ app.use('/api/goal', (req, res, next) => {
   req.url = '/goal' + query;
   matchRoutes(req, res, next);
 });
+app.use('/api/btts', (req, res, next) => {
+  const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  req.url = '/btts' + query;
+  matchRoutes(req, res, next);
+});
 app.use('/api/parlays', parlayRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api', (req, res) => res.status(404).json({ success: false, message: 'Endpoint no encontrado.' }));
