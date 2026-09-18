@@ -46,6 +46,16 @@ export const PROVIDER_PRESETS = {
     keyPlaceholder: 'gsk_...',
     keyHelp: 'Obtén tu clave en console.groq.com/keys'
   },
+  agentrouter: {
+    id: 'agentrouter',
+    name: 'Agent Router',
+    icon: '🤖',
+    badge: 'Multi-LLM Gateway',
+    defaultBaseUrl: 'https://agentrouter.org/v1',
+    defaultModel: 'deepseek-v4-flash',
+    keyPlaceholder: 'sk-...',
+    keyHelp: 'Compatible con agentrouter.org (DeepSeek V4, Claude, GPT)'
+  },
   custom: {
     id: 'custom',
     name: 'Personalizado / 3ros',
@@ -54,7 +64,7 @@ export const PROVIDER_PRESETS = {
     defaultBaseUrl: 'https://api.openai.com/v1',
     defaultModel: 'gpt-4o-mini',
     keyPlaceholder: 'sk-...',
-    keyHelp: 'Compatible con GLM, Ollama, Together AI, Mistral, Perplexity o servidores privados'
+    keyHelp: 'Compatible con AgentRouter, GLM, Ollama, Together AI, Mistral, Perplexity o servidores privados'
   }
 };
 
@@ -62,6 +72,7 @@ export const PROVIDER_PRESETS = {
  * Modelos destacados de razonamiento rápido y profundo
  */
 export const POPULAR_REASONING_MODELS = [
+  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash (AgentRouter)', isReasoning: true },
   { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1 (Razonamiento Puro)', isReasoning: true },
   { id: 'openai/o3-mini', name: 'OpenAI o3-mini (Razonamiento STEM/Cuantitativo)', isReasoning: true },
   { id: 'anthropic/claude-3.7-sonnet:thinking', name: 'Claude 3.7 Sonnet Thinking (Híbrido)', isReasoning: true },

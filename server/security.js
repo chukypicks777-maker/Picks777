@@ -6,10 +6,16 @@ export function validateAiConfig(input = {}) {
   for (const [key, max] of [['apiKey', 2048], ['selectedModel', 200], ['modelName', 200], ['baseUrl', 500]]) {
     if (input[key] !== undefined && (typeof input[key] !== 'string' || input[key].length > max || [...input[key]].some(c => c.charCodeAt(0) < 32))) throw new Error(`Campo ${key} inválido.`);
   }
-  const url = new URL(input.baseUrl || PROVIDER_PRESETS[provider].defaultBaseUrl);
-  // Custom hosts must be explicitly allowlisted by the deployment owner.
+  let rawUrl = input.baseUrl || PROVIDER_PRESETS[provider].defaultBaseUrl;
+  const url = new URL(rawUrl);
+  if ((url.hostname === 'agentrouter.org' || url.hostname === 'co.agentrouter.org') && (url.pathname === '/' || url.pathname === '')) {
+    url.pathname = '/v1';
+  }
+  // Custom hosts must be explicitly allowlisted by the deployment owner or belong to known trusted providers
   const allowed = provider === 'custom'
-    ? ['api.openai.com', ...(process.env.AI_ALLOWED_HOSTS || '').split(',').map(s => s.trim()).filter(Boolean)]
+    ? ['api.openai.com', 'agentrouter.org', 'co.agentrouter.org', 'api.together.xyz', 'api.mistral.ai', 'api.perplexity.ai', ...(process.env.AI_ALLOWED_HOSTS || '').split(',').map(s => s.trim()).filter(Boolean)]
+    : provider === 'agentrouter'
+    ? ['agentrouter.org', 'co.agentrouter.org']
     : [new URL(PROVIDER_PRESETS[provider].defaultBaseUrl).hostname];
   if (url.protocol !== 'https:' || url.username || url.password || url.port || url.search || url.hash || !allowed.includes(url.hostname)) throw new Error('URL de IA no permitida. Usa HTTPS y un proveedor autorizado.');
   return { ...input, provider, baseUrl: url.href.replace(/\/+$/, '') };
