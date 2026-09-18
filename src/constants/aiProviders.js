@@ -72,8 +72,8 @@ export const AGENTROUTER_KNOWN_MODELS = [
   { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash (AgentRouter) [Cuota Activa]', isReasoning: true, hasQuota: true },
   { id: 'claude-opus-5', name: 'Claude Opus 5 (AgentRouter)', isReasoning: false, hasQuota: false },
   { id: 'claude-opus-4-8', name: 'Claude Opus 4.8 (AgentRouter)', isReasoning: false, hasQuota: false },
-  { id: 'deepseek-chat', name: 'DeepSeek Chat (AgentRouter)', isReasoning: false, hasQuota: true },
-  { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner R1 (AgentRouter)', isReasoning: true, hasQuota: true }
+  { id: 'deepseek-chat', name: 'DeepSeek Chat (AgentRouter)', isReasoning: false, hasQuota: false },
+  { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner R1 (AgentRouter)', isReasoning: true, hasQuota: false }
 ];
 
 /**

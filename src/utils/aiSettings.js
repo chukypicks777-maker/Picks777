@@ -1,8 +1,17 @@
 const STORAGE_KEY = 'picks_ai_settings';
 
-export function maskKey(key) {
+export function sanitizeApiKey(key) {
   if (!key || typeof key !== 'string') return '';
-  const clean = key.trim();
+  return key.trim()
+    .replace(/^bearer\s+/i, '')
+    .replace(/^["']|["']$/g, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim();
+}
+
+export function maskKey(key) {
+  const clean = sanitizeApiKey(key);
+  if (!clean) return '';
   if (clean.length <= 8) return '••••••••';
   return `${clean.slice(0, 6)}••••••••${clean.slice(-4)}`;
 }

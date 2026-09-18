@@ -6,6 +6,14 @@ export function validateAiConfig(input = {}) {
   for (const [key, max] of [['apiKey', 2048], ['selectedModel', 200], ['modelName', 200], ['baseUrl', 500]]) {
     if (input[key] !== undefined && (typeof input[key] !== 'string' || input[key].length > max || [...input[key]].some(c => c.charCodeAt(0) < 32))) throw new Error(`Campo ${key} inválido.`);
   }
+  let cleanApiKey = input.apiKey;
+  if (cleanApiKey !== undefined && cleanApiKey !== null && typeof cleanApiKey === 'string') {
+    cleanApiKey = cleanApiKey.trim()
+      .replace(/^bearer\s+/i, '')
+      .replace(/^["']|["']$/g, '')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .trim();
+  }
   let rawUrl = (input.baseUrl && typeof input.baseUrl === 'string' && input.baseUrl.trim()) ? input.baseUrl.trim() : PROVIDER_PRESETS[provider].defaultBaseUrl;
   if (!/^https?:\/\//i.test(rawUrl)) {
     rawUrl = 'https://' + rawUrl;
@@ -67,7 +75,7 @@ export function validateAiConfig(input = {}) {
     if (!modelName || modelName === 'gpt-4o-mini' || modelName.startsWith('~') || modelName.includes(':free') || modelName.includes('nemotron')) modelName = 'deepseek-v4-flash';
   }
 
-  return { ...input, provider, baseUrl: url.href.replace(/\/+$/, ''), selectedModel, modelName };
+  return { ...input, apiKey: cleanApiKey, provider, baseUrl: url.href.replace(/\/+$/, ''), selectedModel, modelName };
 }
 
 export function protectMutations(req, res, next) {

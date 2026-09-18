@@ -433,7 +433,7 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
       } else if (cleanErr.includes('unauthorized client detected')) {
         cleanErr = `Cliente no autorizado por AgentRouter. La solicitud debe realizarse con el endpoint oficial https://co.agentrouter.org/v1.`;
       } else if (cleanErr.includes('Invalid API Key') || cleanErr.includes('无效的令牌') || cleanErr.includes('Missing API Key')) {
-        cleanErr = `Clave API de AgentRouter inválida o expirada. Verifica tu token en console.agentrouter.org.`;
+        cleanErr = `Clave API de AgentRouter inválida o expirada (HTTP 401). Entra a tu consola en https://agentrouter.org/console/token (menú de la izquierda: 'API 令牌'), genera o copia tu token 'sk-...' y pégalo aquí.`;
       }
     } catch {}
     throw new Error(`${normProvider} error ${response.status}: ${cleanErr}`);

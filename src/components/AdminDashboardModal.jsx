@@ -23,7 +23,7 @@ import {
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
 import { PROVIDER_PRESETS, AGENTROUTER_KNOWN_MODELS } from '../constants/aiProviders';
-import { getStoredAiConfig, saveStoredAiConfig, maskKey } from '../utils/aiSettings';
+import { getStoredAiConfig, saveStoredAiConfig, maskKey, sanitizeApiKey } from '../utils/aiSettings';
 
 
 export default function AdminDashboardModal({ onClose }) {
@@ -373,10 +373,11 @@ export default function AdminDashboardModal({ onClose }) {
         setNewModel('deepseek-v4-flash');
       }
 
+      const cleanKey = sanitizeApiKey(newApiKey);
       const res = await fetch('/api/settings/update', {
         method: 'POST',
         credentials: 'same-origin',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -384,7 +385,7 @@ export default function AdminDashboardModal({ onClose }) {
           selectedModel: targetModel,
           modelName: targetModel,
           baseUrl: cleanBaseUrl,
-          apiKey: newApiKey.trim() || undefined
+          apiKey: cleanKey || undefined
         })
       });
       const data = await res.json();
@@ -398,7 +399,7 @@ export default function AdminDashboardModal({ onClose }) {
           selectedModel: targetModel,
           modelName: targetModel,
           baseUrl: cleanBaseUrl,
-          apiKey: newApiKey.trim() || undefined,
+          apiKey: cleanKey || undefined,
           apiKeyMasked: data.settings?.apiKeyMasked,
           isConfigured: data.settings?.isConfigured
         });
@@ -462,7 +463,7 @@ export default function AdminDashboardModal({ onClose }) {
       }
 
       const stored = getStoredAiConfig();
-      const keyToSend = newApiKey.trim() || stored?.apiKey || undefined;
+      const keyToSend = sanitizeApiKey(newApiKey) || sanitizeApiKey(stored?.apiKey) || undefined;
       
       let data = null;
       try {
@@ -564,17 +565,21 @@ export default function AdminDashboardModal({ onClose }) {
               sample: content,
               message: `✅ Conexión exitosa con ${targetModel} (${latency}ms) [Bypass WAF Activo]`
             };
-          } else if (!data?.success && directJson?.error?.message) {
-            let directErrMsg = directJson.error.message;
-            if (directErrMsg.includes('Budget pool quota has been exhausted') || directErrMsg.includes('quota has been exhausted')) {
-              directErrMsg = `La cuota para '${targetModel}' está agotada en tu cuenta de AgentRouter. Selecciona 'deepseek-v4-flash' que tiene saldo activo.`;
-            } else if (directErrMsg.includes('无可用渠道') || directErrMsg.includes('no available channel')) {
-              directErrMsg = `El modelo '${targetModel}' no está habilitado en tu cuenta de AgentRouter. Selecciona 'deepseek-v4-flash'.`;
+          } else if (!data?.success) {
+            let directErrMsg = directJson?.error?.message || directJson?.msg || directJson?.message;
+            if (directErrMsg) {
+              if (directErrMsg.includes('Budget pool quota has been exhausted') || directErrMsg.includes('quota has been exhausted')) {
+                directErrMsg = `La cuota para '${targetModel}' está agotada en tu cuenta de AgentRouter. Selecciona 'deepseek-v4-flash' que tiene saldo activo.`;
+              } else if (directErrMsg.includes('无可用渠道') || directErrMsg.includes('no available channel')) {
+                directErrMsg = `El modelo '${targetModel}' no está habilitado en tu cuenta de AgentRouter. Selecciona 'deepseek-v4-flash'.`;
+              } else if (directErrMsg.includes('Invalid API Key') || directErrMsg.includes('无效的令牌') || directRes?.status === 401) {
+                directErrMsg = `Clave API de AgentRouter inválida o expirada (HTTP 401). Entra a https://agentrouter.org/console/token (menú 'API 令牌'), crea o copia tu token 'sk-...' y pégalo aquí.`;
+              }
+              data = {
+                success: false,
+                message: `⚠️ AgentRouter: ${directErrMsg}`
+              };
             }
-            data = {
-              success: false,
-              message: `⚠️ AgentRouter: ${directErrMsg}`
-            };
           }
         } catch (clientErr) {
           console.warn('Direct browser test error:', clientErr);
@@ -595,8 +600,8 @@ export default function AdminDashboardModal({ onClose }) {
           msg = `La cuota para '${targetModel}' está agotada en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
         } else if (msg.includes('unauthorized client detected')) {
           msg = `Solicitud no autorizada por AgentRouter. Usa el endpoint oficial 'https://co.agentrouter.org/v1' con 'deepseek-v4-flash'.`;
-        } else if (msg.includes('Invalid API Key') || msg.includes('无效的令牌') || msg.includes('Missing API Key')) {
-          msg = `Clave API de AgentRouter inválida o expirada. Verifica tu token en console.agentrouter.org.`;
+        } else if (msg.includes('Invalid API Key') || msg.includes('无效的令牌') || msg.includes('Missing API Key') || msg.includes('401')) {
+          msg = `Clave API de AgentRouter inválida o expirada (HTTP 401). Entra a https://agentrouter.org/console/token (menú izquierdo: 'API 令牌'), genera o copia tu token 'sk-...' y pégalo aquí.`;
         }
         data = {
           ...data,
@@ -1090,27 +1095,82 @@ export default function AdminDashboardModal({ onClose }) {
                       <Key className="w-3.5 h-3.5 text-sky-400" />
                       <span>2. Clave API ({PROVIDER_PRESETS[provider]?.name}):</span>
                     </label>
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      {newApiKey ? '● Clave lista' : (settings.apiKeyMasked ? `Guardada: ${settings.apiKeyMasked}` : 'No configurada')}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      {newApiKey && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            sounds.playClick();
+                            setNewApiKey('');
+                            const stored = getStoredAiConfig();
+                            if (stored) {
+                              saveStoredAiConfig({ ...stored, apiKey: '' });
+                            }
+                          }}
+                          className="text-[10px] text-rose-400 hover:text-rose-300 font-mono underline cursor-pointer"
+                        >
+                          Limpiar clave
+                        </button>
+                      )}
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        {newApiKey ? '● Clave lista' : (settings.apiKeyMasked ? `Guardada: ${settings.apiKeyMasked}` : 'No configurada')}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="relative">
                     <input
                       type={showApiKey ? 'text' : 'password'}
                       value={newApiKey}
-                      onChange={(e) => setNewApiKey(e.target.value)}
+                      onChange={(e) => setNewApiKey(sanitizeApiKey(e.target.value))}
                       placeholder={settings.apiKeyMasked ? `Clave guardada: ${settings.apiKeyMasked}` : (PROVIDER_PRESETS[provider]?.keyPlaceholder || 'sk-...')}
                       className="w-full pl-3 pr-10 py-2 bg-[#090d15] border border-white/10 rounded-lg text-white placeholder:text-slate-600 focus:outline-none focus:border-sky-400 transition font-mono text-xs"
                     />
                     <button
                       type="button"
                       onClick={() => setShowApiKey(!showApiKey)}
+                      title={showApiKey ? "Ocultar clave" : "Ver clave"}
                       className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white cursor-pointer"
                     >
                       {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
                   </div>
+
+                  {provider === 'agentrouter' && (
+                    <div className="p-3 rounded-xl bg-sky-950/30 border border-sky-500/20 text-xs text-slate-300 space-y-1.5 font-sans mt-2">
+                      <div className="flex items-center justify-between font-bold text-sky-300 text-[11px]">
+                        <span className="flex items-center space-x-1">
+                          <span>🔑</span>
+                          <span>¿Dónde conseguir tu Token de AgentRouter?</span>
+                        </span>
+                        <a 
+                          href="https://agentrouter.org/console/token" 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-[10px] text-sky-400 hover:text-sky-200 underline font-mono"
+                        >
+                          Abrir consola (API 令牌) ↗
+                        </a>
+                      </div>
+                      <p className="text-slate-400 text-[10px] leading-relaxed">
+                        1. Entra a tu consola en <strong>agentrouter.org/console</strong> y haz clic en el menú izquierdo en <strong>API 令牌</strong> (API Tokens).<br />
+                        2. Si no tienes uno, haz clic en <strong>添加令牌</strong> (Crear Token). Si ya tienes uno, haz clic en el botón <strong>复制</strong> (Copiar).<br />
+                        3. La clave debe comenzar por <strong>sk-</strong>. Pégala aquí, dale a <strong>Guardar Configuración de IA</strong> y luego <strong>Probar Conexión</strong>.
+                      </p>
+                      {newApiKey && !newApiKey.startsWith('sk-') && (
+                        <div className="p-1.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-mono">
+                          ⚠️ Advertencia: El token ingresado no empieza por "sk-". Asegúrate de haberlo copiado desde la sección "API 令牌".
+                        </div>
+                      )}
+                      {newApiKey && newApiKey.startsWith('sk-') && (
+                        <div className="p-1.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono flex items-center space-x-1">
+                          <Check className="w-3 h-3 text-emerald-400" />
+                          <span>Formato de Token válido de AgentRouter (sk-...)</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <p className="text-[10px] text-slate-400 flex items-center justify-between">
                     <span>{PROVIDER_PRESETS[provider]?.keyHelp}</span>
                     <span className="text-slate-500">Almacenada con cifrado en servidor</span>
