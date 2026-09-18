@@ -376,10 +376,7 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
   try {
     data = JSON.parse(responseText);
   } catch {
-    if (responseText.includes('<!doctype') || responseText.includes('<html')) {
-      throw new Error('El endpoint de IA devolvió una página HTML en lugar de JSON. Verifica la URL base (debe ser https://agentrouter.org/v1).');
-    }
-    throw new Error(`Respuesta inválida del proveedor de IA: ${responseText.slice(0, 100)}`);
+    throw new Error(`[IA Endpoint] Status ${response.status} (${response.statusText}): ${responseText.slice(0, 250)}`);
   }
 
   const msg = data.choices?.[0]?.message || {};
