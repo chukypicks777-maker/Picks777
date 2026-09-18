@@ -41,8 +41,7 @@ export default function App() {
   const [marketFilter, setMarketFilter] = useState(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.toLowerCase();
-      if (path.includes('boost')) return 'safe';
-      if (path.includes('goal')) return 'goal';
+      if (path.includes('banquero') || path.includes('safe')) return 'safe';
       if (path.includes('btts')) return 'btts';
       if (path.includes('over')) return 'over';
     }
@@ -53,10 +52,8 @@ export default function App() {
   const handleNavigate = (filterId) => {
     sounds.playClick();
     setMarketFilter(filterId);
-    if (filterId === 'safe' || filterId === 'boost') {
-      window.history.pushState(null, '', '/boost');
-    } else if (filterId === 'goal') {
-      window.history.pushState(null, '', '/goal');
+    if (filterId === 'safe') {
+      window.history.pushState(null, '', '/banqueros');
     } else if (filterId === 'btts') {
       window.history.pushState(null, '', '/btts');
     } else if (filterId === 'over') {
@@ -69,8 +66,7 @@ export default function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.toLowerCase();
-      if (path.includes('boost')) setMarketFilter('safe');
-      else if (path.includes('goal')) setMarketFilter('goal');
+      if (path.includes('banquero') || path.includes('safe')) setMarketFilter('safe');
       else if (path.includes('btts')) setMarketFilter('btts');
       else if (path.includes('over')) setMarketFilter('over');
       else setMarketFilter('all');
@@ -346,17 +342,11 @@ export default function App() {
     // Si no está seleccionada la pestaña de 'Resultados' (FINISHED),
     // no mezclar partidos pasados/finalizados con los partidos activos o próximos para apostar
     if (matchStatusFilter !== 'FINISHED' && m.status === 'FINISHED') return false;
-    if (marketFilter === 'safe' || marketFilter === 'boost') {
+    if (marketFilter === 'safe') {
       if (bankerSubFilter === 'live') {
         return m.status === 'LIVE';
       }
       return true;
-    }
-    if (marketFilter === 'goal') {
-      const o15 = m.model?.probabilities?.over15 ?? m.probabilities?.over15;
-      const o25 = m.model?.probabilities?.over25 ?? m.probabilities?.over25;
-      const btts = m.model?.probabilities?.bttsYes ?? m.probabilities?.bttsYes;
-      return (o15 != null && o15 >= 50) || (o25 != null && o25 >= 50) || (btts != null && btts >= 50);
     }
     if (marketFilter === 'btts') {
       const btts = m.model?.probabilities?.bttsYes ?? m.probabilities?.bttsYes;
@@ -373,8 +363,8 @@ export default function App() {
     return true;
   });
 
-  // When 'safe' or 'boost' (Picks Banqueros) is active, apply sub-filter sorting and ranking
-  if (marketFilter === 'safe' || marketFilter === 'boost') {
+  // When 'safe' (Picks Banqueros) is active, apply sub-filter sorting and ranking
+  if (marketFilter === 'safe') {
     if (bankerSubFilter === 'all_profit') {
       // Mayor ganancia: ordenar por cuota (odds) del pick banquero descendente sin importar la fecha
       filteredMatches = [...filteredMatches].sort((a, b) => {
@@ -406,17 +396,6 @@ export default function App() {
     }
     // Máximo de 10 mejores picks banqueros oficiales
     filteredMatches = filteredMatches.slice(0, 10);
-  } else if (marketFilter === 'goal') {
-    // Para el Goal Hub, ordenar por suma de probabilidad de goles (Over 1.5 + Over 2.5 + BTTS)
-    filteredMatches = [...filteredMatches].sort((a, b) => {
-      const getGoalSum = m => {
-        const o15 = m.model?.probabilities?.over15 ?? m.probabilities?.over15 ?? 0;
-        const o25 = m.model?.probabilities?.over25 ?? m.probabilities?.over25 ?? 0;
-        const btts = m.model?.probabilities?.bttsYes ?? m.probabilities?.bttsYes ?? 0;
-        return o15 + o25 + btts;
-      };
-      return getGoalSum(b) - getGoalSum(a);
-    });
   } else if (marketFilter === 'btts') {
     // Para Ambos Anotan (BTTS), ordenar por probabilidad de BTTS descendente
     filteredMatches = [...filteredMatches].sort((a, b) => {
@@ -513,7 +492,7 @@ export default function App() {
         />
 
         {/* Featured Spotlight Match */}
-        {selectedLeague === 'all' && timeframe === 'all' && matchStatusFilter === 'all' && !searchQuery && featuredMatch && (
+        {selectedLeague === 'all' && timeframe === 'all' && matchStatusFilter === 'all' && !searchQuery && marketFilter === 'all' && featuredMatch && (
           <HeroFeaturedMatch
             match={featuredMatch}
             onOpenMatch={setSelectedMatch}
@@ -539,7 +518,7 @@ export default function App() {
         {/* Matches Grid */}
         <div className="mb-12">
           {/* Banner Exclusivo de Picks Banqueros cuando el filtro está activo */}
-          {(marketFilter === 'safe' || marketFilter === 'boost') && (
+          {marketFilter === 'safe' && (
             <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-[#0d1522] to-sky-500/20 border border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.15)] space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
@@ -649,10 +628,8 @@ export default function App() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-sm md:text-base text-white flex items-center space-x-2">
               <span>
-                {marketFilter === 'safe' || marketFilter === 'boost'
-                  ? '⚡ Ranking de Picks Banqueros & Boost'
-                  : marketFilter === 'goal'
-                  ? '⚽ Goal Predictor Hub — Pronósticos de Goles'
+                {marketFilter === 'safe'
+                  ? '💎 Ranking de Picks Banqueros'
                   : marketFilter === 'btts'
                   ? '🤝 Partidos Ambos Equipos Anotan (BTTS)'
                   : marketFilter === 'over'
@@ -716,8 +693,8 @@ export default function App() {
                   onOpenModal={setSelectedMatch}
                   onAddToParlay={handleAddToParlay}
                   oddsFormat={oddsFormat}
-                  bankerRank={(marketFilter === 'safe' || marketFilter === 'boost') ? idx + 1 : null}
-                  isLocked={(marketFilter === 'safe' || marketFilter === 'boost') && !isVipUser && idx >= 3}
+                  bankerRank={marketFilter === 'safe' ? idx + 1 : null}
+                  isLocked={marketFilter === 'safe' && !isVipUser && idx >= 3}
                   onUnlockVip={() => setShowUpgradeModal(true)}
                 />
               ))}

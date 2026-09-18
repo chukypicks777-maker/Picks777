@@ -7,8 +7,7 @@ import {
   Flame, 
   RefreshCw,
   User,
-  Share2,
-  Zap
+  Share2
 } from 'lucide-react';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
@@ -89,30 +88,6 @@ export default function Navbar({
             >
               <Flame className="w-3.5 h-3.5 text-amber-400" />
               <span>Partidos</span>
-            </button>
-
-            <button
-              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
-                marketFilter === 'safe' || marketFilter === 'boost'
-                  ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Zap className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
-              <span>⚡ Boost</span>
-            </button>
-
-            <button
-              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('goal'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
-                marketFilter === 'goal'
-                  ? 'bg-sky-500/20 text-sky-300 font-bold border border-sky-500/40 shadow-[0_0_10px_rgba(14,165,233,0.25)]'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <span className="text-xs">⚽</span>
-              <span>Goles</span>
             </button>
 
             <button
@@ -324,26 +299,6 @@ export default function Navbar({
             }`}
           >
             Partidos
-          </button>
-          <button
-            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
-            className={`px-2.5 py-1.5 rounded-lg font-medium transition flex items-center space-x-1 ${
-              marketFilter === 'safe' || marketFilter === 'boost'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold'
-                : 'bg-slate-800 text-emerald-400'
-            }`}
-          >
-            <span>⚡ Boost</span>
-          </button>
-          <button
-            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('goal'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
-            className={`px-2.5 py-1.5 rounded-lg font-medium transition flex items-center space-x-1 ${
-              marketFilter === 'goal'
-                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 font-bold'
-                : 'bg-slate-800 text-sky-400'
-            }`}
-          >
-            <span>⚽ Goles</span>
           </button>
           <button onClick={onOpenStats} className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-sky-300">Stats</button>
           <button onClick={onOpenParlay} className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-emerald-300">Parlay ({parlayCount})</button>

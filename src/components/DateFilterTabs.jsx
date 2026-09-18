@@ -29,9 +29,8 @@ export default function DateFilterTabs({
   ];
 
   const markets = [
-    { id: 'all', label: 'Todos los Mercados', path: '/' },
-    { id: 'safe', label: '⚡ Boost / Banqueros', path: '/boost' },
-    { id: 'goal', label: '⚽ Goles (Goal Hub)', path: '/goal' },
+    { id: 'all', label: 'Todos los Mercados' },
+    { id: 'safe', label: '💎 Picks Banqueros (Más Seguros)' },
     { id: 'over', label: '+2.5 Goles (Over)' },
     { id: 'btts', label: 'Ambos Anotan (BTTS)' },
   ];
@@ -110,7 +109,7 @@ export default function DateFilterTabs({
       <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs">
         <span className="text-[11px] font-mono text-slate-500 mr-1 shrink-0">Categoría:</span>
         {markets.map((m) => {
-          const isSelected = marketFilter === m.id || (m.id === 'safe' && marketFilter === 'boost');
+          const isSelected = marketFilter === m.id;
           return (
             <button
               key={m.id}
