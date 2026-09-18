@@ -26,6 +26,11 @@ test('AI destinations reject SSRF, credentials, queries and type confusion', () 
   assert.throws(() => validateAiConfig({ provider: '__proto__' }));
   assert.throws(() => validateAiConfig({ apiKey: { key: 'bad' } }));
   assert.equal(validateAiConfig({ provider: 'openrouter' }).baseUrl, 'https://openrouter.ai/api/v1');
+  assert.equal(validateAiConfig({ provider: 'custom', baseUrl: 'https://my-custom-proxy.com/v1' }).baseUrl, 'https://my-custom-proxy.com/v1');
+  assert.equal(validateAiConfig({ provider: 'agentrouter', baseUrl: 'https://agentrouter.org' }).baseUrl, 'https://agentrouter.org/v1');
+  for (const badCustom of ['http://custom-proxy.com', 'https://10.0.0.1/v1', 'https://localhost/v1', 'https://custom-proxy.com:8080/v1']) {
+    assert.throws(() => validateAiConfig({ provider: 'custom', baseUrl: badCustom }));
+  }
 });
 test('group writes persist and concurrent stale edits do not overwrite a newer save', async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'picks-groups-'));

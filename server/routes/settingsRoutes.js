@@ -110,8 +110,8 @@ router.post('/update', async (req, res) => {
         updatedAt: updated.updatedAt
       }
     });
-  } catch {
-    res.status(400).json({ success: false, message: 'Configuración inválida. Revisa proveedor, URL HTTPS y modelo.' });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message || 'Configuración inválida. Revisa proveedor, URL HTTPS y modelo.' });
   }
 });
 
@@ -126,8 +126,8 @@ router.post('/test', async (req, res) => {
 
     const result = await testAiConnection({ provider, apiKey, baseUrl, selectedModel });
     res.json(result);
-  } catch {
-    res.status(400).json({ success: false, message: 'No se pudo conectar con el proveedor autorizado.' });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message || 'No se pudo conectar con el proveedor autorizado.' });
   }
 });
 

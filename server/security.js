@@ -11,13 +11,34 @@ export function validateAiConfig(input = {}) {
   if ((url.hostname === 'agentrouter.org' || url.hostname === 'co.agentrouter.org') && (url.pathname === '/' || url.pathname === '')) {
     url.pathname = '/v1';
   }
-  // Custom hosts must be explicitly allowlisted by the deployment owner or belong to known trusted providers
-  const allowed = provider === 'custom'
-    ? ['api.openai.com', 'agentrouter.org', 'co.agentrouter.org', 'api.together.xyz', 'api.mistral.ai', 'api.perplexity.ai', ...(process.env.AI_ALLOWED_HOSTS || '').split(',').map(s => s.trim()).filter(Boolean)]
-    : provider === 'agentrouter'
-    ? ['agentrouter.org', 'co.agentrouter.org']
-    : [new URL(PROVIDER_PRESETS[provider].defaultBaseUrl).hostname];
-  if (url.protocol !== 'https:' || url.username || url.password || url.port || url.search || url.hash || !allowed.includes(url.hostname)) throw new Error('URL de IA no permitida. Usa HTTPS y un proveedor autorizado.');
+
+  if (url.protocol !== 'https:' || url.username || url.password || url.port || url.search || url.hash) {
+    throw new Error('URL de IA no permitida. Usa HTTPS y un endpoint sin puertos especiales ni parámetros.');
+  }
+
+  const h = url.hostname.toLowerCase();
+  const isPrivateOrLocal = h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '[::1]' ||
+    h.endsWith('.local') || h.endsWith('.internal') ||
+    /^(?:10\.|127\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.)/.test(h) ||
+    /^\d+\.\d+\.\d+\.\d+$/.test(h) || h.includes(':') || h.startsWith('[') || h.endsWith(']') || !h.includes('.');
+
+  if (isPrivateOrLocal) {
+    throw new Error('URL de IA no permitida. No se permiten IPs locales o privadas.');
+  }
+
+  if (provider === 'custom') {
+    // Para proveedor personalizado se permite cualquier dominio público HTTPS de internet
+  } else if (provider === 'agentrouter') {
+    if (h !== 'agentrouter.org' && h !== 'co.agentrouter.org') {
+      throw new Error('URL de IA no permitida para Agent Router.');
+    }
+  } else {
+    const expectedHost = new URL(PROVIDER_PRESETS[provider].defaultBaseUrl).hostname;
+    if (h !== expectedHost) {
+      throw new Error(`URL de IA no permitida. Usa el host oficial ${expectedHost}.`);
+    }
+  }
+
   return { ...input, provider, baseUrl: url.href.replace(/\/+$/, '') };
 }
 
