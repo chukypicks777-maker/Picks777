@@ -54,7 +54,7 @@ export const PROVIDER_PRESETS = {
     defaultBaseUrl: 'https://agentrouter.org/v1',
     defaultModel: 'deepseek-v4-flash',
     keyPlaceholder: 'sk-...',
-    keyHelp: 'Compatible con agentrouter.org (DeepSeek V4, Claude, GPT)'
+    keyHelp: 'Compatible con agentrouter.org (Modelo recomendado: deepseek-v4-flash)'
   },
   custom: {
     id: 'custom',
@@ -64,7 +64,7 @@ export const PROVIDER_PRESETS = {
     defaultBaseUrl: 'https://api.openai.com/v1',
     defaultModel: 'gpt-4o-mini',
     keyPlaceholder: 'sk-...',
-    keyHelp: 'Compatible con AgentRouter, GLM, Ollama, Together AI, Mistral, Perplexity o servidores privados'
+    keyHelp: 'Compatible con AgentRouter (https://agentrouter.org/v1), GLM, Ollama, Together AI, Mistral...'
   }
 };
 

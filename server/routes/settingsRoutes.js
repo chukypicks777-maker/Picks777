@@ -62,13 +62,20 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/settings/models - Consulta la lista de modelos reales del proveedor
+// POST /api/settings/models - Consulta la lista de modelos reales del proveedor
 router.post('/models', async (req, res) => {
   try {
     const current = await getEffectiveAiConfig();
-    const provider = req.body?.provider || current.provider || 'openrouter';
-    const apiKey = req.body?.apiKey || (provider === current.provider ? current.apiKey : '');
-    const baseUrl = req.body?.baseUrl || current.baseUrl || '';
+    let provider = req.body?.provider || current.provider || 'openrouter';
+    let apiKey = req.body?.apiKey || (provider === current.provider ? current.apiKey : '');
+    let baseUrl = req.body?.baseUrl || current.baseUrl || '';
+
+    if (baseUrl) {
+      try {
+        const validated = validateAiConfig({ provider, apiKey: apiKey || 'dummy-key-safe', baseUrl });
+        baseUrl = validated.baseUrl;
+      } catch {}
+    }
 
     const models = await fetchProviderModels(provider, apiKey, baseUrl);
     res.json({
@@ -119,10 +126,15 @@ router.post('/update', async (req, res) => {
 router.post('/test', async (req, res) => {
   try {
     const current = await getEffectiveAiConfig();
-    const provider = req.body?.provider || current.provider || 'openrouter';
-    const apiKey = req.body?.apiKey || (provider === current.provider ? current.apiKey : '');
-    const baseUrl = req.body?.baseUrl || current.baseUrl || '';
-    const selectedModel = req.body?.selectedModel || current.selectedModel || '';
+    let provider = req.body?.provider || current.provider || 'openrouter';
+    let apiKey = req.body?.apiKey || (provider === current.provider ? current.apiKey : '');
+    let baseUrl = req.body?.baseUrl || current.baseUrl || '';
+    let selectedModel = req.body?.selectedModel || current.selectedModel || '';
+
+    const validated = validateAiConfig({ provider, apiKey, baseUrl, selectedModel });
+    provider = validated.provider;
+    baseUrl = validated.baseUrl;
+    selectedModel = validated.selectedModel;
 
     const result = await testAiConnection({ provider, apiKey, baseUrl, selectedModel });
     res.json(result);

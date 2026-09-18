@@ -6,9 +6,13 @@ export function validateAiConfig(input = {}) {
   for (const [key, max] of [['apiKey', 2048], ['selectedModel', 200], ['modelName', 200], ['baseUrl', 500]]) {
     if (input[key] !== undefined && (typeof input[key] !== 'string' || input[key].length > max || [...input[key]].some(c => c.charCodeAt(0) < 32))) throw new Error(`Campo ${key} inválido.`);
   }
-  let rawUrl = input.baseUrl || PROVIDER_PRESETS[provider].defaultBaseUrl;
+  let rawUrl = (input.baseUrl && typeof input.baseUrl === 'string' && input.baseUrl.trim()) ? input.baseUrl.trim() : PROVIDER_PRESETS[provider].defaultBaseUrl;
+  if (!/^https?:\/\//i.test(rawUrl)) {
+    rawUrl = 'https://' + rawUrl;
+  }
   const url = new URL(rawUrl);
-  if ((url.hostname === 'agentrouter.org' || url.hostname === 'co.agentrouter.org') && (url.pathname === '/' || url.pathname === '')) {
+  const h = url.hostname.toLowerCase();
+  if ((h === 'agentrouter.org' || h === 'co.agentrouter.org') && (url.pathname === '/' || url.pathname === '')) {
     url.pathname = '/v1';
   }
 
@@ -16,7 +20,6 @@ export function validateAiConfig(input = {}) {
     throw new Error('URL de IA no permitida. Usa HTTPS y un endpoint sin puertos especiales ni parámetros.');
   }
 
-  const h = url.hostname.toLowerCase();
   const isPrivateOrLocal = h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '[::1]' ||
     h.endsWith('.local') || h.endsWith('.internal') ||
     /^(?:10\.|127\.|169\.254\.|172\.(?:1[6-9]|2\d|3[01])\.|192\.168\.)/.test(h) ||
@@ -39,7 +42,15 @@ export function validateAiConfig(input = {}) {
     }
   }
 
-  return { ...input, provider, baseUrl: url.href.replace(/\/+$/, '') };
+  let selectedModel = input.selectedModel;
+  let modelName = input.modelName;
+  const isAgentRouter = provider === 'agentrouter' || h === 'agentrouter.org' || h === 'co.agentrouter.org';
+  if (isAgentRouter && (!selectedModel || selectedModel === 'gpt-4o-mini')) {
+    selectedModel = 'deepseek-v4-flash';
+    if (!modelName || modelName === 'gpt-4o-mini') modelName = 'deepseek-v4-flash';
+  }
+
+  return { ...input, provider, baseUrl: url.href.replace(/\/+$/, ''), selectedModel, modelName };
 }
 
 export function protectMutations(req, res, next) {

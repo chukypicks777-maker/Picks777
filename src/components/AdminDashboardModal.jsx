@@ -92,13 +92,25 @@ export default function AdminDashboardModal({ onClose }) {
     try {
       const stored = getStoredAiConfig();
       const keyToSend = key.trim() || (stored?.provider === p ? stored.apiKey : '');
+      let cleanUrl = (url || '').trim();
+      if ((p === 'agentrouter' || cleanUrl.includes('agentrouter.org')) && !cleanUrl.includes('/v1')) {
+        cleanUrl = cleanUrl ? cleanUrl.replace(/\/+$/, '') + '/v1' : 'https://agentrouter.org/v1';
+      }
       const res = await fetch('/api/settings/models', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: p, apiKey: keyToSend, baseUrl: url.trim() })
+        body: JSON.stringify({ provider: p, apiKey: keyToSend, baseUrl: cleanUrl })
       });
       const data = await res.json();
-      if (data.success && Array.isArray(data.models)) {
+      if (data.success && Array.isArray(data.models) && data.models.length > 0) {
         setAvailableModelsList(data.models);
+        setNewModel(curr => {
+          const exists = data.models.some(m => m.id === curr);
+          if (!exists || curr === 'gpt-4o-mini') {
+            const preferred = data.models.find(m => m.id === 'deepseek-v4-flash') || data.models[0];
+            return preferred.id;
+          }
+          return curr;
+        });
       }
     } catch (err) {
       console.error('Error loading models:', err);
@@ -282,7 +294,17 @@ export default function AdminDashboardModal({ onClose }) {
     setIsSaving(true);
     setSavedSettingsMsg('');
     try {
-      const targetModel = customModelInput.trim() || newModel;
+      let cleanBaseUrl = (baseUrl || '').trim();
+      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && !cleanBaseUrl.includes('/v1')) {
+        cleanBaseUrl = cleanBaseUrl ? cleanBaseUrl.replace(/\/+$/, '') + '/v1' : 'https://agentrouter.org/v1';
+        setBaseUrl(cleanBaseUrl);
+      }
+      let targetModel = customModelInput.trim() || newModel;
+      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && (!targetModel || targetModel === 'gpt-4o-mini')) {
+        targetModel = 'deepseek-v4-flash';
+        setNewModel('deepseek-v4-flash');
+      }
+
       const res = await fetch('/api/settings/update', {
         method: 'POST',
         headers: { 
@@ -292,7 +314,7 @@ export default function AdminDashboardModal({ onClose }) {
           provider,
           selectedModel: targetModel,
           modelName: targetModel,
-          baseUrl: baseUrl.trim(),
+          baseUrl: cleanBaseUrl,
           apiKey: newApiKey.trim() || undefined
         })
       });
@@ -306,7 +328,7 @@ export default function AdminDashboardModal({ onClose }) {
           provider,
           selectedModel: targetModel,
           modelName: targetModel,
-          baseUrl: baseUrl.trim(),
+          baseUrl: cleanBaseUrl,
           apiKey: newApiKey.trim() || undefined,
           apiKeyMasked: data.settings.apiKeyMasked,
           isConfigured: data.settings.isConfigured
@@ -317,12 +339,19 @@ export default function AdminDashboardModal({ onClose }) {
         alert(data.message || 'Error al guardar la configuración.');
       }
     } catch {
-      const targetModel = customModelInput.trim() || newModel;
+      let cleanBaseUrl = (baseUrl || '').trim();
+      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && !cleanBaseUrl.includes('/v1')) {
+        cleanBaseUrl = cleanBaseUrl ? cleanBaseUrl.replace(/\/+$/, '') + '/v1' : 'https://agentrouter.org/v1';
+      }
+      let targetModel = customModelInput.trim() || newModel;
+      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && (!targetModel || targetModel === 'gpt-4o-mini')) {
+        targetModel = 'deepseek-v4-flash';
+      }
       saveStoredAiConfig({
         provider,
         selectedModel: targetModel,
         modelName: targetModel,
-        baseUrl: baseUrl.trim(),
+        baseUrl: cleanBaseUrl,
         apiKey: newApiKey.trim() || undefined,
         isConfigured: Boolean(newApiKey.trim() && newApiKey.trim().length >= 4)
       });
@@ -337,7 +366,17 @@ export default function AdminDashboardModal({ onClose }) {
     setIsTesting(true);
     setTestResult(null);
     try {
-      const targetModel = customModelInput.trim() || newModel;
+      let cleanBaseUrl = (baseUrl || '').trim();
+      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && !cleanBaseUrl.includes('/v1')) {
+        cleanBaseUrl = cleanBaseUrl ? cleanBaseUrl.replace(/\/+$/, '') + '/v1' : 'https://agentrouter.org/v1';
+        setBaseUrl(cleanBaseUrl);
+      }
+      let targetModel = customModelInput.trim() || newModel;
+      if ((provider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org')) && (!targetModel || targetModel === 'gpt-4o-mini')) {
+        targetModel = 'deepseek-v4-flash';
+        setNewModel('deepseek-v4-flash');
+      }
+
       const stored = getStoredAiConfig();
       const keyToSend = newApiKey.trim() || stored?.apiKey || undefined;
       const res = await fetch('/api/settings/test', {
@@ -348,7 +387,7 @@ export default function AdminDashboardModal({ onClose }) {
         body: JSON.stringify({
           provider,
           apiKey: keyToSend,
-          baseUrl: baseUrl.trim(),
+          baseUrl: cleanBaseUrl,
           selectedModel: targetModel
         })
       });
@@ -358,9 +397,9 @@ export default function AdminDashboardModal({ onClose }) {
         sounds.playSuccess();
         saveStoredAiConfig({
           provider,
-          selectedModel: targetModel,
-          modelName: targetModel,
-          baseUrl: baseUrl.trim(),
+          selectedModel: data.model || targetModel,
+          modelName: data.model || targetModel,
+          baseUrl: cleanBaseUrl,
           apiKey: keyToSend,
           isConfigured: true
         });
@@ -368,7 +407,7 @@ export default function AdminDashboardModal({ onClose }) {
         sounds.playClick();
       }
     } catch {
-      setTestResult({ success: false, message: 'Error al enviar petición de prueba.' });
+      setTestResult({ success: false, message: 'Error al enviar petición de prueba. Verifica la URL y la conexión.' });
     } finally {
       setIsTesting(false);
     }
@@ -874,10 +913,26 @@ export default function AdminDashboardModal({ onClose }) {
                   <input
                     type="text"
                     value={baseUrl}
-                    onChange={(e) => setBaseUrl(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setBaseUrl(val);
+                      if (val.includes('agentrouter.org') && (newModel === 'gpt-4o-mini' || !newModel)) {
+                        setNewModel('deepseek-v4-flash');
+                      }
+                    }}
+                    onBlur={() => {
+                      if (baseUrl.includes('agentrouter.org') && !baseUrl.includes('/v1')) {
+                        setBaseUrl(baseUrl.replace(/\/+$/, '') + '/v1');
+                      }
+                    }}
                     placeholder="https://api..."
                     className="w-full px-3 py-1.5 bg-[#090d15] border border-white/10 rounded-lg text-slate-300 font-mono text-xs focus:outline-none focus:border-indigo-400"
                   />
+                  {(provider === 'agentrouter' || baseUrl.includes('agentrouter.org')) && (
+                    <p className="text-[10px] text-sky-400 font-mono">
+                      ℹ️ Conectando a <strong>https://agentrouter.org/v1</strong> • Modelo activo y con cuota: <strong>deepseek-v4-flash</strong>
+                    </p>
+                  )}
                 </div>
 
                 {/* 4. Modelos Reales del Proveedor */}

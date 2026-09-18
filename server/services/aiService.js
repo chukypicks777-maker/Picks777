@@ -5,6 +5,14 @@ import { storage } from '../storage.js';
 import { cachedData } from './dataCache.js';
 import { getTop3Opportunities } from '../../src/utils/mathProbabilities.js';
 
+export const AGENTROUTER_KNOWN_MODELS = [
+  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash (AgentRouter)', isReasoning: true },
+  { id: 'claude-opus-4-8', name: 'Claude Opus 4.8 (AgentRouter)', isReasoning: false },
+  { id: 'claude-opus-5', name: 'Claude Opus 5 (AgentRouter)', isReasoning: false },
+  { id: 'gpt-5.6-sol', name: 'GPT 5.6 Sol (AgentRouter)', isReasoning: true },
+  { id: 'gpt-6-astra', name: 'GPT 6 Astra (AgentRouter)', isReasoning: true }
+];
+
 export async function getEffectiveAiConfig() {
   let dbConfig = null;
   try {
@@ -156,10 +164,18 @@ export async function fetchProviderModels(provider = 'openrouter', apiKey = '', 
     return [];
   }
 
-  if (normProvider === 'agentrouter' || (baseUrl && (baseUrl.includes('agentrouter.org') || baseUrl.includes('co.agentrouter.org')))) {
-    if (!apiKey) return [];
+  let cleanBaseUrl = String(baseUrl || '').trim();
+  const isAgentRouterHost = normProvider === 'agentrouter' ||
+    cleanBaseUrl.includes('agentrouter.org') ||
+    cleanBaseUrl.includes('co.agentrouter.org');
+
+  if (isAgentRouterHost) {
+    if (!cleanBaseUrl.includes('/v1')) {
+      cleanBaseUrl = cleanBaseUrl ? (cleanBaseUrl.replace(/\/+$/, '') + '/v1') : 'https://agentrouter.org/v1';
+    }
+    if (!apiKey) return AGENTROUTER_KNOWN_MODELS;
     try {
-      const url = `${(baseUrl || 'https://agentrouter.org/v1').replace(/\/+$/, '')}/models`;
+      const url = `${cleanBaseUrl.replace(/\/+$/, '')}/models`;
       const res = await fetch(url, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -171,46 +187,39 @@ export async function fetchProviderModels(provider = 'openrouter', apiKey = '', 
         redirect: 'error',
         signal: AbortSignal.timeout(8000)
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data?.data)) {
-          return data.data.map(m => {
-            const idLow = String(m.id || '').toLowerCase();
-            return {
-              id: m.id,
-              name: m.id,
-              isFree: false,
-              isReasoning: /r1|reason|think|sol|astra|flash/i.test(idLow)
-            };
-          });
-        }
+      const resText = await res.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(resText); } catch {}
+      if (res.ok && Array.isArray(data?.data) && data.data.length > 0) {
+        return data.data.map(m => {
+          const idLow = String(m.id || '').toLowerCase();
+          return {
+            id: m.id,
+            name: m.id,
+            isFree: false,
+            isReasoning: /r1|reason|think|sol|astra|flash|opus|claude/i.test(idLow)
+          };
+        });
       }
     } catch (err) {
       console.warn('Error al consultar modelos de AgentRouter:', err.message);
     }
-    return [];
+    return AGENTROUTER_KNOWN_MODELS;
   }
 
   // Custom / Terceros
-  if (baseUrl) {
+  if (cleanBaseUrl) {
     try {
-      const url = `${baseUrl.replace(/\/+$/, '')}/models`;
-      const isAgentRouterHost = url.includes('agentrouter.org');
+      const url = `${cleanBaseUrl.replace(/\/+$/, '')}/models`;
       const headers = {
-        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-        ...(isAgentRouterHost ? {
-          'User-Agent': 'claude-cli/2.1.195 (external, cli)',
-          'x-app': 'cli',
-          'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'claude-code-20250219,oauth-2025-04-20'
-        } : {})
+        ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {})
       };
       const res = await fetch(url, { headers, redirect: 'error', signal: AbortSignal.timeout(6000) });
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data?.data)) {
-          return data.data.map(m => ({ id: m.id, name: m.id, isFree: false }));
-        }
+      const resText = await res.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(resText); } catch {}
+      if (res.ok && Array.isArray(data?.data)) {
+        return data.data.map(m => ({ id: m.id, name: m.id, isFree: false }));
       }
     } catch {}
   }
@@ -283,22 +292,25 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
   }
 
   // OpenRouter, DeepSeek, Groq, AgentRouter u otros endpoints compatibles con OpenAI
-  const finalBaseUrl = (
-    baseUrl || (
-      normProvider === 'openrouter' ? 'https://openrouter.ai/api/v1' :
-      normProvider === 'deepseek' ? 'https://api.deepseek.com/v1' :
-      normProvider === 'groq' ? 'https://api.groq.com/openai/v1' :
-      normProvider === 'agentrouter' ? 'https://agentrouter.org/v1' :
-      'https://openrouter.ai/api/v1'
-    )
-  ).replace(/\/+$/, '');
+  let effectiveBaseUrl = baseUrl || (
+    normProvider === 'openrouter' ? 'https://openrouter.ai/api/v1' :
+    normProvider === 'deepseek' ? 'https://api.deepseek.com/v1' :
+    normProvider === 'groq' ? 'https://api.groq.com/openai/v1' :
+    normProvider === 'agentrouter' ? 'https://agentrouter.org/v1' :
+    'https://openrouter.ai/api/v1'
+  );
+
+  const isAgentRouter = normProvider === 'agentrouter' || effectiveBaseUrl.includes('agentrouter.org') || effectiveBaseUrl.includes('co.agentrouter.org');
+  if (isAgentRouter && !effectiveBaseUrl.includes('/v1')) {
+    effectiveBaseUrl = effectiveBaseUrl.replace(/\/+$/, '') + '/v1';
+  }
+  const finalBaseUrl = effectiveBaseUrl.replace(/\/+$/, '');
 
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     'Content-Type': 'application/json'
   };
 
-  const isAgentRouter = normProvider === 'agentrouter' || finalBaseUrl.includes('agentrouter.org') || finalBaseUrl.includes('co.agentrouter.org');
   if (isAgentRouter) {
     headers['User-Agent'] = 'claude-cli/2.1.195 (external, cli)';
     headers['x-app'] = 'cli';
@@ -342,12 +354,34 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
     body: JSON.stringify(requestBody)
   });
 
+  const responseText = await response.text().catch(() => '');
+
   if (!response.ok) {
-    const errText = await response.text().catch(() => '');
-    throw new Error(`${normProvider} error ${response.status}: ${errText.slice(0, 150)}`);
+    let cleanErr = responseText.slice(0, 200);
+    try {
+      const errObj = JSON.parse(responseText);
+      if (errObj.error?.message) {
+        cleanErr = errObj.error.message;
+        if (cleanErr.includes('无可用渠道') || cleanErr.includes('no available channel')) {
+          cleanErr = `El modelo '${model}' no está habilitado en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
+        } else if (cleanErr.includes('Budget pool quota has been exhausted')) {
+          cleanErr = `La cuota para '${model}' está agotada en tu cuenta de AgentRouter. Usa 'deepseek-v4-flash'.`;
+        }
+      }
+    } catch {}
+    throw new Error(`${normProvider} error ${response.status}: ${cleanErr}`);
   }
 
-  const data = await response.json();
+  let data;
+  try {
+    data = JSON.parse(responseText);
+  } catch {
+    if (responseText.includes('<!doctype') || responseText.includes('<html')) {
+      throw new Error('El endpoint de IA devolvió una página HTML en lugar de JSON. Verifica la URL base (debe ser https://agentrouter.org/v1).');
+    }
+    throw new Error(`Respuesta inválida del proveedor de IA: ${responseText.slice(0, 100)}`);
+  }
+
   const msg = data.choices?.[0]?.message || {};
   let raw = (typeof msg.content === 'string' && msg.content.trim()) ? msg.content : (msg.reasoning_content || msg.reasoning || '');
   if (!raw) throw new Error('El proveedor no devolvió contenido.');
@@ -358,14 +392,16 @@ export async function testAiConnection({ provider, apiKey, baseUrl, selectedMode
   if (!apiKey || apiKey.trim().length < 3) {
     return { success: false, message: 'Ingresa una clave API para probar la conexión.' };
   }
-  const isAgentRouter = provider === 'agentrouter' || (baseUrl && (baseUrl.includes('agentrouter.org') || baseUrl.includes('co.agentrouter.org')));
-  const model = selectedModel || (
-    provider === 'gemini' ? 'gemini-1.5-flash' :
-    provider === 'deepseek' ? 'deepseek-chat' :
-    provider === 'groq' ? 'llama-3.3-70b-versatile' :
-    isAgentRouter ? 'deepseek-v4-flash' :
-    'nvidia/nemotron-3.5-lightning:free'
-  );
+  const cleanBase = String(baseUrl || '').toLowerCase();
+  const isAgentRouter = provider === 'agentrouter' || cleanBase.includes('agentrouter.org') || cleanBase.includes('co.agentrouter.org');
+  let model = selectedModel;
+  if (!model || (isAgentRouter && (model === 'gpt-4o-mini' || model.trim() === ''))) {
+    model = isAgentRouter ? 'deepseek-v4-flash' :
+      provider === 'gemini' ? 'gemini-1.5-flash' :
+      provider === 'deepseek' ? 'deepseek-chat' :
+      provider === 'groq' ? 'llama-3.3-70b-versatile' :
+      'nvidia/nemotron-3.5-lightning:free';
+  }
   const start = Date.now();
   try {
     const raw = await executeAiChatCompletion({
