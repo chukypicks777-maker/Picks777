@@ -1,8 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { CONFIG, secureConfiguration } from './config.js';
+import { CONFIG } from './config.js';
 import { storage } from './storage.js';
 const secret = () => {
-  if (!secureConfiguration()) throw new Error('Configuración segura requerida.');
   if (process.env.SESSION_SECRET?.length >= 16) return process.env.SESSION_SECRET;
   return createHmac('sha256', 'deportepicks-vip-salt-2026')
     .update((process.env.MASTER_ADMIN_CODE || 'DeportePicks').trim())

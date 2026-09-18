@@ -23,6 +23,7 @@ import {
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
 import { PROVIDER_PRESETS } from '../constants/aiProviders';
+import { getStoredAiConfig, saveStoredAiConfig, maskKey } from '../utils/aiSettings';
 
 
 export default function AdminDashboardModal({ onClose }) {
@@ -89,9 +90,11 @@ export default function AdminDashboardModal({ onClose }) {
   const fetchModelsForProvider = useCallback(async (p = 'openrouter', key = '', url = '') => {
     setLoadingModels(true);
     try {
+      const stored = getStoredAiConfig();
+      const keyToSend = key.trim() || (stored?.provider === p ? stored.apiKey : '');
       const res = await fetch('/api/settings/models', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: p, apiKey: key.trim(), baseUrl: url.trim() })
+        body: JSON.stringify({ provider: p, apiKey: keyToSend, baseUrl: url.trim() })
       });
       const data = await res.json();
       if (data.success && Array.isArray(data.models)) {
@@ -111,14 +114,39 @@ export default function AdminDashboardModal({ onClose }) {
       });
       const data = await res.json();
       if (data.success && data.settings) {
-        setSettings(data.settings);
-        const prov = data.settings.provider || 'openrouter';
+        const stored = getStoredAiConfig();
+        const effectiveConfigured = data.settings.isConfigured || Boolean(stored?.apiKey && stored.apiKey.length >= 4);
+        const effectiveMasked = data.settings.apiKeyMasked || (stored?.apiKey ? maskKey(stored.apiKey) : '');
+        setSettings({
+          ...data.settings,
+          isConfigured: effectiveConfigured,
+          apiKeyMasked: effectiveMasked
+        });
+        saveStoredAiConfig({
+          ...data.settings,
+          isConfigured: effectiveConfigured
+        });
+        const prov = data.settings.provider || stored?.provider || 'openrouter';
         setProvider(prov);
-        setBaseUrl(data.settings.baseUrl || PROVIDER_PRESETS[prov]?.defaultBaseUrl || 'https://openrouter.ai/api/v1');
-        setNewModel(data.settings.selectedModel || PROVIDER_PRESETS[prov]?.defaultModel || 'nvidia/nemotron-3.5-lightning:free');
-        fetchModelsForProvider(prov, '', data.settings.baseUrl);
+        setBaseUrl(data.settings.baseUrl || stored?.baseUrl || PROVIDER_PRESETS[prov]?.defaultBaseUrl || 'https://openrouter.ai/api/v1');
+        setNewModel(data.settings.selectedModel || stored?.selectedModel || PROVIDER_PRESETS[prov]?.defaultModel || 'nvidia/nemotron-3.5-lightning:free');
+        fetchModelsForProvider(prov, stored?.apiKey || '', data.settings.baseUrl || stored?.baseUrl);
+        return;
       }
     } catch {}
+    const stored = getStoredAiConfig();
+    if (stored) {
+      setSettings(prev => ({ 
+        ...prev, 
+        ...stored,
+        apiKeyMasked: stored.apiKey ? maskKey(stored.apiKey) : prev.apiKeyMasked,
+        isConfigured: Boolean(stored.apiKey && stored.apiKey.length >= 4)
+      }));
+      if (stored.provider) setProvider(stored.provider);
+      if (stored.baseUrl) setBaseUrl(stored.baseUrl);
+      if (stored.selectedModel) setNewModel(stored.selectedModel);
+      fetchModelsForProvider(stored.provider || 'openrouter', stored.apiKey || '', stored.baseUrl || '');
+    }
   }, [fetchModelsForProvider]);
 
   useEffect(() => {
@@ -274,14 +302,32 @@ export default function AdminDashboardModal({ onClose }) {
         confetti({ particleCount: 35, spread: 50, origin: { y: 0.6 } });
         setSavedSettingsMsg('Configuración del motor de IA guardada exitosamente.');
         setSettings(data.settings);
+        saveStoredAiConfig({
+          provider,
+          selectedModel: targetModel,
+          modelName: targetModel,
+          baseUrl: baseUrl.trim(),
+          apiKey: newApiKey.trim() || undefined,
+          apiKeyMasked: data.settings.apiKeyMasked,
+          isConfigured: data.settings.isConfigured
+        });
         setNewApiKey('');
-        window.dispatchEvent(new CustomEvent('ai-settings-updated', { detail: data.settings }));
         setTimeout(() => setSavedSettingsMsg(''), 4000);
       } else {
         alert(data.message || 'Error al guardar la configuración.');
       }
     } catch {
-      alert('Error de conexión al guardar configuración.');
+      const targetModel = customModelInput.trim() || newModel;
+      saveStoredAiConfig({
+        provider,
+        selectedModel: targetModel,
+        modelName: targetModel,
+        baseUrl: baseUrl.trim(),
+        apiKey: newApiKey.trim() || undefined,
+        isConfigured: Boolean(newApiKey.trim() && newApiKey.trim().length >= 4)
+      });
+      setSavedSettingsMsg('Configuración de IA guardada localmente en la página.');
+      setTimeout(() => setSavedSettingsMsg(''), 4000);
     } finally {
       setIsSaving(false);
     }
@@ -292,6 +338,8 @@ export default function AdminDashboardModal({ onClose }) {
     setTestResult(null);
     try {
       const targetModel = customModelInput.trim() || newModel;
+      const stored = getStoredAiConfig();
+      const keyToSend = newApiKey.trim() || stored?.apiKey || undefined;
       const res = await fetch('/api/settings/test', {
         method: 'POST',
         headers: { 
@@ -299,7 +347,7 @@ export default function AdminDashboardModal({ onClose }) {
         },
         body: JSON.stringify({
           provider,
-          apiKey: newApiKey.trim() || undefined,
+          apiKey: keyToSend,
           baseUrl: baseUrl.trim(),
           selectedModel: targetModel
         })
@@ -308,6 +356,14 @@ export default function AdminDashboardModal({ onClose }) {
       setTestResult(data);
       if (data.success) {
         sounds.playSuccess();
+        saveStoredAiConfig({
+          provider,
+          selectedModel: targetModel,
+          modelName: targetModel,
+          baseUrl: baseUrl.trim(),
+          apiKey: keyToSend,
+          isConfigured: true
+        });
       } else {
         sounds.playClick();
       }
@@ -428,7 +484,16 @@ export default function AdminDashboardModal({ onClose }) {
           >
             Configuración IA
           </button>
-          <button onClick={() => setActiveTab('groups')} className="px-4 py-2.5 text-xs font-bold text-sky-300">Grupos y comunidad</button>
+          <button
+            onClick={() => { sounds.playClick(); setActiveTab('groups'); }}
+            className={`px-4 py-2.5 border-b-2 text-xs font-semibold transition ${
+              activeTab === 'groups'
+                ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Grupos y Comunidad
+          </button>
         </div>
 
         {/* Body Container */}

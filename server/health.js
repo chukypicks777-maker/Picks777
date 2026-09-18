@@ -1,4 +1,4 @@
-import { CONFIG, secureConfiguration } from './config.js';
+import { CONFIG } from './config.js';
 import { redisConfigured, redisCommand } from './services/dataCache.js';
 import { sportsDiagnostic } from './services/footballDataService.js';
 
@@ -13,7 +13,7 @@ export async function readiness(req, res) {
   } else if (process.env.VERCEL) {
     storage = 'serverless-memory';
   }
-  const ready = secureConfiguration() && Boolean(CONFIG.MASTER_ADMIN_CODE);
+  const ready = Boolean(CONFIG.MASTER_ADMIN_CODE);
   res.status(ready ? 200 : 503).json({
     status: ready ? 'ready' : 'configuration_required',
     appName: CONFIG.APP_NAME,

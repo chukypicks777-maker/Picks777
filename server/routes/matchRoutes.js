@@ -48,6 +48,35 @@ async function feedHandler(req, res) {
 router.get('/live-sync', feedHandler);
 router.get('/', feedHandler);
 router.post('/sync', feedHandler);
+router.get('/boost', async (req, res) => {
+  const feed = await getFootballFeed();
+  if (feed.coverage.every(c => c.status === 'unavailable')) {
+    return res.status(503).json({ ...feed, success: false, message: 'No se puede consultar el proveedor.' });
+  }
+  let list = feed.matches;
+  try {
+    if (Object.keys(req.query || {}).length > 0) list = filterMatches(list, req.query);
+  } catch {}
+  const boostMatches = list
+    .filter(m => m.status !== 'FINISHED')
+    .sort((a, b) => ((b.model?.probabilities?.confidence ?? b.probabilities?.confidence ?? 0) - (a.model?.probabilities?.confidence ?? a.probabilities?.confidence ?? 0)))
+    .slice(0, 10);
+  res.json({ success: true, count: boostMatches.length, matches: boostMatches, coverage: feed.coverage });
+});
+router.get('/goal', async (req, res) => {
+  const feed = await getFootballFeed();
+  if (feed.coverage.every(c => c.status === 'unavailable')) {
+    return res.status(503).json({ ...feed, success: false, message: 'No se puede consultar el proveedor.' });
+  }
+  let list = feed.matches;
+  try {
+    if (Object.keys(req.query || {}).length > 0) list = filterMatches(list, req.query);
+  } catch {}
+  const goalMatches = list
+    .filter(m => m.status !== 'FINISHED' && (m.probabilities?.over25 != null || m.probabilities?.over15 != null))
+    .sort((a, b) => (((b.probabilities?.over15 ?? 0) + (b.probabilities?.over25 ?? 0)) - ((a.probabilities?.over15 ?? 0) + (a.probabilities?.over25 ?? 0))));
+  res.json({ success: true, count: goalMatches.length, matches: goalMatches, coverage: feed.coverage });
+});
 router.get('/:id', async (req, res) => {
   const feed = await getFootballFeed();
   const match = feed.matches.find(m => m.id === req.params.id);
@@ -61,6 +90,7 @@ router.post('/:id/ai-analysis', rateLimit('ai'), async (req, res) => {
   const enriched = await enrichMatchWithRealData(match);
   const forceRefresh = Boolean(req.query.force === '1' || req.body?.forceRefresh);
   const model = req.body?.model || req.query?.model || undefined;
-  res.json({ success: true, match: enriched, report: await generateAiMatchReport(enriched, { forceRefresh, model }) });
+  const aiConfig = req.body?.aiConfig;
+  res.json({ success: true, match: enriched, report: await generateAiMatchReport(enriched, { forceRefresh, model, aiConfig }) });
 });
 export default router;

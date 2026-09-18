@@ -359,7 +359,23 @@ export async function generateAiMatchReport(match, options = {}) {
     facts: facts.map(f => f.text), narrativeAnalysis: narrative,
     aiStatus: 'Informe calculado con registros del proveedor; sin texto predictivo no verificado.',
     limitations: 'Estimaciones sujetas al tamaño de muestra y a errores del proveedor; no garantizan resultados.' };
-  const config = await getEffectiveAiConfig();
+  let config = await getEffectiveAiConfig();
+  if (options.aiConfig && typeof options.aiConfig === 'object') {
+    try {
+      const validated = validateAiConfig(options.aiConfig);
+      if (validated.apiKey && validated.apiKey.length >= 4) {
+        config = {
+          ...config,
+          ...validated,
+          isConfigured: true,
+          updatedAt: new Date().toISOString()
+        };
+      }
+    } catch {}
+  }
+  if (options.model && typeof options.model === 'string' && options.model.trim()) {
+    config.selectedModel = options.model.trim();
+  }
   if (!config.isConfigured) return baseline;
   const cacheKey = 'ai:grounded-v1:' + createHash('sha256').update(JSON.stringify([facts, p, config.updatedAt, config.provider, config.selectedModel])).digest('hex');
   const generate = async () => {

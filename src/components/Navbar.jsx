@@ -7,11 +7,12 @@ import {
   Flame, 
   RefreshCw,
   User,
-  Share2
+  Share2,
+  Zap
 } from 'lucide-react';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
-import { useSocialLinks } from '../utils/socialSettings';
+import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
 
 export default function Navbar({ 
   auth, 
@@ -26,9 +27,14 @@ export default function Navbar({
   parlayCount = 0,
   isSyncing = false,
   onManualSync,
-  onOpenUpgrade
+  onOpenUpgrade,
+  marketFilter = 'all',
+  onNavigate
 }) {
   const SOCIAL_LINKS = useSocialLinks();
+  const telegramLink = getSocialLink(SOCIAL_LINKS, 'telegram');
+  const whatsappLink = getSocialLink(SOCIAL_LINKS, 'whatsapp');
+  const instagramLink = getSocialLink(SOCIAL_LINKS, 'instagram');
   const [showSocialMenu, setShowSocialMenu] = useState(false);
 
   const userName = auth?.user?.name || auth?.user?.username || (auth?.isAdmin ? 'Owner' : 'Usuario VIP');
@@ -74,11 +80,39 @@ export default function Navbar({
           {/* Center Navigation Links */}
           <nav className="hidden md:flex items-center space-x-1 bg-[#161b22] p-1 rounded-lg border border-white/5">
             <button
-              onClick={() => { sounds.playClick(); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
-              className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 transition flex items-center space-x-1.5 cursor-pointer"
+              onClick={() => { sounds.playClick(); if (onNavigate) { onNavigate('all'); } else { window.scrollTo({ top: 320, behavior: 'smooth' }); } }}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
+                marketFilter === 'all'
+                  ? 'bg-white/10 text-white font-semibold'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+              }`}
             >
               <Flame className="w-3.5 h-3.5 text-amber-400" />
               <span>Partidos</span>
+            </button>
+
+            <button
+              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); }}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
+                marketFilter === 'safe' || marketFilter === 'boost'
+                  ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
+              <span>⚡ Boost</span>
+            </button>
+
+            <button
+              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('goal'); }}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
+                marketFilter === 'goal'
+                  ? 'bg-sky-500/20 text-sky-300 font-bold border border-sky-500/40 shadow-[0_0_10px_rgba(14,165,233,0.25)]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span className="text-xs">⚽</span>
+              <span>Goles</span>
             </button>
 
             <button
@@ -120,10 +154,10 @@ export default function Navbar({
             <div className="hidden lg:flex items-center space-x-1 border-r border-white/10 pr-2 mr-0.5">
               {/* Telegram */}
               <a
-                href={SOCIAL_LINKS[0].url}
+                href={telegramLink.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                title="Canal de Telegram - Free Picks"
+                title={telegramLink.label || "Canal de Telegram - Free Picks"}
                 onClick={() => sounds.playClick()}
                 className="w-7 h-7 rounded-lg bg-[#161b22] hover:bg-[#229ED9]/20 text-slate-400 hover:text-[#229ED9] border border-white/5 hover:border-[#229ED9]/30 flex items-center justify-center transition"
               >
@@ -132,10 +166,10 @@ export default function Navbar({
 
               {/* WhatsApp */}
               <a
-                href={SOCIAL_LINKS[1].url}
+                href={whatsappLink.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                title="Grupo Oficial de WhatsApp"
+                title={whatsappLink.label || "Grupo Oficial de WhatsApp"}
                 onClick={() => sounds.playClick()}
                 className="w-7 h-7 rounded-lg bg-[#161b22] hover:bg-[#25D366]/20 text-slate-400 hover:text-[#25D366] border border-white/5 hover:border-[#25D366]/30 flex items-center justify-center transition"
               >
@@ -144,10 +178,10 @@ export default function Navbar({
 
               {/* Instagram */}
               <a
-                href={SOCIAL_LINKS[2].url}
+                href={instagramLink.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                title="Instagram Oficial @picks__777"
+                title={instagramLink.label || "Instagram Oficial @picks__777"}
                 onClick={() => sounds.playClick()}
                 className="w-7 h-7 rounded-lg bg-[#161b22] hover:bg-[#E1306C]/20 text-slate-400 hover:text-[#E1306C] border border-white/5 hover:border-[#E1306C]/30 flex items-center justify-center transition"
               >
@@ -282,10 +316,38 @@ export default function Navbar({
           </div>
 
         </div>
-        <nav aria-label="Navegación móvil" className="flex md:hidden justify-center gap-2 pb-2 text-xs">
-          <button onClick={onOpenStats} className="px-3 py-2 rounded-lg bg-slate-800 text-sky-300">Estadísticas</button>
-          <button onClick={onOpenParlay} className="px-3 py-2 rounded-lg bg-slate-800 text-emerald-300">Parlay ({parlayCount})</button>
-          {auth?.isAdmin && <button onClick={onOpenAdmin} className="px-3 py-2 rounded-lg bg-amber-500/10 text-amber-300">Panel Owner</button>}
+        <nav aria-label="Navegación móvil" className="flex md:hidden justify-center flex-wrap gap-1.5 pb-2 text-xs">
+          <button
+            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); }}
+            className={`px-2.5 py-1.5 rounded-lg font-medium transition ${
+              marketFilter === 'all' ? 'bg-white/10 text-white font-bold' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            Partidos
+          </button>
+          <button
+            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); }}
+            className={`px-2.5 py-1.5 rounded-lg font-medium transition flex items-center space-x-1 ${
+              marketFilter === 'safe' || marketFilter === 'boost'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold'
+                : 'bg-slate-800 text-emerald-400'
+            }`}
+          >
+            <span>⚡ Boost</span>
+          </button>
+          <button
+            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('goal'); }}
+            className={`px-2.5 py-1.5 rounded-lg font-medium transition flex items-center space-x-1 ${
+              marketFilter === 'goal'
+                ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40 font-bold'
+                : 'bg-slate-800 text-sky-400'
+            }`}
+          >
+            <span>⚽ Goles</span>
+          </button>
+          <button onClick={onOpenStats} className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-sky-300">Stats</button>
+          <button onClick={onOpenParlay} className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-emerald-300">Parlay ({parlayCount})</button>
+          {auth?.isAdmin && <button onClick={onOpenAdmin} className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-300">Panel Owner</button>}
         </nav>
       </div>
     </header>

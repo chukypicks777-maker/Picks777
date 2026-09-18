@@ -191,6 +191,28 @@ test('HTTP session and owner flow, access persistence and revocation', async () 
     await request(`/api/admin/codes/${generated.codes[0].code}/revoke`, {}, owner);
     assert.equal((await request('/api/matches', null, vip)).status, 401);
     assert.equal((await request('/api/admin/codes', null, `${owner}tampered`)).status, 401);
+
+    const boostRes = await request('/api/matches/boost', null, owner);
+    assert.equal(boostRes.status, 200);
+    const boostJson = await boostRes.json();
+    assert.equal(boostJson.success, true);
+    assert.ok(Array.isArray(boostJson.matches));
+
+    const boostAliasRes = await request('/api/boost?league=espana', null, owner);
+    assert.equal(boostAliasRes.status, 200);
+    const boostAliasJson = await boostAliasRes.json();
+    assert.equal(boostAliasJson.success, true);
+
+    const goalRes = await request('/api/matches/goal', null, owner);
+    assert.equal(goalRes.status, 200);
+    const goalJson = await goalRes.json();
+    assert.equal(goalJson.success, true);
+    assert.ok(Array.isArray(goalJson.matches));
+
+    const goalAliasRes = await request('/api/goal?status=LIVE', null, owner);
+    assert.equal(goalAliasRes.status, 200);
+    const goalAliasJson = await goalAliasRes.json();
+    assert.equal(goalAliasJson.success, true);
   } finally {
     await new Promise(resolve => server.close(resolve));
     storage.file = originalFile;

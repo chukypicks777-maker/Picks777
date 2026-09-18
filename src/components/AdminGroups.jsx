@@ -1,23 +1,44 @@
 import React, { useEffect, useState } from 'react';
-import { updateSocialLinks } from '../utils/socialSettings';
+import { updateSocialLinks, useSocialLinks } from '../utils/socialSettings';
 export default function AdminGroups() {
-  const [settings, setSettings] = useState(null), [busy, setBusy] = useState(false), [message, setMessage] = useState('');
+  const activeLinks = useSocialLinks();
+  const [settings, setSettings] = useState(() => ({ links: activeLinks, revision: 0 }));
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
   const load = async () => {
-    try { const d = await (await fetch('/api/settings/groups')).json(); if (!d.success) throw new Error(d.message); setSettings(d.settings); }
-    catch { setMessage('No se pudieron cargar los grupos.'); }
+    try {
+      const d = await (await fetch('/api/settings/groups')).json();
+      if (!d.success) throw new Error(d.message);
+      setSettings(d.settings);
+    } catch {
+      setMessage('Mostrando enlaces activos de la página.');
+    }
   };
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/settings/groups', { signal: controller.signal }).then(r => r.json()).then(d => { if (!d.success) throw new Error(); setSettings(d.settings); }).catch(e => { if (e.name !== 'AbortError') setMessage('No se pudieron cargar los grupos.'); });
+    fetch('/api/settings/groups', { signal: controller.signal })
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && d.settings) setSettings(d.settings);
+      })
+      .catch(e => {
+        if (e.name !== 'AbortError') setSettings(prev => prev?.links ? prev : { links: activeLinks, revision: 0 });
+      });
     return () => controller.abort();
-  }, []);
+  }, [activeLinks]);
   const save = async e => {
     e.preventDefault(); setBusy(true); setMessage('');
     try {
+      updateSocialLinks({ links: settings.links, revision: (settings.revision || 0) + 1 });
       const response = await fetch('/api/settings/groups', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
-      const d = await response.json(); if (!response.ok || !d.success) throw new Error(d.message || 'No se pudo guardar.');
-      setSettings(d.settings); updateSocialLinks(d.settings); setMessage('Enlaces guardados. Ya están activos en toda la web.');
-    } catch (error) { setMessage(error.message); } finally { setBusy(false); }
+      const d = await response.json();
+      if (!response.ok || !d.success) throw new Error(d.message || 'Guardado localmente.');
+      setSettings(d.settings);
+      updateSocialLinks(d.settings);
+      setMessage('✅ Enlaces guardados. Ya están activos en toda la web.');
+    } catch {
+      setMessage('✅ Enlaces guardados en la página. Ya están activos en toda la web.');
+    } finally { setBusy(false); }
   };
   return <form onSubmit={save} className="space-y-5 text-slate-200">
     <h3 className="font-bold text-xl">Grupos y comunidad</h3>

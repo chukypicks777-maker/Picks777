@@ -4,6 +4,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { redisConfigured, redisCommand } from './services/dataCache.js';
 import { SOCIAL_LINKS } from '../src/constants/socials.js';
 import { validateSocialLinks } from './socialSettings.js';
+import { defaultSeedData } from './data/defaultSeed.js';
 const KEY = 'picks:v2:access';
 const clean = code => String(code || '').trim().toUpperCase();
 const initial = () => ({ codes: [], users: [], aiConfig: null });
@@ -13,7 +14,18 @@ export class StorageManager {
   async loadRaw() {
     if (redisConfigured()) return await redisCommand('GET', KEY);
     try { return await fs.readFile(this.file, 'utf8'); }
-    catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+    catch (error) {
+      if (error.code === 'ENOENT') {
+        if (this.file === defaultStorageFile()) {
+          try {
+            return await fs.readFile(path.resolve('server/data/access-v2.json'), 'utf8');
+          } catch {}
+          return JSON.stringify(defaultSeedData);
+        }
+        return null;
+      }
+      throw error;
+    }
   }
   async load() { const raw = await this.loadRaw(); return raw ? JSON.parse(raw) : initial(); }
   async transaction(change) {

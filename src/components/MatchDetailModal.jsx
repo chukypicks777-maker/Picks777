@@ -22,6 +22,7 @@ import DifferentialAnalysisSection from './DifferentialAnalysisSection';
 import OverUnderGroupedSection from './OverUnderGroupedSection';
 import { calculateTeamDetailedStats, calculateDifferential, getCoherentPredictedScore } from '../utils/mathProbabilities';
 import { getCachedAnalysis, setCachedAnalysis, computeMatchFingerprint, clearAllAnalysisCache } from '../utils/analysisCache';
+import { getStoredAiConfig } from '../utils/aiSettings';
 
 const calculateMatchSimulation = scoreSimulation;
 
@@ -103,13 +104,22 @@ export default function MatchDetailModal({
     const fingerprint = computeMatchFingerprint(curMatch);
     setLoadingAi(true);
     try {
+      const storedAi = getStoredAiConfig();
+      const aiConfigPayload = (storedAi && storedAi.apiKey && storedAi.apiKey.length >= 4) ? {
+        provider: storedAi.provider || 'openrouter',
+        apiKey: storedAi.apiKey,
+        baseUrl: storedAi.baseUrl,
+        selectedModel: modelToUse || storedAi.selectedModel
+      } : undefined;
+
       const res = await fetch(`/api/matches/${curMatch.id}/ai-analysis`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
         body: JSON.stringify({ 
           forceRefresh,
-          model: modelToUse
+          model: modelToUse,
+          aiConfig: aiConfigPayload
         })
       });
       const data = await res.json();
@@ -144,20 +154,31 @@ export default function MatchDetailModal({
   useEffect(() => {
     let active = true;
     const loadActiveModel = async () => {
+      const storedAi = getStoredAiConfig();
       if (cachedActiveModel) return;
       try {
         const res = await fetch('/api/settings/active-model');
         const data = await res.json();
         if (active && data.success) {
           const info = {
-            provider: data.provider || '',
-            selectedModel: data.selectedModel || '',
-            isConfigured: Boolean(data.isConfigured)
+            provider: data.provider || storedAi?.provider || '',
+            selectedModel: data.selectedModel || storedAi?.selectedModel || '',
+            isConfigured: Boolean(data.isConfigured || storedAi?.isConfigured || (storedAi?.apiKey && storedAi.apiKey.length >= 4))
           };
           cachedActiveModel = info;
           setActiveModelInfo(info);
         }
-      } catch {}
+      } catch {
+        if (active && storedAi) {
+          const info = {
+            provider: storedAi.provider || '',
+            selectedModel: storedAi.selectedModel || '',
+            isConfigured: Boolean(storedAi.isConfigured || (storedAi.apiKey && storedAi.apiKey.length >= 4))
+          };
+          cachedActiveModel = info;
+          setActiveModelInfo(info);
+        }
+      }
     };
     loadActiveModel();
 

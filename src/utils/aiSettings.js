@@ -1,0 +1,32 @@
+const STORAGE_KEY = 'picks_ai_settings';
+
+export function maskKey(key) {
+  if (!key || typeof key !== 'string') return '';
+  const clean = key.trim();
+  if (clean.length <= 8) return '••••••••';
+  return `${clean.slice(0, 6)}••••••••${clean.slice(-4)}`;
+}
+
+export function getStoredAiConfig() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
+export function saveStoredAiConfig(config) {
+  if (typeof window === 'undefined' || !config || typeof config !== 'object') return;
+  try {
+    const prev = getStoredAiConfig() || {};
+    const cleanConfig = Object.fromEntries(
+      Object.entries(config).filter(([, v]) => v !== undefined)
+    );
+    const merged = { ...prev, ...cleanConfig, updatedAt: new Date().toISOString() };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    window.dispatchEvent(new CustomEvent('ai-settings-updated', { detail: merged }));
+    return merged;
+  } catch {}
+}
+

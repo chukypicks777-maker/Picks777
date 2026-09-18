@@ -3,7 +3,7 @@ import { KeyRound, ArrowRight, AlertCircle, CheckCircle2, Crown, ExternalLink, X
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
-import { useSocialLinks } from '../utils/socialSettings';
+import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
 import { loginWithRealGoogle } from '../utils/firebase';
 
 function GoogleIcon({ className = "w-5 h-5" }) {
@@ -19,6 +19,9 @@ function GoogleIcon({ className = "w-5 h-5" }) {
 
 export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
   const SOCIAL_LINKS = useSocialLinks();
+  const telegramLink = getSocialLink(SOCIAL_LINKS, 'telegram');
+  const whatsappLink = getSocialLink(SOCIAL_LINKS, 'whatsapp');
+  const instagramLink = getSocialLink(SOCIAL_LINKS, 'instagram');
   const [pendingAuth, setPendingAuth] = useState(null);
   const isTrialExpired = Boolean(auth?.trialExpired || pendingAuth?.trialExpired);
   const isAlreadyLoggedIn = Boolean(auth?.valid || auth?.user);
@@ -482,7 +485,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
             
             {/* Telegram */}
             <a
-              href={SOCIAL_LINKS[0].url}
+              href={telegramLink.url}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => sounds.playClick()}
@@ -494,7 +497,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
                 </div>
                 <div>
                   <span className="text-xs font-bold text-white block leading-tight">Telegram</span>
-                  <span className="text-[10px] text-sky-400 font-mono">Free Picks</span>
+                  <span className="text-[10px] text-sky-400 font-mono">{telegramLink.label || 'Free Picks'}</span>
                 </div>
               </div>
               <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition shrink-0" />
@@ -502,7 +505,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
 
             {/* WhatsApp */}
             <a
-              href={SOCIAL_LINKS[1].url}
+              href={whatsappLink.url}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => sounds.playClick()}
@@ -514,7 +517,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
                 </div>
                 <div>
                   <span className="text-xs font-bold text-white block leading-tight">WhatsApp</span>
-                  <span className="text-[10px] text-emerald-400 font-mono">Grupo VIP</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">{whatsappLink.label || 'Grupo VIP'}</span>
                 </div>
               </div>
               <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition shrink-0" />
@@ -522,7 +525,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
 
             {/* Instagram */}
             <a
-              href={SOCIAL_LINKS[2].url}
+              href={instagramLink.url}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => sounds.playClick()}
@@ -534,7 +537,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
                 </div>
                 <div>
                   <span className="text-xs font-bold text-white block leading-tight">Instagram</span>
-                  <span className="text-[10px] text-pink-400 font-mono">@picks__777</span>
+                  <span className="text-[10px] text-pink-400 font-mono">{instagramLink.handle || instagramLink.label || '@picks__777'}</span>
                 </div>
               </div>
               <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition shrink-0" />

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { ExternalLink, X } from 'lucide-react';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
-import { useSocialLinks } from '../utils/socialSettings';
+import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
 import { sounds } from '../utils/audioEffects';
 
 export default function CommunityBanner() {
   const SOCIAL_LINKS = useSocialLinks();
+  const telegramLink = getSocialLink(SOCIAL_LINKS, 'telegram');
+  const whatsappLink = getSocialLink(SOCIAL_LINKS, 'whatsapp');
+  const instagramLink = getSocialLink(SOCIAL_LINKS, 'instagram');
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) return null;
@@ -39,7 +42,7 @@ export default function CommunityBanner() {
           
           {/* Telegram */}
           <a
-            href={SOCIAL_LINKS[0].url}
+            href={telegramLink.url}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => sounds.playClick()}
@@ -52,7 +55,7 @@ export default function CommunityBanner() {
 
           {/* WhatsApp */}
           <a
-            href={SOCIAL_LINKS[1].url}
+            href={whatsappLink.url}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => sounds.playClick()}
@@ -65,7 +68,7 @@ export default function CommunityBanner() {
 
           {/* Instagram */}
           <a
-            href={SOCIAL_LINKS[2].url}
+            href={instagramLink.url}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => sounds.playClick()}

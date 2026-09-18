@@ -1,11 +1,14 @@
 import React from 'react';
 import { ExternalLink, Flame, Sparkles } from 'lucide-react';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
-import { useSocialLinks } from '../utils/socialSettings';
+import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
 import { sounds } from '../utils/audioEffects';
 
 export default function FooterCommunityShowcase() {
   const SOCIAL_LINKS = useSocialLinks();
+  const telegramLink = getSocialLink(SOCIAL_LINKS, 'telegram');
+  const whatsappLink = getSocialLink(SOCIAL_LINKS, 'whatsapp');
+  const instagramLink = getSocialLink(SOCIAL_LINKS, 'instagram');
   const tipsters = [
     "Gallitovip", "Japo7ime", "Rodrigopicks", "Abuelo", 
     "Cristian rey", "Gran islam", "Hugowx"
@@ -41,7 +44,7 @@ export default function FooterCommunityShowcase() {
           {/* Left: The Reference Image with WhatsApp QR */}
           <div className="lg:col-span-5 flex justify-center">
             <a 
-              href={SOCIAL_LINKS[1].url}
+              href={whatsappLink.url}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => sounds.playClick()}
@@ -110,7 +113,7 @@ export default function FooterCommunityShowcase() {
                 
                 {/* WhatsApp */}
                 <a
-                  href={SOCIAL_LINKS[1].url}
+                  href={whatsappLink.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => sounds.playClick()}
@@ -122,7 +125,7 @@ export default function FooterCommunityShowcase() {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-white block">WhatsApp</span>
-                      <span className="text-[10px] text-[#25D366] font-mono">Entrar al Grupo</span>
+                      <span className="text-[10px] text-[#25D366] font-mono">{whatsappLink.label || 'Entrar al Grupo'}</span>
                     </div>
                   </div>
                   <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-white transition" />
@@ -130,7 +133,7 @@ export default function FooterCommunityShowcase() {
 
                 {/* Telegram */}
                 <a
-                  href={SOCIAL_LINKS[0].url}
+                  href={telegramLink.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => sounds.playClick()}
@@ -142,7 +145,7 @@ export default function FooterCommunityShowcase() {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-white block">Telegram</span>
-                      <span className="text-[10px] text-sky-400 font-mono">Canal Free Picks</span>
+                      <span className="text-[10px] text-sky-400 font-mono">{telegramLink.label || 'Canal Free Picks'}</span>
                     </div>
                   </div>
                   <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-white transition" />
@@ -150,7 +153,7 @@ export default function FooterCommunityShowcase() {
 
                 {/* Instagram */}
                 <a
-                  href={SOCIAL_LINKS[2].url}
+                  href={instagramLink.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => sounds.playClick()}
@@ -162,7 +165,7 @@ export default function FooterCommunityShowcase() {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-white block">Instagram</span>
-                      <span className="text-[10px] text-pink-400 font-mono">@picks__777</span>
+                      <span className="text-[10px] text-pink-400 font-mono">{instagramLink.handle || instagramLink.label || '@picks__777'}</span>
                     </div>
                   </div>
                   <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-white transition" />
