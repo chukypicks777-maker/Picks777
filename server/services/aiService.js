@@ -180,9 +180,7 @@ export async function fetchProviderModels(provider = 'openrouter', apiKey = '', 
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'User-Agent': 'claude-cli/2.1.195 (external, cli)',
-          'x-app': 'cli',
-          'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'claude-code-20250219,oauth-2025-04-20'
+          'x-app': 'cli'
         },
         redirect: 'error',
         signal: AbortSignal.timeout(8000)
@@ -314,8 +312,6 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
   if (isAgentRouter) {
     headers['User-Agent'] = 'claude-cli/2.1.195 (external, cli)';
     headers['x-app'] = 'cli';
-    headers['anthropic-version'] = '2023-06-01';
-    headers['anthropic-beta'] = 'claude-code-20250219,oauth-2025-04-20';
   }
 
   if (normProvider === 'openrouter') {
@@ -366,6 +362,8 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
           cleanErr = `El modelo '${model}' no está habilitado en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
         } else if (cleanErr.includes('Budget pool quota has been exhausted') || cleanErr.includes('quota has been exhausted')) {
           cleanErr = `La cuota para '${model}' está agotada en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
+        } else if (cleanErr.includes('unauthorized client detected')) {
+          cleanErr = `Cliente no autorizado por AgentRouter. La solicitud debe realizarse a través del servidor del sistema con el modelo con cuota activa ('deepseek-v4-flash').`;
         }
       }
     } catch {}

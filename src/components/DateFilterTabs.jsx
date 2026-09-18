@@ -11,6 +11,7 @@ export default function DateFilterTabs({
   setSearchQuery,
   marketFilter,
   setMarketFilter,
+  onNavigate,
   liveCount = 0
 }) {
   const statusOptions = [
@@ -28,9 +29,11 @@ export default function DateFilterTabs({
   ];
 
   const markets = [
-    { id: 'all', label: 'Todos los Mercados' },
-    { id: 'safe', label: '💎 Picks Banqueros (Más Seguros)' },
+    { id: 'all', label: 'Todos los Mercados', path: '/' },
+    { id: 'safe', label: '⚡ Boost / Banqueros', path: '/boost' },
+    { id: 'goal', label: '⚽ Goles (Goal Hub)', path: '/goal' },
     { id: 'over', label: '+2.5 Goles (Over)' },
+    { id: 'btts', label: 'Ambos Anotan (BTTS)' },
   ];
 
   return (
@@ -113,11 +116,15 @@ export default function DateFilterTabs({
               key={m.id}
               onClick={() => {
                 sounds.playClick();
-                setMarketFilter(m.id);
+                if (onNavigate) {
+                  onNavigate(m.id);
+                } else {
+                  setMarketFilter(m.id);
+                }
               }}
               className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer whitespace-nowrap border shrink-0 ${
                 isSelected
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-semibold'
+                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-semibold shadow-[0_0_10px_rgba(16,185,129,0.2)]'
                   : 'bg-[#121620] border-white/[0.06] text-slate-400 hover:text-slate-200 hover:border-white/15'
               }`}
             >

@@ -1,4 +1,4 @@
-import { percent, roundDistribution } from '../utils/probability';
+import { percent, roundDistribution, validNumber } from '../utils/probability';
 import React from 'react';
 import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles, Lock, Crown } from 'lucide-react';
 import { formatOdds } from '../utils/oddsFormatter';
@@ -20,7 +20,48 @@ export default function MatchCard({
   const p = { ...base, ...roundDistribution({ homeWin: base.homeWin, draw: base.draw, awayWin: base.awayWin }) };
   const parlayCandidates = getTop3Opportunities(match).filter(p => Number.isFinite(p.odds) && p.odds > 1);
   const homeProb = percent(p.homeWin), drawProb = percent(p.draw), awayProb = percent(p.awayWin);
-  const over25Prob = percent(p.over25), over15Prob = percent(p.over15);
+  const over25Prob = percent(p.over25);
+  const over15Prob = (() => {
+    if (percent(p.over15) !== null) return percent(p.over15);
+    if (percent(match.model?.probabilities?.over15) !== null) return percent(match.model.probabilities.over15);
+    if (percent(match.probabilities?.over15) !== null) return percent(match.probabilities.over15);
+    const home = match.homeTeam || {};
+    const away = match.awayTeam || {};
+    const homeGP = Number.isFinite(home.gamesPlayed) ? home.gamesPlayed : (home.homeRecord ? (home.homeRecord.w + home.homeRecord.d + home.homeRecord.l) : null);
+    const awayGP = Number.isFinite(away.gamesPlayed) ? away.gamesPlayed : (away.awayRecord ? (away.awayRecord.w + away.awayRecord.d + away.awayRecord.l) : null);
+    if (Number.isFinite(homeGP) && homeGP > 0 && Number.isFinite(awayGP) && awayGP > 0 &&
+        Number.isFinite(home.goalsFor) && home.goalsFor >= 0 && Number.isFinite(home.goalsAgainst) && home.goalsAgainst >= 0 &&
+        Number.isFinite(away.goalsFor) && away.goalsFor >= 0 && Number.isFinite(away.goalsAgainst) && away.goalsAgainst >= 0) {
+      const totalLambda = (home.goalsFor / homeGP + away.goalsAgainst / awayGP) / 2 + (away.goalsFor / awayGP + home.goalsAgainst / homeGP) / 2;
+      if (totalLambda > 0 && totalLambda <= 20) {
+        const p0 = Math.exp(-totalLambda);
+        const p1 = totalLambda * Math.exp(-totalLambda);
+        return Math.round((1 - p0 - p1) * 100);
+      }
+    }
+    return null;
+  })();
+  const bttsProb = (() => {
+    if (percent(p.bttsYes) !== null) return percent(p.bttsYes);
+    if (percent(match.model?.probabilities?.bttsYes) !== null) return percent(match.model.probabilities.bttsYes);
+    if (percent(match.probabilities?.bttsYes) !== null) return percent(match.probabilities.bttsYes);
+    const home = match.homeTeam || {};
+    const away = match.awayTeam || {};
+    const homeGP = Number.isFinite(home.gamesPlayed) ? home.gamesPlayed : (home.homeRecord ? (home.homeRecord.w + home.homeRecord.d + home.homeRecord.l) : null);
+    const awayGP = Number.isFinite(away.gamesPlayed) ? away.gamesPlayed : (away.awayRecord ? (away.awayRecord.w + away.awayRecord.d + away.awayRecord.l) : null);
+    if (Number.isFinite(homeGP) && homeGP > 0 && Number.isFinite(awayGP) && awayGP > 0 &&
+        Number.isFinite(home.goalsFor) && home.goalsFor >= 0 && Number.isFinite(home.goalsAgainst) && home.goalsAgainst >= 0 &&
+        Number.isFinite(away.goalsFor) && away.goalsFor >= 0 && Number.isFinite(away.goalsAgainst) && away.goalsAgainst >= 0) {
+      const lambda = (home.goalsFor / homeGP + away.goalsAgainst / awayGP) / 2;
+      const mu = (away.goalsFor / awayGP + home.goalsAgainst / homeGP) / 2;
+      if (lambda > 0 && mu > 0 && lambda <= 10 && mu <= 10) {
+        const pHome = 1 - Math.exp(-lambda);
+        const pAway = 1 - Math.exp(-mu);
+        return Math.round(pHome * pAway * 100);
+      }
+    }
+    return null;
+  })();
   const bankerPick = getBestBankerPick(match);
   const isBankerMode = bankerRank != null;
   const displayPick = bankerPick?.selection || 'Sin datos suficientes';
@@ -170,15 +211,19 @@ export default function MatchCard({
             </div>
           )}
 
-          {/* Quick Stats Pills: Goles Over (+1.5 y +2.5) */}
-          <div className="grid grid-cols-2 gap-1.5 mb-3 text-center text-[10px] font-mono">
+          {/* Quick Stats Pills: Goles Over (+1.5, +2.5) y Ambos Anotan (BTTS) */}
+          <div className="grid grid-cols-3 gap-1.5 mb-3 text-center text-[10px] font-mono">
             <div className="bg-[#121824] p-1.5 rounded border border-white/5">
-              <span className="text-slate-400 block text-[9px]">+1.5 Over</span>
+              <span className="text-slate-400 block text-[9px] truncate">+1.5 Over</span>
               <span className="font-bold text-sky-300"><NumberCounter value={over15Prob} suffix="%" /></span>
             </div>
             <div className="bg-[#121824] p-1.5 rounded border border-white/5">
-              <span className="text-slate-400 block text-[9px]">+2.5 Over</span>
+              <span className="text-slate-400 block text-[9px] truncate">+2.5 Over</span>
               <span className="font-bold text-emerald-400"><NumberCounter value={over25Prob} suffix="%" /></span>
+            </div>
+            <div className="bg-[#121824] p-1.5 rounded border border-white/5">
+              <span className="text-slate-400 block text-[9px] truncate" title="Ambos Anotan (BTTS)">Ambos Anotan</span>
+              <span className="font-bold text-amber-300"><NumberCounter value={bttsProb} suffix="%" /></span>
             </div>
           </div>
 

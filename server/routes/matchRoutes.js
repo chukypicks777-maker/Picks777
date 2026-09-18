@@ -59,7 +59,13 @@ router.get('/boost', async (req, res) => {
   } catch {}
   const boostMatches = list
     .filter(m => m.status !== 'FINISHED')
-    .sort((a, b) => ((b.model?.probabilities?.confidence ?? b.probabilities?.confidence ?? 0) - (a.model?.probabilities?.confidence ?? a.probabilities?.confidence ?? 0)))
+    .sort((a, b) => {
+      const pA = a.model?.probabilities || a.probabilities || {};
+      const pB = b.model?.probabilities || b.probabilities || {};
+      const valA = pA.confidence ?? Math.max(pA.homeWin ?? 0, pA.awayWin ?? 0, pA.over15 ?? 0);
+      const valB = pB.confidence ?? Math.max(pB.homeWin ?? 0, pB.awayWin ?? 0, pB.over15 ?? 0);
+      return valB - valA;
+    })
     .slice(0, 10);
   res.json({ success: true, count: boostMatches.length, matches: boostMatches, coverage: feed.coverage });
 });
@@ -73,8 +79,15 @@ router.get('/goal', async (req, res) => {
     if (Object.keys(req.query || {}).length > 0) list = filterMatches(list, req.query);
   } catch {}
   const goalMatches = list
-    .filter(m => m.status !== 'FINISHED' && (m.probabilities?.over25 != null || m.probabilities?.over15 != null))
-    .sort((a, b) => (((b.probabilities?.over15 ?? 0) + (b.probabilities?.over25 ?? 0)) - ((a.probabilities?.over15 ?? 0) + (a.probabilities?.over25 ?? 0))));
+    .filter(m => {
+      const p = m.model?.probabilities || m.probabilities;
+      return m.status !== 'FINISHED' && p && (p.over25 != null || p.over15 != null);
+    })
+    .sort((a, b) => {
+      const pA = a.model?.probabilities || a.probabilities || {};
+      const pB = b.model?.probabilities || b.probabilities || {};
+      return (((pB.over15 ?? 0) + (pB.over25 ?? 0)) - ((pA.over15 ?? 0) + (pA.over25 ?? 0)));
+    });
   res.json({ success: true, count: goalMatches.length, matches: goalMatches, coverage: feed.coverage });
 });
 router.get('/:id', async (req, res) => {
