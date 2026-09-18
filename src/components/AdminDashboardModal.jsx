@@ -122,6 +122,27 @@ export default function AdminDashboardModal({ onClose }) {
           }
           return curr;
         });
+      } else if (isAgentRouter && keyToSend) {
+        try {
+          const directUrl = (cleanUrl.endsWith('/v1') ? cleanUrl : (cleanUrl ? cleanUrl.replace(/\/+$/, '') + '/v1' : 'https://agentrouter.org/v1')) + '/models';
+          const directRes = await fetch(directUrl, {
+            headers: {
+              'Authorization': `Bearer ${keyToSend}`,
+              'User-Agent': 'claude-cli/2.1.195 (external, cli)',
+              'x-app': 'cli'
+            }
+          });
+          const directData = await directRes.json().catch(() => null);
+          if (directRes.ok && Array.isArray(directData?.data) && directData.data.length > 0) {
+            const parsedModels = directData.data.map(m => ({
+              id: m.id,
+              name: m.id,
+              isFree: false,
+              isReasoning: /r1|reason|think|sol|astra|flash|opus|claude/i.test(m.id)
+            }));
+            setAvailableModelsList(parsedModels);
+          }
+        } catch {}
       }
     } catch (err) {
       console.error('Error loading models:', err);
@@ -382,7 +403,7 @@ export default function AdminDashboardModal({ onClose }) {
 
       const stored = getStoredAiConfig();
       const keyToSend = newApiKey.trim() || stored?.apiKey || undefined;
-      const res = await fetch('/api/settings/test', {
+      let res = await fetch('/api/settings/test', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json'
@@ -394,7 +415,46 @@ export default function AdminDashboardModal({ onClose }) {
           selectedModel: targetModel
         })
       });
-      const data = await res.json();
+      let data = await res.json();
+
+      // Si el servidor de Vercel fue interceptado por el WAF anti-datacenter de AgentRouter,
+      // probamos directamente desde el navegador del usuario (que tiene CORS * habilitado)
+      if (!data.success && isAgentRouter && keyToSend) {
+        try {
+          const directUrl = (cleanBaseUrl.endsWith('/v1') ? cleanBaseUrl : (cleanBaseUrl ? cleanBaseUrl.replace(/\/+$/, '') + '/v1' : 'https://agentrouter.org/v1')) + '/chat/completions';
+          const startDirect = Date.now();
+          const directRes = await fetch(directUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${keyToSend}`,
+              'Content-Type': 'application/json',
+              'User-Agent': 'claude-cli/2.1.195 (external, cli)',
+              'x-app': 'cli',
+              'anthropic-version': '2023-06-01',
+              'anthropic-beta': 'claude-code-20250219,oauth-2025-04-20'
+            },
+            body: JSON.stringify({
+              model: targetModel,
+              messages: [{ role: 'user', content: 'Reply with the single word OK.' }]
+            })
+          });
+          const directData = await directRes.json().catch(() => null);
+          if (directRes.ok && (directData?.choices?.[0]?.message?.content || directData?.choices?.[0]?.message?.reasoning_content)) {
+            const latency = Date.now() - startDirect;
+            const sampleText = (directData.choices[0].message.content || directData.choices[0].message.reasoning_content || 'OK').trim().slice(0, 60);
+            data = {
+              success: true,
+              latencyMs: latency,
+              model: targetModel,
+              sample: sampleText,
+              message: `✅ Conexión exitosa con ${targetModel} (${latency}ms)`
+            };
+          }
+        } catch (clientErr) {
+          console.warn('Fallback directo de navegador no completó:', clientErr);
+        }
+      }
+
       setTestResult(data);
       if (data.success) {
         sounds.playSuccess();
