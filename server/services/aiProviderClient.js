@@ -29,7 +29,8 @@ async function requestJson(url, { apiKey, ...options }) {
     if (apiKey) detail = detail.split(apiKey).join('[clave oculta]');
     detail = detail.replace(/Bearer\s+\S+|sk-[\w-]+/gi, '[clave oculta]').replace(/<[^>]*>/g, '').slice(0, 350);
     let code = 'PROVIDER_ERROR', hint = '';
-    if (response.status === 401) { code = 'AUTH_ERROR'; hint = 'Revisa la clave de este proveedor.'; }
+    if (/unauthorized client/i.test(detail)) { code = 'CLIENT_NOT_AUTHORIZED'; hint = 'El proveedor no autoriza este cliente. Solicita a su soporte habilitar el acceso desde tu aplicación; guardar otra vez la clave no elimina este bloqueo.'; }
+    else if (response.status === 401) { code = 'AUTH_ERROR'; hint = 'Revisa la clave de este proveedor.'; }
     else if (response.status === 403) { code = 'ACCESS_DENIED'; hint = 'El proveedor denegó el acceso.'; }
     else if (response.status === 429) { code = 'RATE_LIMIT'; hint = 'El proveedor indica un límite de solicitudes o cuota.'; }
     else if (response.status === 402 || /quota|budget|余额|额度/i.test(detail)) { code = 'QUOTA_ERROR'; hint = 'Revisa la cuota del token y del modelo en el proveedor.'; }

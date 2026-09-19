@@ -51,10 +51,10 @@ export const PROVIDER_PRESETS = {
     name: 'Agent Router',
     icon: '🤖',
     badge: 'Multi-LLM Gateway',
-    defaultBaseUrl: 'https://co.agentrouter.org/v1',
+    defaultBaseUrl: 'https://agentrouter.org/v1',
     defaultModel: '',
     keyPlaceholder: 'sk-...',
-    keyHelp: 'Consulta los modelos habilitados para tu token. Endpoint documentado: https://co.agentrouter.org/v1'
+    keyHelp: 'Usa la URL asociada a tu token. Una clave de agentrouter.org no necesariamente sirve en co.agentrouter.org.'
   },
   custom: {
     id: 'custom',

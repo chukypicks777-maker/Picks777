@@ -76,6 +76,7 @@ test('WAF, quota, auth, timeout and malformed responses are not success and do n
   for (const [upstream, expected] of [
     [new Response('<!DOCTYPE html>AliyunCaptcha', { status: 403 }), 'WAF_CHALLENGE'],
     [json({ error: { message: 'Token invalid test-secret-only' } }, 401), 'AUTH_ERROR'],
+    [json({ error: { message: 'unauthorized client detected' } }, 401), 'CLIENT_NOT_AUTHORIZED'],
     [json({ error: { message: 'Budget pool quota has been exhausted' } }, 402), 'QUOTA_ERROR'],
     [json({ error: { message: 'rate limit' } }, 429), 'RATE_LIMIT'],
     [new Response('not json'), 'INVALID_RESPONSE'],

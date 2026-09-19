@@ -53,6 +53,16 @@ test('settings HTTP flow saves, reopens and tests the same key; provider switche
     const catalog = await request('/api/settings/models', unchanged);
     assert.equal(catalog.data.success, false); assert.equal(catalog.data.upstreamStatus, 401);
     assert.equal(catalog.data.models, undefined);
+    const pending = await request('/api/settings/update', { ...unchanged, selectedModel: '', modelName: '' });
+    assert.equal(pending.data.success, true);
+    const reopened = (await request('/api/settings')).data.settings;
+    assert.equal(reopened.isConfigured, true);
+    assert.equal(reopened.selectedModel, '');
+    assert.equal(reopened.modelName, '');
+    assert.equal((await storage.getAiConfig()).apiKey, config.apiKey);
+    const noModelCount = outbound.length;
+    assert.equal((await request('/api/settings/test', {})).data.code, 'MISSING_MODEL');
+    assert.equal(outbound.length, noModelCount);
   } finally {
     await new Promise(resolve => server.close(resolve));
     storage.file = originalFile;

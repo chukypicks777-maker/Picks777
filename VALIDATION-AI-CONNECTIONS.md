@@ -12,7 +12,7 @@
 
 Catálogos obtenidos únicamente de la API, errores diferenciados con estado HTTP, selección de modelo explícita, claves asociadas al proveedor y URL normalizados, guardado confirmado por servidor y sin claves en localStorage. Una prueba exitosa exige texto final del proveedor; el razonamiento sin respuesta no cuenta como éxito.
 
-Una solicitud por prueba, con límite de 45 segundos. Gemini usa su API nativa; Claude en AgentRouter usa Messages; los demás usan Chat Completions. No se modifican automáticamente URLs ya guardadas. Para nuevas configuraciones de AgentRouter se propone el endpoint de su guía actual: https://co.agentrouter.org/portal/guide. La compatibilidad de la clave con ese endpoint debe comprobarse.
+Una solicitud por prueba, con límite de 45 segundos. Gemini usa su API nativa; Claude en AgentRouter usa Messages; los demás usan Chat Completions. No se modifican automáticamente URLs ya guardadas. El preset de AgentRouter usa agentrouter.org, donde se emiten los tokens enlazados desde el panel. No se presupone que esos tokens sean válidos en co.agentrouter.org.
 
 ## Verificación
 
@@ -23,3 +23,11 @@ Una solicitud por prueba, con límite de 45 segundos. Gemini usa su API nativa; 
 - Sesión real en la versión publicada, sin guardar cambios: el endpoint original de AgentRouter continuó mostrando el bloqueo del proveedor; el endpoint alternativo devolvió un error de autenticación. Se restauró el endpoint original en el formulario.
 
 No se obtuvo una respuesta de generación exitosa con una clave real usando la versión corregida. Las pruebas automáticas no demuestran disponibilidad, cuota ni autenticación de una cuenta real. Las credenciales no se incluyen en estos archivos.
+
+## Seguimiento: persistencia de la clave sin catálogo
+
+El guardado ya no exige un modelo: conserva explícitamente el modelo vacío y permite guardar la clave del servidor cuando el proveedor bloquea su catálogo. La prueba de generación sigue exigiendo un modelo y no realiza llamadas con un modelo pendiente. El panel diferencia esta situación.
+
+Prueba directa con la clave proporcionada por el titular: agentrouter.org devolvió HTTP 401 con `unauthorized client detected` tanto al consultar modelos como al intentar la generación. co.agentrouter.org devolvió HTTP 401 `Invalid API Key`. El primer error se clasifica ahora como cliente no autorizado, sin asegurar que la clave sea inválida. No se obtuvo una generación exitosa ni se modificaron las protecciones del proveedor.
+
+Verificación: 44 tests aprobados, incluyendo guardar/reabrir la clave con modelo pendiente y ausencia de llamadas de generación sin modelo; lint limpio y build correcto.

@@ -280,7 +280,9 @@ export default function AdminDashboardModal({ onClose }) {
       setBaseUrl(data.settings.baseUrl);
       setNewApiKey('');
       saveStoredAiConfig({ ...data.settings, apiKey: '' });
-      setSavedSettingsMsg('Configuración guardada en el servidor. Usa Probar Conexión para verificarla.');
+      setSavedSettingsMsg(data.settings.selectedModel
+        ? 'Configuración predeterminada guardada en el servidor. Usa Probar Conexión para verificarla.'
+        : 'Clave predeterminada guardada en el servidor. Falta seleccionar un modelo cuando el proveedor permita el acceso.');
       sounds.playSuccess();
     } catch (error) {
       setTestResult({ success: false, message: error.message || 'No se pudo guardar la configuración en el servidor.' });
@@ -701,7 +703,7 @@ export default function AdminDashboardModal({ onClose }) {
                     </h4>
                     <p className="text-[11px] text-slate-400 font-mono mt-0.5">
                       {settings.isConfigured 
-                        ? `Proveedor guardado: ${settings.provider?.toUpperCase()} • Modelo: ${settings.selectedModel}`
+                        ? `Proveedor guardado: ${settings.provider?.toUpperCase()} • Modelo: ${settings.selectedModel || 'Pendiente de seleccionar'}`
                         : 'Sin clave configurada. Los pronósticos usan análisis cuantitativo y Poisson.'}
                     </p>
                   </div>
@@ -905,7 +907,7 @@ export default function AdminDashboardModal({ onClose }) {
                   </div>
 
                   {modelsError && <p role="alert" className="text-xs text-amber-300 break-words">{modelsError}</p>}
-                  {provider === 'agentrouter' && <p className="text-xs text-slate-400">Endpoint de la guía actual: https://co.agentrouter.org/v1. Si cambias la URL, vuelve a pegar la clave para ese destino.</p>}
+                  {provider === 'agentrouter' && <p className="text-xs text-slate-400">Puedes guardar la clave aunque el catálogo no responda. Si el proveedor bloquea el acceso, debe habilitar la integración. No cambies a otro endpoint sin confirmar que acepta tu token.</p>}
                   {/* Modelo elegido en el formulario */}
                   <div className="p-3 bg-[#0d1424] rounded-xl border border-sky-500/30 flex items-center justify-between">
                     <div className="flex items-center space-x-2.5 min-w-0">
