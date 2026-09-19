@@ -85,7 +85,6 @@ router.post('/update', async (req, res) => {
     const current = await getEffectiveAiConfig();
     const { provider, apiKey, baseUrl, selectedModel, modelName } = resolveAiConfig(req.body, current);
     if (!apiKey) throw new Error('Ingresa la clave API de este proveedor antes de guardar.');
-    if (!selectedModel) throw new Error('Selecciona o escribe el ID del modelo antes de guardar.');
     const updated = await storage.updateAiConfig({
       provider,
       apiKey,

@@ -283,13 +283,13 @@ export class StorageManager {
     return this.transaction(db => {
       const existing = db.aiConfig || {};
       const newApiKey = updates.apiKey !== undefined && updates.apiKey !== null ? String(updates.apiKey).trim() : existing.apiKey;
-      const selectedModel = String(updates.selectedModel || existing.selectedModel || 'nvidia/nemotron-3.5-lightning:free').trim();
+      const selectedModel = String(updates.selectedModel ?? existing.selectedModel ?? '').trim();
       db.aiConfig = {
         provider: String(updates.provider || existing.provider || 'openrouter').trim().toLowerCase(),
         apiKey: newApiKey || '',
         baseUrl: String(updates.baseUrl || existing.baseUrl || 'https://openrouter.ai/api/v1').trim(),
         selectedModel,
-        modelName: String(updates.modelName || existing.modelName || selectedModel).trim(),
+        modelName: String(updates.modelName ?? existing.modelName ?? selectedModel).trim(),
         updatedAt: new Date().toISOString()
       };
       if (db.settings) {
