@@ -51,30 +51,22 @@ export const PROVIDER_PRESETS = {
     name: 'Agent Router',
     icon: '🤖',
     badge: 'Multi-LLM Gateway',
-    defaultBaseUrl: 'https://agentrouter.org/v1',
-    defaultModel: 'deepseek-v4-flash',
+    defaultBaseUrl: 'https://co.agentrouter.org/v1',
+    defaultModel: '',
     keyPlaceholder: 'sk-...',
-    keyHelp: 'Compatible con https://agentrouter.org/ (Consola: agentrouter.org/console - Modelo con cuota: deepseek-v4-flash)'
+    keyHelp: 'Consulta los modelos habilitados para tu token. Endpoint documentado: https://co.agentrouter.org/v1'
   },
   custom: {
     id: 'custom',
     name: 'Personalizado / 3ros',
     icon: '🛠️',
     badge: 'Cualquier API OpenAI',
-    defaultBaseUrl: 'https://agentrouter.org/v1',
-    defaultModel: 'deepseek-v4-flash',
+    defaultBaseUrl: '',
+    defaultModel: '',
     keyPlaceholder: 'sk-...',
-    keyHelp: 'Compatible con AgentRouter (https://agentrouter.org/v1), GLM, Ollama, Together AI, Mistral...'
+    keyHelp: 'API compatible con Chat Completions. Usa la URL base HTTPS pública y el ID del modelo de tu proveedor.'
   }
 };
-
-export const AGENTROUTER_KNOWN_MODELS = [
-  { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash (AgentRouter) [Cuota Activa]', isReasoning: true, hasQuota: true },
-  { id: 'claude-opus-5', name: 'Claude Opus 5 (AgentRouter)', isReasoning: false, hasQuota: false },
-  { id: 'claude-opus-4-8', name: 'Claude Opus 4.8 (AgentRouter)', isReasoning: false, hasQuota: false },
-  { id: 'deepseek-chat', name: 'DeepSeek Chat (AgentRouter)', isReasoning: false, hasQuota: false },
-  { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner R1 (AgentRouter)', isReasoning: true, hasQuota: false }
-];
 
 /**
  * Modelos destacados de razonamiento rápido y profundo

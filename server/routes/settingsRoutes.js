@@ -3,7 +3,7 @@ import { requireAdmin } from '../session.js';
 import { storage, maskApiKey } from '../storage.js';
 import { fetchProviderModels, testAiConnection, getEffectiveAiConfig } from '../services/aiService.js';
 import { clearCachePattern } from '../services/dataCache.js';
-import { validateAiConfig } from '../security.js';
+import { resolveAiConfig } from '../security.js';
 
 const router = express.Router();
 
@@ -66,18 +66,7 @@ router.get('/', async (req, res) => {
 router.post('/models', async (req, res) => {
   try {
     const current = await getEffectiveAiConfig();
-    let provider = req.body?.provider || current.provider || 'openrouter';
-    let apiKey = req.body?.apiKey || (provider === current.provider ? current.apiKey : '');
-    let baseUrl = req.body?.baseUrl || current.baseUrl || '';
-
-    if (baseUrl) {
-      try {
-        const validated = validateAiConfig({ provider, apiKey: apiKey || 'dummy-key-safe', baseUrl });
-        provider = validated.provider;
-        baseUrl = validated.baseUrl;
-      } catch {}
-    }
-
+    const { provider, apiKey, baseUrl } = resolveAiConfig(req.body, current);
     const models = await fetchProviderModels(provider, apiKey, baseUrl);
     res.json({
       success: true,
@@ -85,18 +74,21 @@ router.post('/models', async (req, res) => {
       count: models.length,
       models
     });
-  } catch {
-    res.status(500).json({ success: false, message: 'Error al consultar modelos del proveedor.' });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message, code: error.code, upstreamStatus: error.status });
   }
 });
 
 // POST /api/settings/update - Guarda la configuración de IA de forma segura
 router.post('/update', async (req, res) => {
   try {
-    const { provider, apiKey, baseUrl, selectedModel, modelName } = validateAiConfig(req.body);
+    const current = await getEffectiveAiConfig();
+    const { provider, apiKey, baseUrl, selectedModel, modelName } = resolveAiConfig(req.body, current);
+    if (!apiKey) throw new Error('Ingresa la clave API de este proveedor antes de guardar.');
+    if (!selectedModel) throw new Error('Selecciona o escribe el ID del modelo antes de guardar.');
     const updated = await storage.updateAiConfig({
       provider,
-      apiKey: apiKey !== undefined && apiKey !== null && apiKey !== '' ? apiKey.trim() : undefined,
+      apiKey,
       baseUrl,
       selectedModel,
       modelName
@@ -127,19 +119,8 @@ router.post('/update', async (req, res) => {
 router.post('/test', async (req, res) => {
   try {
     const current = await getEffectiveAiConfig();
-    let provider = req.body?.provider || current.provider || 'openrouter';
-    let apiKey = (req.body?.apiKey && typeof req.body.apiKey === 'string' && req.body.apiKey.trim())
-      ? req.body.apiKey.trim()
-      : (current.apiKey || '');
-    let baseUrl = req.body?.baseUrl || current.baseUrl || '';
-    let selectedModel = req.body?.selectedModel || current.selectedModel || '';
-
-    const validated = validateAiConfig({ provider, apiKey, baseUrl, selectedModel });
-    provider = validated.provider;
-    baseUrl = validated.baseUrl;
-    selectedModel = validated.selectedModel;
-
-    const result = await testAiConnection({ provider, apiKey, baseUrl, selectedModel });
+    const config = resolveAiConfig(req.body, current);
+    const result = await testAiConnection(config);
     res.json(result);
   } catch (err) {
     res.status(400).json({ success: false, message: err.message || 'No se pudo conectar con el proveedor autorizado.' });

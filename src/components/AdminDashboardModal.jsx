@@ -1,5 +1,5 @@
 import AdminGroups from './AdminGroups';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   X, 
   Crown, 
@@ -22,8 +22,8 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
-import { PROVIDER_PRESETS, AGENTROUTER_KNOWN_MODELS } from '../constants/aiProviders';
-import { getStoredAiConfig, saveStoredAiConfig, maskKey, sanitizeApiKey } from '../utils/aiSettings';
+import { PROVIDER_PRESETS } from '../constants/aiProviders';
+import { getStoredAiConfig, saveStoredAiConfig, sanitizeApiKey } from '../utils/aiSettings';
 
 
 export default function AdminDashboardModal({ onClose }) {
@@ -63,6 +63,8 @@ export default function AdminDashboardModal({ onClose }) {
   // Models catalog states
   const [availableModelsList, setAvailableModelsList] = useState([]);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [modelsError, setModelsError] = useState('');
+  const modelRequest = useRef(0);
   const [modelSearchQuery, setModelSearchQuery] = useState('');
   const [modelCategoryFilter, setModelCategoryFilter] = useState('all');
 
@@ -88,109 +90,47 @@ export default function AdminDashboardModal({ onClose }) {
   }, []);
 
   const fetchModelsForProvider = useCallback(async (p = 'openrouter', key = '', url = '') => {
+    const request = ++modelRequest.current;
     setLoadingModels(true);
-    let cleanUrl = (url || '').trim();
-    if (cleanUrl.includes('agentrouter.org')) {
-      const cleanNoTrailing = cleanUrl.replace(/\/+$/, '');
-      cleanUrl = cleanNoTrailing.endsWith('/v1') ? cleanNoTrailing : `${cleanNoTrailing}/v1`;
-    }
-    let effectiveProvider = p;
-    if (cleanUrl.includes('agentrouter.org')) {
-      effectiveProvider = 'agentrouter';
-    }
-    const isAgentRouter = effectiveProvider === 'agentrouter';
-    
-    if (isAgentRouter) {
-      setAvailableModelsList(AGENTROUTER_KNOWN_MODELS);
-      setNewModel(curr => {
-        if (!curr || curr === 'gpt-4o-mini' || curr.startsWith('~') || curr.includes(':free') || curr.includes('nemotron')) {
-          return 'deepseek-v4-flash';
-        }
-        return curr;
-      });
-    } else {
-      setAvailableModelsList([]);
-    }
-
+    setAvailableModelsList([]);
+    setModelsError('');
     try {
-      const stored = getStoredAiConfig();
-      const keyToSend = sanitizeApiKey(key) || (stored?.provider === effectiveProvider ? sanitizeApiKey(stored.apiKey) : '');
       const res = await fetch('/api/settings/models', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: effectiveProvider, apiKey: keyToSend, baseUrl: cleanUrl })
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: p, apiKey: sanitizeApiKey(key) || undefined, baseUrl: url })
       });
       const data = await res.json();
-      if (data.success && Array.isArray(data.models) && data.models.length > 0) {
-        const enriched = data.models.map(m => ({
-          ...m,
-          hasQuota: m.id === 'deepseek-v4-flash'
-        }));
-        setAvailableModelsList(enriched);
-        setNewModel(curr => {
-          const exists = enriched.some(m => m.id === curr);
-          if (!exists || curr === 'gpt-4o-mini' || curr.startsWith('~') || (isAgentRouter && (curr.includes(':free') || curr.includes('nemotron')))) {
-            const preferred = enriched.find(m => m.id === 'deepseek-v4-flash') || enriched[0];
-            return preferred.id;
-          }
-          return curr;
-        });
-      }
-    } catch (err) {
-      console.error('Error loading models:', err);
+      if (!res.ok || !data.success) throw new Error(data.message || `No se pudo consultar el catálogo (HTTP ${res.status}).`);
+      if (request !== modelRequest.current) return;
+      setAvailableModelsList(data.models || []);
+      if (!data.models?.length) setModelsError('El proveedor devolvió un catálogo vacío. Puedes escribir el ID del modelo manualmente.');
+    } catch (error) {
+      if (request === modelRequest.current) setModelsError(error.message || 'No se pudo consultar el catálogo.');
     } finally {
-      setLoadingModels(false);
+      if (request === modelRequest.current) setLoadingModels(false);
     }
   }, []);
 
   const fetchSettings = useCallback(async () => {
     try {
-      const res = await fetch('/api/settings', {
-        credentials: 'same-origin',
-        headers: { }
-      });
+      const res = await fetch('/api/settings', { credentials: 'same-origin' });
       const data = await res.json();
-      if (data.success && data.settings) {
-        const stored = getStoredAiConfig();
-        const effectiveConfigured = data.settings.isConfigured || Boolean(stored?.apiKey && stored.apiKey.length >= 4);
-        const effectiveMasked = data.settings.apiKeyMasked || (stored?.apiKey ? maskKey(stored.apiKey) : '');
-        setSettings({
-          ...data.settings,
-          isConfigured: effectiveConfigured,
-          apiKeyMasked: effectiveMasked
-        });
-        saveStoredAiConfig({
-          ...data.settings,
-          isConfigured: effectiveConfigured
-        });
-        const prov = data.settings.provider || stored?.provider || 'openrouter';
-        setProvider(prov);
-        let effectiveBase = data.settings.baseUrl || stored?.baseUrl || PROVIDER_PRESETS[prov]?.defaultBaseUrl || 'https://openrouter.ai/api/v1';
-        setBaseUrl(effectiveBase);
-        if (stored?.apiKey) {
-          setNewApiKey(prev => prev || stored.apiKey);
-        }
-        setNewModel(data.settings.selectedModel || stored?.selectedModel || PROVIDER_PRESETS[prov]?.defaultModel || 'nvidia/nemotron-3.5-lightning:free');
-        fetchModelsForProvider(prov, stored?.apiKey || '', effectiveBase);
-        return;
-      }
-    } catch {}
-    const stored = getStoredAiConfig();
-    if (stored) {
-      setSettings(prev => ({ 
-        ...prev, 
-        ...stored,
-        apiKeyMasked: stored.apiKey ? maskKey(stored.apiKey) : prev.apiKeyMasked,
-        isConfigured: Boolean(stored.apiKey && stored.apiKey.length >= 4)
-      }));
-      if (stored.provider) setProvider(stored.provider);
-      if (stored.baseUrl) setBaseUrl(stored.baseUrl);
-      if (stored.apiKey) setNewApiKey(prev => prev || stored.apiKey);
-      if (stored.selectedModel) setNewModel(stored.selectedModel);
-      fetchModelsForProvider(stored.provider || 'openrouter', stored.apiKey || '', stored.baseUrl || '');
+      if (!res.ok || !data.success || !data.settings) throw new Error(data.message || 'No se pudo cargar la configuración del servidor.');
+      setSettings(data.settings);
+      saveStoredAiConfig({ ...data.settings, apiKey: '' });
+      const prov = data.settings.provider || 'openrouter';
+      const url = data.settings.baseUrl || PROVIDER_PRESETS[prov]?.defaultBaseUrl || '';
+      setProvider(prov);
+      setBaseUrl(url);
+      setNewApiKey('');
+      setNewModel(data.settings.selectedModel || '');
+      fetchModelsForProvider(prov, '', url);
+    } catch (error) {
+      setModelsError(error.message || 'No se pudo cargar la configuración del servidor.');
     }
   }, [fetchModelsForProvider]);
+
+  const invalidateTest = () => { setTestResult(null); setSavedSettingsMsg(''); };
 
   useEffect(() => {
     let active = true;
@@ -203,7 +143,7 @@ export default function AdminDashboardModal({ onClose }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [fetchCodes, fetchSettings]);
 
   const handleGenerateBatch = async (e) => {
     e.preventDefault();
@@ -320,185 +260,48 @@ export default function AdminDashboardModal({ onClose }) {
     document.body.removeChild(link);
   };
 
+  const connectionInput = () => ({ provider, baseUrl: baseUrl.trim(),
+    selectedModel: customModelInput.trim() || newModel.trim(),
+    modelName: customModelInput.trim() || newModel.trim(), apiKey: sanitizeApiKey(newApiKey) || undefined });
+
   const handleSaveSettings = async (e) => {
-    if (e) e.preventDefault();
+    e?.preventDefault();
     setIsSaving(true);
     setSavedSettingsMsg('');
     try {
-      let cleanBaseUrl = (baseUrl || '').trim();
-      if (cleanBaseUrl.includes('agentrouter.org')) {
-        const noTrail = cleanBaseUrl.replace(/\/+$/, '');
-        cleanBaseUrl = noTrail.endsWith('/v1') ? noTrail : `${noTrail}/v1`;
-      }
-      let effectiveProvider = provider;
-      if (cleanBaseUrl.includes('agentrouter.org')) {
-        effectiveProvider = 'agentrouter';
-        if (provider !== 'agentrouter') setProvider('agentrouter');
-      } else if (cleanBaseUrl.includes('openrouter.ai') && effectiveProvider === 'agentrouter') {
-        effectiveProvider = 'openrouter';
-        if (provider !== 'openrouter') setProvider('openrouter');
-      }
-      const isAgentRouter = effectiveProvider === 'agentrouter';
-      let targetModel = customModelInput.trim() || newModel;
-      if (isAgentRouter && (!targetModel || targetModel === 'gpt-4o-mini' || targetModel.startsWith('~') || targetModel.includes(':free') || targetModel.includes('nemotron'))) {
-        targetModel = 'deepseek-v4-flash';
-        setNewModel('deepseek-v4-flash');
-      }
-
-      const cleanKey = sanitizeApiKey(newApiKey);
       const res = await fetch('/api/settings/update', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          provider: effectiveProvider,
-          selectedModel: targetModel,
-          modelName: targetModel,
-          baseUrl: cleanBaseUrl,
-          apiKey: cleanKey || undefined
-        })
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(connectionInput())
       });
       const data = await res.json();
-      if (data.success) {
-        sounds.playSuccess();
-        confetti({ particleCount: 35, spread: 50, origin: { y: 0.6 } });
-        setSavedSettingsMsg('Configuración del motor de IA guardada exitosamente.');
-        setSettings(data.settings);
-        saveStoredAiConfig({
-          provider: effectiveProvider,
-          selectedModel: targetModel,
-          modelName: targetModel,
-          baseUrl: cleanBaseUrl,
-          apiKey: cleanKey || newApiKey || undefined,
-          apiKeyMasked: data.settings?.apiKeyMasked,
-          isConfigured: data.settings?.isConfigured
-        });
-        setTimeout(() => setSavedSettingsMsg(''), 4000);
-      } else {
-        alert(data.message || 'Error al guardar la configuración.');
-      }
-    } catch {
-      let cleanBaseUrl = (baseUrl || '').trim();
-      if (cleanBaseUrl.includes('agentrouter.org')) {
-        const noTrail = cleanBaseUrl.replace(/\/+$/, '');
-        cleanBaseUrl = noTrail.endsWith('/v1') ? noTrail : `${noTrail}/v1`;
-      }
-      let effectiveProvider = provider;
-      if (cleanBaseUrl.includes('agentrouter.org')) {
-        effectiveProvider = 'agentrouter';
-        if (provider !== 'agentrouter') setProvider('agentrouter');
-      }
-      const isAgentRouter = effectiveProvider === 'agentrouter';
-      let targetModel = customModelInput.trim() || newModel;
-      if (isAgentRouter && (!targetModel || targetModel === 'gpt-4o-mini' || targetModel.startsWith('~') || targetModel.includes(':free') || targetModel.includes('nemotron'))) {
-        targetModel = 'deepseek-v4-flash';
-      }
-      saveStoredAiConfig({
-        provider: effectiveProvider,
-        selectedModel: targetModel,
-        modelName: targetModel,
-        baseUrl: cleanBaseUrl,
-        apiKey: newApiKey.trim() || undefined,
-        isConfigured: Boolean(newApiKey.trim() && newApiKey.trim().length >= 4)
-      });
-      setSavedSettingsMsg('Configuración de IA guardada localmente en la página.');
-      setTimeout(() => setSavedSettingsMsg(''), 4000);
-    } finally {
-      setIsSaving(false);
-    }
+      if (!res.ok || !data.success) throw new Error(data.message || `No se pudo guardar (HTTP ${res.status}).`);
+      setSettings(data.settings);
+      setProvider(data.settings.provider);
+      setBaseUrl(data.settings.baseUrl);
+      setNewApiKey('');
+      saveStoredAiConfig({ ...data.settings, apiKey: '' });
+      setSavedSettingsMsg('Configuración guardada en el servidor. Usa Probar Conexión para verificarla.');
+      sounds.playSuccess();
+    } catch (error) {
+      setTestResult({ success: false, message: error.message || 'No se pudo guardar la configuración en el servidor.' });
+    } finally { setIsSaving(false); }
   };
 
   const handleTestConnection = async () => {
     setIsTesting(true);
     setTestResult(null);
     try {
-      let cleanBaseUrl = (baseUrl || '').trim();
-      if (cleanBaseUrl.includes('agentrouter.org')) {
-        const noTrail = cleanBaseUrl.replace(/\/+$/, '');
-        cleanBaseUrl = noTrail.endsWith('/v1') ? noTrail : `${noTrail}/v1`;
-      }
-      let effectiveProvider = provider;
-      if (cleanBaseUrl.includes('agentrouter.org')) {
-        effectiveProvider = 'agentrouter';
-        if (provider !== 'agentrouter') setProvider('agentrouter');
-      } else if (cleanBaseUrl.includes('openrouter.ai') && effectiveProvider === 'agentrouter') {
-        effectiveProvider = 'openrouter';
-        if (provider !== 'openrouter') setProvider('openrouter');
-      }
-      const isAgentRouter = effectiveProvider === 'agentrouter';
-      let targetModel = customModelInput.trim() || newModel;
-      if (isAgentRouter && (!targetModel || targetModel === 'gpt-4o-mini' || targetModel.startsWith('~') || targetModel.includes(':free') || targetModel.includes('nemotron'))) {
-        targetModel = 'deepseek-v4-flash';
-        setNewModel('deepseek-v4-flash');
-      }
-
-      const stored = getStoredAiConfig();
-      const keyToSend = sanitizeApiKey(newApiKey) || sanitizeApiKey(stored?.apiKey) || undefined;
-
-      let data = null;
-      try {
-        let res = await fetch('/api/settings/test', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            provider: effectiveProvider,
-            apiKey: keyToSend,
-            baseUrl: cleanBaseUrl,
-            selectedModel: targetModel
-          })
-        });
-        data = await res.json();
-      } catch (fetchErr) {
-        console.error('Test connection fetch error:', fetchErr);
-      }
-
-      if (!data) {
-        data = { success: false, message: 'No se pudo contactar con el servidor. Verifica tu conexión de red.' };
-      }
-
-      if (!data.success && data.message) {
-        let msg = data.message;
-        if (msg.includes('aliyun_waf') || msg.includes('<!doctype') || msg.includes('WAF_CHALLENGE') || msg.includes('Status 200 (OK): <')) {
-          msg = `El firewall interceptó la conexión. Asegúrate de usar el modelo 'deepseek-v4-flash' con tu token de AgentRouter.`;
-        } else if (msg.includes('无可用渠道') || msg.includes('no available channel')) {
-          msg = `El modelo '${targetModel}' no está habilitado en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
-        } else if (msg.includes('Budget pool quota has been exhausted') || msg.includes('quota has been exhausted')) {
-          msg = `La cuota para '${targetModel}' está agotada en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash' que tiene saldo activo.`;
-        } else if (msg.includes('unauthorized client detected')) {
-          msg = `Cliente no autorizado por AgentRouter. Verifica tu token en https://agentrouter.org/console/token.`;
-        } else if (msg.includes('Invalid API Key') || msg.includes('无效的令牌') || msg.includes('Missing API Key') || msg.includes('401')) {
-          msg = `Clave API de AgentRouter inválida o expirada (HTTP 401). Entra a https://agentrouter.org/console/token (menú izquierdo: 'API 令牌'), genera o copia tu token 'sk-...' y pégalo aquí.`;
-        }
-        data = {
-          ...data,
-          message: msg.startsWith('⚠️') || msg.startsWith('✅') ? msg : `⚠️ ${msg}`
-        };
-      }
-
+      const res = await fetch('/api/settings/test', {
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(connectionInput())
+      });
+      let data;
+      try { data = await res.json(); } catch { throw new Error(`El servidor no devolvió JSON (HTTP ${res.status}). Intenta nuevamente.`); }
       setTestResult(data);
-      if (data.success) {
-        sounds.playSuccess();
-        saveStoredAiConfig({
-          provider: effectiveProvider,
-          selectedModel: data.model || targetModel,
-          modelName: data.model || targetModel,
-          baseUrl: cleanBaseUrl,
-          apiKey: keyToSend,
-          isConfigured: true
-        });
-      } else {
-        sounds.playClick();
-      }
-    } catch {
-      setTestResult({ success: false, message: 'Error al enviar petición de prueba. Verifica la URL y la conexión.' });
-    } finally {
-      setIsTesting(false);
-    }
+      if (data.success) sounds.playSuccess();
+    } catch (error) {
+      setTestResult({ success: false, message: error.message || 'No se pudo contactar con el servidor.' });
+    } finally { setIsTesting(false); }
   };
 
   const handleClearCache = async () => {
@@ -893,12 +696,12 @@ export default function AdminDashboardModal({ onClose }) {
                       <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
                         settings.isConfigured ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30' : 'bg-slate-800 text-slate-300 border border-white/10'
                       }`}>
-                        {settings.isConfigured ? 'CONECTADO' : 'MODO ESTADÍSTICO'}
+                        {settings.isConfigured ? 'CONFIGURACIÓN GUARDADA' : 'MODO ESTADÍSTICO'}
                       </span>
                     </h4>
                     <p className="text-[11px] text-slate-400 font-mono mt-0.5">
                       {settings.isConfigured 
-                        ? `Proveedor activo: ${settings.provider?.toUpperCase()} • Modelo: ${settings.selectedModel}`
+                        ? `Proveedor guardado: ${settings.provider?.toUpperCase()} • Modelo: ${settings.selectedModel}`
                         : 'Sin clave configurada. Los pronósticos usan análisis cuantitativo y Poisson.'}
                     </p>
                   </div>
@@ -913,7 +716,7 @@ export default function AdminDashboardModal({ onClose }) {
               </div>
 
               {/* Main Configuration Form */}
-              <div className="bg-[#111723] rounded-xl p-5 border border-white/10 space-y-4 font-mono text-xs">
+              <fieldset disabled={isTesting || isSaving} onChange={invalidateTest} className="min-w-0 bg-[#111723] rounded-xl p-5 border border-white/10 space-y-4 font-mono text-xs">
                 
                 {/* 1. Selector de Proveedor */}
                 <div>
@@ -930,11 +733,14 @@ export default function AdminDashboardModal({ onClose }) {
                           type="button"
                           onClick={() => {
                             sounds.playClick();
+                            invalidateTest();
                             setProvider(p.id);
                             setBaseUrl(p.defaultBaseUrl);
                             setNewModel(p.defaultModel);
                             setCustomModelInput('');
-                            fetchModelsForProvider(p.id, newApiKey || undefined, p.defaultBaseUrl);
+                            invalidateTest();
+                            setNewApiKey('');
+                            fetchModelsForProvider(p.id, '', p.defaultBaseUrl);
                           }}
                           className={`p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between space-y-1 ${
                             isSelected
@@ -972,6 +778,7 @@ export default function AdminDashboardModal({ onClose }) {
                           type="button"
                           onClick={() => {
                             sounds.playClick();
+                            invalidateTest();
                             setNewApiKey('');
                             const stored = getStoredAiConfig();
                             if (stored) {
@@ -984,7 +791,7 @@ export default function AdminDashboardModal({ onClose }) {
                         </button>
                       )}
                       <span className="text-[10px] text-slate-500 font-mono">
-                        {newApiKey ? '● Clave lista' : (settings.apiKeyMasked ? `Guardada: ${settings.apiKeyMasked}` : 'No configurada')}
+                        {newApiKey ? '● Clave lista' : ((settings.provider === provider && settings.baseUrl === baseUrl && settings.apiKeyMasked) ? `Guardada: ${settings.apiKeyMasked}` : 'No configurada')}
                       </span>
                     </div>
                   </div>
@@ -994,7 +801,7 @@ export default function AdminDashboardModal({ onClose }) {
                       type={showApiKey ? 'text' : 'password'}
                       value={newApiKey}
                       onChange={(e) => setNewApiKey(sanitizeApiKey(e.target.value))}
-                      placeholder={settings.apiKeyMasked ? `Clave guardada: ${settings.apiKeyMasked}` : (PROVIDER_PRESETS[provider]?.keyPlaceholder || 'sk-...')}
+                      placeholder={(settings.provider === provider && settings.baseUrl === baseUrl && settings.apiKeyMasked) ? `Clave guardada: ${settings.apiKeyMasked}` : (PROVIDER_PRESETS[provider]?.keyPlaceholder || 'sk-...')}
                       className="w-full pl-3 pr-10 py-2 bg-[#090d15] border border-white/10 rounded-lg text-white placeholder:text-slate-600 focus:outline-none focus:border-sky-400 transition font-mono text-xs"
                     />
                     <button
@@ -1036,7 +843,7 @@ export default function AdminDashboardModal({ onClose }) {
                       {newApiKey && newApiKey.startsWith('sk-') && (
                         <div className="p-1.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono flex items-center space-x-1">
                           <Check className="w-3 h-3 text-emerald-400" />
-                          <span>Formato de Token válido de AgentRouter (sk-...)</span>
+                          <span>Prefijo reconocido; falta verificar la conexión</span>
                         </div>
                       )}
                     </div>
@@ -1044,7 +851,7 @@ export default function AdminDashboardModal({ onClose }) {
 
                   <p className="text-[10px] text-slate-400 flex items-center justify-between">
                     <span>{PROVIDER_PRESETS[provider]?.keyHelp}</span>
-                    <span className="text-slate-500">Almacenada con cifrado en servidor</span>
+                    <span className="text-slate-500">Clave guardada en el servidor al pulsar Guardar</span>
                   </p>
                 </div>
 
@@ -1058,26 +865,12 @@ export default function AdminDashboardModal({ onClose }) {
                     type="text"
                     value={baseUrl}
                     onChange={(e) => {
-                      const val = e.target.value;
-                      setBaseUrl(val);
-                      if (val.includes('agentrouter.org')) {
-                        setProvider('agentrouter');
-                        setAvailableModelsList(AGENTROUTER_KNOWN_MODELS);
-                        setNewModel(curr => {
-                          if (!curr || curr === 'gpt-4o-mini' || curr.startsWith('~') || curr.includes(':free') || curr.includes('nemotron')) {
-                            return 'deepseek-v4-flash';
-                          }
-                          return curr;
-                        });
-                      } else if (val.includes('openrouter.ai')) {
-                        setProvider('openrouter');
-                      } else if (val.includes('deepseek.com')) {
-                        setProvider('deepseek');
-                      } else if (val.includes('groq.com')) {
-                        setProvider('groq');
-                      } else if (val.includes('generativelanguage.googleapis.com')) {
-                        setProvider('gemini');
-                      }
+                      setBaseUrl(e.target.value);
+                      setNewApiKey('');
+                      setAvailableModelsList([]);
+                      setModelsError('');
+                      modelRequest.current++;
+                      setLoadingModels(false);
                     }}
                     placeholder="https://api..."
                     className="w-full px-3 py-1.5 bg-[#090d15] border border-white/10 rounded-lg text-slate-300 font-mono text-xs focus:outline-none focus:border-indigo-400"
@@ -1093,7 +886,7 @@ export default function AdminDashboardModal({ onClose }) {
                         <span>4. Modelos Extraídos de la API ({availableModelsList.length}):</span>
                       </label>
                       <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                        Extraídos en vivo directamente de la cuenta del proveedor sin listas predefinidas
+                        El catálogo no confirma saldo ni permisos de uso. Compruébalos con Probar Conexión.
                       </p>
                     </div>
 
@@ -1111,7 +904,9 @@ export default function AdminDashboardModal({ onClose }) {
                     </button>
                   </div>
 
-                  {/* Banner de Modelo Actualmente Activo */}
+                  {modelsError && <p role="alert" className="text-xs text-amber-300 break-words">{modelsError}</p>}
+                  {provider === 'agentrouter' && <p className="text-xs text-slate-400">Endpoint de la guía actual: https://co.agentrouter.org/v1. Si cambias la URL, vuelve a pegar la clave para ese destino.</p>}
+                  {/* Modelo elegido en el formulario */}
                   <div className="p-3 bg-[#0d1424] rounded-xl border border-sky-500/30 flex items-center justify-between">
                     <div className="flex items-center space-x-2.5 min-w-0">
                       <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 shrink-0">
@@ -1127,7 +922,7 @@ export default function AdminDashboardModal({ onClose }) {
                       </div>
                     </div>
                     <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] font-bold font-mono shrink-0 ml-2">
-                      ACTIVO
+                      SELECCIONADO
                     </span>
                   </div>
 
@@ -1225,6 +1020,7 @@ export default function AdminDashboardModal({ onClose }) {
                               key={m.id}
                               onClick={() => {
                                 sounds.playClick();
+                                invalidateTest();
                                 setNewModel(m.id);
                                 setCustomModelInput('');
                               }}
@@ -1239,16 +1035,6 @@ export default function AdminDashboardModal({ onClose }) {
                                   <span className="font-bold text-xs text-white truncate font-sans">
                                     {m.name || m.id}
                                   </span>
-                                  {m.hasQuota && (
-                                    <span className="px-1.5 py-0.2 rounded bg-emerald-400/15 border border-emerald-400/40 text-emerald-300 text-[9px] font-mono font-bold">
-                                      Cuota Activa
-                                    </span>
-                                  )}
-                                  {m.hasQuota === false && (
-                                    <span className="px-1.5 py-0.2 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[9px] font-mono">
-                                      Sin saldo
-                                    </span>
-                                  )}
                                   {m.isReasoning && (
                                     <span className="px-1.5 py-0.2 rounded bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[9px] font-mono font-medium">
                                       Razonamiento
@@ -1304,6 +1090,7 @@ export default function AdminDashboardModal({ onClose }) {
                         <button
                           type="button"
                           onClick={() => {
+                            invalidateTest();
                             setNewModel(customModelInput.trim());
                             setCustomModelInput('');
                             sounds.playClick();
@@ -1380,7 +1167,7 @@ export default function AdminDashboardModal({ onClose }) {
                   </button>
                 </div>
 
-              </div>
+              </fieldset>
 
             </div>
           )}
