@@ -3,14 +3,21 @@ import { validateAiConfig } from '../security.js';
 import { PROVIDER_PRESETS } from '../../src/constants/aiProviders.js';
 import { CONFIG } from '../config.js';
 import { storage } from '../storage.js';
-import { cachedData } from './dataCache.js';
+import { cachedData, redisConfigured } from './dataCache.js';
 import { getTop3Opportunities } from '../../src/utils/mathProbabilities.js';
 
 import { fetchProviderModels, executeAiChatCompletion } from './aiProviderClient.js';
 export { fetchProviderModels, executeAiChatCompletion, testAiConnection } from './aiProviderClient.js';
 
 export async function getEffectiveAiConfig() {
-  const dbConfig = await storage.getAiConfig();
+  let dbConfig = await storage.getAiConfig();
+  if (process.env.AI_DEFAULT_CONFIG && ((!redisConfigured() && process.env.VERCEL) || !dbConfig?.apiKey)) {
+    try {
+      dbConfig = validateAiConfig(JSON.parse(process.env.AI_DEFAULT_CONFIG));
+    } catch {
+      throw new Error('La configuración privada predeterminada de IA no es válida.');
+    }
+  }
   const provider = String(dbConfig?.provider || 'openrouter').trim().toLowerCase();
   const preset = PROVIDER_PRESETS[provider] || PROVIDER_PRESETS.openrouter;
   const envKey = provider === 'openrouter' ? CONFIG.OPENROUTER_API_KEY : provider === 'gemini' ? process.env.GEMINI_API_KEY : '';

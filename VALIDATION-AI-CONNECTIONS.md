@@ -31,3 +31,9 @@ El guardado ya no exige un modelo: conserva explícitamente el modelo vacío y p
 Prueba directa con la clave proporcionada por el titular: agentrouter.org devolvió HTTP 401 con `unauthorized client detected` tanto al consultar modelos como al intentar la generación. co.agentrouter.org devolvió HTTP 401 `Invalid API Key`. El primer error se clasifica ahora como cliente no autorizado, sin asegurar que la clave sea inválida. No se obtuvo una generación exitosa ni se modificaron las protecciones del proveedor.
 
 Verificación: 44 tests aprobados, incluyendo guardar/reabrir la clave con modelo pendiente y ausencia de llamadas de generación sin modelo; lint limpio y build correcto.
+
+## Almacenamiento de producción confirmado
+
+La verificación después de recargar mostró que Vercel usaba `serverless-memory`: el archivo temporal no conservaba la clave entre instancias. Se añadió `AI_DEFAULT_CONFIG`, una variable secreta de producción con la configuración completa, como valor predeterminado duradero. En Vercel sin Redis tiene prioridad frente al archivo temporal. El panel rechaza nuevos guardados temporales para no afirmar una persistencia inexistente. Con Redis se mantiene el guardado normal en la base.
+
+La clave se configura desde Vercel, nunca en Git ni en el frontend. El estado de salud consulta la configuración efectiva. Validación ampliada: 45 pruebas aprobadas, lint limpio y compilación correcta.

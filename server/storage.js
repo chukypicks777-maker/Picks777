@@ -280,6 +280,9 @@ export class StorageManager {
     });
   }
   async updateAiConfig(updates = {}) {
+    if (process.env.VERCEL && !redisConfigured()) {
+      throw new Error('Este servidor no tiene almacenamiento permanente para cambios de IA. La configuración predeterminada se administra en las variables privadas de Vercel (AI_DEFAULT_CONFIG).');
+    }
     return this.transaction(db => {
       const existing = db.aiConfig || {};
       const newApiKey = updates.apiKey !== undefined && updates.apiKey !== null ? String(updates.apiKey).trim() : existing.apiKey;
