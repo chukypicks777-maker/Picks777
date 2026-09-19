@@ -27,18 +27,20 @@ export function validateAiConfig(input = {}) {
     }
   }
   let rawUrl = (input.baseUrl && typeof input.baseUrl === 'string' && input.baseUrl.trim()) ? input.baseUrl.trim() : PROVIDER_PRESETS[provider].defaultBaseUrl;
+  if (!rawUrl) throw new Error('Ingresa la URL base HTTPS del proveedor.');
   if (!/^https?:\/\//i.test(rawUrl)) {
     rawUrl = 'https://' + rawUrl;
   }
   const url = new URL(rawUrl);
   const h = url.hostname.toLowerCase();
+  url.pathname = url.pathname.replace(/\/(chat\/completions|models|messages)\/?$/, '').replace(/\/+$/, '') || '/';
 
   // Inferir automáticamente si el host pertenece a uno conocido
-  if (h === 'agentrouter.org' || h === 'co.agentrouter.org' || h.includes('agentrouter')) {
+  if (h === 'agentrouter.org' || h === 'co.agentrouter.org') {
     if (provider !== 'custom') {
       provider = 'agentrouter';
     }
-    if (url.pathname === '/' || url.pathname === '' || !url.pathname.includes('/v1')) {
+    if (url.pathname === '/' || url.pathname === '') {
       url.pathname = '/v1';
     }
   } else if (provider !== 'custom') {
@@ -79,15 +81,26 @@ export function validateAiConfig(input = {}) {
     }
   }
 
-  let selectedModel = input.selectedModel;
-  let modelName = input.modelName;
-  const isAgentRouter = provider === 'agentrouter' || h === 'agentrouter.org' || h === 'co.agentrouter.org';
-  if (isAgentRouter && (!selectedModel || selectedModel === 'gpt-4o-mini' || selectedModel.startsWith('~') || selectedModel.includes(':free') || selectedModel.includes('nemotron'))) {
-    selectedModel = 'deepseek-v4-flash';
-    if (!modelName || modelName === 'gpt-4o-mini' || modelName.startsWith('~') || modelName.includes(':free') || modelName.includes('nemotron')) modelName = 'deepseek-v4-flash';
-  }
+  const selectedModel = input.selectedModel?.trim();
+  const modelName = input.modelName?.trim();
 
   return { ...input, apiKey: cleanApiKey, provider, baseUrl: url.href.replace(/\/+$/, ''), selectedModel, modelName };
+}
+
+// A saved key belongs to one provider and API base, never to an arbitrary new host.
+export function resolveAiConfig(input = {}, current = {}) {
+  const provider = input.provider || current.provider || 'openrouter';
+  const target = validateAiConfig({ ...input, provider,
+    baseUrl: input.baseUrl || (provider === current.provider ? current.baseUrl : undefined) });
+  let sameDestination = false;
+  try {
+    const saved = validateAiConfig(current);
+    sameDestination = target.provider === saved.provider && target.baseUrl === saved.baseUrl;
+  } catch { /* No valid saved configuration. */ }
+  return { ...target,
+    apiKey: target.apiKey || (sameDestination ? current.apiKey : '') || '',
+    selectedModel: target.selectedModel ?? (sameDestination ? current.selectedModel : ''),
+    modelName: target.modelName ?? (sameDestination ? current.modelName : '') };
 }
 
 export function protectMutations(req, res, next) {
