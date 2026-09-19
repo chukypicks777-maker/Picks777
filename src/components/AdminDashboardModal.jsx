@@ -90,15 +90,12 @@ export default function AdminDashboardModal({ onClose }) {
   const fetchModelsForProvider = useCallback(async (p = 'openrouter', key = '', url = '') => {
     setLoadingModels(true);
     let cleanUrl = (url || '').trim();
-    if (cleanUrl.includes('agentrouter.org') || cleanUrl.includes('co.agentrouter.org')) {
-      if (cleanUrl.includes('agentrouter.org') && !cleanUrl.includes('co.agentrouter.org')) {
-        cleanUrl = cleanUrl.replace('agentrouter.org', 'co.agentrouter.org');
-      }
+    if (cleanUrl.includes('agentrouter.org')) {
       const cleanNoTrailing = cleanUrl.replace(/\/+$/, '');
       cleanUrl = cleanNoTrailing.endsWith('/v1') ? cleanNoTrailing : `${cleanNoTrailing}/v1`;
     }
     let effectiveProvider = p;
-    if (cleanUrl.includes('agentrouter.org') || cleanUrl.includes('co.agentrouter.org')) {
+    if (cleanUrl.includes('agentrouter.org')) {
       effectiveProvider = 'agentrouter';
     }
     const isAgentRouter = effectiveProvider === 'agentrouter';
@@ -117,7 +114,7 @@ export default function AdminDashboardModal({ onClose }) {
 
     try {
       const stored = getStoredAiConfig();
-      const keyToSend = key.trim() || (stored?.provider === effectiveProvider ? stored.apiKey : '');
+      const keyToSend = sanitizeApiKey(key) || (stored?.provider === effectiveProvider ? sanitizeApiKey(stored.apiKey) : '');
       const res = await fetch('/api/settings/models', {
         method: 'POST',
         credentials: 'same-origin',
@@ -139,31 +136,6 @@ export default function AdminDashboardModal({ onClose }) {
           }
           return curr;
         });
-      } else if (isAgentRouter && keyToSend) {
-        // Fallback directo desde el navegador usando el gateway oficial co.agentrouter.org
-        try {
-          const directBase = cleanUrl || 'https://co.agentrouter.org/v1';
-          const directRes = await fetch(`${directBase}/models`, {
-            headers: {
-              'Authorization': `Bearer ${keyToSend}`
-            }
-          });
-          const directJson = await directRes.json().catch(() => null);
-          if (directRes.ok && Array.isArray(directJson?.data) && directJson.data.length > 0) {
-            const parsedModels = directJson.data.map(m => {
-              const id = m.id;
-              const hasQuota = id === 'deepseek-v4-flash';
-              return {
-                id,
-                name: `${id}${hasQuota ? ' [Cuota Activa]' : ''}`,
-                isFree: false,
-                hasQuota,
-                isReasoning: /r1|reason|think|sol|astra|flash|opus|claude/i.test(id)
-              };
-            });
-            setAvailableModelsList(parsedModels);
-          }
-        } catch {}
       }
     } catch (err) {
       console.error('Error loading models:', err);
@@ -196,8 +168,8 @@ export default function AdminDashboardModal({ onClose }) {
         setProvider(prov);
         let effectiveBase = data.settings.baseUrl || stored?.baseUrl || PROVIDER_PRESETS[prov]?.defaultBaseUrl || 'https://openrouter.ai/api/v1';
         setBaseUrl(effectiveBase);
-        if (stored?.apiKey && !newApiKey) {
-          setNewApiKey(stored.apiKey);
+        if (stored?.apiKey) {
+          setNewApiKey(prev => prev || stored.apiKey);
         }
         setNewModel(data.settings.selectedModel || stored?.selectedModel || PROVIDER_PRESETS[prov]?.defaultModel || 'nvidia/nemotron-3.5-lightning:free');
         fetchModelsForProvider(prov, stored?.apiKey || '', effectiveBase);
@@ -214,11 +186,11 @@ export default function AdminDashboardModal({ onClose }) {
       }));
       if (stored.provider) setProvider(stored.provider);
       if (stored.baseUrl) setBaseUrl(stored.baseUrl);
-      if (stored.apiKey && !newApiKey) setNewApiKey(stored.apiKey);
+      if (stored.apiKey) setNewApiKey(prev => prev || stored.apiKey);
       if (stored.selectedModel) setNewModel(stored.selectedModel);
       fetchModelsForProvider(stored.provider || 'openrouter', stored.apiKey || '', stored.baseUrl || '');
     }
-  }, [fetchModelsForProvider, newApiKey]);
+  }, [fetchModelsForProvider]);
 
   useEffect(() => {
     let active = true;
@@ -231,7 +203,7 @@ export default function AdminDashboardModal({ onClose }) {
     return () => {
       active = false;
     };
-  }, [fetchCodes, fetchSettings]);
+  }, []);
 
   const handleGenerateBatch = async (e) => {
     e.preventDefault();
@@ -354,12 +326,12 @@ export default function AdminDashboardModal({ onClose }) {
     setSavedSettingsMsg('');
     try {
       let cleanBaseUrl = (baseUrl || '').trim();
-      if (cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org')) {
+      if (cleanBaseUrl.includes('agentrouter.org')) {
         const noTrail = cleanBaseUrl.replace(/\/+$/, '');
         cleanBaseUrl = noTrail.endsWith('/v1') ? noTrail : `${noTrail}/v1`;
       }
       let effectiveProvider = provider;
-      if (cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org')) {
+      if (cleanBaseUrl.includes('agentrouter.org')) {
         effectiveProvider = 'agentrouter';
         if (provider !== 'agentrouter') setProvider('agentrouter');
       } else if (cleanBaseUrl.includes('openrouter.ai') && effectiveProvider === 'agentrouter') {
@@ -399,7 +371,7 @@ export default function AdminDashboardModal({ onClose }) {
           selectedModel: targetModel,
           modelName: targetModel,
           baseUrl: cleanBaseUrl,
-          apiKey: cleanKey || undefined,
+          apiKey: cleanKey || newApiKey || undefined,
           apiKeyMasked: data.settings?.apiKeyMasked,
           isConfigured: data.settings?.isConfigured
         });
@@ -409,12 +381,12 @@ export default function AdminDashboardModal({ onClose }) {
       }
     } catch {
       let cleanBaseUrl = (baseUrl || '').trim();
-      if (cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org')) {
+      if (cleanBaseUrl.includes('agentrouter.org')) {
         const noTrail = cleanBaseUrl.replace(/\/+$/, '');
         cleanBaseUrl = noTrail.endsWith('/v1') ? noTrail : `${noTrail}/v1`;
       }
       let effectiveProvider = provider;
-      if (cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org')) {
+      if (cleanBaseUrl.includes('agentrouter.org')) {
         effectiveProvider = 'agentrouter';
         if (provider !== 'agentrouter') setProvider('agentrouter');
       }
@@ -443,12 +415,12 @@ export default function AdminDashboardModal({ onClose }) {
     setTestResult(null);
     try {
       let cleanBaseUrl = (baseUrl || '').trim();
-      if (cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org')) {
+      if (cleanBaseUrl.includes('agentrouter.org')) {
         const noTrail = cleanBaseUrl.replace(/\/+$/, '');
         cleanBaseUrl = noTrail.endsWith('/v1') ? noTrail : `${noTrail}/v1`;
       }
       let effectiveProvider = provider;
-      if (cleanBaseUrl.includes('agentrouter.org') || cleanBaseUrl.includes('co.agentrouter.org')) {
+      if (cleanBaseUrl.includes('agentrouter.org')) {
         effectiveProvider = 'agentrouter';
         if (provider !== 'agentrouter') setProvider('agentrouter');
       } else if (cleanBaseUrl.includes('openrouter.ai') && effectiveProvider === 'agentrouter') {
@@ -464,7 +436,7 @@ export default function AdminDashboardModal({ onClose }) {
 
       const stored = getStoredAiConfig();
       const keyToSend = sanitizeApiKey(newApiKey) || sanitizeApiKey(stored?.apiKey) || undefined;
-      
+
       let data = null;
       try {
         let res = await fetch('/api/settings/test', {
@@ -481,125 +453,24 @@ export default function AdminDashboardModal({ onClose }) {
           })
         });
         data = await res.json();
-      } catch {}
-
-      // Fallback directo desde el navegador (CORS * habilitado en AgentRouter)
-      // Supera el WAF de Alibaba Cloud que intercepta las IPs de servidores cloud (Vercel/AWS)
-      const isWafError = !data?.success && (
-        isAgentRouter ||
-        data?.isWafChallenge ||
-        (data?.message && (
-          data.message.includes('aliyun_waf') ||
-          data.message.includes('WAF_CHALLENGE') ||
-          data.message.includes('<!doctype') ||
-          data.message.includes('WAF') ||
-          data.message.includes('Status 200 (OK): <')
-        ))
-      );
-
-      if ((!data || isWafError) && keyToSend && isAgentRouter) {
-        try {
-          const directBase = (cleanBaseUrl && !cleanBaseUrl.includes('agentrouter.org')) ? cleanBaseUrl : (cleanBaseUrl ? cleanBaseUrl.replace('agentrouter.org', 'co.agentrouter.org') : 'https://co.agentrouter.org/v1');
-          const startDirect = Date.now();
-
-          // 1. Probar primero OpenAI /chat/completions en co.agentrouter.org
-          let directRes = await fetch(`${directBase}/chat/completions`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${keyToSend}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              model: targetModel,
-              messages: [{ role: 'user', content: 'Say OK' }],
-              max_tokens: 50
-            })
-          }).catch(() => null);
-
-          let directText = directRes ? await directRes.text().catch(() => '') : '';
-          let directJson = null;
-          try { directJson = JSON.parse(directText); } catch {}
-
-          // 2. Si OpenAI endpoint no funcionó o fue interceptado, probar Anthropic /messages
-          if (!directRes?.ok) {
-            try {
-              const anthropicRes = await fetch(`${directBase}/messages`, {
-                method: 'POST',
-                headers: {
-                  'x-api-key': keyToSend,
-                  'anthropic-version': '2023-06-01',
-                  'content-type': 'application/json'
-                },
-                body: JSON.stringify({
-                  model: targetModel,
-                  max_tokens: 50,
-                  messages: [{ role: 'user', content: 'Say OK' }]
-                })
-              });
-              if (anthropicRes.ok) {
-                const aData = await anthropicRes.json();
-                const latency = Date.now() - startDirect;
-                const sampleText = (aData.content?.find(c => c.type === 'text')?.text || 'OK').trim().slice(0, 60);
-                data = {
-                  success: true,
-                  latencyMs: latency,
-                  model: targetModel,
-                  sample: sampleText,
-                  message: `✅ Conexión exitosa con ${targetModel} (${latency}ms) [Bypass WAF Activo]`
-                };
-              } else {
-                const aText = await anthropicRes.text().catch(() => '');
-                try { directJson = JSON.parse(aText); } catch {}
-              }
-            } catch {}
-          }
-
-          if (!data?.success && directRes?.ok && directJson?.choices?.[0]?.message) {
-            const latency = Date.now() - startDirect;
-            const msgObj = directJson.choices[0].message;
-            const content = (msgObj.content || msgObj.reasoning_content || 'OK').trim().slice(0, 60);
-            data = {
-              success: true,
-              latencyMs: latency,
-              model: targetModel,
-              sample: content,
-              message: `✅ Conexión exitosa con ${targetModel} (${latency}ms) [Bypass WAF Activo]`
-            };
-          } else if (!data?.success) {
-            let directErrMsg = directJson?.error?.message || directJson?.msg || directJson?.message;
-            if (directErrMsg) {
-              if (directErrMsg.includes('Budget pool quota has been exhausted') || directErrMsg.includes('quota has been exhausted')) {
-                directErrMsg = `La cuota para '${targetModel}' está agotada en tu cuenta de AgentRouter. Selecciona 'deepseek-v4-flash' que tiene saldo activo.`;
-              } else if (directErrMsg.includes('无可用渠道') || directErrMsg.includes('no available channel')) {
-                directErrMsg = `El modelo '${targetModel}' no está habilitado en tu cuenta de AgentRouter. Selecciona 'deepseek-v4-flash'.`;
-              } else if (directErrMsg.includes('Invalid API Key') || directErrMsg.includes('无效的令牌') || directRes?.status === 401) {
-                directErrMsg = `Clave API de AgentRouter inválida o expirada (HTTP 401). Entra a https://agentrouter.org/console/token (menú 'API 令牌'), crea o copia tu token 'sk-...' y pégalo aquí.`;
-              }
-              data = {
-                success: false,
-                message: `⚠️ AgentRouter: ${directErrMsg}`
-              };
-            }
-          }
-        } catch (clientErr) {
-          console.warn('Direct browser test error:', clientErr);
-        }
+      } catch (fetchErr) {
+        console.error('Test connection fetch error:', fetchErr);
       }
 
       if (!data) {
-        data = { success: false, message: 'No se pudo contactar con el proveedor de IA. Verifica tu conexión.' };
+        data = { success: false, message: 'No se pudo contactar con el servidor. Verifica tu conexión de red.' };
       }
 
       if (!data.success && data.message) {
         let msg = data.message;
         if (msg.includes('aliyun_waf') || msg.includes('<!doctype') || msg.includes('WAF_CHALLENGE') || msg.includes('Status 200 (OK): <')) {
-          msg = `El firewall de Alibaba Cloud interceptó la conexión. Cambia al endpoint oficial 'https://co.agentrouter.org/v1' con el modelo 'deepseek-v4-flash'.`;
+          msg = `El firewall interceptó la conexión. Asegúrate de usar el modelo 'deepseek-v4-flash' con tu token de AgentRouter.`;
         } else if (msg.includes('无可用渠道') || msg.includes('no available channel')) {
           msg = `El modelo '${targetModel}' no está habilitado en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
         } else if (msg.includes('Budget pool quota has been exhausted') || msg.includes('quota has been exhausted')) {
-          msg = `La cuota para '${targetModel}' está agotada en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash'.`;
+          msg = `La cuota para '${targetModel}' está agotada en tu cuenta de AgentRouter. Te recomendamos seleccionar 'deepseek-v4-flash' que tiene saldo activo.`;
         } else if (msg.includes('unauthorized client detected')) {
-          msg = `Solicitud no autorizada por AgentRouter. Usa el endpoint oficial 'https://co.agentrouter.org/v1' con 'deepseek-v4-flash'.`;
+          msg = `Cliente no autorizado por AgentRouter. Verifica tu token en https://agentrouter.org/console/token.`;
         } else if (msg.includes('Invalid API Key') || msg.includes('无效的令牌') || msg.includes('Missing API Key') || msg.includes('401')) {
           msg = `Clave API de AgentRouter inválida o expirada (HTTP 401). Entra a https://agentrouter.org/console/token (menú izquierdo: 'API 令牌'), genera o copia tu token 'sk-...' y pégalo aquí.`;
         }
@@ -1189,7 +1060,7 @@ export default function AdminDashboardModal({ onClose }) {
                     onChange={(e) => {
                       const val = e.target.value;
                       setBaseUrl(val);
-                      if (val.includes('agentrouter.org') || val.includes('co.agentrouter.org')) {
+                      if (val.includes('agentrouter.org')) {
                         setProvider('agentrouter');
                         setAvailableModelsList(AGENTROUTER_KNOWN_MODELS);
                         setNewModel(curr => {

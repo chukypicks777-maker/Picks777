@@ -3,9 +3,6 @@ export function validateAiConfig(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Configuración inválida.');
   let provider = input.provider || 'openrouter';
   if (!Object.hasOwn(PROVIDER_PRESETS, provider)) throw new Error('Proveedor inválido.');
-  for (const [key, max] of [['apiKey', 2048], ['selectedModel', 200], ['modelName', 200], ['baseUrl', 500]]) {
-    if (input[key] !== undefined && (typeof input[key] !== 'string' || input[key].length > max || [...input[key]].some(c => c.charCodeAt(0) < 32))) throw new Error(`Campo ${key} inválido.`);
-  }
   let cleanApiKey = input.apiKey;
   if (cleanApiKey !== undefined && cleanApiKey !== null && typeof cleanApiKey === 'string') {
     cleanApiKey = cleanApiKey.trim()
@@ -13,6 +10,21 @@ export function validateAiConfig(input = {}) {
       .replace(/^["']|["']$/g, '')
       .replace(/[\u200B-\u200D\uFEFF]/g, '')
       .trim();
+  }
+
+  const fieldsToCheck = [
+    ['apiKey', cleanApiKey, 2048],
+    ['selectedModel', typeof input.selectedModel === 'string' ? input.selectedModel.trim() : input.selectedModel, 200],
+    ['modelName', typeof input.modelName === 'string' ? input.modelName.trim() : input.modelName, 200],
+    ['baseUrl', typeof input.baseUrl === 'string' ? input.baseUrl.trim() : input.baseUrl, 500]
+  ];
+
+  for (const [key, val, max] of fieldsToCheck) {
+    if (val !== undefined && val !== null) {
+      if (typeof val !== 'string' || val.length > max || [...val].some(c => c.charCodeAt(0) < 32)) {
+        throw new Error(`Campo ${key} inválido.`);
+      }
+    }
   }
   let rawUrl = (input.baseUrl && typeof input.baseUrl === 'string' && input.baseUrl.trim()) ? input.baseUrl.trim() : PROVIDER_PRESETS[provider].defaultBaseUrl;
   if (!/^https?:\/\//i.test(rawUrl)) {

@@ -9,9 +9,27 @@ export const AGENTROUTER_KNOWN_MODELS = [
   { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash (AgentRouter) [Cuota Activa]', isReasoning: true, hasQuota: true },
   { id: 'claude-opus-5', name: 'Claude Opus 5 (AgentRouter)', isReasoning: false, hasQuota: false },
   { id: 'claude-opus-4-8', name: 'Claude Opus 4.8 (AgentRouter)', isReasoning: false, hasQuota: false },
-  { id: 'deepseek-chat', name: 'DeepSeek Chat (AgentRouter)', isReasoning: false, hasQuota: true },
-  { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner R1 (AgentRouter)', isReasoning: true, hasQuota: true }
+  { id: 'deepseek-chat', name: 'DeepSeek Chat (AgentRouter)', isReasoning: false, hasQuota: false },
+  { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner R1 (AgentRouter)', isReasoning: true, hasQuota: false }
 ];
+
+export function getAgentRouterHeaders(apiKey = '') {
+  return {
+    Authorization: `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+    'User-Agent': 'claude-cli/2.1.119 (external, cli)',
+    'x-app': 'cli',
+    'anthropic-version': '2023-06-01',
+    'anthropic-beta': 'claude-code-20250219,interleaved-thinking-2025-05-14',
+    'anthropic-dangerous-direct-browser-access': 'true',
+    'X-Stainless-Lang': 'js',
+    'X-Stainless-Package-Version': '0.38.0',
+    'X-Stainless-OS': 'Windows',
+    'X-Stainless-Arch': 'x64',
+    'X-Stainless-Runtime': 'node',
+    'X-Stainless-Runtime-Version': 'v20.10.0'
+  };
+}
 
 export async function getEffectiveAiConfig() {
   let dbConfig = null;
@@ -26,7 +44,7 @@ export async function getEffectiveAiConfig() {
     provider === 'gemini' ? 'https://generativelanguage.googleapis.com/v1beta' :
     provider === 'deepseek' ? 'https://api.deepseek.com/v1' :
     provider === 'groq' ? 'https://api.groq.com/openai/v1' :
-    provider === 'agentrouter' ? 'https://co.agentrouter.org/v1' :
+    provider === 'agentrouter' ? 'https://agentrouter.org/v1' :
     'https://openrouter.ai/api/v1'
   )).trim();
 
@@ -165,26 +183,17 @@ export async function fetchProviderModels(provider = 'openrouter', apiKey = '', 
   }
 
   let cleanBaseUrl = String(baseUrl || '').trim();
-  const isAgentRouterHost = normProvider === 'agentrouter' ||
-    cleanBaseUrl.includes('agentrouter.org') ||
-    cleanBaseUrl.includes('co.agentrouter.org');
+  const isAgentRouterHost = normProvider === 'agentrouter' || cleanBaseUrl.includes('agentrouter.org');
 
   if (isAgentRouterHost) {
-    if (cleanBaseUrl.includes('agentrouter.org') && !cleanBaseUrl.includes('co.agentrouter.org')) {
-      cleanBaseUrl = cleanBaseUrl.replace('agentrouter.org', 'co.agentrouter.org');
-    }
     if (!cleanBaseUrl.includes('/v1')) {
-      cleanBaseUrl = cleanBaseUrl ? (cleanBaseUrl.replace(/\/+$/, '') + '/v1') : 'https://co.agentrouter.org/v1';
+      cleanBaseUrl = cleanBaseUrl ? (cleanBaseUrl.replace(/\/+$/, '') + '/v1') : 'https://agentrouter.org/v1';
     }
     if (!apiKey) return AGENTROUTER_KNOWN_MODELS;
     try {
       const url = `${cleanBaseUrl.replace(/\/+$/, '')}/models`;
       const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'User-Agent': 'claude-cli/2.1.195 (external, cli)',
-          'x-app': 'cli'
-        },
+        headers: getAgentRouterHeaders(apiKey),
         redirect: 'error',
         signal: AbortSignal.timeout(8000)
       });
@@ -297,30 +306,24 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
     normProvider === 'openrouter' ? 'https://openrouter.ai/api/v1' :
     normProvider === 'deepseek' ? 'https://api.deepseek.com/v1' :
     normProvider === 'groq' ? 'https://api.groq.com/openai/v1' :
-    normProvider === 'agentrouter' ? 'https://co.agentrouter.org/v1' :
+    normProvider === 'agentrouter' ? 'https://agentrouter.org/v1' :
     'https://openrouter.ai/api/v1'
   );
 
-  const isAgentRouter = normProvider === 'agentrouter' || effectiveBaseUrl.includes('agentrouter.org') || effectiveBaseUrl.includes('co.agentrouter.org');
+  const isAgentRouter = normProvider === 'agentrouter' || effectiveBaseUrl.includes('agentrouter.org');
   if (isAgentRouter) {
-    if (effectiveBaseUrl.includes('agentrouter.org') && !effectiveBaseUrl.includes('co.agentrouter.org')) {
-      effectiveBaseUrl = effectiveBaseUrl.replace('agentrouter.org', 'co.agentrouter.org');
-    }
     if (!effectiveBaseUrl.includes('/v1')) {
       effectiveBaseUrl = effectiveBaseUrl.replace(/\/+$/, '') + '/v1';
     }
   }
   const finalBaseUrl = effectiveBaseUrl.replace(/\/+$/, '');
 
-  const headers = {
-    Authorization: `Bearer ${apiKey}`,
-    'Content-Type': 'application/json'
-  };
-
-  if (isAgentRouter) {
-    headers['User-Agent'] = 'claude-cli/2.1.195 (external, cli)';
-    headers['x-app'] = 'cli';
-  }
+  const headers = isAgentRouter
+    ? getAgentRouterHeaders(apiKey)
+    : {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      };
 
   if (normProvider === 'openrouter') {
     headers['HTTP-Referer'] = 'https://picks777.vercel.app';
@@ -373,16 +376,14 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
   if (isAgentRouter && (isHtmlOrWaf || !response.ok)) {
     try {
       const anthropicUrl = `${finalBaseUrl}/messages`;
+      const anthropicHeaders = {
+        ...getAgentRouterHeaders(apiKey),
+        'x-api-key': apiKey
+      };
       const anthropicResp = await fetch(anthropicUrl, {
         method: 'POST',
         redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-          'User-Agent': 'claude-cli/2.1.195 (external, cli)',
-          'x-app': 'cli'
-        },
+        headers: anthropicHeaders,
         body: JSON.stringify({
           model,
           max_tokens: 4000,
@@ -410,7 +411,7 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
     (response.status === 200 && responseText.includes('<!doctype html>'));
 
   if (isHtmlResponse) {
-    const err = new Error(`[WAF_CHALLENGE] El firewall WAF de Alibaba Cloud interceptó la conexión. Cambiando al endpoint oficial https://co.agentrouter.org/v1.`);
+    const err = new Error(`[WAF_CHALLENGE] El firewall WAF de Alibaba Cloud interceptó la conexión hacia agentrouter.org.`);
     err.isWafChallenge = true;
     throw err;
   }
@@ -431,7 +432,7 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
       } else if (cleanErr.includes('Budget pool quota has been exhausted') || cleanErr.includes('quota has been exhausted')) {
         cleanErr = `La cuota para '${model}' está agotada en tu cuenta de AgentRouter. Selecciona el modelo con cuota activa: 'deepseek-v4-flash'.`;
       } else if (cleanErr.includes('unauthorized client detected')) {
-        cleanErr = `Cliente no autorizado por AgentRouter. La solicitud debe realizarse con el endpoint oficial https://co.agentrouter.org/v1.`;
+        cleanErr = `Cliente no autorizado por AgentRouter. Verifica tu token en https://agentrouter.org/console/token.`;
       } else if (cleanErr.includes('Invalid API Key') || cleanErr.includes('无效的令牌') || cleanErr.includes('Missing API Key')) {
         cleanErr = `Clave API de AgentRouter inválida o expirada (HTTP 401). Entra a tu consola en https://agentrouter.org/console/token (menú de la izquierda: 'API 令牌'), genera o copia tu token 'sk-...' y pégalo aquí.`;
       }
@@ -457,11 +458,11 @@ export async function testAiConnection({ provider, apiKey, baseUrl, selectedMode
     return { success: false, message: 'Ingresa una clave API para probar la conexión.' };
   }
   const cleanBase = String(baseUrl || '').toLowerCase();
-  const isAgentRouter = provider === 'agentrouter' || cleanBase.includes('agentrouter.org') || cleanBase.includes('co.agentrouter.org');
+  const isAgentRouter = provider === 'agentrouter' || cleanBase.includes('agentrouter.org');
   let effectiveBaseUrl = baseUrl;
   if (isAgentRouter) {
-    if (!effectiveBaseUrl || (effectiveBaseUrl.includes('agentrouter.org') && !effectiveBaseUrl.includes('co.agentrouter.org'))) {
-      effectiveBaseUrl = 'https://co.agentrouter.org/v1';
+    if (!effectiveBaseUrl) {
+      effectiveBaseUrl = 'https://agentrouter.org/v1';
     }
   }
   let model = (selectedModel || '').trim();
@@ -554,7 +555,7 @@ export async function generateAiMatchReport(match, options = {}) {
     try {
       // The model may prioritize verified facts, but cannot introduce numbers,
       // tactics, injuries, scores, odds or picks that are absent from the data.
-      const isAgentRouter = config.provider === 'agentrouter' || (config.baseUrl && (config.baseUrl.includes('agentrouter.org') || config.baseUrl.includes('co.agentrouter.org')));
+      const isAgentRouter = config.provider === 'agentrouter' || (config.baseUrl && config.baseUrl.includes('agentrouter.org'));
       const promptCatalog = isAgentRouter
         ? facts.map(f => {
             if (f.id === 'fixture') return { id: f.id, summary: `Match fixture: ${match.homeTeam?.name} vs ${match.awayTeam?.name} (${match.status})` };
