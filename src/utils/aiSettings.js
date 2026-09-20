@@ -21,12 +21,7 @@ export function getStoredAiConfig() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const config = JSON.parse(raw);
-      if (config.apiKey) {
-        delete config.apiKey;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-      }
-      return config;
+      return JSON.parse(raw);
     }
   } catch {}
   return null;
@@ -40,7 +35,6 @@ export function saveStoredAiConfig(config) {
       Object.entries(config).filter(([, v]) => v !== undefined)
     );
     const merged = { ...prev, ...cleanConfig, updatedAt: new Date().toISOString() };
-    delete merged.apiKey;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
     window.dispatchEvent(new CustomEvent('ai-settings-updated', { detail: merged }));
     return merged;

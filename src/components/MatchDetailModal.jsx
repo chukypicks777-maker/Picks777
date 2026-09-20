@@ -12,6 +12,8 @@ import {
   Target, 
   Activity, 
   Shield,
+  CheckCircle2,
+  Sparkles,
 } from 'lucide-react';
 import { sounds } from '../utils/audioEffects';
 import LiveTacticalPitch from './LiveTacticalPitch';
@@ -32,8 +34,17 @@ export default function MatchDetailModal({
   match, 
   onClose, 
   onAddToParlay, 
-  oddsFormat = 'decimal' 
+  oddsFormat = 'decimal',
+  isOwner = false
 }) {
+  const effectiveIsOwner = Boolean(
+    isOwner ||
+    (typeof window !== 'undefined' && (
+      localStorage.getItem('picks_user_role') === 'owner' ||
+      localStorage.getItem('picks_is_owner') === 'true' ||
+      localStorage.getItem('picks_owner_active') === 'true'
+    ))
+  );
   const initialCached = getCachedAnalysis(match?.id, match);
   const initialFingerprint = computeMatchFingerprint(match);
 
@@ -106,10 +117,10 @@ export default function MatchDetailModal({
     try {
       const storedAi = getStoredAiConfig();
       const aiConfigPayload = (storedAi && storedAi.apiKey && storedAi.apiKey.length >= 4) ? {
-        provider: storedAi.provider || 'openrouter',
+        provider: storedAi.provider || 'custom',
         apiKey: storedAi.apiKey,
-        baseUrl: storedAi.baseUrl,
-        selectedModel: modelToUse || storedAi.selectedModel
+        baseUrl: storedAi.baseUrl || 'https://vyceai.com/v1',
+        selectedModel: modelToUse || storedAi.selectedModel || 'deepseek-v4.1'
       } : undefined;
 
       const res = await fetch(`/api/matches/${curMatch.id}/ai-analysis`, {
@@ -419,73 +430,90 @@ export default function MatchDetailModal({
           {activeTab === 'ai_report' && (
             <div className="space-y-5">
               
-              {/* Top AI Controls */}
-              <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-[#111723] rounded-xl border border-white/5">
-                {loadingAi ? (
-                  <div className="flex items-center space-x-2 text-xs font-mono text-sky-300">
-                    <RotateCw className="w-3.5 h-3.5 animate-spin text-sky-400 shrink-0" />
-                    <span>Analizando con IA en tiempo real ({activeModelInfo.selectedModel || 'motor activo'})...</span>
-                  </div>
-                ) : aiReport?.aiAvailable ? (
-                  <div className="flex items-center space-x-2 text-xs font-mono text-slate-200">
-                    <Cpu className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                    <span>Motor: <strong className="text-sky-300">{aiReport.modelUsed || activeModelInfo.selectedModel}</strong></span>
-                    <span className="px-1.5 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-sky-300 text-[10px] font-mono font-medium">
-                      Procesado por IA
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2 text-xs font-mono text-slate-300">
-                    <Activity className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>Motor: <strong className="text-slate-200">Cálculo Cuantitativo Poisson</strong></span>
-                    <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 text-[10px] font-mono">
-                      Modo Estadístico
-                    </span>
-                  </div>
-                )}
+              {/* Estado del Procesamiento de IA / Motor Cuantitativo */}
+              <div className={`p-4 rounded-xl border transition-all duration-300 relative overflow-hidden ${
+                loadingAi
+                  ? 'bg-gradient-to-r from-sky-950/50 via-[#0c1424] to-sky-900/40 border-sky-500/40 shadow-[0_0_25px_rgba(56,189,248,0.15)]'
+                  : aiReport?.aiAvailable
+                    ? 'bg-gradient-to-r from-emerald-950/40 via-[#0d1622] to-sky-950/30 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.12)]'
+                    : 'bg-[#101622] border-white/10'
+              }`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 relative z-10">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    {loadingAi ? (
+                      <div className="relative flex items-center justify-center shrink-0">
+                        <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-sky-400 opacity-30"></span>
+                        <div className="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-300 shadow-[0_0_15px_rgba(56,189,248,0.3)]">
+                          <RotateCw className="w-4 h-4 animate-spin text-sky-400" />
+                        </div>
+                      </div>
+                    ) : aiReport?.aiAvailable ? (
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.25)]">
+                        <Sparkles className="w-4 h-4 text-emerald-400" />
+                      </div>
+                    ) : (
+                      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 shrink-0">
+                        <Cpu className="w-4 h-4 text-slate-400" />
+                      </div>
+                    )}
 
-                <button
-                  onClick={() => fetchAiAnalysis(true)}
-                  disabled={loadingAi}
-                  className="px-3 py-1 bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 rounded-lg text-xs font-mono font-medium transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  <RotateCw className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin text-sky-400' : ''}`} />
-                  <span>{loadingAi ? 'Procesando...' : 'Regenerar con IA'}</span>
-                </button>
+                    <div className="min-w-0">
+                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                        <span className="text-xs font-bold font-sans tracking-wide text-white">
+                          {loadingAi
+                            ? 'Procesando Análisis con IA...'
+                            : aiReport?.aiAvailable
+                              ? 'Pronóstico IA: Procesado y Verificado'
+                              : 'Análisis Cuantitativo Institucional'}
+                        </span>
+                        
+                        {loadingAi && (
+                          <span className="px-2 py-0.5 rounded-full bg-sky-500/20 border border-sky-400/40 text-sky-300 text-[10px] font-mono font-bold animate-pulse flex items-center space-x-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping"></span>
+                            <span>CARGANDO DATOS</span>
+                          </span>
+                        )}
+
+                        {!loadingAi && aiReport?.aiAvailable && (
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-mono font-bold flex items-center space-x-1 shadow-[0_0_8px_rgba(16,185,129,0.2)]">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            <span>IA ACTIVA</span>
+                          </span>
+                        )}
+
+                        {!loadingAi && !aiReport?.aiAvailable && (
+                          <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-400 text-[10px] font-mono font-medium">
+                            MODO ESTADÍSTICO
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-slate-300 font-mono mt-1 line-clamp-2">
+                        {loadingAi
+                          ? `Conectando con ${activeModelInfo.selectedModel || 'VyceAI DeepSeek V4.1'} • Cruzando probabilidades Poisson y métricas de temporada...`
+                          : aiReport?.aiAvailable
+                            ? `Motor: ${aiReport.modelUsed || activeModelInfo.selectedModel || 'DeepSeek V4.1 Flash'} • Análisis fundamentado en hechos oficiales verificables.`
+                            : (aiReport?.aiStatus || 'Pronóstico calculado mediante modelo matemático Poisson sobre estadísticas de temporada.')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Botón de reintento/regeneración: EXCLUSIVO para el OWNER */}
+                  {effectiveIsOwner && (
+                    <div className="flex items-center space-x-2 shrink-0 sm:self-center self-end">
+                      <button
+                        onClick={() => fetchAiAnalysis(true)}
+                        disabled={loadingAi}
+                        className="px-3 py-1.5 bg-gradient-to-r from-sky-500/20 to-emerald-500/20 hover:from-sky-500/30 hover:to-emerald-500/30 text-sky-200 border border-sky-400/40 rounded-lg text-xs font-mono font-semibold transition-all shadow-[0_0_12px_rgba(56,189,248,0.15)] flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                        title="Control de Administrador / Owner"
+                      >
+                        <RotateCw className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin text-sky-400' : ''}`} />
+                        <span>{loadingAi ? 'Procesando...' : (aiReport?.aiAvailable ? 'Regenerar con IA' : 'Reintentar con IA')}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-
-              {/* Banner de procesamiento en vivo cuando la IA está calculando */}
-              {loadingAi && (
-                <div className="p-4 rounded-xl bg-[#0d1424] border border-sky-500/20 text-center flex flex-col items-center justify-center space-y-1.5 py-4">
-                  <div className="flex items-center space-x-2 text-sky-400">
-                    <RotateCw className="w-4 h-4 animate-spin" />
-                    <span className="text-xs font-mono font-semibold uppercase tracking-wider text-sky-300">
-                      Generando Pronóstico Táctico
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 font-mono">
-                    Conectando con el motor {activeModelInfo.selectedModel ? `[${activeModelInfo.selectedModel}]` : 'configurado'} • Consultando registros y probabilidades...
-                  </p>
-                </div>
-              )}
-
-              {/* Mensaje informativo si está en modo cuantitativo */}
-              {!loadingAi && !aiReport?.aiAvailable && (
-                <div className="p-3 rounded-xl bg-slate-800/40 border border-white/5 text-slate-300 text-xs font-mono flex items-center justify-between">
-                  <div className="flex items-center space-x-2 min-w-0">
-                    <Activity className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span className="truncate">
-                      {aiReport?.aiStatus || 'Análisis cuantitativo institucional basado en el modelo matemático de Poisson y estadísticas oficiales.'}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => fetchAiAnalysis(true)}
-                    className="ml-3 px-2.5 py-1 bg-white/5 hover:bg-white/10 text-slate-200 border border-white/10 rounded text-[11px] font-medium shrink-0 cursor-pointer transition"
-                  >
-                    Reintentar
-                  </button>
-                </div>
-              )}
 
               <VerifiedPicks match={m} onAddToParlay={onAddToParlay} oddsFormat={oddsFormat} />
               <OverUnderGroupedSection match={m} homeStats={homeDetailed} awayStats={awayDetailed} diff={diff} />

@@ -203,12 +203,12 @@ export const defaultSeedData = {
     }
   ],
   aiConfig: {
-    provider: 'openrouter',
+    provider: 'custom',
     apiKey: '',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    selectedModel: 'nvidia/nemotron-3.5-lightning:free',
-    modelName: 'nvidia/nemotron-3.5-lightning:free',
-    updatedAt: '2026-09-17T18:43:09.015Z'
+    baseUrl: 'https://vyceai.com/v1',
+    selectedModel: 'deepseek-v4.1',
+    modelName: 'DeepSeek V4.1 Flash',
+    updatedAt: '2026-09-20T00:00:00.000Z'
   },
   socialSettings: {
     links: SOCIAL_LINKS,

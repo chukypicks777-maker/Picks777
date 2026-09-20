@@ -416,6 +416,14 @@ export default function App() {
     auth?.code
   );
 
+  const isOwner = Boolean(
+    auth?.isAdmin || 
+    auth?.role === 'owner' || 
+    auth?.user?.plan === 'Owner' ||
+    auth?.code === 'MASTER' ||
+    auth?.vipCode === 'MASTER'
+  );
+
   const liveMatchesCount = matches.filter(m => m && m.status === 'LIVE').length;
   const featuredMatch = matches.find(m => m && m.isFeatured && m.status !== 'FINISHED') || matches.find(m => m && m.status !== 'FINISHED') || matches[0] || null;
 
@@ -725,6 +733,7 @@ export default function App() {
           onClose={() => setSelectedMatch(null)}
           onAddToParlay={handleAddToParlay}
           oddsFormat={oddsFormat}
+          isOwner={isOwner}
         />
       )}
 

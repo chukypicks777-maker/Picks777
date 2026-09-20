@@ -278,9 +278,9 @@ export default function AdminDashboardModal({ onClose }) {
       if (!res.ok || !data.success) throw new Error(data.message || `No se pudo guardar (HTTP ${res.status}).`);
       setSettings(data.settings);
       setProvider(data.settings.provider);
-      setBaseUrl(data.settings.baseUrl);
+      const savedKey = sanitizeApiKey(newApiKey) || getStoredAiConfig()?.apiKey || '';
       setNewApiKey('');
-      saveStoredAiConfig({ ...data.settings, apiKey: '' });
+      saveStoredAiConfig({ ...data.settings, apiKey: savedKey });
       setSavedSettingsMsg(data.settings.selectedModel
         ? 'Configuración guardada exitosamente en el servidor. Usa Probar Conexión para verificarla.'
         : 'Clave guardada exitosamente en el servidor. Falta seleccionar un modelo cuando el proveedor permita el acceso.');

@@ -18,12 +18,14 @@ export async function getEffectiveAiConfig() {
       throw new Error('La configuración privada predeterminada de IA no es válida.');
     }
   }
-  const provider = String(dbConfig?.provider || 'openrouter').trim().toLowerCase();
-  const preset = PROVIDER_PRESETS[provider] || PROVIDER_PRESETS.openrouter;
-  const envKey = provider === 'openrouter' ? CONFIG.OPENROUTER_API_KEY : provider === 'gemini' ? process.env.GEMINI_API_KEY : '';
+  const provider = String(dbConfig?.provider || 'custom').trim().toLowerCase();
+  const preset = PROVIDER_PRESETS[provider] || PROVIDER_PRESETS.custom;
+  const envKey = (provider === 'custom' || provider === 'vyceai')
+    ? (process.env.VYCEAI_API_KEY || process.env.CUSTOM_AI_API_KEY || process.env.AI_API_KEY || '')
+    : provider === 'openrouter' ? CONFIG.OPENROUTER_API_KEY : provider === 'gemini' ? process.env.GEMINI_API_KEY : '';
   const apiKey = String(dbConfig?.apiKey ?? envKey ?? '').trim();
-  const baseUrl = String(dbConfig?.baseUrl || preset.defaultBaseUrl).trim();
-  const selectedModel = String(dbConfig?.selectedModel ?? (provider === 'openrouter' ? CONFIG.DEFAULT_MODEL || preset.defaultModel : preset.defaultModel)).trim();
+  const baseUrl = String(dbConfig?.baseUrl || preset?.defaultBaseUrl || 'https://vyceai.com/v1').trim();
+  const selectedModel = String(dbConfig?.selectedModel ?? (provider === 'custom' ? 'deepseek-v4.1' : (provider === 'openrouter' ? CONFIG.DEFAULT_MODEL || preset.defaultModel : preset.defaultModel))).trim();
 
   return {
     provider,
