@@ -72,6 +72,8 @@ export const PROVIDER_PRESETS = {
  * Modelos destacados de razonamiento rápido y profundo
  */
 export const POPULAR_REASONING_MODELS = [
+  { id: 'deepseek-v4.1', name: 'DeepSeek V4.1 Flash', isReasoning: true },
+  { id: 'deepseek/deepseek-v4.1-flash', name: 'DeepSeek V4.1 Flash (OpenRouter)', isReasoning: true },
   { id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash (AgentRouter)', isReasoning: true },
   { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1 (Razonamiento Puro)', isReasoning: true },
   { id: 'openai/o3-mini', name: 'OpenAI o3-mini (Razonamiento STEM/Cuantitativo)', isReasoning: true },

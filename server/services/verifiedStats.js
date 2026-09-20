@@ -83,5 +83,5 @@ export async function enrichHistoricalStats(match) {
     avgYellowCards: stats.cards, avgFouls: stats.fouls, sampleSizes: stats.sampleSizes,
     statsSource: 'ESPN boxscore', statsFetchedAt: stats.fetchedAt, statsRecords: stats.records } : original;
   return { ...match, homeTeam: team(match.homeTeam, histories[0]), awayTeam: team(match.awayTeam, histories[1]),
-    halfGoals: match.status === 'SCHEDULED' ? halfGoalModel(match.model, ...histories) : null };
+    halfGoals: (match.status !== 'POSTPONED' && match.status !== 'CANCELLED') ? halfGoalModel(match.model, ...histories) : null };
 }

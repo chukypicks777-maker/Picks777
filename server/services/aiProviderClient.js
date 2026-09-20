@@ -57,10 +57,30 @@ export async function fetchProviderModels(provider = 'openrouter', apiKey = '', 
   });
 }
 
+export function normalizeModelId(provider, model) {
+  if (!model || typeof model !== 'string') return model;
+  const trimmed = model.trim();
+  if (provider === 'openrouter') {
+    if (!trimmed.includes('/')) {
+      if (/^deepseek-v4(\.[0-9]+)?(-flash)?$/i.test(trimmed)) return 'deepseek/deepseek-v4.1-flash';
+      if (/^deepseek-r1$/i.test(trimmed)) return 'deepseek/deepseek-r1';
+      if (/^deepseek-chat$/i.test(trimmed)) return 'deepseek/deepseek-chat';
+      if (/^nemotron/i.test(trimmed)) return 'nvidia/nemotron-3.5-lightning:free';
+      if (/^llama-3\.3-70b/i.test(trimmed)) return 'meta-llama/llama-3.3-70b-instruct:free';
+      if (/^gemini-2\.0-flash/i.test(trimmed)) return 'google/gemini-2.0-flash-001';
+      if (/^o3-mini$/i.test(trimmed)) return 'openai/o3-mini';
+    }
+  } else if (provider === 'deepseek') {
+    if (/^deepseek-v[34](\.[0-9]+)?(-flash)?$/i.test(trimmed)) return 'deepseek-chat';
+    if (/^deepseek-r1$/i.test(trimmed)) return 'deepseek-reasoner';
+  }
+  return trimmed;
+}
+
 export async function executeAiChatCompletion({ provider = 'openrouter', apiKey, baseUrl, model, systemPrompt = '', userPrompt, maxTokens = 4000 }) {
   const config = validateAiConfig({ provider, apiKey, baseUrl, selectedModel: model });
   ({ provider, apiKey, baseUrl } = config);
-  model = config.selectedModel;
+  model = normalizeModelId(provider, config.selectedModel);
   if (!apiKey) throw providerError('Ingresa la clave API de este proveedor.', 'MISSING_KEY');
   if (!model) throw providerError('Selecciona un modelo del catálogo o escribe su ID exacto.', 'MISSING_MODEL');
   const signal = AbortSignal.timeout(45000); // One request fits within the 60s hosting limit.
@@ -85,10 +105,13 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
     body[/^(?:openai\/)?(?:o[134](?:-|$)|gpt-5)/i.test(model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokens;
   }
   const data = await requestJson(url, { method: 'POST', apiKey, headers, body: JSON.stringify(body), signal });
-  const content = provider === 'gemini'
+  let content = provider === 'gemini'
     ? data.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('')
     : anthropic ? data.content?.filter(p => p.type === 'text').map(p => p.text).join('') : data.choices?.[0]?.message?.content;
-  const text = typeof content === 'string' ? content : Array.isArray(content) ? content.filter(p => p.type === 'text').map(p => p.text).join('') : '';
+  if (provider === 'gemini' && !content) {
+    content = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('');
+  }
+  let text = typeof content === 'string' ? content : Array.isArray(content) ? content.filter(p => p.type === 'text').map(p => p.text).join('') : '';
   if (!text?.trim()) throw providerError('El proveedor no devolvió una respuesta final de texto. Puede haber agotado el límite de generación.', 'EMPTY_RESPONSE');
   return text;
 }

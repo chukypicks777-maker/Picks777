@@ -97,11 +97,11 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
     source: 'ESPN', sourceUrl: `https://www.espn.com/soccer/match/_/gameId/${event.id}`,
     fetchedAt, providerUpdatedAt: null, h2h: [], recentMatches: [], realBoxscore: null
   };
-  match.model = status === 'SCHEDULED' && Date.parse(event.date) > Date.now() ? poissonModel(match.homeTeam, match.awayTeam) : null;
+  match.model = (status !== 'POSTPONED' && status !== 'CANCELLED') ? poissonModel(match.homeTeam, match.awayTeam) : null;
   if (match.model) {
     match.probabilities = match.model.probabilities;
     match.probabilities.predictedScore = match.model.predictedScore;
-  } else if (status === 'SCHEDULED' && Date.parse(event.date) > Date.now() && odds.homeWin && odds.draw && odds.awayWin) {
+  } else if (status === 'SCHEDULED' && odds.homeWin && odds.draw && odds.awayWin) {
     const invH = 1 / odds.homeWin, invD = 1 / odds.draw, invA = 1 / odds.awayWin;
     const tot = invH + invD + invA;
     const over25P = odds.over25 && odds.under25 ? ((1 / odds.over25) / (1 / odds.over25 + 1 / odds.under25)) * 100 : null;
@@ -252,6 +252,14 @@ export function parseSummaryDetails(data, match) {
 }
 export async function enrichMatchWithRealData(match) {
   match = await enrichHistoricalStats(match);
+  if (!match.model && match.status !== 'POSTPONED' && match.status !== 'CANCELLED') {
+    const computed = poissonModel(match.homeTeam, match.awayTeam);
+    if (computed) {
+      match.model = computed;
+      match.probabilities = computed.probabilities;
+      match.probabilities.predictedScore = computed.predictedScore;
+    }
+  }
   try {
     const details = await cachedData(`summary:${match.id}:${match.status}`, match.status === 'LIVE' ? 60 : 600, async () => {
       const url = `${BASE}/${match.espnCode}/summary?event=${match.espnEventId}`;

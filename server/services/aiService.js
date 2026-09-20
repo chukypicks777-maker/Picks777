@@ -40,6 +40,25 @@ export async function availableModels() {
   return fetchProviderModels('openrouter', CONFIG.OPENROUTER_API_KEY, CONFIG.OPENROUTER_BASE_URL);
 }
 
+function extractJsonFromAiResponse(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const cleaned = raw
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
+    .trim();
+  const codeBlock = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (codeBlock && codeBlock[1]) {
+    try { return JSON.parse(codeBlock[1].trim()); } catch {}
+  }
+  try { return JSON.parse(cleaned); } catch {}
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    try { return JSON.parse(cleaned.slice(start, end + 1)); } catch {}
+  }
+  return null;
+}
+
 export async function generateAiMatchReport(match, options = {}) {
   const p = match.model?.probabilities || match.probabilities || {};
   const fmt = n => Number.isFinite(n) ? Number(n.toFixed(1)) : 'N/D';
@@ -102,16 +121,21 @@ export async function generateAiMatchReport(match, options = {}) {
           })
         : facts;
 
+      const validIdsList = facts.map(f => f.id);
       const raw = await executeAiChatCompletion({ ...config, model: config.selectedModel,
-        systemPrompt: 'Select the most relevant fact IDs from the catalog to summarize the fixture. Return only JSON object {"factIds":["id"]} choosing between 1 and 6 IDs from the catalog. Do not alter or fabricate facts.',
+        systemPrompt: `Select the most relevant fact IDs from the catalog to summarize the fixture. Allowed IDs: ${JSON.stringify(validIdsList)}. Return only JSON object {"factIds":["id"]} choosing between 1 and 6 IDs from the catalog. Do not alter or fabricate facts.`,
         userPrompt: JSON.stringify(promptCatalog) });
-      const cleaned = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-      const parsed = JSON.parse(cleaned.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ''));
-      if (!Array.isArray(parsed.factIds) || !parsed.factIds.length || parsed.factIds.length > 6 || parsed.factIds.some(id => typeof id !== 'string' || !facts.some(f => f.id === id))) throw new Error('Invalid fact selection');
+      const parsed = extractJsonFromAiResponse(raw);
+      if (!parsed || !Array.isArray(parsed.factIds) || !parsed.factIds.length || parsed.factIds.length > 6 || parsed.factIds.some(id => typeof id !== 'string' || !facts.some(f => f.id === id))) {
+        throw new Error('Invalid fact selection');
+      }
       const keypoints = [...new Set(parsed.factIds)].map(id => facts.find(f => f.id === id).text);
       return { ...baseline, aiAvailable: true, modelUsed: config.selectedModel, tacticalKeypoints: keypoints,
         aiStatus: 'La IA prioriza hechos comprobables del informe. Las cifras y selecciones proceden del cálculo estadístico.' };
-    } catch { return { ...baseline, aiStatus: 'La respuesta de IA no pudo validarse; se muestra el informe estadístico verificable.' }; }
+    } catch (err) {
+      console.error('[aiService] Error generating or validating AI match report:', err?.message || err);
+      return { ...baseline, aiStatus: 'La respuesta de IA no pudo validarse; se muestra el informe estadístico verificable.' };
+    }
   };
   return options.forceRefresh ? generate() : cachedData(cacheKey, 600, generate);
 }

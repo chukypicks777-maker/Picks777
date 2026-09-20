@@ -45,7 +45,7 @@ export function calculateDifferential(home, away, match = {}) {
   };
 }
 export function getTop3Opportunities(match) {
-  if (!match || (match.status && match.status !== 'SCHEDULED') || (match.kickoff && Date.parse(match.kickoff) <= Date.now())) return [];
+  if (!match || match.status === 'POSTPONED' || match.status === 'CANCELLED') return [];
   const p = match.model?.probabilities || match.probabilities || {};
   const candidates = [];
   const add = (key, selection, market, probability, category) => {
