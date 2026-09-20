@@ -105,7 +105,8 @@ export async function generateAiMatchReport(match, options = {}) {
       const raw = await executeAiChatCompletion({ ...config, model: config.selectedModel,
         systemPrompt: 'Select the most relevant fact IDs from the catalog to summarize the fixture. Return only JSON object {"factIds":["id"]} choosing between 1 and 6 IDs from the catalog. Do not alter or fabricate facts.',
         userPrompt: JSON.stringify(promptCatalog) });
-      const parsed = JSON.parse(raw.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ''));
+      const cleaned = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      const parsed = JSON.parse(cleaned.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ''));
       if (!Array.isArray(parsed.factIds) || !parsed.factIds.length || parsed.factIds.length > 6 || parsed.factIds.some(id => typeof id !== 'string' || !facts.some(f => f.id === id))) throw new Error('Invalid fact selection');
       const keypoints = [...new Set(parsed.factIds)].map(id => facts.find(f => f.id === id).text);
       return { ...baseline, aiAvailable: true, modelUsed: config.selectedModel, tacticalKeypoints: keypoints,
