@@ -10,9 +10,14 @@ const { storage } = await import('../server/storage.js');
 const { default: app } = await import('../server/index.js');
 const { getEffectiveAiConfig } = await import('../server/services/aiService.js');
 
-test('private environment default survives serverless instances and ephemeral saves are rejected', async t => {
+test('private environment default serves as fallback when storage has no key and saved storage takes precedence', async t => {
   const previous = { VERCEL: process.env.VERCEL, AI_DEFAULT_CONFIG: process.env.AI_DEFAULT_CONFIG };
-  t.mock.method(storage, 'getAiConfig', async () => ({ provider: 'openrouter', apiKey: '', selectedModel: 'legacy-model' }));
+  let stored = { provider: 'openrouter', apiKey: '', selectedModel: 'legacy-model' };
+  t.mock.method(storage, 'getAiConfig', async () => stored);
+  t.mock.method(storage, 'updateAiConfig', async updates => {
+    stored = { ...stored, ...updates };
+    return stored;
+  });
   try {
     process.env.VERCEL = '1';
     process.env.AI_DEFAULT_CONFIG = JSON.stringify({ provider: 'agentrouter', baseUrl: 'https://agentrouter.org/v1', apiKey: 'environment-test-key', selectedModel: '' });
@@ -23,7 +28,12 @@ test('private environment default survives serverless instances and ephemeral sa
       assert.equal(config.selectedModel, '');
       assert.equal(config.isConfigured, true);
     }
-    await assert.rejects(storage.updateAiConfig({ apiKey: 'temporary-key' }), /almacenamiento permanente/);
+    await storage.updateAiConfig({ provider: 'custom', apiKey: 'saved-key', baseUrl: 'https://vyceai.com/v1', selectedModel: 'deepseek-v4.1' });
+    const active = await getEffectiveAiConfig();
+    assert.equal(active.provider, 'custom');
+    assert.equal(active.apiKey, 'saved-key');
+    assert.equal(active.selectedModel, 'deepseek-v4.1');
+    stored.apiKey = '';
     process.env.AI_DEFAULT_CONFIG = '{secret-invalid-json';
     await assert.rejects(getEffectiveAiConfig(), error => !error.message.includes('secret-invalid-json'));
   } finally {

@@ -3,7 +3,7 @@ import { validateAiConfig } from '../security.js';
 import { PROVIDER_PRESETS } from '../../src/constants/aiProviders.js';
 import { CONFIG } from '../config.js';
 import { storage } from '../storage.js';
-import { cachedData, redisConfigured } from './dataCache.js';
+import { cachedData } from './dataCache.js';
 import { getTop3Opportunities } from '../../src/utils/mathProbabilities.js';
 
 import { fetchProviderModels, executeAiChatCompletion } from './aiProviderClient.js';
@@ -11,7 +11,7 @@ export { fetchProviderModels, executeAiChatCompletion, testAiConnection } from '
 
 export async function getEffectiveAiConfig() {
   let dbConfig = await storage.getAiConfig();
-  if (process.env.AI_DEFAULT_CONFIG && ((!redisConfigured() && process.env.VERCEL) || !dbConfig?.apiKey)) {
+  if (!dbConfig?.apiKey && process.env.AI_DEFAULT_CONFIG) {
     try {
       dbConfig = validateAiConfig(JSON.parse(process.env.AI_DEFAULT_CONFIG));
     } catch {

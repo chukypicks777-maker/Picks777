@@ -268,6 +268,7 @@ export default function AdminDashboardModal({ onClose }) {
     e?.preventDefault();
     setIsSaving(true);
     setSavedSettingsMsg('');
+    setTestResult(null);
     try {
       const res = await fetch('/api/settings/update', {
         method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
@@ -281,8 +282,8 @@ export default function AdminDashboardModal({ onClose }) {
       setNewApiKey('');
       saveStoredAiConfig({ ...data.settings, apiKey: '' });
       setSavedSettingsMsg(data.settings.selectedModel
-        ? 'Configuración predeterminada guardada en el servidor. Usa Probar Conexión para verificarla.'
-        : 'Clave predeterminada guardada en el servidor. Falta seleccionar un modelo cuando el proveedor permita el acceso.');
+        ? 'Configuración guardada exitosamente en el servidor. Usa Probar Conexión para verificarla.'
+        : 'Clave guardada exitosamente en el servidor. Falta seleccionar un modelo cuando el proveedor permita el acceso.');
       sounds.playSuccess();
     } catch (error) {
       setTestResult({ success: false, message: error.message || 'No se pudo guardar la configuración en el servidor.' });

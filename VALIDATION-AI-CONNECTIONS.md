@@ -32,8 +32,6 @@ Prueba directa con la clave proporcionada por el titular: agentrouter.org devolv
 
 Verificación: 44 tests aprobados, incluyendo guardar/reabrir la clave con modelo pendiente y ausencia de llamadas de generación sin modelo; lint limpio y build correcto.
 
-## Almacenamiento de producción confirmado
+## Almacenamiento y configuración dinámica
 
-La verificación después de recargar mostró que Vercel usaba `serverless-memory`: el archivo temporal no conservaba la clave entre instancias. Se añadió `AI_DEFAULT_CONFIG`, una variable secreta de producción con la configuración completa, como valor predeterminado duradero. En Vercel sin Redis tiene prioridad frente al archivo temporal. El panel rechaza nuevos guardados temporales para no afirmar una persistencia inexistente. Con Redis se mantiene el guardado normal en la base.
-
-La clave se configura desde Vercel, nunca en Git ni en el frontend. El estado de salud consulta la configuración efectiva. Validación ampliada: 45 pruebas aprobadas, lint limpio y compilación correcta.
+La variable `AI_DEFAULT_CONFIG` actúa como configuración predeterminada duradera de entorno para arranques limpios o instancias iniciales. El panel de administración web permite guardar dinámicamente el proveedor, la clave y el modelo seleccionado directamente en el almacenamiento del servidor (`storage.updateAiConfig`). Cuando el administrador guarda una configuración desde el panel, ésta tiene prioridad sobre el valor por defecto del entorno, permitiendo personalizar el motor de IA en tiempo real sin reiniciar el despliegue. Con Redis configurado, la persistencia se replica de forma distribuida en la base de datos.
