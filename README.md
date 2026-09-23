@@ -1,6 +1,6 @@
 # ⚽ DEPORTEPICKS AI VIP — Plataforma de Inteligencia Predictiva para Apuestas de Fútbol
 
-> Plataforma web de análisis deportivo impulsada por Inteligencia Artificial de última generación (**OpenRouter / Z-AI GLM-5.2**) y modelos predictivos cuantitativos. Diseñada con una interfaz ultra-premium (estilo terminal de \$300,000 inspirada en **MasterCuota**, **Jarvis Bet** y **Picks777**).
+> Plataforma web de análisis deportivo impulsada por Inteligencia Artificial de última generación (**VyceAI / DeepSeek V4.1 / AgentRouter**) y modelos predictivos cuantitativos. Diseñada con una interfaz ultra-premium (estilo terminal de \$300,000 inspirada en **MasterCuota**, **Jarvis Bet** y **Picks777**).
 
 ---
 
@@ -18,9 +18,9 @@
 
 ---
 
-### 2. 🤖 Motor de Inteligencia Artificial (OpenRouter GLM-5.2)
-* **Modelo Principal**: `z-ai/glm-5.2:free`
-* **Modelos de Respaldo Automático**: `minimax/minimax-m3:free`, `nvidia/nemotron-3.5-lightning:free`, `google/gemma-4-31b-it:free`.
+### 2. 🤖 Motor de Inteligencia Artificial (DeepSeek V4.1 / VyceAI / 3ros)
+* **Modelo Principal**: `deepseek-v4.1` (VyceAI / API de terceros con saldo)
+* **Compatibilidad Multi-Proveedor**: AgentRouter, DeepSeek oficial, Groq, Gemini y APIs compatibles con OpenAI.
 * **Motor Algorítmico Cuantitativo**: Modelo de Poisson, xG (Goles Esperados) y Dixon-Coles integrado para análisis sin fallas.
 * **Pronósticos Detallados**:
   * 🎯 **Marcador Exacto Predicho** (ej: `2 - 1`)
@@ -83,7 +83,7 @@ Configura `MASTER_ADMIN_CODE` en las variables de entorno (por defecto `DeporteP
    * **Exportar a CSV / Excel**.
    * Opciones para **Revocar** o **Eliminar** códigos.
 4. **Configuración de IA**:
-   * Selector de modelo de OpenRouter en vivo.
+   * Selector de modelo y proveedor en vivo (VyceAI, AgentRouter, DeepSeek, Groq, Gemini).
    * Actualización de API Key.
    * Limpieza de caché de pronósticos.
 
@@ -148,6 +148,6 @@ docker run -p 5000:5000 deportepicks-ai
 
 ## Configuración Vercel y producción
 
-Variables solo del servidor (nunca `VITE_*`): `MASTER_ADMIN_CODE` aleatorio de 32–128 caracteres, `SESSION_SECRET` independiente de al menos 32 caracteres, `UPSTASH_REDIS_REST_URL` HTTPS y `UPSTASH_REDIS_REST_TOKEN`. Redis es obligatorio en toda producción. OpenRouter es opcional: `OPENROUTER_API_KEY` y `OPENROUTER_MODEL`; el modelo se comprueba en el catálogo y no se sustituye por otro de pago.
+Variables solo del servidor (nunca `VITE_*`): `MASTER_ADMIN_CODE` aleatorio de 32–128 caracteres, `SESSION_SECRET` independiente de al menos 32 caracteres, `UPSTASH_REDIS_REST_URL` HTTPS y `UPSTASH_REDIS_REST_TOKEN`. Redis es obligatorio en toda producción. IA de terceros opcional: `CUSTOM_AI_API_KEY`, `CUSTOM_AI_BASE_URL` y `DEFAULT_AI_MODEL`.
 
 Configura valores separados para Preview y Production. No compartas Redis ni credenciales productivas con pruebas. Usa HTTPS para cookies Secure. Confirma rotación de credenciales, conectividad, pruebas y aprobación del responsable antes de promover una preview. Véase `VALIDATION.md`.

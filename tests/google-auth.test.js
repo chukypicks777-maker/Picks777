@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { once } from 'node:events';
 
-process.env.OPENROUTER_API_KEY = '';
+process.env.CUSTOM_AI_API_KEY = '';
 process.env.UPSTASH_REDIS_REST_URL = '';
 process.env.UPSTASH_REDIS_REST_TOKEN = '';
 process.env.VERCEL = '';

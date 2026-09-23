@@ -1748,9 +1748,16 @@
       "cachedAt": "2026-09-08T09:40:30.047Z"
     }
   },
+  "aiConfig": {
+    "provider": "custom",
+    "apiKey": "",
+    "baseUrl": "https://vyceai.com/v1",
+    "selectedModel": "deepseek-v4.1",
+    "modelName": "DeepSeek V4.1 Flash",
+    "updatedAt": "2026-09-20T00:00:00.000Z"
+  },
   "settings": {
-    "selectedModel": "openrouter/free",
-    "openRouterApiKey": "",
+    "selectedModel": "deepseek-v4.1",
     "autoAiSync": true,
     "lastSync": "2026-09-02T07:43:20.606Z"
   },

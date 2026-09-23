@@ -256,9 +256,9 @@ export class StorageManager {
     if (data.aiConfig) return data.aiConfig;
     if (data.settings?.selectedModel) {
       return {
-        provider: 'openrouter',
-        apiKey: data.settings.openRouterApiKey || '',
-        baseUrl: 'https://openrouter.ai/api/v1',
+        provider: 'custom',
+        apiKey: '',
+        baseUrl: 'https://vyceai.com/v1',
         selectedModel: data.settings.selectedModel,
         modelName: data.settings.selectedModel,
         updatedAt: null
@@ -285,9 +285,9 @@ export class StorageManager {
       const newApiKey = updates.apiKey !== undefined && updates.apiKey !== null ? String(updates.apiKey).trim() : existing.apiKey;
       const selectedModel = String(updates.selectedModel ?? existing.selectedModel ?? '').trim();
       db.aiConfig = {
-        provider: String(updates.provider || existing.provider || 'openrouter').trim().toLowerCase(),
+        provider: String(updates.provider || existing.provider || 'custom').trim().toLowerCase(),
         apiKey: newApiKey || '',
-        baseUrl: String(updates.baseUrl || existing.baseUrl || 'https://openrouter.ai/api/v1').trim(),
+        baseUrl: String(updates.baseUrl || existing.baseUrl || 'https://vyceai.com/v1').trim(),
         selectedModel,
         modelName: String(updates.modelName ?? existing.modelName ?? selectedModel).trim(),
         updatedAt: new Date().toISOString()

@@ -40,9 +40,9 @@ async function requestJson(url, { apiKey, ...options }) {
   return data;
 }
 
-export async function fetchProviderModels(provider = 'openrouter', apiKey = '', baseUrl = '') {
+export async function fetchProviderModels(provider = 'custom', apiKey = '', baseUrl = '') {
   ({ provider, apiKey, baseUrl } = validateAiConfig({ provider, apiKey, baseUrl }));
-  if (!apiKey && provider !== 'openrouter') throw providerError('Ingresa la clave de este proveedor para consultar sus modelos.', 'MISSING_KEY');
+  if (!apiKey) throw providerError('Ingresa la clave de este proveedor para consultar sus modelos.', 'MISSING_KEY');
   const gemini = provider === 'gemini';
   const headers = gemini ? { 'x-goog-api-key': apiKey } : apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
   const data = await requestJson(`${baseUrl}/models`, { apiKey, headers, signal: AbortSignal.timeout(10000) });
@@ -60,25 +60,16 @@ export async function fetchProviderModels(provider = 'openrouter', apiKey = '', 
 export function normalizeModelId(provider, model) {
   if (!model || typeof model !== 'string') return model;
   const trimmed = model.trim();
-  if (provider === 'openrouter') {
-    if (!trimmed.includes('/')) {
-      if (/^deepseek-v4(\.[0-9]+)?(-flash)?$/i.test(trimmed)) return 'deepseek/deepseek-v4.1-flash';
-      if (/^deepseek-r1$/i.test(trimmed)) return 'deepseek/deepseek-r1';
-      if (/^deepseek-chat$/i.test(trimmed)) return 'deepseek/deepseek-chat';
-      if (/^nemotron/i.test(trimmed)) return 'nvidia/nemotron-3.5-lightning:free';
-      if (/^llama-3\.3-70b/i.test(trimmed)) return 'meta-llama/llama-3.3-70b-instruct:free';
-      if (/^gemini-2\.0-flash/i.test(trimmed)) return 'google/gemini-2.0-flash-001';
-      if (/^o3-mini$/i.test(trimmed)) return 'openai/o3-mini';
-    }
-  } else if (provider === 'deepseek') {
+  if (provider === 'deepseek') {
     if (/^deepseek-v[34](\.[0-9]+)?(-flash)?$/i.test(trimmed)) return 'deepseek-chat';
     if (/^deepseek-r1$/i.test(trimmed)) return 'deepseek-reasoner';
   }
   return trimmed;
 }
 
-export async function executeAiChatCompletion({ provider = 'openrouter', apiKey, baseUrl, model, systemPrompt = '', userPrompt, maxTokens = 4000 }) {
-  const config = validateAiConfig({ provider, apiKey, baseUrl, selectedModel: model });
+export async function executeAiChatCompletion({ provider = 'custom', apiKey, baseUrl, model, selectedModel, systemPrompt = '', userPrompt, maxTokens = 4000 }) {
+  const chosenModel = model || selectedModel;
+  const config = validateAiConfig({ provider, apiKey, baseUrl, selectedModel: chosenModel });
   ({ provider, apiKey, baseUrl } = config);
   model = normalizeModelId(provider, config.selectedModel);
   if (!apiKey) throw providerError('Ingresa la clave API de este proveedor.', 'MISSING_KEY');
@@ -99,19 +90,22 @@ export async function executeAiChatCompletion({ provider = 'openrouter', apiKey,
   } else {
     url = `${baseUrl}/chat/completions`;
     headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
-    if (provider === 'openrouter') { headers['HTTP-Referer'] = 'https://picks777.vercel.app'; headers['X-Title'] = 'Picks777'; }
     body = { model, messages: [...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []), { role: 'user', content: userPrompt }] };
     // Never send both incompatible token-limit parameters.
     body[/^(?:openai\/)?(?:o[134](?:-|$)|gpt-5)/i.test(model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokens;
   }
   const data = await requestJson(url, { method: 'POST', apiKey, headers, body: JSON.stringify(body), signal });
+  let choice = data.choices?.[0];
   let content = provider === 'gemini'
     ? data.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('')
-    : anthropic ? data.content?.filter(p => p.type === 'text').map(p => p.text).join('') : data.choices?.[0]?.message?.content;
+    : anthropic ? data.content?.filter(p => p.type === 'text').map(p => p.text).join('') : (choice?.message?.content || choice?.message?.reasoning || choice?.text);
   if (provider === 'gemini' && !content) {
     content = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('');
   }
   let text = typeof content === 'string' ? content : Array.isArray(content) ? content.filter(p => p.type === 'text').map(p => p.text).join('') : '';
+  if (!text?.trim() && choice?.message?.reasoning) {
+    text = String(choice.message.reasoning);
+  }
   if (!text?.trim()) throw providerError('El proveedor no devolvió una respuesta final de texto. Puede haber agotado el límite de generación.', 'EMPTY_RESPONSE');
   return text;
 }

@@ -1,7 +1,8 @@
 import { PROVIDER_PRESETS } from '../src/constants/aiProviders.js';
 export function validateAiConfig(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Configuración inválida.');
-  let provider = input.provider || 'openrouter';
+  const explicitProvider = input.provider;
+  let provider = input.provider || 'custom';
   if (!Object.hasOwn(PROVIDER_PRESETS, provider)) throw new Error('Proveedor inválido.');
   let cleanApiKey = input.apiKey;
   if (cleanApiKey !== undefined && cleanApiKey !== null && typeof cleanApiKey === 'string') {
@@ -26,7 +27,7 @@ export function validateAiConfig(input = {}) {
       }
     }
   }
-  let rawUrl = (input.baseUrl && typeof input.baseUrl === 'string' && input.baseUrl.trim()) ? input.baseUrl.trim() : PROVIDER_PRESETS[provider].defaultBaseUrl;
+  let rawUrl = (input.baseUrl && typeof input.baseUrl === 'string' && input.baseUrl.trim()) ? input.baseUrl.trim() : (PROVIDER_PRESETS[provider]?.defaultBaseUrl || 'https://vyceai.com/v1');
   if (!rawUrl) throw new Error('Ingresa la URL base HTTPS del proveedor.');
   if (!/^https?:\/\//i.test(rawUrl)) {
     rawUrl = 'https://' + rawUrl;
@@ -37,16 +38,14 @@ export function validateAiConfig(input = {}) {
 
   // Inferir automáticamente si el host pertenece a uno conocido
   if (h === 'agentrouter.org' || h === 'co.agentrouter.org') {
-    if (provider !== 'custom') {
+    if (explicitProvider !== 'custom') {
       provider = 'agentrouter';
     }
     if (url.pathname === '/' || url.pathname === '') {
       url.pathname = '/v1';
     }
-  } else if (provider !== 'custom') {
-    if (h === 'openrouter.ai') {
-      provider = 'openrouter';
-    } else if (h === 'api.deepseek.com') {
+  } else if (explicitProvider !== 'custom') {
+    if (h === 'api.deepseek.com') {
       provider = 'deepseek';
     } else if (h === 'api.groq.com') {
       provider = 'groq';
@@ -89,7 +88,7 @@ export function validateAiConfig(input = {}) {
 
 // A saved key belongs to one provider and API base, never to an arbitrary new host.
 export function resolveAiConfig(input = {}, current = {}) {
-  const provider = input.provider || current.provider || 'openrouter';
+  const provider = input.provider || current.provider || 'custom';
   const target = validateAiConfig({ ...input, provider,
     baseUrl: input.baseUrl || (provider === current.provider ? current.baseUrl : undefined) });
   let sameDestination = false;

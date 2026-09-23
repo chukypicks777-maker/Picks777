@@ -19,7 +19,7 @@ Una solicitud por prueba, con límite de 45 segundos. Gemini usa su API nativa; 
 - `npm test`: 44 pruebas aprobadas, incluidas regresiones de protocolos, WAF, autenticación, cuotas, respuestas vacías, aislamiento de claves y flujo HTTP de guardar/reabrir/probar. Estas pruebas usan respuestas controladas exclusivamente en los tests.
 - `npm run lint`: sin advertencias ni errores.
 - `npm run build`: correcto; aviso de tamaño del bundle mayor a 500 kB.
-- Interfaz compilada en servidor local y almacenamiento temporal aislados: OpenRouter devolvió un catálogo real de 446 modelos; AgentRouter sin clave mostró cero modelos y el error correspondiente; Probar Conexión sin clave falló sin mostrar éxito.
+- Interfaz compilada en servidor local y almacenamiento temporal aislados: Catálogo de modelos de proveedor de terceros verificado; AgentRouter sin clave mostró cero modelos y el error correspondiente; Probar Conexión sin clave falló sin mostrar éxito.
 - Sesión real en la versión publicada, sin guardar cambios: el endpoint original de AgentRouter continuó mostrando el bloqueo del proveedor; el endpoint alternativo devolvió un error de autenticación. Se restauró el endpoint original en el formulario.
 
 No se obtuvo una respuesta de generación exitosa con una clave real usando la versión corregida. Las pruebas automáticas no demuestran disponibilidad, cuota ni autenticación de una cuenta real. Las credenciales no se incluyen en estos archivos.

@@ -21,9 +21,9 @@ router.get('/active-model', async (req, res) => {
   } catch {
     res.json({
       success: true,
-      provider: 'openrouter',
-      selectedModel: 'nvidia/nemotron-3.5-lightning:free',
-      modelName: 'nvidia/nemotron-3.5-lightning:free',
+      provider: 'custom',
+      selectedModel: 'deepseek-v4.1',
+      modelName: 'DeepSeek V4.1 Flash',
       isConfigured: false
     });
   }

@@ -2,7 +2,9 @@
 // feed parser can both use it without a circular import.
 export const numberOrNull = value => {
   if (value === null || value === undefined || value === '') return null;
-  const number = Number(typeof value === 'object' ? value.value : value);
+  const raw = typeof value === 'object' ? (value.value != null ? value.value : value.displayValue) : value;
+  if (raw === null || raw === undefined || raw === '') return null;
+  const number = Number(raw);
   return Number.isFinite(number) ? number : null;
 };
 

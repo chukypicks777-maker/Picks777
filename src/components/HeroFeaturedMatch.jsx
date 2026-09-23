@@ -139,9 +139,9 @@ export default function HeroFeaturedMatch({
                       </span>
                       <span className="text-xl md:text-2xl font-black font-mono text-white tracking-wider">
                         {match.status === 'LIVE' 
-                          ? `${match.liveScore?.home ?? 0} - ${match.liveScore?.away ?? 0}`
+                          ? `${match.liveScore?.home ?? match.finalScore?.home ?? 0} - ${match.liveScore?.away ?? match.finalScore?.away ?? 0}`
                           : match.status === 'FINISHED'
-                          ? `${match.finalScore?.home ?? 0} - ${match.finalScore?.away ?? 0}`
+                          ? `${match.finalScore?.home ?? match.liveScore?.home ?? 0} - ${match.finalScore?.away ?? match.liveScore?.away ?? 0}`
                           : getCoherentPredictedScore(match)}
                       </span>
                     </div>

@@ -12,7 +12,7 @@ const { getEffectiveAiConfig } = await import('../server/services/aiService.js')
 
 test('private environment default serves as fallback when storage has no key and saved storage takes precedence', async t => {
   const previous = { VERCEL: process.env.VERCEL, AI_DEFAULT_CONFIG: process.env.AI_DEFAULT_CONFIG };
-  let stored = { provider: 'openrouter', apiKey: '', selectedModel: 'legacy-model' };
+  let stored = { provider: 'custom', apiKey: '', selectedModel: 'legacy-model' };
   t.mock.method(storage, 'getAiConfig', async () => stored);
   t.mock.method(storage, 'updateAiConfig', async updates => {
     stored = { ...stored, ...updates };

@@ -22,13 +22,12 @@ test('social validation blocks scripts, credentials, deceptive domains and dupli
   assert.equal(validateSocialLinks(SOCIAL_LINKS)[0].url, SOCIAL_LINKS[0].url);
 });
 test('AI destinations reject SSRF, credentials, queries and type confusion', () => {
-  for (const baseUrl of ['http://127.0.0.1:5000', 'https://169.254.169.254', 'https://openrouter.ai.evil.com', 'https://user:pass@openrouter.ai/api/v1', 'https://openrouter.ai/api/v1?token=bad', 'https://[::1]']) assert.throws(() => validateAiConfig({ provider: 'openrouter', baseUrl }));
+  for (const baseUrl of ['http://127.0.0.1:5000', 'https://169.254.169.254', 'https://agentrouter.org.evil.com', 'https://user:pass@agentrouter.org/v1', 'https://agentrouter.org/v1?token=bad', 'https://[::1]']) assert.throws(() => validateAiConfig({ provider: 'agentrouter', baseUrl }));
   assert.throws(() => validateAiConfig({ provider: '__proto__' }));
   assert.throws(() => validateAiConfig({ apiKey: { key: 'bad' } }));
-  assert.equal(validateAiConfig({ provider: 'openrouter' }).baseUrl, 'https://openrouter.ai/api/v1');
+  assert.equal(validateAiConfig({ provider: 'custom' }).baseUrl, 'https://vyceai.com/v1');
   assert.equal(validateAiConfig({ provider: 'custom', baseUrl: 'https://my-custom-proxy.com/v1' }).baseUrl, 'https://my-custom-proxy.com/v1');
   assert.equal(validateAiConfig({ provider: 'agentrouter', baseUrl: 'https://agentrouter.org' }).baseUrl, 'https://agentrouter.org/v1');
-  assert.equal(validateAiConfig({ provider: 'openrouter', baseUrl: 'https://agentrouter.org' }).provider, 'agentrouter');
   assert.equal(validateAiConfig({ baseUrl: 'https://agentrouter.org' }).provider, 'agentrouter');
   for (const badCustom of ['http://custom-proxy.com', 'https://10.0.0.1/v1', 'https://localhost/v1', 'https://custom-proxy.com:8080/v1']) {
     assert.throws(() => validateAiConfig({ provider: 'custom', baseUrl: badCustom }));
@@ -78,7 +77,7 @@ test('HTTP groups: anonymous/VIP/header forgery/CSRF denied; Owner succeeds; pub
     const saved = await request('/api/settings/groups', input, owner); assert.equal(saved.status, 200);
     assert.equal((await request('/api/settings/groups', input, owner)).status, 400);
     const publicData = await (await request('/api/community')).json(); assert.equal(publicData.settings.revision, 1); assert.equal(publicData.settings.apiKey, undefined);
-    const settings = await request('/api/settings/update', { provider: 'openrouter', apiKey: {}, baseUrl: 'https://localhost' }, owner); assert.equal(settings.status, 400);
+    const settings = await request('/api/settings/update', { provider: 'custom', apiKey: {}, baseUrl: 'https://localhost' }, owner); assert.equal(settings.status, 400);
   } finally { await new Promise(resolve => server.close(resolve)); storage.file = original; await rm(dir, { recursive: true, force: true }); }
 });
 

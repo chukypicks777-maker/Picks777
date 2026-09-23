@@ -43,18 +43,18 @@ export default function AdminDashboardModal({ onClose }) {
 
   // AI Configuration states
   const [settings, setSettings] = useState({
-    provider: 'openrouter',
-    selectedModel: 'nvidia/nemotron-3.5-lightning:free',
-    baseUrl: 'https://openrouter.ai/api/v1',
+    provider: 'custom',
+    selectedModel: 'deepseek-v4.1',
+    baseUrl: 'https://vyceai.com/v1',
     apiKeyMasked: '',
     isConfigured: false
   });
-  const [provider, setProvider] = useState('openrouter');
-  const [newModel, setNewModel] = useState('nvidia/nemotron-3.5-lightning:free');
+  const [provider, setProvider] = useState('custom');
+  const [newModel, setNewModel] = useState('deepseek-v4.1');
   const [customModelInput, setCustomModelInput] = useState('');
   const [newApiKey, setNewApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
-  const [baseUrl, setBaseUrl] = useState('https://openrouter.ai/api/v1');
+  const [baseUrl, setBaseUrl] = useState('https://vyceai.com/v1');
   const [savedSettingsMsg, setSavedSettingsMsg] = useState('');
   const [testResult, setTestResult] = useState(null);
   const [isTesting, setIsTesting] = useState(false);
@@ -89,7 +89,7 @@ export default function AdminDashboardModal({ onClose }) {
     }
   }, []);
 
-  const fetchModelsForProvider = useCallback(async (p = 'openrouter', key = '', url = '') => {
+  const fetchModelsForProvider = useCallback(async (p = 'custom', key = '', url = '') => {
     const request = ++modelRequest.current;
     setLoadingModels(true);
     setAvailableModelsList([]);
@@ -118,7 +118,7 @@ export default function AdminDashboardModal({ onClose }) {
       if (!res.ok || !data.success || !data.settings) throw new Error(data.message || 'No se pudo cargar la configuración del servidor.');
       setSettings(data.settings);
       saveStoredAiConfig({ ...data.settings, apiKey: '' });
-      const prov = data.settings.provider || 'openrouter';
+      const prov = data.settings.provider || 'custom';
       const url = data.settings.baseUrl || PROVIDER_PRESETS[prov]?.defaultBaseUrl || '';
       setProvider(prov);
       setBaseUrl(url);

@@ -1,0 +1,499 @@
+{
+  "verifiedAt": "2026-09-23T17:41:51.588Z",
+  "allVerified": true,
+  "totalAiAvailable": 0,
+  "results": [
+    {
+      "index": 1,
+      "matchId": "espn-761543",
+      "fixture": "Seattle Sounders FC vs Real Salt Lake",
+      "league": "MLS",
+      "status": "SCHEDULED",
+      "kickoff": "2026-09-24T01:30Z",
+      "latencyMs": 5517,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 37.4,
+        "draw": 25,
+        "awayWin": 37.6,
+        "over25": 54.3,
+        "under25": 45.7,
+        "bttsYes": 57.7,
+        "predictedScore": "1 - 1"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para Seattle Sounders FC vs Real Salt Lake. Muestra de temporada: 24 partidos (local) y 25 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 54.3% y Under 2.5 en 45.7%. Ambos Anotan (BTTS) en 57.7%. Dinámica prevista: Partido abierto con alto volumen de ocasiones ofensivas.",
+        "positiveFactors": [
+          "Seattle Sounders FC: 28 goles a favor en 24 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: Real Salt Lake (37.6%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 62.4%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 1 (11.7%). Selección cuantitativa principal: Total Goles Over 1.5 con 78%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 2,
+      "matchId": "espn-401876964",
+      "fixture": "Atlante vs Monterrey",
+      "league": "Liga MX",
+      "status": "SCHEDULED",
+      "kickoff": "2026-09-26T01:00Z",
+      "latencyMs": 3827,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 25.4,
+        "draw": 25,
+        "awayWin": 49.6,
+        "over25": 49.8,
+        "under25": 50.2,
+        "bttsYes": 52.4,
+        "predictedScore": "1 - 1"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para Atlante vs Monterrey. Muestra de temporada: 9 partidos (local) y 8 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 49.8% y Under 2.5 en 50.2%. Ambos Anotan (BTTS) en 52.4%. Dinámica prevista: Encuentro equilibrado con prevalencia de rigor táctico y control.",
+        "positiveFactors": [
+          "Atlante: 8 goles a favor en 9 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: Monterrey (49.6%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 50.4%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 1 (11.9%). Selección cuantitativa principal: Doble Oportunidad (X2) con 75%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 3,
+      "matchId": "espn-401874944",
+      "fixture": "AC Milan vs Lecce",
+      "league": "Serie A",
+      "status": "FINISHED",
+      "kickoff": "2026-09-20T18:45Z",
+      "latencyMs": 2719,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 63,
+        "draw": 20.9,
+        "awayWin": 16.2,
+        "over25": 55.4,
+        "under25": 44.6,
+        "bttsYes": 51.3,
+        "predictedScore": "1 - 0"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para AC Milan vs Lecce. Muestra de temporada: 5 partidos (local) y 5 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 55.4% y Under 2.5 en 44.6%. Ambos Anotan (BTTS) en 51.3%. Dinámica prevista: Partido abierto con alto volumen de ocasiones ofensivas.",
+        "positiveFactors": [
+          "AC Milan: 10 goles a favor en 5 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: AC Milan (63%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 37%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 0 (11%). Selección cuantitativa principal: Doble Oportunidad (1X) con 84%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 4,
+      "matchId": "espn-401876449",
+      "fixture": "Marseille vs Paris Saint-Germain",
+      "league": "Ligue 1",
+      "status": "FINISHED",
+      "kickoff": "2026-09-20T18:45Z",
+      "latencyMs": 2606,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 33.5,
+        "draw": 24.2,
+        "awayWin": 42.3,
+        "over25": 57.7,
+        "under25": 42.3,
+        "bttsYes": 60.1,
+        "predictedScore": "1 - 1"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para Marseille vs Paris Saint-Germain. Muestra de temporada: 5 partidos (local) y 5 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 57.7% y Under 2.5 en 42.3%. Ambos Anotan (BTTS) en 60.1%. Dinámica prevista: Partido abierto con alto volumen de ocasiones ofensivas.",
+        "positiveFactors": [
+          "Marseille: 7 goles a favor en 5 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: Paris Saint-Germain (42.3%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 57.7%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 1 (11.2%). Selección cuantitativa principal: Total Goles Over 1.5 con 80%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 5,
+      "matchId": "espn-401882858",
+      "fixture": "Valencia vs Real Sociedad",
+      "league": "LaLiga",
+      "status": "FINISHED",
+      "kickoff": "2026-09-20T19:00Z",
+      "latencyMs": 3573,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 29.5,
+        "draw": 24.9,
+        "awayWin": 45.6,
+        "over25": 52.7,
+        "under25": 47.3,
+        "bttsYes": 55.7,
+        "predictedScore": "1 - 1"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para Valencia vs Real Sociedad. Muestra de temporada: 7 partidos (local) y 7 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 52.7% y Under 2.5 en 47.3%. Ambos Anotan (BTTS) en 55.7%. Dinámica prevista: Partido abierto con alto volumen de ocasiones ofensivas.",
+        "positiveFactors": [
+          "Valencia: 4 goles a favor en 7 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: Real Sociedad (45.6%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 54.4%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 1 (11.8%). Selección cuantitativa principal: Total Goles Over 1.5 con 77%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 6,
+      "matchId": "espn-761830",
+      "fixture": "Atlanta United FC vs New York City FC",
+      "league": "MLS",
+      "status": "SCHEDULED",
+      "kickoff": "2026-09-26T23:30Z",
+      "latencyMs": 4434,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 29.8,
+        "draw": 24.8,
+        "awayWin": 45.4,
+        "over25": 53.2,
+        "under25": 46.8,
+        "bttsYes": 56.2,
+        "predictedScore": "1 - 1"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para Atlanta United FC vs New York City FC. Muestra de temporada: 26 partidos (local) y 26 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 53.2% y Under 2.5 en 46.8%. Ambos Anotan (BTTS) en 56.2%. Dinámica prevista: Partido abierto con alto volumen de ocasiones ofensivas.",
+        "positiveFactors": [
+          "Atlanta United FC: 30 goles a favor en 26 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: New York City FC (45.4%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 54.6%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 1 (11.7%). Selección cuantitativa principal: Total Goles Over 1.5 con 77%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 7,
+      "matchId": "espn-401876963",
+      "fixture": "Tijuana vs Atlas",
+      "league": "Liga MX",
+      "status": "SCHEDULED",
+      "kickoff": "2026-09-26T03:00Z",
+      "latencyMs": 4952,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 43,
+        "draw": 24.4,
+        "awayWin": 32.5,
+        "over25": 56.1,
+        "under25": 43.9,
+        "bttsYes": 58.8,
+        "predictedScore": "1 - 1"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para Tijuana vs Atlas. Muestra de temporada: 8 partidos (local) y 9 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 56.1% y Under 2.5 en 43.9%. Ambos Anotan (BTTS) en 58.8%. Dinámica prevista: Partido abierto con alto volumen de ocasiones ofensivas.",
+        "positiveFactors": [
+          "Tijuana: 12 goles a favor en 8 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: Tijuana (43%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 57%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 1 (11.4%). Selección cuantitativa principal: Total Goles Over 1.5 con 79%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 8,
+      "matchId": "espn-761831",
+      "fixture": "CF Montréal vs FC Cincinnati",
+      "league": "MLS",
+      "status": "SCHEDULED",
+      "kickoff": "2026-09-26T23:30Z",
+      "latencyMs": 5148,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 34.1,
+        "draw": 20.8,
+        "awayWin": 45.1,
+        "over25": 74.9,
+        "under25": 25.1,
+        "bttsYes": 73.5,
+        "predictedScore": "1 - 2"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para CF Montréal vs FC Cincinnati. Muestra de temporada: 26 partidos (local) y 25 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 74.9% y Under 2.5 en 25.1%. Ambos Anotan (BTTS) en 73.5%. Dinámica prevista: Partido abierto con alto volumen de ocasiones ofensivas.",
+        "positiveFactors": [
+          "CF Montréal: 31 goles a favor en 26 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: FC Cincinnati (45.1%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 54.9%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 2 (8%). Selección cuantitativa principal: Total Goles Over 1.5 con 90%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 9,
+      "matchId": "espn-401876959",
+      "fixture": "Cruz Azul vs Toluca",
+      "league": "Liga MX",
+      "status": "SCHEDULED",
+      "kickoff": "2026-09-26T22:50Z",
+      "latencyMs": 4315,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 27.5,
+        "draw": 22,
+        "awayWin": 50.5,
+        "over25": 64.7,
+        "under25": 35.3,
+        "bttsYes": 64.3,
+        "predictedScore": "1 - 1"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para Cruz Azul vs Toluca. Muestra de temporada: 9 partidos (local) y 9 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 64.7% y Under 2.5 en 35.3%. Ambos Anotan (BTTS) en 64.3%. Dinámica prevista: Partido abierto con alto volumen de ocasiones ofensivas.",
+        "positiveFactors": [
+          "Cruz Azul: 16 goles a favor en 9 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: Toluca (50.5%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 49.5%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 1 (9.6%). Selección cuantitativa principal: Total Goles Over 1.5 con 85%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 10,
+      "matchId": "espn-761832",
+      "fixture": "Charlotte FC vs Chicago Fire FC",
+      "league": "MLS",
+      "status": "SCHEDULED",
+      "kickoff": "2026-09-26T23:30Z",
+      "latencyMs": 3998,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 39.5,
+        "draw": 23.1,
+        "awayWin": 37.3,
+        "over25": 63.6,
+        "under25": 36.4,
+        "bttsYes": 64.9,
+        "predictedScore": "1 - 1"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para Charlotte FC vs Chicago Fire FC. Muestra de temporada: 26 partidos (local) y 25 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 63.6% y Under 2.5 en 36.4%. Ambos Anotan (BTTS) en 64.9%. Dinámica prevista: Partido abierto con alto volumen de ocasiones ofensivas.",
+        "positiveFactors": [
+          "Charlotte FC: 47 goles a favor en 26 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: Charlotte FC (39.5%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 60.5%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 1 (10.1%). Selección cuantitativa principal: Total Goles Over 1.5 con 84%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 11,
+      "matchId": "espn-401876962",
+      "fixture": "Guadalajara vs Querétaro",
+      "league": "Liga MX",
+      "status": "SCHEDULED",
+      "kickoff": "2026-09-26T23:07Z",
+      "latencyMs": 2973,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 44.2,
+        "draw": 26.1,
+        "awayWin": 29.6,
+        "over25": 47.6,
+        "under25": 52.4,
+        "bttsYes": 51.8,
+        "predictedScore": "1 - 1"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para Guadalajara vs Querétaro. Muestra de temporada: 9 partidos (local) y 8 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 47.6% y Under 2.5 en 52.4%. Ambos Anotan (BTTS) en 51.8%. Dinámica prevista: Encuentro equilibrado con prevalencia de rigor táctico y control.",
+        "positiveFactors": [
+          "Guadalajara: 17 goles a favor en 9 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: Guadalajara (44.2%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 55.8%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 1 - 1 (12.4%). Selección cuantitativa principal: Total Goles Under 3.5 con 74%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    },
+    {
+      "index": 12,
+      "matchId": "espn-761834",
+      "fixture": "Philadelphia Union vs Orlando City SC",
+      "league": "MLS",
+      "status": "SCHEDULED",
+      "kickoff": "2026-09-26T23:30Z",
+      "latencyMs": 4592,
+      "aiAvailable": false,
+      "modelUsed": null,
+      "mathVerification": {
+        "sumOutcome": 100,
+        "sumGoals25": 100,
+        "sumBtts": 100,
+        "scoreFormatValid": true,
+        "mathConsistent": true
+      },
+      "probabilities": {
+        "homeWin": 47.9,
+        "draw": 20.8,
+        "awayWin": 31.3,
+        "over25": 73.2,
+        "under25": 26.8,
+        "bttsYes": 71.8,
+        "predictedScore": "2 - 1"
+      },
+      "analysisSections": {
+        "dataVerification": "Datos verificados de ESPN para Philadelphia Union vs Orlando City SC. Muestra de temporada: 26 partidos (local) y 26 partidos (visitante).",
+        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 73.2% y Under 2.5 en 26.8%. Ambos Anotan (BTTS) en 71.8%. Dinámica prevista: Partido abierto con alto volumen de ocasiones ofensivas.",
+        "positiveFactors": [
+          "Philadelphia Union: 50 goles a favor en 26 fechas disputadas.",
+          "Mayor probabilidad matemática estimada: Philadelphia Union (47.9%)."
+        ],
+        "negativeFactors": [
+          "Margen de empate o sorpresa estadística estimado en 52.1%.",
+          "Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones)."
+        ],
+        "verdict": "Marcador individual más probable: 2 - 1 (8.4%). Selección cuantitativa principal: Total Goles Over 1.5 con 89%."
+      },
+      "verificationStatus": "VERIFIED_OK"
+    }
+  ]
+}

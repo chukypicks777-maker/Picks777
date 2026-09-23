@@ -20,7 +20,9 @@ export function sportsDiagnostic(now = Date.now()) {
 }
 export const numberOrNull = value => {
   if (value === null || value === undefined || value === '') return null;
-  const number = Number(typeof value === 'object' ? value.value : value);
+  const raw = typeof value === 'object' ? (value.value != null ? value.value : value.displayValue) : value;
+  if (raw === null || raw === undefined || raw === '') return null;
+  const number = Number(raw);
   return Number.isFinite(number) ? number : null;
 };
 const stat = (team, name) => numberOrNull((team.stats || team.statistics || []).find(s => s.name === name)?.value);
@@ -124,7 +126,7 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
 function getScoreboardDates() {
   const now = Date.now();
   const fmt = value => new Date(value).toISOString().slice(0, 10).replaceAll('-', '');
-  return [-1, 0, 1, 2, 3, 4, 5].map(offset => fmt(now + offset * 86400000));
+  return [-2, -1, 0, 1, 2, 3, 4, 5, 6].map(offset => fmt(now + offset * 86400000));
 }
 export async function getFootballFeed() {
   const dates = getScoreboardDates();
@@ -168,7 +170,13 @@ export async function getFootballFeed() {
         const sameSeason = standings?.seasonYear != null && (e.season?.year ?? season?.year) === standings.seasonYear;
         const parsed = parseEspnEvent(e, league, sameSeason ? standings.rows : [], scoreboard.fetchedAt, season?.displayName);
         return parsed ? { ...parsed, standingsFetchedAt: sameSeason ? standings.fetchedAt : null } : null;
-      }).filter(Boolean);
+      }).filter(Boolean).filter(m => {
+        // Exclude ancient finished or cancelled matches older than 72 hours from the active feed
+        if ((m.status === 'FINISHED' || m.status === 'CANCELLED') && (Date.now() - Date.parse(m.kickoff) > 72 * 3600 * 1000)) {
+          return false;
+        }
+        return true;
+      });
       return { matches, coverage: { leagueId: league.id, name: league.name, status: 'available', count: matches.length, fetchedAt: scoreboard.fetchedAt, standingsAvailable: Boolean(standings) } };
     } catch {
       return { matches: [], coverage: { leagueId: league.id, name: league.name, status: 'unavailable', count: 0, fetchedAt: null } };
@@ -264,9 +272,55 @@ export async function enrichMatchWithRealData(match) {
     const details = await cachedData(`summary:${match.id}:${match.status}`, match.status === 'LIVE' ? 60 : 600, async () => {
       const url = `${BASE}/${match.espnCode}/summary?event=${match.espnEventId}`;
       const data = await fetchJson(url);
-      return { ...parseSummaryDetails(data, match), fetchedAt: new Date().toISOString(), sourceUrl: url };
+      return { ...parseSummaryDetails(data, match), rawHeader: data.header, fetchedAt: new Date().toISOString(), sourceUrl: url };
     });
-    return { ...match, h2h: details.realH2H, recentMatches: details.recentMatches, realBoxscore: details.boxscore, detailsFetchedAt: details.fetchedAt, detailsSourceUrl: details.sourceUrl, detailsAvailable: true };
+
+    let updatedLiveScore = match.liveScore;
+    let updatedFinalScore = match.finalScore;
+    let updatedStatus = match.status;
+    let updatedMinute = match.liveMinute;
+
+    const headerComp = details.rawHeader?.competitions?.[0];
+    if (headerComp) {
+      const s = headerComp.status || {};
+      const statusType = s.type || {};
+      const statusName = statusType.name || '';
+      const exceptional = { STATUS_POSTPONED: 'POSTPONED', STATUS_CANCELED: 'CANCELLED', STATUS_CANCELLED: 'CANCELLED', STATUS_SUSPENDED: 'SUSPENDED', STATUS_ABANDONED: 'ABANDONED', STATUS_DELAYED: 'DELAYED' };
+      if (exceptional[statusName]) {
+        updatedStatus = exceptional[statusName];
+      } else if (statusType.completed) {
+        updatedStatus = 'FINISHED';
+      } else if (statusType.state === 'in') {
+        updatedStatus = 'LIVE';
+        updatedMinute = s.displayClock || updatedMinute;
+      }
+      const hc = headerComp.competitors?.find(c => c.homeAway === 'home' || String(c.id) === match.homeTeamId);
+      const ac = headerComp.competitors?.find(c => c.homeAway === 'away' || String(c.id) === match.awayTeamId);
+      const hs = numberOrNull(hc?.score);
+      const as = numberOrNull(ac?.score);
+      if (hs !== null && as !== null) {
+        if (updatedStatus === 'LIVE') {
+          updatedLiveScore = { home: hs, away: as };
+        } else if (updatedStatus === 'FINISHED') {
+          updatedFinalScore = { home: hs, away: as };
+          updatedLiveScore = { home: hs, away: as };
+        }
+      }
+    }
+
+    return {
+      ...match,
+      status: updatedStatus,
+      liveMinute: updatedMinute,
+      liveScore: updatedLiveScore,
+      finalScore: updatedFinalScore,
+      h2h: details.realH2H,
+      recentMatches: details.recentMatches,
+      realBoxscore: details.boxscore,
+      detailsFetchedAt: details.fetchedAt,
+      detailsSourceUrl: details.sourceUrl,
+      detailsAvailable: true
+    };
   } catch {
     return { ...match, detailsAvailable: false, detailsError: 'El proveedor no entrega detalles en este momento.' };
   }

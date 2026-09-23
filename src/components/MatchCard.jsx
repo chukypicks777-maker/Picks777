@@ -148,7 +148,7 @@ export default function MatchCard({
               <div className="flex items-center space-x-2 font-mono text-xs">
                 {match.status === 'LIVE' || match.status === 'FINISHED' ? (
                   <span className="font-bold text-white text-sm">
-                    {match.status === 'LIVE' ? match.liveScore?.home ?? 0 : match.finalScore?.home ?? 0}
+                    {match.status === 'LIVE' ? match.liveScore?.home ?? match.finalScore?.home ?? 0 : match.finalScore?.home ?? match.liveScore?.home ?? 0}
                   </span>
                 ) : (
                   <span className="text-slate-400 text-[11px]">
@@ -173,7 +173,7 @@ export default function MatchCard({
               <div className="flex items-center space-x-2 font-mono text-xs">
                 {match.status === 'LIVE' || match.status === 'FINISHED' ? (
                   <span className="font-bold text-white text-sm">
-                    {match.status === 'LIVE' ? match.liveScore?.away ?? 0 : match.finalScore?.away ?? 0}
+                    {match.status === 'LIVE' ? match.liveScore?.away ?? match.finalScore?.away ?? 0 : match.finalScore?.away ?? match.liveScore?.away ?? 0}
                   </span>
                 ) : (
                   <span className="text-slate-400 text-[11px]">

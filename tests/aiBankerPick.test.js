@@ -10,7 +10,7 @@ test('AI cannot inject made-up probabilities, scores, tactics, odds, HTML or una
  const dir=await mkdtemp(path.join(os.tmpdir(),'picks-ai-grounded-')),oldFile=storage.file,oldFetch=globalThis.fetch;
  storage.file=path.join(dir,'access.json');
  try{
-  await storage.updateAiConfig({provider:'openrouter',baseUrl:'https://openrouter.ai/api/v1',apiKey:'test-only-key',selectedModel:'test-model'});
+  await storage.updateAiConfig({provider:'custom',baseUrl:'https://vyceai.com/v1',apiKey:'test-only-key',selectedModel:'test-model'});
   const team={name:'Test',gamesPlayed:10,goalsFor:20,goalsAgainst:10},model=poissonModel(team,team);
   const match={id:'test',status:'SCHEDULED',kickoff:new Date(Date.now()+86400000).toISOString(),homeTeam:team,awayTeam:team,model,probabilities:model.probabilities};
   let response={factIds:['goals','score'],topPick:{probability:500},predictedScore:'99 - 99',tacticalAnalysis:'<script>bad</script>'};

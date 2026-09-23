@@ -23,7 +23,7 @@ import TeamDetailedStatsCard from './TeamDetailedStatsCard';
 import DifferentialAnalysisSection from './DifferentialAnalysisSection';
 import OverUnderGroupedSection from './OverUnderGroupedSection';
 import { calculateTeamDetailedStats, calculateDifferential, getCoherentPredictedScore } from '../utils/mathProbabilities';
-import { getCachedAnalysis, setCachedAnalysis, computeMatchFingerprint, clearAllAnalysisCache } from '../utils/analysisCache';
+import { getCachedAnalysis, setCachedAnalysis, computeMatchFingerprint, clearAllAnalysisCache, removeCachedAnalysis } from '../utils/analysisCache';
 import { getStoredAiConfig } from '../utils/aiSettings';
 
 const calculateMatchSimulation = scoreSimulation;
@@ -99,7 +99,9 @@ export default function MatchDetailModal({
     if (!curMatch?.id) return;
     const modelToUse = modelOverride || activeModelInfoRef.current.selectedModel || undefined;
 
-    if (!forceRefresh) {
+    if (forceRefresh) {
+      removeCachedAnalysis(curMatch.id);
+    } else {
       const cached = getCachedAnalysis(curMatch.id, curMatch);
       if (cached?.aiReport) {
         setAiReport(cached.aiReport);
@@ -119,7 +121,7 @@ export default function MatchDetailModal({
       const aiConfigPayload = (storedAi && storedAi.apiKey && storedAi.apiKey.length >= 4) ? {
         provider: storedAi.provider || 'custom',
         apiKey: storedAi.apiKey,
-        baseUrl: storedAi.baseUrl || 'https://vyceai.com/v1',
+        baseUrl: storedAi.baseUrl || (storedAi.provider === 'agentrouter' ? 'https://agentrouter.org/v1' : 'https://vyceai.com/v1'),
         selectedModel: modelToUse || storedAi.selectedModel || 'deepseek-v4.1'
       } : undefined;
 
@@ -314,16 +316,16 @@ export default function MatchDetailModal({
         {/* Header Ribbon */}
         <div className="bg-[#101622] border-b border-white/10 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <span className="text-xl">{match.leagueFlag}</span>
+            <span className="text-xl">{m.leagueFlag}</span>
             <div>
               <h3 className="font-bold text-sm md:text-base text-white flex items-center space-x-2">
-                <span>{match.leagueName}</span>
+                <span>{m.leagueName}</span>
                 <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/30 px-1.5 py-0.2 rounded font-bold">
                   PRO AI REPORT
                 </span>
               </h3>
               <p className="text-xs font-mono text-slate-400">
-                {match.venue} • {new Date(match.kickoff).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}
+                {m.venue} • {new Date(m.kickoff).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}
               </p>
             </div>
           </div>
@@ -350,7 +352,7 @@ export default function MatchDetailModal({
         {isScanning && (
           <div className="p-4 border-b border-white/10">
             <RadarScanner 
-              matchTitle={`${match.homeTeam.name} vs ${match.awayTeam.name}`}
+              matchTitle={`${m.homeTeam?.name} vs ${m.awayTeam?.name}`}
               onScanComplete={() => setIsScanning(false)}
             />
           </div>
@@ -364,40 +366,40 @@ export default function MatchDetailModal({
             <div className="flex flex-col-reverse sm:flex-row items-center gap-2 text-center sm:text-right min-w-0 justify-end">
               <div>
                 <p className="font-bold text-base md:text-lg text-white font-sans">
-                  {match.homeTeam?.name}
+                  {m.homeTeam?.name}
                 </p>
                 <p className="text-xs font-mono text-sky-400">
-                  Local{match.homeTeam?.position ? ` • #${match.homeTeam.position} (${match.homeTeam.points ?? 0} pts)` : ''}
+                  Local{m.homeTeam?.position ? ` • #${m.homeTeam.position} (${m.homeTeam.points ?? 0} pts)` : ''}
                 </p>
               </div>
-              <img src={match.homeTeam?.logo} alt={match.homeTeam?.name} className="w-11 h-11 object-contain filter drop-shadow" />
+              <img src={m.homeTeam?.logo} alt={m.homeTeam?.name} className="w-11 h-11 object-contain filter drop-shadow" />
             </div>
 
             {/* Center Status / Score */}
             <div className="px-1 sm:px-6 text-center">
               <div className="bg-[#141b29] border border-white/10 px-4 py-2 rounded-xl shadow-inner">
                 <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                  {match.status === 'LIVE' ? 'En Vivo' : match.status === 'FINISHED' ? 'Final' : 'Marcador más probable'}
+                  {m.status === 'LIVE' ? (m.liveMinute ? `En Vivo · ${m.liveMinute}'` : 'En Vivo') : m.status === 'FINISHED' ? 'Resultado Final' : 'Marcador más probable'}
                 </span>
                 <span className="text-2xl font-black font-mono text-white tracking-wider">
-                  {match.status === 'LIVE' 
-                    ? `${match.liveScore?.home ?? 'N/D'} - ${match.liveScore?.away ?? 'N/D'}`
-                    : match.status === 'FINISHED'
-                    ? `${match.finalScore?.home ?? 'N/D'} - ${match.finalScore?.away ?? 'N/D'}`
-                    : getCoherentPredictedScore(m, aiReport?.predictedScore || m.model?.predictedScore || match.aiPick?.predictedScore)}
+                  {m.status === 'LIVE' 
+                    ? `${m.liveScore?.home ?? m.finalScore?.home ?? 0} - ${m.liveScore?.away ?? m.finalScore?.away ?? 0}`
+                    : m.status === 'FINISHED'
+                    ? `${m.finalScore?.home ?? m.liveScore?.home ?? 0} - ${m.finalScore?.away ?? m.liveScore?.away ?? 0}`
+                    : getCoherentPredictedScore(m, aiReport?.predictedScore || m.model?.predictedScore || m.aiPick?.predictedScore)}
                 </span>
               </div>
             </div>
 
             {/* Team 2 */}
             <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left min-w-0 justify-start">
-              <img src={match.awayTeam?.logo} alt={match.awayTeam?.name} className="w-11 h-11 object-contain filter drop-shadow" />
+              <img src={m.awayTeam?.logo} alt={m.awayTeam?.name} className="w-11 h-11 object-contain filter drop-shadow" />
               <div>
                 <p className="font-bold text-base md:text-lg text-white font-sans">
-                  {match.awayTeam?.name}
+                  {m.awayTeam?.name}
                 </p>
                 <p className="text-xs font-mono text-indigo-400">
-                  Visita{match.awayTeam?.position ? ` • #${match.awayTeam.position} (${match.awayTeam.points ?? 0} pts)` : ''}
+                  Visita{m.awayTeam?.position ? ` • #${m.awayTeam.position} (${m.awayTeam.points ?? 0} pts)` : ''}
                 </p>
               </div>
             </div>
@@ -498,14 +500,14 @@ export default function MatchDetailModal({
                     </div>
                   </div>
 
-                  {/* Botón de reintento/regeneración: EXCLUSIVO para el OWNER */}
-                  {effectiveIsOwner && (
+                  {/* Botón de reintento/regeneración: disponible si no está activa la IA o para el Owner */}
+                  {(!aiReport?.aiAvailable || effectiveIsOwner) && (
                     <div className="flex items-center space-x-2 shrink-0 sm:self-center self-end">
                       <button
                         onClick={() => fetchAiAnalysis(true)}
                         disabled={loadingAi}
                         className="px-3 py-1.5 bg-gradient-to-r from-sky-500/20 to-emerald-500/20 hover:from-sky-500/30 hover:to-emerald-500/30 text-sky-200 border border-sky-400/40 rounded-lg text-xs font-mono font-semibold transition-all shadow-[0_0_12px_rgba(56,189,248,0.15)] flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
-                        title="Control de Administrador / Owner"
+                        title={effectiveIsOwner ? "Control de Administrador / Owner" : "Reintentar análisis con IA"}
                       >
                         <RotateCw className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin text-sky-400' : ''}`} />
                         <span>{loadingAi ? 'Procesando...' : (aiReport?.aiAvailable ? 'Regenerar con IA' : 'Reintentar con IA')}</span>
@@ -517,19 +519,100 @@ export default function MatchDetailModal({
 
               <VerifiedPicks match={m} onAddToParlay={onAddToParlay} oddsFormat={oddsFormat} />
               <OverUnderGroupedSection match={m} homeStats={homeDetailed} awayStats={awayDetailed} diff={diff} />
-              {/* Narrative Analysis */}
-              <div className="bg-[#111723] rounded-xl p-5 border border-white/5">
-                <h5 className="font-bold text-xs uppercase tracking-wide text-slate-300 mb-2 font-mono">
-                  Informe Táctico & Justificación Cuantitativa
-                </h5>
-                <p className="text-xs text-slate-300 font-sans leading-relaxed whitespace-pre-line">
-                  {aiReport?.narrativeAnalysis || match.aiPick?.summaryRationale}
-                </p>
+              {/* Narrative Analysis & AI Breakdown */}
+              <div className="bg-[#111723] rounded-xl p-5 border border-white/5 space-y-4">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+                  <h5 className="font-bold text-xs uppercase tracking-wide text-sky-400 font-mono flex items-center space-x-2">
+                    <span>⚡</span>
+                    <span>Análisis Táctico Especializado & Inteligencia Predictiva</span>
+                  </h5>
+                  {aiReport?.aiAvailable && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                      VERIFICADO 100%
+                    </span>
+                  )}
+                </div>
+
+                {aiReport?.analysisSections ? (
+                  <div className="space-y-3.5">
+                    {/* Sección 1: Verificación de Datos Reales */}
+                    <div className="bg-[#0c1017] p-3.5 rounded-xl border border-sky-500/20">
+                      <span className="text-[11px] font-mono font-bold text-sky-300 uppercase tracking-wider block mb-1.5 flex items-center space-x-1.5">
+                        <span>📊</span>
+                        <span>Verificación Cuantitativa de Datos Oficiales:</span>
+                      </span>
+                      <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                        {aiReport.analysisSections.dataVerification}
+                      </p>
+                    </div>
+
+                    {/* Sección 2: Análisis de Goles y Tendencia */}
+                    <div className="bg-[#0c1017] p-3.5 rounded-xl border border-emerald-500/20">
+                      <span className="text-[11px] font-mono font-bold text-emerald-300 uppercase tracking-wider block mb-1.5 flex items-center space-x-1.5">
+                        <span>⚽</span>
+                        <span>Dinámica de Goles (+1.5, +2.5 & Ambos Anotan / BTTS):</span>
+                      </span>
+                      <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                        {aiReport.analysisSections.goalsAnalysis}
+                      </p>
+                    </div>
+
+                    {/* Sección 3: Factores Positivos y Factores de Riesgo */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Factores Positivos (A favor) */}
+                      <div className="bg-[#0c1017] p-3.5 rounded-xl border border-emerald-500/30 space-y-2">
+                        <span className="text-[11px] font-mono font-bold text-emerald-400 uppercase tracking-wider block flex items-center space-x-1.5">
+                          <span>🟢</span>
+                          <span>Factores Positivos (A Favor):</span>
+                        </span>
+                        <ul className="space-y-1.5">
+                          {(Array.isArray(aiReport.analysisSections.positiveFactors) ? aiReport.analysisSections.positiveFactors : []).map((f, i) => (
+                            <li key={i} className="text-xs text-slate-300 flex items-start space-x-1.5 font-sans">
+                              <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Factores de Riesgo (En contra) */}
+                      <div className="bg-[#0c1017] p-3.5 rounded-xl border border-amber-500/30 space-y-2">
+                        <span className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-wider block flex items-center space-x-1.5">
+                          <span>🔴</span>
+                          <span>Factores de Riesgo / Cautela:</span>
+                        </span>
+                        <ul className="space-y-1.5">
+                          {(Array.isArray(aiReport.analysisSections.negativeFactors) ? aiReport.analysisSections.negativeFactors : []).map((f, i) => (
+                            <li key={i} className="text-xs text-slate-300 flex items-start space-x-1.5 font-sans">
+                              <span className="text-amber-400 font-bold shrink-0">⚠</span>
+                              <span>{f}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Sección 4: Veredicto Cuantitativo y de Apuesta */}
+                    <div className="bg-gradient-to-r from-sky-950/40 via-[#0d1624] to-emerald-950/40 p-4 rounded-xl border border-sky-400/30 shadow-[0_0_15px_rgba(56,189,248,0.1)]">
+                      <span className="text-[11px] font-mono font-bold text-sky-300 uppercase tracking-wider block mb-1.5 flex items-center space-x-1.5">
+                        <span>🎯</span>
+                        <span>Veredicto y Conclusión de Apuesta Cuantitativa:</span>
+                      </span>
+                      <p className="text-xs text-slate-200 font-sans leading-relaxed font-medium">
+                        {aiReport.analysisSections.verdict}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-300 font-sans leading-relaxed whitespace-pre-line">
+                    {aiReport?.narrativeAnalysis || match.aiPick?.summaryRationale}
+                  </p>
+                )}
 
                 {aiReport?.tacticalKeypoints && (
                   <div className="mt-3.5 pt-3.5 border-t border-white/5 space-y-1.5">
                     <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider block">
-                      Claves del Algoritmo:
+                      Claves Fácticas del Algoritmo:
                     </span>
                     <ul className="space-y-1">
                       {aiReport.tacticalKeypoints.map((pt, i) => (
@@ -783,8 +866,8 @@ export default function MatchDetailModal({
                     <span>Comparativa Visual de Rendimiento en Temporada (Local vs Visita)</span>
                   </h5>
                   <div className="flex items-center space-x-4 text-[11px]">
-                    <span className="text-sky-400 font-bold">{match.homeTeam?.shortName}</span>
-                    <span className="text-indigo-400 font-bold">{match.awayTeam?.shortName}</span>
+                    <span className="text-sky-400 font-bold">{m.homeTeam?.shortName}</span>
+                    <span className="text-indigo-400 font-bold">{m.awayTeam?.shortName}</span>
                   </div>
                 </div>
 

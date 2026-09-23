@@ -20,9 +20,9 @@ export function positiveInteger(name, fallback, maximum = 1000000) {
 }
 export const CONFIG = {
   PORT: process.env.PORT || 5000,
-  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
-  OPENROUTER_BASE_URL: 'https://openrouter.ai/api/v1',
-  DEFAULT_MODEL: process.env.OPENROUTER_MODEL || 'openrouter/free',
+  CUSTOM_AI_API_KEY: process.env.CUSTOM_AI_API_KEY || process.env.VYCEAI_API_KEY || process.env.AI_API_KEY || '',
+  CUSTOM_AI_BASE_URL: process.env.CUSTOM_AI_BASE_URL || process.env.VYCEAI_BASE_URL || 'https://vyceai.com/v1',
+  DEFAULT_MODEL: process.env.DEFAULT_AI_MODEL || process.env.AI_MODEL || 'deepseek-v4.1',
   MASTER_ADMIN_CODE: process.env.MASTER_ADMIN_CODE || 'DeportePicks',
   APP_NAME: 'DeportePicks AI VIP',
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '102504637276-qs6ggp38pl5t4qjvd9q4s9sadphmcsf7.apps.googleusercontent.com'
