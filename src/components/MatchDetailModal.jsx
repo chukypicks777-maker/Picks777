@@ -58,7 +58,7 @@ export default function MatchDetailModal({
 
   const [enrichedMatch, setEnrichedMatch] = useState(initialCached?.enrichedMatch || match);
   const [_loadingDetails, setLoadingDetails] = useState(!initialCached?.enrichedMatch);
-  const [activeModelInfo, setActiveModelInfo] = useState(() => cachedActiveModel || { provider: '', selectedModel: '', isConfigured: false });
+  const [activeModelInfo, setActiveModelInfo] = useState(() => cachedActiveModel || { provider: 'custom', selectedModel: 'deepseek-v4.1', modelName: 'DeepSeek V4.1 Flash', isConfigured: false });
 
   // Derive simulation data; reset distribution if match changes
   const [lastMatchId, setLastMatchId] = useState(match?.id);
@@ -103,14 +103,17 @@ export default function MatchDetailModal({
     if (forceRefresh) {
       removeCachedAnalysis(curMatch.id);
     } else {
-      const cached = getCachedAnalysis(curMatch.id, curMatch);
+      const isConfigured = Boolean(activeModelInfoRef.current.isConfigured);
+      const cached = getCachedAnalysis(curMatch.id, curMatch, modelToUse, isConfigured);
       if (cached?.aiReport) {
-        setAiReport(cached.aiReport);
-        if (cached.enrichedMatch) {
-          setEnrichedMatch(prev => ({ ...prev, ...cached.enrichedMatch }));
+        if (!isConfigured || cached.aiReport.aiAvailable !== false) {
+          setAiReport(cached.aiReport);
+          if (cached.enrichedMatch) {
+            setEnrichedMatch(prev => ({ ...prev, ...cached.enrichedMatch }));
+          }
+          setLoadingAi(false);
+          return;
         }
-        setLoadingAi(false);
-        return;
       }
     }
 
@@ -177,27 +180,26 @@ export default function MatchDetailModal({
     let active = true;
     const loadActiveModel = async () => {
       const storedAi = getStoredAiConfig();
-      if (cachedActiveModel) return;
       try {
         const res = await fetch('/api/settings/active-model');
         const data = await res.json();
         if (active && data.success) {
           const info = {
-            provider: data.provider || storedAi?.provider || '',
-            selectedModel: data.selectedModel || storedAi?.selectedModel || '',
+            provider: data.provider || storedAi?.provider || 'custom',
+            selectedModel: data.selectedModel || storedAi?.selectedModel || 'deepseek-v4.1',
+            modelName: data.modelName || 'DeepSeek V4.1 Flash',
             isConfigured: Boolean(data.isConfigured || storedAi?.isConfigured || (storedAi?.apiKey && storedAi.apiKey.length >= 4))
           };
-          cachedActiveModel = info;
           setActiveModelInfo(info);
         }
       } catch {
         if (active && storedAi) {
           const info = {
-            provider: storedAi.provider || '',
-            selectedModel: storedAi.selectedModel || '',
+            provider: storedAi.provider || 'custom',
+            selectedModel: storedAi.selectedModel || 'deepseek-v4.1',
+            modelName: storedAi.modelName || 'DeepSeek V4.1 Flash',
             isConfigured: Boolean(storedAi.isConfigured || (storedAi.apiKey && storedAi.apiKey.length >= 4))
           };
-          cachedActiveModel = info;
           setActiveModelInfo(info);
         }
       }
@@ -209,10 +211,10 @@ export default function MatchDetailModal({
         const newModel = e.detail.selectedModel;
         const info = {
           selectedModel: newModel,
-          provider: e.detail.provider || '',
+          modelName: e.detail.modelName || newModel,
+          provider: e.detail.provider || 'custom',
           isConfigured: e.detail.isConfigured ?? true
         };
-        cachedActiveModel = info;
         setActiveModelInfo(info);
         clearAllAnalysisCache();
         fetchAiAnalysis(true, newModel);
@@ -488,7 +490,7 @@ export default function MatchDetailModal({
                         {!loadingAi && aiReport?.aiAvailable && (
                           <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-mono font-bold flex items-center space-x-1 shadow-[0_0_8px_rgba(16,185,129,0.2)]">
                             <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                            <span>IA ACTIVA</span>
+                            <span>IA ACTIVA ({aiReport.modelUsed || activeModelInfo.selectedModel || 'deepseek-v4.1'})</span>
                           </span>
                         )}
 
@@ -501,9 +503,9 @@ export default function MatchDetailModal({
 
                       <p className="text-[11px] text-slate-300 font-mono mt-1 line-clamp-2">
                         {loadingAi
-                          ? `Conectando con ${activeModelInfo.selectedModel || 'VyceAI DeepSeek V4.1'} • Cruzando probabilidades Poisson y métricas de temporada...`
+                          ? `Conectando con ${activeModelInfo.selectedModel || 'deepseek-v4.1'} • Cruzando probabilidades Poisson y métricas de temporada...`
                           : aiReport?.aiAvailable
-                            ? `Motor: ${aiReport.modelUsed || activeModelInfo.selectedModel || 'DeepSeek V4.1 Flash'} • Análisis fundamentado en hechos oficiales verificables.`
+                            ? `Motor: ${aiReport.modelUsed || activeModelInfo.selectedModel || 'deepseek-v4.1'} • Análisis fundamentado en hechos oficiales verificables.`
                             : (aiReport?.aiStatus || 'Pronóstico calculado mediante modelo matemático Poisson sobre estadísticas de temporada.')}
                       </p>
                     </div>

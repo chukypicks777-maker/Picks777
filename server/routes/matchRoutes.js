@@ -118,13 +118,19 @@ router.get('/:id', async (req, res) => {
   res.json({ success: true, match: await enrichMatchWithRealData(match) });
 });
 router.post('/:id/ai-analysis', rateLimit('ai'), async (req, res) => {
-  const feed = await getFootballFeed();
-  const match = feed.matches.find(m => m.id === req.params.id);
-  if (!match) return res.status(404).json({ success: false, message: 'Partido no disponible en el feed actual.' });
-  const enriched = await enrichMatchWithRealData(match);
-  const forceRefresh = Boolean(req.query.force === '1' || req.body?.forceRefresh);
-  const model = req.body?.model || req.query?.model || undefined;
-  const aiConfig = req.body?.aiConfig;
-  res.json({ success: true, match: enriched, report: await generateAiMatchReport(enriched, { forceRefresh, model, aiConfig }) });
+  try {
+    const feed = await getFootballFeed();
+    const match = feed.matches.find(m => m.id === req.params.id);
+    if (!match) return res.status(404).json({ success: false, message: 'Partido no disponible en el feed actual.' });
+    const enriched = await enrichMatchWithRealData(match);
+    const forceRefresh = Boolean(req.query.force === '1' || req.body?.forceRefresh);
+    const model = req.body?.model || req.query?.model || undefined;
+    const aiConfig = req.body?.aiConfig;
+    const report = await generateAiMatchReport(enriched, { forceRefresh, model, aiConfig });
+    res.json({ success: true, match: enriched, report });
+  } catch (error) {
+    console.error('[matchRoutes] Error in ai-analysis:', error.message);
+    res.status(500).json({ success: false, message: 'Error procesando análisis de IA.' });
+  }
 });
 export default router;

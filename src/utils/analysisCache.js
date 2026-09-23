@@ -42,7 +42,7 @@ export function computeMatchFingerprint(m) {
 /**
  * Obtiene el análisis en caché si existe y la huella deportiva coincide.
  */
-export function getCachedAnalysis(matchId, currentMatch) {
+export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, isAiConfigured = false) {
   if (!matchId) return null;
   const currentFingerprint = computeMatchFingerprint(currentMatch);
 
@@ -68,6 +68,18 @@ export function getCachedAnalysis(matchId, currentMatch) {
 
   // Verificar si el partido cambió (estado, goles o probabilidades principales)
   if (currentFingerprint && entry.fingerprint && entry.fingerprint !== currentFingerprint) {
+    removeCachedAnalysis(matchId);
+    return null;
+  }
+
+  // Si se solicita un modelo específico y el análisis en caché fue generado con otro modelo, invalidar
+  if (requestedModel && entry.model && entry.model !== requestedModel) {
+    removeCachedAnalysis(matchId);
+    return null;
+  }
+
+  // Si la IA está activa pero el reporte en caché es un baseline no-IA, invalidar para consultar la IA
+  if (isAiConfigured && entry.aiReport && entry.aiReport.aiAvailable === false) {
     removeCachedAnalysis(matchId);
     return null;
   }

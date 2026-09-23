@@ -24,6 +24,7 @@ import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
 import { PROVIDER_PRESETS } from '../constants/aiProviders';
 import { getStoredAiConfig, saveStoredAiConfig, sanitizeApiKey } from '../utils/aiSettings';
+import { clearAllAnalysisCache } from '../utils/analysisCache';
 
 
 export default function AdminDashboardModal({ onClose }) {
@@ -103,9 +104,15 @@ export default function AdminDashboardModal({ onClose }) {
       if (!res.ok || !data.success) throw new Error(data.message || `No se pudo consultar el catálogo (HTTP ${res.status}).`);
       if (request !== modelRequest.current) return;
       setAvailableModelsList(data.models || []);
-      if (!data.models?.length) setModelsError('El proveedor devolvió un catálogo vacío. Puedes escribir el ID del modelo manualmente.');
+      if (!data.models?.length && p !== 'custom') {
+        setModelsError('El proveedor devolvió un catálogo vacío. Puedes escribir o seleccionar el ID del modelo abajo.');
+      }
     } catch (error) {
-      if (request === modelRequest.current) setModelsError(error.message || 'No se pudo consultar el catálogo.');
+      if (request === modelRequest.current) {
+        if (!error.message?.includes('Ingresa la clave') && p !== 'custom') {
+          setModelsError(error.message || 'No se pudo consultar el catálogo.');
+        }
+      }
     } finally {
       if (request === modelRequest.current) setLoadingModels(false);
     }
@@ -123,9 +130,11 @@ export default function AdminDashboardModal({ onClose }) {
       setProvider(prov);
       setBaseUrl(url);
       setNewApiKey('');
-      setNewModel(data.settings.selectedModel || '');
+      setNewModel(data.settings.selectedModel || PROVIDER_PRESETS[prov]?.defaultModel || 'deepseek-v4.1');
       const activeKey = getStoredAiConfig()?.apiKey || '';
-      fetchModelsForProvider(prov, activeKey, url);
+      if (activeKey || data.settings.apiKeyMasked) {
+        fetchModelsForProvider(prov, activeKey, url);
+      }
     } catch (error) {
       setModelsError(error.message || 'No se pudo cargar la configuración del servidor.');
     }
@@ -261,13 +270,16 @@ export default function AdminDashboardModal({ onClose }) {
     document.body.removeChild(link);
   };
 
-  const connectionInput = () => ({
-    provider,
-    baseUrl: baseUrl.trim(),
-    selectedModel: customModelInput.trim() || newModel.trim(),
-    modelName: customModelInput.trim() || newModel.trim(),
-    apiKey: sanitizeApiKey(newApiKey) || getStoredAiConfig()?.apiKey || undefined
-  });
+  const connectionInput = () => {
+    const chosen = customModelInput.trim() || newModel.trim() || 'deepseek-v4.1';
+    return {
+      provider,
+      baseUrl: baseUrl.trim(),
+      selectedModel: chosen,
+      modelName: chosen,
+      apiKey: sanitizeApiKey(newApiKey) || getStoredAiConfig()?.apiKey || undefined
+    };
+  };
 
   const handleSaveSettings = async (e) => {
     e?.preventDefault();
@@ -275,21 +287,37 @@ export default function AdminDashboardModal({ onClose }) {
     setSavedSettingsMsg('');
     setTestResult(null);
     try {
+      const chosenModel = customModelInput.trim() || newModel.trim() || 'deepseek-v4.1';
+      const cleanKey = sanitizeApiKey(newApiKey);
       const res = await fetch('/api/settings/update', {
         method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(connectionInput())
+        body: JSON.stringify({
+          provider,
+          baseUrl: baseUrl.trim(),
+          selectedModel: chosenModel,
+          modelName: chosenModel,
+          apiKey: cleanKey || undefined
+        })
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || `No se pudo guardar (HTTP ${res.status}).`);
       setSettings(data.settings);
       setProvider(data.settings.provider);
-      const savedKey = sanitizeApiKey(newApiKey) || getStoredAiConfig()?.apiKey || '';
+      setBaseUrl(data.settings.baseUrl || baseUrl);
+      setNewModel(data.settings.selectedModel || chosenModel);
+      setCustomModelInput('');
+      const savedKey = cleanKey || getStoredAiConfig()?.apiKey || '';
       setNewApiKey('');
       saveStoredAiConfig({ ...data.settings, apiKey: savedKey });
       setSavedSettingsMsg(data.settings.selectedModel
-        ? 'Configuración guardada exitosamente en el servidor. Usa Probar Conexión para verificarla.'
-        : 'Clave guardada exitosamente en el servidor. Falta seleccionar un modelo cuando el proveedor permita el acceso.');
+        ? `Configuración guardada exitosamente en el servidor (Modelo: ${data.settings.selectedModel}). Usa Probar Conexión para verificar.`
+        : 'Clave guardada exitosamente en el servidor.');
       sounds.playSuccess();
+      clearAllAnalysisCache();
+      window.dispatchEvent(new CustomEvent('ai-settings-updated', { detail: data.settings }));
+      if (savedKey || data.settings.apiKeyMasked) {
+        fetchModelsForProvider(data.settings.provider, savedKey, data.settings.baseUrl);
+      }
     } catch (error) {
       setTestResult({ success: false, message: error.message || 'No se pudo guardar la configuración en el servidor.' });
     } finally { setIsSaving(false); }
@@ -316,6 +344,7 @@ export default function AdminDashboardModal({ onClose }) {
     if (!window.confirm('¿Limpiar el caché de pronósticos y modelos de IA?')) return;
     try {
       sounds.playClick();
+      clearAllAnalysisCache();
       await fetch('/api/settings/cache/clear', {
         method: 'POST',
         credentials: 'same-origin',
@@ -891,7 +920,7 @@ export default function AdminDashboardModal({ onClose }) {
                     <div>
                       <label className="text-slate-200 font-bold font-sans flex items-center space-x-1.5">
                         <Cpu className="w-3.5 h-3.5 text-sky-400" />
-                        <span>4. Modelos Extraídos de la API ({availableModelsList.length}):</span>
+                        <span>4. {availableModelsList.length > 0 ? `Modelos Extraídos de la API (${availableModelsList.length})` : 'Modelos Recomendados y Disponibles'}:</span>
                       </label>
                       <p className="text-[10px] text-slate-400 font-mono mt-0.5">
                         El catálogo no confirma saldo ni permisos de uso. Compruébalos con Probar Conexión.
@@ -1000,13 +1029,133 @@ export default function AdminDashboardModal({ onClose }) {
                       </span>
                     </div>
                   ) : availableModelsList.length === 0 ? (
-                    <div className="p-4 rounded-xl bg-[#090d15] border border-white/5 text-center space-y-1">
-                      <p className="text-xs text-slate-300 font-sans">
-                        No hay modelos extraídos todavía.
-                      </p>
-                      <p className="text-[11px] text-slate-500 font-mono">
-                        Ingresa tu API Key arriba y haz clic en <strong>"Cargar Modelos"</strong> para listar los modelos habilitados en tu cuenta, o escribe el ID directamente abajo.
-                      </p>
+                    <div className="p-4 rounded-xl bg-[#090d15] border border-white/5 space-y-3">
+                      <div className="text-center space-y-1">
+                        <p className="text-xs text-slate-300 font-sans">
+                          Catálogo de modelos para {PROVIDER_PRESETS[provider]?.name || 'IA'}
+                        </p>
+                        <p className="text-[11px] text-slate-500 font-mono">
+                          Selecciona directamente el modelo recomendado para tu cuenta, o pulsa "Cargar Modelos":
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        <div
+                          onClick={() => {
+                            sounds.playClick();
+                            invalidateTest();
+                            setNewModel('deepseek-v4.1');
+                            setCustomModelInput('');
+                          }}
+                          className={`p-2.5 rounded-lg border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                            (newModel === 'deepseek-v4.1' && !customModelInput.trim())
+                              ? 'bg-sky-500/15 border-sky-400/60 shadow-[0_0_12px_rgba(56,189,248,0.15)] text-white'
+                              : 'bg-[#0c121e] border-white/5 text-slate-300 hover:border-white/20 hover:bg-white/5'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="font-bold text-xs text-white">DeepSeek V4.1 Flash</span>
+                              <span className="px-1.5 py-0.2 rounded bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[9px] font-mono">
+                                Razonamiento
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-sky-400/80 font-mono">deepseek-v4.1 (VyceAI Saldo)</span>
+                          </div>
+                          {(newModel === 'deepseek-v4.1' && !customModelInput.trim()) ? (
+                            <span className="px-2 py-0.5 rounded bg-sky-400 text-black font-bold text-[9px] font-mono">ACTIVO</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-white/5 text-slate-400 text-[9px] font-mono">Elegir</span>
+                          )}
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            sounds.playClick();
+                            invalidateTest();
+                            setNewModel('deepseek-chat');
+                            setCustomModelInput('');
+                          }}
+                          className={`p-2.5 rounded-lg border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                            (newModel === 'deepseek-chat' && !customModelInput.trim())
+                              ? 'bg-sky-500/15 border-sky-400/60 shadow-[0_0_12px_rgba(56,189,248,0.15)] text-white'
+                              : 'bg-[#0c121e] border-white/5 text-slate-300 hover:border-white/20 hover:bg-white/5'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="font-bold text-xs text-white">DeepSeek Chat V3</span>
+                              <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[9px] font-mono">
+                                Rápido
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-sky-400/80 font-mono">deepseek-chat (Estándar)</span>
+                          </div>
+                          {(newModel === 'deepseek-chat' && !customModelInput.trim()) ? (
+                            <span className="px-2 py-0.5 rounded bg-sky-400 text-black font-bold text-[9px] font-mono">ACTIVO</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-white/5 text-slate-400 text-[9px] font-mono">Elegir</span>
+                          )}
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            sounds.playClick();
+                            invalidateTest();
+                            setNewModel('deepseek-reasoner');
+                            setCustomModelInput('');
+                          }}
+                          className={`p-2.5 rounded-lg border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                            (newModel === 'deepseek-reasoner' && !customModelInput.trim())
+                              ? 'bg-sky-500/15 border-sky-400/60 shadow-[0_0_12px_rgba(56,189,248,0.15)] text-white'
+                              : 'bg-[#0c121e] border-white/5 text-slate-300 hover:border-white/20 hover:bg-white/5'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="font-bold text-xs text-white">DeepSeek R1 Reasoner</span>
+                              <span className="px-1.5 py-0.2 rounded bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[9px] font-mono">
+                                Razonamiento Puro
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-sky-400/80 font-mono">deepseek-reasoner (R1)</span>
+                          </div>
+                          {(newModel === 'deepseek-reasoner' && !customModelInput.trim()) ? (
+                            <span className="px-2 py-0.5 rounded bg-sky-400 text-black font-bold text-[9px] font-mono">ACTIVO</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-white/5 text-slate-400 text-[9px] font-mono">Elegir</span>
+                          )}
+                        </div>
+
+                        <div
+                          onClick={() => {
+                            sounds.playClick();
+                            invalidateTest();
+                            setNewModel('deepseek-v4-flash');
+                            setCustomModelInput('');
+                          }}
+                          className={`p-2.5 rounded-lg border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                            (newModel === 'deepseek-v4-flash' && !customModelInput.trim())
+                              ? 'bg-sky-500/15 border-sky-400/60 shadow-[0_0_12px_rgba(56,189,248,0.15)] text-white'
+                              : 'bg-[#0c121e] border-white/5 text-slate-300 hover:border-white/20 hover:bg-white/5'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center space-x-1.5">
+                              <span className="font-bold text-xs text-white">DeepSeek V4 Flash</span>
+                              <span className="px-1.5 py-0.2 rounded bg-sky-500/10 border border-sky-500/30 text-sky-300 text-[9px] font-mono">
+                                Flash V4
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-sky-400/80 font-mono">deepseek-v4-flash</span>
+                          </div>
+                          {(newModel === 'deepseek-v4-flash' && !customModelInput.trim()) ? (
+                            <span className="px-2 py-0.5 rounded bg-sky-400 text-black font-bold text-[9px] font-mono">ACTIVO</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-white/5 text-slate-400 text-[9px] font-mono">Elegir</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="max-h-64 overflow-y-auto space-y-1.5 p-1 rounded-xl bg-[#090d15] border border-white/5 pr-1.5">

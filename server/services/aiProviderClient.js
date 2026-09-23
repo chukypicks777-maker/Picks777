@@ -45,13 +45,33 @@ export async function fetchProviderModels(provider = 'custom', apiKey = '', base
   if (!apiKey) throw providerError('Ingresa la clave de este proveedor para consultar sus modelos.', 'MISSING_KEY');
   const gemini = provider === 'gemini';
   const headers = gemini ? { 'x-goog-api-key': apiKey } : apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
-  const data = await requestJson(`${baseUrl}/models`, { apiKey, headers, signal: AbortSignal.timeout(10000) });
-  const models = gemini ? data?.models : data?.data;
-  if (!Array.isArray(models)) throw providerError('La API no devolvió un catálogo de modelos válido. Puedes introducir el ID manualmente.', 'INVALID_CATALOG');
+  let data;
+  try {
+    data = await requestJson(`${baseUrl}/models`, { apiKey, headers, signal: AbortSignal.timeout(10000) });
+  } catch (err) {
+    if (provider === 'custom' && (err.status === 404 || err.code === 'MODEL_OR_ENDPOINT')) {
+      data = { data: [] };
+    } else {
+      throw err;
+    }
+  }
+  let models = gemini ? data?.models : data?.data;
+  if (!Array.isArray(models) || models.length === 0) {
+    if (provider === 'custom') {
+      models = [
+        { id: 'deepseek-v4.1', displayName: 'DeepSeek V4.1 Flash (VyceAI Saldo)', isReasoning: true, context_length: 128000 },
+        { id: 'deepseek-chat', displayName: 'DeepSeek Chat V3 (Estándar)', isReasoning: false, context_length: 64000 },
+        { id: 'deepseek-reasoner', displayName: 'DeepSeek R1 Reasoner (Razonamiento Puro)', isReasoning: true, context_length: 64000 },
+        { id: 'deepseek-v4-flash', displayName: 'DeepSeek V4 Flash', isReasoning: true, context_length: 128000 }
+      ];
+    } else {
+      throw providerError('La API no devolvió un catálogo de modelos válido. Puedes introducir el ID manualmente.', 'INVALID_CATALOG');
+    }
+  }
   return models.filter(m => gemini ? m.supportedGenerationMethods?.includes('generateContent') : typeof m.id === 'string').map(m => {
     const id = gemini ? m.name.replace(/^models\//, '') : m.id;
     return { id, name: m.displayName || m.name || id, description: m.description || '',
-      isReasoning: /reason|think|\br1\b|\bo[134]\b/i.test(id),
+      isReasoning: /reason|think|\br1\b|\bo[134]\b|v4(\.1)?/i.test(id),
       isFree: id.endsWith(':free') || Boolean(m.pricing && Number(m.pricing.prompt) === 0 && Number(m.pricing.completion) === 0),
       contextLength: m.context_length || m.inputTokenLimit || null };
   });
@@ -71,7 +91,7 @@ export function normalizeModelId(provider, model) {
   return trimmed;
 }
 
-export async function executeAiChatCompletion({ provider = 'custom', apiKey, baseUrl, model, selectedModel, systemPrompt = '', userPrompt, maxTokens = 4000 }) {
+export async function executeAiChatCompletion({ provider = 'custom', apiKey, baseUrl, model, selectedModel, systemPrompt = '', userPrompt, maxTokens = 4000, temperature = 0.3 }) {
   const chosenModel = model || selectedModel;
   const config = validateAiConfig({ provider, apiKey, baseUrl, selectedModel: chosenModel });
   ({ provider, apiKey, baseUrl } = config);
@@ -86,15 +106,21 @@ export async function executeAiChatCompletion({ provider = 'custom', apiKey, bas
     url = `${baseUrl}/models/${encodeURIComponent(model.replace(/^models\//, ''))}:generateContent`;
     headers = { 'x-goog-api-key': apiKey, 'Content-Type': 'application/json' };
     body = { ...(systemPrompt ? { systemInstruction: { parts: [{ text: systemPrompt }] } } : {}),
-      contents: [{ role: 'user', parts: [{ text: userPrompt }] }], generationConfig: { maxOutputTokens: maxTokens } };
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }], generationConfig: { maxOutputTokens: maxTokens, temperature } };
   } else if (anthropic) {
     url = `${baseUrl}/messages`;
     headers = { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' };
-    body = { model, max_tokens: maxTokens, ...(systemPrompt ? { system: systemPrompt } : {}), messages: [{ role: 'user', content: userPrompt }] };
+    body = { model, max_tokens: maxTokens, temperature, ...(systemPrompt ? { system: systemPrompt } : {}), messages: [{ role: 'user', content: userPrompt }] };
   } else {
     url = `${baseUrl}/chat/completions`;
     headers = { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
-    body = { model, messages: [...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []), { role: 'user', content: userPrompt }] };
+    body = { 
+      model, 
+      messages: [...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []), { role: 'user', content: userPrompt }] 
+    };
+    if (!/^(?:openai\/)?(?:o[134](?:-|$)|gpt-5)/i.test(model)) {
+      body.temperature = temperature;
+    }
     // Never send both incompatible token-limit parameters.
     body[/^(?:openai\/)?(?:o[134](?:-|$)|gpt-5)/i.test(model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokens;
   }
@@ -102,7 +128,9 @@ export async function executeAiChatCompletion({ provider = 'custom', apiKey, bas
   let choice = data.choices?.[0];
   let content = provider === 'gemini'
     ? data.candidates?.[0]?.content?.parts?.filter(p => !p.thought).map(p => p.text || '').join('')
-    : anthropic ? data.content?.filter(p => p.type === 'text').map(p => p.text).join('') : (choice?.message?.content || choice?.message?.reasoning || choice?.text);
+    : anthropic
+      ? data.content?.filter(p => p.type === 'text').map(p => p.text).join('')
+      : (choice?.message?.content || choice?.message?.reasoning || choice?.text);
   if (provider === 'gemini' && !content) {
     content = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('');
   }

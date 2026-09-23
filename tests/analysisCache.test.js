@@ -145,3 +145,33 @@ test('removeCachedAnalysis and clearAllAnalysisCache properly evict cached recor
   assert.equal(getCachedAnalysis('match-B', matchB), null, 'match-B should be cleared by clearAllAnalysisCache');
 });
 
+test('analysis cache invalidates when requestedModel differs or AI is configured over non-AI baseline', () => {
+  clearAllAnalysisCache();
+
+  const match = { id: 'match-505', status: 'SCHEDULED' };
+
+  // 1. Cached with model deepseek-chat
+  setCachedAnalysis('match-505', match, {
+    aiReport: { aiAvailable: true, modelUsed: 'deepseek-chat' },
+    model: 'deepseek-chat'
+  });
+
+  // Requesting the same model hits cache
+  assert.ok(getCachedAnalysis('match-505', match, 'deepseek-chat', true), 'Same model should hit cache');
+
+  // Requesting a different model invalidates and returns null
+  assert.equal(getCachedAnalysis('match-505', match, 'deepseek-v4.1', true), null, 'Different model must invalidate');
+
+  // 2. Cached with non-AI baseline report (aiAvailable: false)
+  setCachedAnalysis('match-505', match, {
+    aiReport: { aiAvailable: false, aiStatus: 'Informe estadístico Poisson' },
+    model: null
+  });
+
+  // When AI is not configured, baseline cache is accepted
+  assert.ok(getCachedAnalysis('match-505', match, null, false), 'Non-AI baseline is accepted if AI is not configured');
+
+  // When AI becomes configured, baseline cache is invalidated so real AI can be queried
+  assert.equal(getCachedAnalysis('match-505', match, 'deepseek-v4.1', true), null, 'Baseline cache must invalidate once AI is configured');
+});
+

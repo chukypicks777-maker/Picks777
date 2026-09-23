@@ -57,15 +57,35 @@ router.get('/', async (req, res) => {
         updatedAt: config.updatedAt
       }
     });
-  } catch {
-    res.status(500).json({ success: false, message: 'Error al consultar la configuración de IA.' });
+  } catch (error) {
+    // Si la configuración predeterminada en variables de entorno es inválida,
+    // retorna la configuración unconfigured en lugar de fallar con 500,
+    // permitiendo al owner abrir el panel y configurar su clave sin bloqueos.
+    res.json({
+      success: true,
+      warning: error.message,
+      settings: {
+        provider: 'custom',
+        baseUrl: 'https://vyceai.com/v1',
+        selectedModel: 'deepseek-v4.1',
+        modelName: 'DeepSeek V4.1 Flash',
+        apiKeyMasked: '',
+        isConfigured: false,
+        updatedAt: null
+      }
+    });
   }
 });
 
 // POST /api/settings/models - Consulta la lista de modelos reales del proveedor
 router.post('/models', async (req, res) => {
   try {
-    const current = await getEffectiveAiConfig();
+    let current = {};
+    try {
+      current = await getEffectiveAiConfig();
+    } catch {
+      // Ignorar fallo de configuración previa para permitir consultar con nuevos datos
+    }
     const { provider, apiKey, baseUrl } = resolveAiConfig(req.body, current);
     const models = await fetchProviderModels(provider, apiKey, baseUrl);
     res.json({
@@ -82,15 +102,20 @@ router.post('/models', async (req, res) => {
 // POST /api/settings/update - Guarda la configuración de IA de forma segura
 router.post('/update', async (req, res) => {
   try {
-    const current = await getEffectiveAiConfig();
+    let current = {};
+    try {
+      current = await getEffectiveAiConfig();
+    } catch {
+      // Ignorar fallo de configuración previa para permitir guardar la nueva clave
+    }
     const { provider, apiKey, baseUrl, selectedModel, modelName } = resolveAiConfig(req.body, current);
     if (!apiKey) throw new Error('Ingresa la clave API de este proveedor antes de guardar.');
     const updated = await storage.updateAiConfig({
       provider,
       apiKey,
       baseUrl,
-      selectedModel,
-      modelName
+      selectedModel: selectedModel !== undefined ? selectedModel : 'deepseek-v4.1',
+      modelName: modelName !== undefined ? modelName : (selectedModel || 'DeepSeek V4.1 Flash')
     });
 
     // Limpia el caché de reportes previos para que usen el nuevo motor
@@ -117,7 +142,12 @@ router.post('/update', async (req, res) => {
 // POST /api/settings/test - Realiza un ping/test de conexión en vivo con la clave y modelo
 router.post('/test', async (req, res) => {
   try {
-    const current = await getEffectiveAiConfig();
+    let current = {};
+    try {
+      current = await getEffectiveAiConfig();
+    } catch {
+      // Ignorar fallo de configuración previa para permitir probar los datos enviados
+    }
     const config = resolveAiConfig(req.body, current);
     const result = await testAiConnection(config);
     res.json(result);
