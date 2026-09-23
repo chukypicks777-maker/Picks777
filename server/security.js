@@ -1,8 +1,9 @@
 import { PROVIDER_PRESETS } from '../src/constants/aiProviders.js';
 export function validateAiConfig(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Configuración inválida.');
-  const explicitProvider = input.provider;
+  const explicitProvider = input.provider === 'openrouter' ? 'custom' : input.provider;
   let provider = input.provider || 'custom';
+  if (provider === 'openrouter') provider = 'custom';
   if (!Object.hasOwn(PROVIDER_PRESETS, provider)) throw new Error('Proveedor inválido.');
   let cleanApiKey = input.apiKey;
   if (cleanApiKey !== undefined && cleanApiKey !== null && typeof cleanApiKey === 'string') {
@@ -28,6 +29,9 @@ export function validateAiConfig(input = {}) {
     }
   }
   let rawUrl = (input.baseUrl && typeof input.baseUrl === 'string' && input.baseUrl.trim()) ? input.baseUrl.trim() : (PROVIDER_PRESETS[provider]?.defaultBaseUrl || 'https://vyceai.com/v1');
+  if (rawUrl.includes('openrouter.ai')) {
+    rawUrl = PROVIDER_PRESETS[provider]?.defaultBaseUrl || 'https://vyceai.com/v1';
+  }
   if (!rawUrl) throw new Error('Ingresa la URL base HTTPS del proveedor.');
   if (!/^https?:\/\//i.test(rawUrl)) {
     rawUrl = 'https://' + rawUrl;
@@ -80,17 +84,27 @@ export function validateAiConfig(input = {}) {
     }
   }
 
-  const selectedModel = input.selectedModel?.trim();
-  const modelName = input.modelName?.trim();
+  let selectedModel = input.selectedModel?.trim();
+  if (selectedModel && selectedModel.includes('openrouter')) {
+    selectedModel = 'deepseek-v4.1';
+  }
+  let modelName = input.modelName?.trim();
+  if (modelName && modelName.toLowerCase().includes('openrouter')) {
+    modelName = 'DeepSeek V4.1 Flash';
+  }
 
   return { ...input, apiKey: cleanApiKey, provider, baseUrl: url.href.replace(/\/+$/, ''), selectedModel, modelName };
 }
 
 // A saved key belongs to one provider and API base, never to an arbitrary new host.
 export function resolveAiConfig(input = {}, current = {}) {
-  const provider = input.provider || current.provider || 'custom';
+  let inProv = input.provider;
+  if (inProv === 'openrouter') inProv = 'custom';
+  let curProv = current.provider;
+  if (curProv === 'openrouter') curProv = 'custom';
+  const provider = inProv || curProv || 'custom';
   const target = validateAiConfig({ ...input, provider,
-    baseUrl: input.baseUrl || (provider === current.provider ? current.baseUrl : undefined) });
+    baseUrl: input.baseUrl || (provider === curProv ? current.baseUrl : undefined) });
   let sameDestination = false;
   try {
     const saved = validateAiConfig(current);

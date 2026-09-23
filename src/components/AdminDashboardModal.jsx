@@ -117,14 +117,15 @@ export default function AdminDashboardModal({ onClose }) {
       const data = await res.json();
       if (!res.ok || !data.success || !data.settings) throw new Error(data.message || 'No se pudo cargar la configuración del servidor.');
       setSettings(data.settings);
-      saveStoredAiConfig({ ...data.settings, apiKey: '' });
+      saveStoredAiConfig(data.settings);
       const prov = data.settings.provider || 'custom';
       const url = data.settings.baseUrl || PROVIDER_PRESETS[prov]?.defaultBaseUrl || '';
       setProvider(prov);
       setBaseUrl(url);
       setNewApiKey('');
       setNewModel(data.settings.selectedModel || '');
-      fetchModelsForProvider(prov, '', url);
+      const activeKey = getStoredAiConfig()?.apiKey || '';
+      fetchModelsForProvider(prov, activeKey, url);
     } catch (error) {
       setModelsError(error.message || 'No se pudo cargar la configuración del servidor.');
     }
@@ -260,9 +261,13 @@ export default function AdminDashboardModal({ onClose }) {
     document.body.removeChild(link);
   };
 
-  const connectionInput = () => ({ provider, baseUrl: baseUrl.trim(),
+  const connectionInput = () => ({
+    provider,
+    baseUrl: baseUrl.trim(),
     selectedModel: customModelInput.trim() || newModel.trim(),
-    modelName: customModelInput.trim() || newModel.trim(), apiKey: sanitizeApiKey(newApiKey) || undefined });
+    modelName: customModelInput.trim() || newModel.trim(),
+    apiKey: sanitizeApiKey(newApiKey) || getStoredAiConfig()?.apiKey || undefined
+  });
 
   const handleSaveSettings = async (e) => {
     e?.preventDefault();
@@ -785,7 +790,7 @@ export default function AdminDashboardModal({ onClose }) {
                             setNewApiKey('');
                             const stored = getStoredAiConfig();
                             if (stored) {
-                              saveStoredAiConfig({ ...stored, apiKey: '' });
+                              saveStoredAiConfig({ ...stored, apiKey: '', clearApiKey: true });
                             }
                           }}
                           className="text-[10px] text-rose-400 hover:text-rose-300 font-mono underline cursor-pointer"
@@ -897,7 +902,7 @@ export default function AdminDashboardModal({ onClose }) {
                       type="button"
                       onClick={() => {
                         sounds.playClick();
-                        fetchModelsForProvider(provider, newApiKey || undefined, baseUrl);
+                        fetchModelsForProvider(provider, sanitizeApiKey(newApiKey) || getStoredAiConfig()?.apiKey || undefined, baseUrl);
                       }}
                       disabled={loadingModels}
                       className="px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-lg text-xs font-mono font-medium flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 transition"

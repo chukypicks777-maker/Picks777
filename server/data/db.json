@@ -1742,7 +1742,7 @@
       ],
       "cornersAnalysis": "La suma estimada de 11.8 córners es robusta. El AEK Athens genera volumen ofensivo constante (6.6 avg), mientras que el LASK, al jugar de contra, suele forzar despejes hacia las líneas de fondo. El H2H histórico muestra un promedio de 10.0, lo que hace que la línea de 9.5 sea altamente probable.",
       "cardsAnalysis": "Se espera un partido de intensidad media-alta. El LASK Linz es más agresivo defensivamente (13.3 faltas/juego y 2.7 amarillas), lo que sugiere que la mayoría de las tarjetas se concentrarán en el equipo visitante para frenar las transiciones rápidas del AEK.",
-      "modelUsed": "google/gemma-4-31b-it:free",
+      "modelUsed": "deepseek-v4.1",
       "generatedAt": "2026-09-08T09:40:30.044Z",
       "isCached": false,
       "cachedAt": "2026-09-08T09:40:30.047Z"

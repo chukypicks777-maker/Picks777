@@ -20,8 +20,10 @@ export async function getEffectiveAiConfig() {
   }
 
   let provider = String(dbConfig?.provider || '').trim().toLowerCase();
+  if (provider === 'openrouter') provider = 'custom';
   let apiKey = String(dbConfig?.apiKey || '').trim();
   let baseUrl = String(dbConfig?.baseUrl || '').trim();
+  if (baseUrl.includes('openrouter.ai')) baseUrl = 'https://vyceai.com/v1';
 
   // If no database key is set, seamlessly fall back to environment credentials
   if (!apiKey) {
@@ -52,9 +54,12 @@ export async function getEffectiveAiConfig() {
   const preset = PROVIDER_PRESETS[provider] || PROVIDER_PRESETS.custom;
   baseUrl = baseUrl || preset?.defaultBaseUrl || 'https://vyceai.com/v1';
 
-  const selectedModel = dbConfig?.selectedModel !== undefined
+  let selectedModel = dbConfig?.selectedModel !== undefined
     ? String(dbConfig.selectedModel).trim()
     : String(preset?.defaultModel || CONFIG.DEFAULT_MODEL || 'deepseek-v4.1').trim();
+  if (selectedModel.includes('openrouter')) {
+    selectedModel = 'deepseek-v4.1';
+  }
 
   const modelName = dbConfig?.modelName !== undefined
     ? String(dbConfig.modelName).trim()
@@ -207,7 +212,9 @@ export async function generateAiMatchReport(match, options = {}) {
 
       // Candidate models list: configured model first, followed by preset default if distinct
       const candidateModels = [];
-      if (config.selectedModel) candidateModels.push(config.selectedModel);
+      let chosenModel = config.selectedModel;
+      if (chosenModel && chosenModel.includes('openrouter')) chosenModel = 'deepseek-v4.1';
+      if (chosenModel) candidateModels.push(chosenModel);
       const defaultForProvider = PROVIDER_PRESETS[config.provider]?.defaultModel || CONFIG.DEFAULT_MODEL || 'deepseek-v4.1';
       if (defaultForProvider && !candidateModels.includes(defaultForProvider)) {
         candidateModels.push(defaultForProvider);

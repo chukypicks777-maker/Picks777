@@ -253,14 +253,29 @@ export class StorageManager {
   }
   async getAiConfig() {
     const data = await this.load();
-    if (data.aiConfig) return data.aiConfig;
+    if (data.aiConfig) {
+      const cfg = { ...data.aiConfig };
+      if (cfg.provider === 'openrouter') cfg.provider = 'custom';
+      if (typeof cfg.baseUrl === 'string' && cfg.baseUrl.includes('openrouter.ai')) {
+        cfg.baseUrl = 'https://vyceai.com/v1';
+      }
+      if (typeof cfg.selectedModel === 'string' && cfg.selectedModel.includes('openrouter')) {
+        cfg.selectedModel = 'deepseek-v4.1';
+        cfg.modelName = 'DeepSeek V4.1 Flash';
+      }
+      return cfg;
+    }
     if (data.settings?.selectedModel) {
+      let selModel = data.settings.selectedModel;
+      if (typeof selModel === 'string' && selModel.includes('openrouter')) {
+        selModel = 'deepseek-v4.1';
+      }
       return {
         provider: 'custom',
         apiKey: '',
         baseUrl: 'https://vyceai.com/v1',
-        selectedModel: data.settings.selectedModel,
-        modelName: data.settings.selectedModel,
+        selectedModel: selModel,
+        modelName: selModel,
         updatedAt: null
       };
     }
@@ -283,11 +298,16 @@ export class StorageManager {
     return this.transaction(db => {
       const existing = db.aiConfig || {};
       const newApiKey = updates.apiKey !== undefined && updates.apiKey !== null ? String(updates.apiKey).trim() : existing.apiKey;
-      const selectedModel = String(updates.selectedModel ?? existing.selectedModel ?? '').trim();
+      let rawProvider = String(updates.provider || existing.provider || 'custom').trim().toLowerCase();
+      if (rawProvider === 'openrouter') rawProvider = 'custom';
+      let rawBaseUrl = String(updates.baseUrl || existing.baseUrl || 'https://vyceai.com/v1').trim();
+      if (rawBaseUrl.includes('openrouter.ai')) rawBaseUrl = 'https://vyceai.com/v1';
+      let selectedModel = String(updates.selectedModel ?? existing.selectedModel ?? '').trim();
+      if (selectedModel.includes('openrouter')) selectedModel = 'deepseek-v4.1';
       db.aiConfig = {
-        provider: String(updates.provider || existing.provider || 'custom').trim().toLowerCase(),
+        provider: rawProvider,
         apiKey: newApiKey || '',
-        baseUrl: String(updates.baseUrl || existing.baseUrl || 'https://vyceai.com/v1').trim(),
+        baseUrl: rawBaseUrl,
         selectedModel,
         modelName: String(updates.modelName ?? existing.modelName ?? selectedModel).trim(),
         updatedAt: new Date().toISOString()

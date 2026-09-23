@@ -20,8 +20,8 @@ export function positiveInteger(name, fallback, maximum = 1000000) {
 }
 export const CONFIG = {
   PORT: process.env.PORT || 5000,
-  CUSTOM_AI_API_KEY: process.env.CUSTOM_AI_API_KEY || process.env.VYCEAI_API_KEY || process.env.AI_API_KEY || '',
-  CUSTOM_AI_BASE_URL: process.env.CUSTOM_AI_BASE_URL || process.env.VYCEAI_BASE_URL || 'https://vyceai.com/v1',
+  CUSTOM_AI_API_KEY: process.env.CUSTOM_AI_API_KEY || process.env.VYCEAI_API_KEY || process.env.AI_API_KEY || process.env.THIRD_PARTY_API_KEY || process.env.THIRD_PARTY_AI_KEY || '',
+  CUSTOM_AI_BASE_URL: process.env.CUSTOM_AI_BASE_URL || process.env.VYCEAI_BASE_URL || process.env.AI_BASE_URL || 'https://vyceai.com/v1',
   DEFAULT_MODEL: process.env.DEFAULT_AI_MODEL || process.env.AI_MODEL || 'deepseek-v4.1',
   MASTER_ADMIN_CODE: process.env.MASTER_ADMIN_CODE || 'DeportePicks',
   APP_NAME: 'DeportePicks AI VIP',

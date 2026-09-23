@@ -25,6 +25,7 @@ import OverUnderGroupedSection from './OverUnderGroupedSection';
 import { calculateTeamDetailedStats, calculateDifferential, getCoherentPredictedScore } from '../utils/mathProbabilities';
 import { getCachedAnalysis, setCachedAnalysis, computeMatchFingerprint, clearAllAnalysisCache, removeCachedAnalysis } from '../utils/analysisCache';
 import { getStoredAiConfig } from '../utils/aiSettings';
+import { PROVIDER_PRESETS } from '../constants/aiProviders';
 
 const calculateMatchSimulation = scoreSimulation;
 
@@ -118,11 +119,19 @@ export default function MatchDetailModal({
     setLoadingAi(true);
     try {
       const storedAi = getStoredAiConfig();
+      let resolvedProvider = storedAi?.provider || 'custom';
+      if (resolvedProvider === 'openrouter') resolvedProvider = 'custom';
+      const defaultUrl = PROVIDER_PRESETS[resolvedProvider]?.defaultBaseUrl || 'https://vyceai.com/v1';
+      let resolvedBaseUrl = storedAi?.baseUrl || defaultUrl;
+      if (resolvedBaseUrl.includes('openrouter.ai')) resolvedBaseUrl = defaultUrl;
+      let resolvedModel = modelToUse || storedAi?.selectedModel || PROVIDER_PRESETS[resolvedProvider]?.defaultModel || 'deepseek-v4.1';
+      if (resolvedModel.includes('openrouter')) resolvedModel = 'deepseek-v4.1';
+
       const aiConfigPayload = (storedAi && storedAi.apiKey && storedAi.apiKey.length >= 4) ? {
-        provider: storedAi.provider || 'custom',
+        provider: resolvedProvider,
         apiKey: storedAi.apiKey,
-        baseUrl: storedAi.baseUrl || (storedAi.provider === 'agentrouter' ? 'https://agentrouter.org/v1' : 'https://vyceai.com/v1'),
-        selectedModel: modelToUse || storedAi.selectedModel || 'deepseek-v4.1'
+        baseUrl: resolvedBaseUrl,
+        selectedModel: resolvedModel
       } : undefined;
 
       const res = await fetch(`/api/matches/${curMatch.id}/ai-analysis`, {

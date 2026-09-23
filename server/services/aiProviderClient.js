@@ -59,7 +59,11 @@ export async function fetchProviderModels(provider = 'custom', apiKey = '', base
 
 export function normalizeModelId(provider, model) {
   if (!model || typeof model !== 'string') return model;
-  const trimmed = model.trim();
+  let trimmed = model.trim();
+  if (trimmed.startsWith('openrouter/')) {
+    trimmed = trimmed.replace(/^openrouter\//i, '');
+    if (!trimmed || trimmed === 'free') trimmed = 'deepseek-v4.1';
+  }
   if (provider === 'deepseek') {
     if (/^deepseek-v[34](\.[0-9]+)?(-flash)?$/i.test(trimmed)) return 'deepseek-chat';
     if (/^deepseek-r1$/i.test(trimmed)) return 'deepseek-reasoner';
