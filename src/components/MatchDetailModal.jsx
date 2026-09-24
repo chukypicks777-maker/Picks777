@@ -300,6 +300,11 @@ export default function MatchDetailModal({
   }).length;
   const over25H2HPct = h2hList.length > 0 ? Math.round((over25H2HCount / h2hList.length) * 100) : 0;
 
+  const bttsH2HCount = h2hList.filter(h => h.btts).length;
+  const bttsH2HPct = h2hList.length > 0 ? Math.round((bttsH2HCount / h2hList.length) * 100) : 0;
+  const totalH2HGoals = h2hList.reduce((acc, h) => acc + (h.totalGoals || 0), 0);
+  const avgH2HGoals = h2hList.length > 0 ? (totalH2HGoals / h2hList.length).toFixed(1) : '0.0';
+
   const hasCornersData = h2hList.some(h => h.totalCorners != null);
   const hasCardsData = h2hList.some(h => h.yellowCards != null);
   const hasFoulsData = h2hList.some(h => h.totalFouls != null);
@@ -688,15 +693,15 @@ export default function MatchDetailModal({
                       <span className="text-sm font-bold text-sky-400">{over25H2HPct}% ({over25H2HCount}/{h2hList.length})</span>
                     </div>
                     <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
-                      <span className="text-slate-400 block mb-0.5">Promedio Córners</span>
+                      <span className="text-slate-400 block mb-0.5">{hasCornersData ? 'Promedio Córners' : 'Ambos Anotan (BTTS)'}</span>
                       <span className="text-sm font-bold text-amber-300">
-                        {avgH2HCorners !== '-' ? `${avgH2HCorners} 🚩` : 'N/D'}
+                        {hasCornersData ? `${avgH2HCorners} 🚩` : `${bttsH2HPct}% (${bttsH2HCount}/${h2hList.length})`}
                       </span>
                     </div>
                     <div className="bg-[#141b29] p-2 rounded-lg border border-white/5">
-                      <span className="text-slate-400 block mb-0.5">Promedio Tarjetas</span>
+                      <span className="text-slate-400 block mb-0.5">{hasCardsData ? 'Promedio Tarjetas' : 'Promedio Goles / Partido'}</span>
                       <span className="text-sm font-bold text-rose-400">
-                        {avgH2HYellowCards !== '-' ? `${avgH2HYellowCards} 🟨` : 'N/D'}
+                        {hasCardsData ? `${avgH2HYellowCards} 🟨` : `${avgH2HGoals} ⚽`}
                       </span>
                     </div>
                   </div>
@@ -715,58 +720,75 @@ export default function MatchDetailModal({
 
               {/* Detailed Direct Matches Table if H2H exists */}
               {h2hList.length > 0 && (
-                <div className="overflow-x-auto rounded-xl border border-white/5 bg-[#111723]">
-                  <table className="w-full text-left text-xs font-mono">
-                    <thead className="bg-[#141b29] text-slate-400 border-b border-white/5">
-                      <tr>
-                        <th className="py-2.5 px-3">#</th>
-                        <th className="py-2.5 px-3">Fecha</th>
-                        <th className="py-2.5 px-3">Torneo</th>
-                        <th className="py-2.5 px-3">Local</th>
-                        <th className="py-2.5 px-3 text-center">Marcador</th>
-                        <th className="py-2.5 px-3">Visitante</th>
-                        <th className="py-2.5 px-3 text-center">Línea 2.5</th>
-                        <th className="py-2.5 px-3 text-center">Corners</th>
-                        <th className="py-2.5 px-3 text-center">Tarjetas</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 text-slate-300">
-                      {h2hList.map((h, i) => {
-                        const dateFormatted = h.date ? new Date(h.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
-                        const scoreParts = (h.score || '').split('-').map(s => parseInt(s.trim(), 10));
-                        const isOver25 = (scoreParts[0] + scoreParts[1]) > 2;
-                        return (
-                          <tr key={i} className="hover:bg-white/5 transition">
-                            <td className="py-2.5 px-3 text-slate-500 font-bold">{i + 1}</td>
-                            <td className="py-2.5 px-3 text-slate-400 whitespace-nowrap">{dateFormatted}</td>
-                            <td className="py-2.5 px-3">
-                              <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded truncate max-w-[140px] block">
-                                {h.competition || 'Oficial'}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-3 font-semibold text-white">{h.home}</td>
-                            <td className="py-2.5 px-3 text-center font-bold text-white bg-black/20 font-mono">
-                              {h.score}
-                            </td>
-                            <td className="py-2.5 px-3 font-semibold text-white">{h.away}</td>
-                            <td className="py-2.5 px-3 text-center">
-                              <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                isOver25 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
-                              }`}>
-                                {isOver25 ? '+2.5' : '-2.5'}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-3 text-center text-sky-300 font-mono">
-                              {h.totalCorners != null ? `${h.totalCorners} 🚩` : '-'}
-                            </td>
-                            <td className="py-2.5 px-3 text-center text-amber-400 font-mono">
-                              {h.yellowCards != null ? `${h.yellowCards} 🟨` : '-'}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div className="space-y-1.5">
+                  <div className="overflow-x-auto rounded-xl border border-white/5 bg-[#111723]">
+                    <table className="w-full text-left text-xs font-mono">
+                      <thead className="bg-[#141b29] text-slate-400 border-b border-white/5">
+                        <tr>
+                          <th className="py-2.5 px-3">#</th>
+                          <th className="py-2.5 px-3">Fecha</th>
+                          <th className="py-2.5 px-3">Torneo</th>
+                          <th className="py-2.5 px-3">Local</th>
+                          <th className="py-2.5 px-3 text-center">Marcador</th>
+                          <th className="py-2.5 px-3">Visitante</th>
+                          <th className="py-2.5 px-3 text-center">Línea 2.5</th>
+                          <th className="py-2.5 px-3 text-center">Ambos Anotan</th>
+                          {hasCornersData && <th className="py-2.5 px-3 text-center">Corners</th>}
+                          {hasCardsData && <th className="py-2.5 px-3 text-center">Tarjetas</th>}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5 text-slate-300">
+                        {h2hList.map((h, i) => {
+                          const dateFormatted = h.date ? new Date(h.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                          const scoreParts = (h.score || '').split('-').map(s => parseInt(s.trim(), 10));
+                          const isOver25 = (scoreParts[0] + scoreParts[1]) > 2;
+                          return (
+                            <tr key={i} className="hover:bg-white/5 transition">
+                              <td className="py-2.5 px-3 text-slate-500 font-bold">{i + 1}</td>
+                              <td className="py-2.5 px-3 text-slate-400 whitespace-nowrap">{dateFormatted}</td>
+                              <td className="py-2.5 px-3">
+                                <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded truncate max-w-[140px] block">
+                                  {h.competition || 'Oficial'}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 font-semibold text-white">{h.home}</td>
+                              <td className="py-2.5 px-3 text-center font-bold text-white bg-black/20 font-mono">
+                                {h.score}
+                              </td>
+                              <td className="py-2.5 px-3 font-semibold text-white">{h.away}</td>
+                              <td className="py-2.5 px-3 text-center">
+                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                  isOver25 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                                }`}>
+                                  {isOver25 ? '+2.5' : '-2.5'}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-center">
+                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                  h.btts ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700/50 text-slate-400'
+                                }`}>
+                                  {h.btts ? 'Sí' : 'No'}
+                                </span>
+                              </td>
+                              {hasCornersData && (
+                                <td className="py-2.5 px-3 text-center text-sky-300 font-mono">
+                                  {h.totalCorners != null ? `${h.totalCorners} 🚩` : '-'}
+                                </td>
+                              )}
+                              {hasCardsData && (
+                                <td className="py-2.5 px-3 text-center text-amber-400 font-mono">
+                                  {h.yellowCards != null ? `${h.yellowCards} 🟨` : '-'}
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-mono px-1">
+                    ℹ️ Historial directo oficial de enfrentamientos registrados por ESPN. Las estadísticas consolidadas por partido de córners y tarjetas se analizan en la pestaña 'Estadísticas & Análisis de Equipos'.
+                  </p>
                 </div>
               )}
 
@@ -937,13 +959,13 @@ export default function MatchDetailModal({
                 {/* Metric 5: Valla Invicta (Clean Sheet) % */}
                 <div>
                   <div className="flex justify-between text-slate-300 mb-1">
-                    <span>{displayNumber(homeDetailed.cleanSheetRate, 0)}%</span>
+                    <span>{homeDetailed.cleanSheetRate != null ? `${Math.round(homeDetailed.cleanSheetRate)}%` : 'N/D'}</span>
                     <span className="text-slate-400 text-[11px]">Tasa Valla Invicta (Clean Sheet) Temporada</span>
-                    <span>{displayNumber(awayDetailed.cleanSheetRate, 0)}%</span>
+                    <span>{awayDetailed.cleanSheetRate != null ? `${Math.round(awayDetailed.cleanSheetRate)}%` : 'N/D'}</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
-                    <div style={{ width: `${homeDetailed.cleanSheetRate}%` }} className="h-full bg-sky-500" />
-                    <div style={{ width: `${awayDetailed.cleanSheetRate}%` }} className="h-full bg-indigo-500" />
+                    <div style={{ width: `${homeDetailed.cleanSheetRate ?? 50}%` }} className="h-full bg-sky-500" />
+                    <div style={{ width: `${awayDetailed.cleanSheetRate ?? 50}%` }} className="h-full bg-indigo-500" />
                   </div>
                 </div>
               </div>
@@ -979,7 +1001,7 @@ export default function MatchDetailModal({
                 </button>
               </div>
 
-              {simulationData && (
+              {simulationData && Object.keys(simulationData).length > 0 ? (
                 <div className="space-y-2.5 pt-2">
                   {Object.entries(simulationData).map(([score, prob], idx) => (
                     <div key={score} className="space-y-1">
@@ -997,6 +1019,10 @@ export default function MatchDetailModal({
                       </div>
                     </div>
                   ))}
+                </div>
+              ) : (
+                <div className="p-6 text-center text-slate-400 bg-[#111723] rounded-xl border border-white/5 font-sans">
+                  Sin muestra estadística suficiente de goles para proyectar la distribución de marcadores.
                 </div>
               )}
             </div>

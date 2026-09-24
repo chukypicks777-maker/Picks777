@@ -176,56 +176,84 @@ export function extractJsonFromAiResponse(raw) {
 export async function generateAiMatchReport(match, options = {}) {
   const p = match.model?.probabilities || match.probabilities || {};
   const fmt = n => Number.isFinite(n) ? Number(n.toFixed(1)) : 'N/D';
+  const homePos = match.homeTeam?.position ?? match.homeTeam?.rank;
+  const awayPos = match.awayTeam?.position ?? match.awayTeam?.rank;
+  const homePoints = match.homeTeam?.points != null ? `${match.homeTeam.points} pts` : '';
+  const awayPoints = match.awayTeam?.points != null ? `${match.awayTeam.points} pts` : '';
+  const homeName = match.homeTeam?.name || 'Local';
+  const awayName = match.awayTeam?.name || 'Visitante';
+  const picks = getTop3Opportunities(match);
+
   const facts = [
-    { id: 'fixture', text: `${match.homeTeam.name} vs ${match.awayTeam.name}. Estado del proveedor: ${match.status}. Inicio: ${match.kickoff}.` },
-    { id: 'source', text: `Fuente: ${match.source || 'ESPN'}. Consulta: ${match.fetchedAt || 'N/D'}.` }
+    { id: 'fixture', text: `${homeName} vs ${awayName}. Torneo: ${match.leagueName || 'Oficial'}. Estado: ${match.status}. Inicio: ${match.kickoff}.` },
+    { id: 'source', text: `Fuente oficial: ${match.source || 'ESPN'}. Consulta: ${match.fetchedAt || 'N/D'}.` }
   ];
-  for (const [side, team] of [['home', match.homeTeam], ['away', match.awayTeam]]) {
-    if (Number.isFinite(team?.gamesPlayed)) facts.push({ id: side, text: `${team.name}: ${team.gamesPlayed} partidos disputados, ${team.goalsFor ?? 'N/D'} goles a favor y ${team.goalsAgainst ?? 'N/D'} en contra.` });
+  for (const [side, team, pos, pts] of [['home', match.homeTeam, homePos, homePoints], ['away', match.awayTeam, awayPos, awayPoints]]) {
+    if (Number.isFinite(team?.gamesPlayed)) {
+      const gF = team.goalsFor ?? 'N/D';
+      const gA = team.goalsAgainst ?? 'N/D';
+      const pInfo = pos ? `Posición #${pos}` : '';
+      const ptsInfo = pts ? `(${pts})` : '';
+      const cRate = team.cleanSheetRate != null ? `valla invicta ${team.cleanSheetRate}%` : '';
+      const corners = team.avgCorners != null ? `${team.avgCorners} córners/p` : '';
+      const cards = team.avgYellowCards != null ? `${team.avgYellowCards} amarillas/p` : '';
+      const extra = [pInfo, ptsInfo, cRate, corners, cards].filter(Boolean).join(', ');
+      facts.push({ id: side, text: `${team.name} (${side === 'home' ? 'Local' : 'Visitante'}): ${team.gamesPlayed} PJ, ${gF} GF, ${gA} GC. ${extra ? `Registros: ${extra}.` : ''}` });
+    }
   }
   if (match.model) {
-    facts.push({ id: 'result', text: `Estimación Poisson: local ${fmt(p.homeWin)}%, empate ${fmt(p.draw)}%, visitante ${fmt(p.awayWin)}%.` });
-    facts.push({ id: 'goals', text: `Goles totales: más de 2.5 ${fmt(p.over25)}%; menos de 2.5 ${fmt(p.under25)}%. Ambos anotan: ${fmt(p.bttsYes)}%.` });
-    facts.push({ id: 'score', text: `Marcador individual más probable: ${match.model.predictedScore} (${fmt(match.model.scoreDistribution?.[0]?.probability)}%). Es un escenario, no un resultado asegurado.` });
-    facts.push({ id: 'sample', text: `Muestra de temporada: ${match.model.sampleSize?.home ?? 'N/D'} y ${match.model.sampleSize?.away ?? 'N/D'} partidos. Modelo sin calibración retrospectiva de precisión.` });
+    facts.push({ id: 'result', text: `Estimación Poisson: ${homeName} ${fmt(p.homeWin)}%, Empate ${fmt(p.draw)}%, ${awayName} ${fmt(p.awayWin)}%.` });
+    facts.push({ id: 'expectedGoals', text: `xG Poisson proyectado: ${homeName} ${fmt(match.model.expectedGoals?.home)} xG vs ${awayName} ${fmt(match.model.expectedGoals?.away)} xG.` });
+    facts.push({ id: 'goals', text: `Goles totales: Más de 1.5 ${fmt(p.over15)}%, Menos de 1.5 ${fmt(p.under15)}%; Más de 2.5 ${fmt(p.over25)}%, Menos de 2.5 ${fmt(p.under25)}%; Más de 3.5 ${fmt(p.over35)}%, Menos de 3.5 ${fmt(p.under35)}%. Ambos anotan: Sí ${fmt(p.bttsYes)}%, No ${fmt(p.bttsNo)}%.` });
+    facts.push({ id: 'score', text: `Marcador individual más probable: ${match.model.predictedScore} (${fmt(match.model.scoreDistribution?.[0]?.probability)}%). Escenario de máxima probabilidad del modelo Poisson.` });
+    facts.push({ id: 'sample', text: `Muestra de temporada: ${match.model.sampleSize?.home ?? 'N/D'} partidos (local) y ${match.model.sampleSize?.away ?? 'N/D'} partidos (visitante).` });
   } else facts.push({ id: 'missing', text: 'Sin muestra suficiente para un pronóstico Poisson previo al partido.' });
 
   if (Array.isArray(match.h2h) && match.h2h.length > 0) {
     const h2hText = match.h2h.slice(0, 5).map(h => `${h.home} ${h.score || 'vs'} ${h.away}`).join('; ');
-    facts.push({ id: 'h2h', text: `Historial directo (H2H): ${h2hText}.` });
+    facts.push({ id: 'h2h', text: `Historial directo H2H (${match.h2h.length} partidos oficiales recientes): ${h2hText}.` });
   }
 
-  if (Number.isFinite(match.homeTeam?.rank) || Number.isFinite(match.awayTeam?.rank)) {
+  if (Number.isFinite(homePos) || Number.isFinite(awayPos)) {
     facts.push({
       id: 'standings',
-      text: `Clasificación: ${match.homeTeam.name} (Puesto ${match.homeTeam.rank ?? 'N/D'}, ${match.homeTeam.points ?? 'N/D'} pts) vs ${match.awayTeam.name} (Puesto ${match.awayTeam.rank ?? 'N/D'}, ${match.awayTeam.points ?? 'N/D'} pts).`
+      text: `Clasificación oficial en ${match.leagueName || 'liga'}: ${homeName} (Puesto #${homePos ?? 'N/D'}, ${homePoints || 'N/D'}) vs ${awayName} (Puesto #${awayPos ?? 'N/D'}, ${awayPoints || 'N/D'}).`
     });
   }
 
   if ((match.homeTeam?.form && match.homeTeam.form.length > 0) || (match.awayTeam?.form && match.awayTeam.form.length > 0)) {
     facts.push({
       id: 'form',
-      text: `Racha reciente: ${match.homeTeam.name} [${(match.homeTeam.form || []).join('-') || 'N/D'}] vs ${match.awayTeam.name} [${(match.awayTeam.form || []).join('-') || 'N/D'}].`
+      text: `Racha de los últimos 5 partidos: ${homeName} [${(match.homeTeam.form || []).join('-') || 'N/D'}] vs ${awayName} [${(match.awayTeam.form || []).join('-') || 'N/D'}].`
     });
   }
-  const picks = getTop3Opportunities(match);
+
+  const posText = (homePos && awayPos) ? ` (Puesto #${homePos} vs #${awayPos})` : '';
+  const hForm = (match.homeTeam?.form || []).join('-');
+  const aForm = (match.awayTeam?.form || []).join('-');
+  const formText = (hForm || aForm) ? ` Rachas recientes: ${homeName} [${hForm || 'N/D'}] vs ${awayName} [${aForm || 'N/D'}].` : '';
+  const xGHome = match.model?.expectedGoals?.home != null ? fmt(match.model.expectedGoals.home) : null;
+  const xGAway = match.model?.expectedGoals?.away != null ? fmt(match.model.expectedGoals.away) : null;
+  const xGText = (xGHome && xGAway) ? ` xG proyectado: ${homeName} ${xGHome} xG vs ${awayName} ${xGAway} xG.` : '';
+
   const narrative = facts.map(f => f.text).join('\n\n');
   const baselineSections = {
-    dataVerification: `Datos verificados de ${match.source || 'ESPN'} para ${match.homeTeam?.name} vs ${match.awayTeam?.name}. ` +
-      (match.model ? `Muestra de temporada: ${match.model.sampleSize?.home ?? 'N/D'} partidos (local) y ${match.model.sampleSize?.away ?? 'N/D'} partidos (visitante).` : 'Sin muestra histórica previa.'),
+    dataVerification: `Datos oficiales de ${match.source || 'ESPN'} para ${homeName} vs ${awayName}${posText}. ` +
+      (match.model ? `Muestra cuantitativa: ${match.model.sampleSize?.home ?? 'N/D'} partidos (local) y ${match.model.sampleSize?.away ?? 'N/D'} partidos (visitante).${formText}${xGText}` : 'Sin muestra histórica previa.'),
     goalsAnalysis: match.model
-      ? `Modelo Poisson proyecta Over 2.5 en ${fmt(p.over25)}% y Under 2.5 en ${fmt(p.under25)}%. Ambos Anotan (BTTS) en ${fmt(p.bttsYes)}%. Dinámica prevista: ${Number(p.over25) >= 50 ? 'Partido abierto con alto volumen de ocasiones ofensivas' : 'Encuentro equilibrado con prevalencia de rigor táctico y control'}.`
-      : 'Dinámica de goles en procesamiento según el feed oficial del torneo.',
+      ? `Modelo Poisson proyecta Over 2.5 en ${fmt(p.over25)}% y Under 2.5 en ${fmt(p.under25)}%. Ambos Anotan (BTTS) en ${fmt(p.bttsYes)}% (Over 1.5 en ${fmt(p.over15)}%). Dinámica prevista: ${Number(p.over25) >= 50 ? `Partido de ritmo alto con ${homeName} y ${awayName} buscando el arco rival.` : `Encuentro cerrado y de rigor táctico donde el control defensivo predominará entre ${homeName} y ${awayName}.`}`
+      : `Dinámica de goles en procesamiento según el calendario oficial de ${match.leagueName || 'la liga'}.`,
     positiveFactors: [
-      match.homeTeam?.gamesPlayed ? `${match.homeTeam.name}: ${match.homeTeam.goalsFor ?? 0} goles a favor en ${match.homeTeam.gamesPlayed} fechas disputadas.` : 'Regularidad competitiva en el fixture oficial.',
-      match.model ? `Mayor probabilidad matemática estimada: ${Number(p.homeWin) >= Number(p.awayWin) ? match.homeTeam?.name + ' (' + fmt(p.homeWin) + '%)' : match.awayTeam?.name + ' (' + fmt(p.awayWin) + '%)'}.` : 'Datos de forma de los equipos disponibles.'
+      match.homeTeam?.gamesPlayed ? `${homeName}: ${match.homeTeam.goalsFor ?? 0} goles a favor en ${match.homeTeam.gamesPlayed} partidos disputados (${homePoints}).` : `Ventaja de localía para ${homeName}.`,
+      match.model ? `Probabilidad matemática principal: ${Number(p.homeWin) >= Number(p.awayWin) ? `${homeName} (${fmt(p.homeWin)}%)` : `${awayName} (${fmt(p.awayWin)}%)`} bajo distribución Poisson.` : 'Registro de partidos oficiales disponible.',
+      picks[0] ? `Selección destacada: ${picks[0].selection} con ${picks[0].probability}% de probabilidad estadística.` : 'Equilibrio táctico en las métricas de temporada.'
     ],
     negativeFactors: [
-      `Margen de empate o sorpresa estadística estimado en ${fmt(Number(p.draw) + Math.min(Number(p.homeWin), Number(p.awayWin)))}%.`,
-      'Varianza intrínseca en 90 minutos y factores no modelables (arbitraje, climatología, rotaciones).'
+      Number(p.draw) ? `Margen de empate o sorpresa para ${awayName} estimado en ${fmt(Number(p.draw) + Math.min(Number(p.homeWin), Number(p.awayWin)))}%.` : 'Margen de incertidumbre en el resultado.',
+      (match.awayTeam?.goalsFor != null && match.awayTeam.goalsFor > 0) ? `${awayName} promedia capacidad goleadora con ${match.awayTeam.goalsFor} tantos anotados (${awayPoints}).` : `Varianza intrínseca en 90 minutos para ${homeName} vs ${awayName}.`
     ],
     verdict: match.model
-      ? `Marcador individual más probable: ${match.model.predictedScore} (${fmt(match.model.scoreDistribution?.[0]?.probability)}%). Selección cuantitativa principal: ${picks[0]?.market || 'Victoria Local'} con ${picks[0]?.probability ? fmt(picks[0].probability) + '%' : 'respaldo estadístico'}.`
+      ? `Marcador individual más probable: ${match.model.predictedScore} (${fmt(match.model.scoreDistribution?.[0]?.probability)}%). Selección recomendada por modelo: ${picks[0]?.market || 'Doble Oportunidad'} (${picks[0]?.selection || homeName}) con ${picks[0]?.probability ? fmt(picks[0].probability) + '%' : 'respaldo probabilístico'}.`
       : 'Evaluación prudente; se recomienda verificar alineaciones previas al pitido inicial.'
   };
 
@@ -276,20 +304,7 @@ export async function generateAiMatchReport(match, options = {}) {
   const cacheKey = 'ai:grounded-v3:' + createHash('sha256').update(JSON.stringify([facts, p, config.updatedAt, config.provider, config.selectedModel])).digest('hex');
   const generate = async () => {
     try {
-      const isAgentRouter = config.provider === 'agentrouter' || (config.baseUrl && config.baseUrl.includes('agentrouter.org'));
-      const promptCatalog = isAgentRouter
-        ? facts.map(f => {
-            if (f.id === 'fixture') return { id: f.id, summary: `Match fixture: ${match.homeTeam?.name} vs ${match.awayTeam?.name} (${match.status})` };
-            if (f.id === 'home') return { id: f.id, summary: `${match.homeTeam?.name}: ${match.homeTeam?.gamesPlayed} matches, ${match.homeTeam?.goalsFor} scored, ${match.homeTeam?.goalsAgainst} conceded` };
-            if (f.id === 'away') return { id: f.id, summary: `${match.awayTeam?.name}: ${match.awayTeam?.gamesPlayed} matches, ${match.awayTeam?.goalsFor} scored, ${match.awayTeam?.goalsAgainst} conceded` };
-            if (f.id === 'result') return { id: f.id, summary: `Poisson win probability: Home ${fmt(p.homeWin)}%, Draw ${fmt(p.draw)}%, Away ${fmt(p.awayWin)}%` };
-            if (f.id === 'goals') return { id: f.id, summary: `Goals probability: Over 2.5 ${fmt(p.over25)}%, Under 2.5 ${fmt(p.under25)}%, BTTS ${fmt(p.bttsYes)}%` };
-            if (f.id === 'score') return { id: f.id, summary: `Most probable predicted score: ${match.model?.predictedScore}` };
-            if (f.id === 'sample') return { id: f.id, summary: `Sample size: ${match.model?.sampleSize?.home} and ${match.model?.sampleSize?.away} matches` };
-            return { id: f.id, summary: `Fact: ${f.id}` };
-          })
-        : facts;
-
+      const promptCatalog = facts.map(f => ({ id: f.id, summary: f.text }));
       const validIdsList = facts.map(f => f.id);
 
       // Candidate models list: configured model first, followed by preset default if distinct
@@ -306,25 +321,26 @@ export async function generateAiMatchReport(match, options = {}) {
       let usedModel = config.selectedModel;
 
       const systemPrompt = `Eres un motor analítico avanzado de Inteligencia Artificial especializado en pronósticos y apuestas deportivas profesionales (777 Picks AI Engine).
-Tu objetivo es realizar un análisis cuantitativo, táctico y probabilístico profundo, riguroso y de alto valor estratégico para el encuentro asignado.
-Debes razonar con la máxima profundidad analítica posible, contrastando métricas de ataque, solidez defensiva, tendencias de goles y distribuciones Poisson.
+Tu objetivo es realizar un análisis cuantitativo, táctico y probabilístico profundo, riguroso y personalizado para el encuentro entre ${homeName} y ${awayName}.
+Debes razonar con la máxima profundidad analítica posible, contrastando métricas oficiales de ataque, solidez defensiva, tendencias de goles y distribuciones Poisson de ambos equipos.
+NUNCA utilices texto genérico reutilizable. Cada párrafo debe hablar con precisión de este enfrentamiento específico.
 
 Responde ÚNICAMENTE con un objeto JSON válido con la siguiente estructura exacta:
 {
   "factIds": ["fixture", "result"],
   "analysis": {
-    "dataVerification": "Párrafo detallado y exhaustivo en español verificando las fuentes oficiales (ESPN), tamaño de muestra analizado de cada equipo, regularidad de los datos y solidez estadística.",
-    "goalsAnalysis": "Párrafo analítico profundo en español examinando la dinámica goleadora: probabilidades del modelo para Más/Menos 1.5, 2.5 goles y Ambos Equipos Anotan (BTTS), balance entre ataque vs concesión defensiva.",
+    "dataVerification": "Párrafo detallado en español verificando las fuentes oficiales (ESPN), posiciones, tamaño de muestra de ${homeName} y ${awayName} y solidez estadística.",
+    "goalsAnalysis": "Párrafo analítico profundo en español examinando la dinámica goleadora: xG Poisson de cada equipo, probabilidades de Más/Menos 1.5, 2.5 goles y Ambos Anotan (BTTS).",
     "positiveFactors": [
-      "Factor positivo 1: detalle táctico y estadístico cuantitativo con métricas concretas a favor del pronóstico principal.",
-      "Factor positivo 2: rendimiento, regularidad o ventaja de localía/momento.",
-      "Factor positivo 3: argumento matemático adicional respaldado en los datos."
+      "Factor positivo 1: detalle táctico y cuantitativo concreto a favor de ${homeName} o del pronóstico principal.",
+      "Factor positivo 2: rendimiento, regularidad o ventaja de localía.",
+      "Factor positivo 3: argumento matemático adicional fundamentado en los datos."
     ],
     "negativeFactors": [
-      "Factor de riesgo 1: cautela específica, margen de error o escenarios donde el rival puede complicar.",
-      "Factor de riesgo 2: varianza inherente a los 90 minutos, disciplina arbitral o rotaciones."
+      "Factor de riesgo 1: cautela específica o escenarios donde ${awayName} puede complicar.",
+      "Factor de riesgo 2: varianza inherente a los 90 minutos, arbitraje o rotaciones."
     ],
-    "verdict": "Veredicto táctico y cuantitativo final razonado con precisión. Especifica el marcador más probable derivado del cálculo Poisson, la selección de valor recomendada y una gestión disciplinada del riesgo."
+    "verdict": "Veredicto táctico y cuantitativo final razonado con precisión. Especifica el marcador más probable derivado del cálculo Poisson (${match.model?.predictedScore || 'N/D'}), la selección de valor recomendada y gestión disciplinada del riesgo."
   }
 }
 
@@ -339,7 +355,14 @@ Reglas estrictas:
             ...config,
             model: candidate,
             systemPrompt,
-            userPrompt: `Fixture facts: ${JSON.stringify(promptCatalog)}. Select between 1 and 6 valid factIds from ${JSON.stringify(validIdsList)} and analyze deeply in Spanish. Return pure JSON.`,
+            userPrompt: `Partido a analizar (${match.leagueName || 'Liga Oficial'}): ${homeName} (Local) vs ${awayName} (Visitante).
+Estadísticas oficiales y modelo Poisson: ${JSON.stringify(promptCatalog)}.
+Instrucciones analíticas estrictas:
+1. Menciona explícitamente a "${homeName}" y a "${awayName}" por su nombre en cada sección del informe.
+2. Compara el ataque de ${homeName} contra la defensa de ${awayName}, sus posiciones en la clasificación (${homePos ? `#${homePos}` : 'N/D'} vs ${awayPos ? `#${awayPos}` : 'N/D'}) y los xG esperados (${fmt(match.model?.expectedGoals?.home)} xG vs ${fmt(match.model?.expectedGoals?.away)} xG).
+3. Razona por qué el modelo proyecta el marcador ${match.model?.predictedScore || 'N/D'} y evalúa probabilidades para Más/Menos 1.5 y 2.5 goles y Ambos Anotan (BTTS).
+4. Elige entre 1 y 6 factIds válidos exclusivamente de: ${JSON.stringify(validIdsList)}.
+5. Devuelve ÚNICAMENTE el objeto JSON en español profesional.`,
             maxTokens: 4000,
             temperature: 0.3
           });

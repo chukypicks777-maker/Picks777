@@ -13,13 +13,33 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, match = {})
   const goals = totalLines(match.model?.expectedGoals?.[isHome ? 'home' : 'away']);
   const cards = validNumber(team.avgYellowCards) ? team.avgYellowCards : null;
   const corners = calculateCornerProbabilities(team.avgCorners);
+  let cleanSheetRate = percent(team.cleanSheetRate);
+  if (cleanSheetRate === null && Array.isArray(match.recentMatches)) {
+    const group = match.recentMatches.find(g => String(g.teamId) === String(team.id) || g.team === team.name);
+    if (group && Array.isArray(group.events)) {
+      let clean = 0, count = 0;
+      for (const e of group.events) {
+        if (!e.score) continue;
+        const parts = e.score.split('-').map(s => Number(s.trim()));
+        if (parts.length === 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) {
+          count++;
+          const rivalScore = e.atVs === '@' ? parts[0] : parts[1];
+          if (rivalScore === 0) clean++;
+        }
+      }
+      if (count > 0) cleanSheetRate = Math.round((clean / count) * 100);
+    }
+  }
+  if (cleanSheetRate === null && validNumber(avgGC)) {
+    cleanSheetRate = Math.round(Math.exp(-avgGC) * 100);
+  }
   return {
     name: team.name || (isHome ? 'Local' : 'Visitante'), shortName: team.shortName || (isHome ? 'LOC' : 'VIS'), logo: team.logo,
     position: team.position ?? null, points: team.points ?? null, gamesPlayed: team.gamesPlayed ?? null,
     form: Array.isArray(team.form) ? team.form : [], goalsFor: team.goalsFor ?? null, goalsAgainst: team.goalsAgainst ?? null,
     avgGF, avgGC, goalDiff: subtract(team.goalsFor, team.goalsAgainst),
     ...Object.fromEntries(Object.entries(goals).map(([k, v]) => [`${k}Rate`, v])),
-    bttsRate: percent(team.bttsRate), cleanSheetRate: percent(team.cleanSheetRate),
+    bttsRate: percent(team.bttsRate), cleanSheetRate,
     avgCorners: corners.lambda, avgCornersConceded: team.avgCornersConceded ?? null,
     ...Object.fromEntries(Object.entries(corners).filter(([k]) => k !== 'lambda').map(([k, v]) => [`corner${k[0].toUpperCase()}${k.slice(1)}`, v])),
     ...Object.fromEntries(Object.entries(totalLines(cards)).map(([k, v]) => [`cards${k[0].toUpperCase()}${k.slice(1)}`, v])),

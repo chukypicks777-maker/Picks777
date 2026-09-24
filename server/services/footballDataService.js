@@ -73,7 +73,7 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
       gamesPlayed: row.gamesPlayed ?? null, form: form(c.form),
       avgCorners: null, avgCornersConceded: null,
       avgFouls: null, avgYellowCards: null,
-      bttsRate: null, over25Rate: null,
+      bttsRate: null, over25Rate: null, cleanSheetRate: null,
       keyPlayers: [...new Set((c.leaders || []).flatMap(g => (g.leaders || []).map(l => l.athlete?.displayName).filter(Boolean)))]
     };
   };
@@ -308,8 +308,30 @@ export async function enrichMatchWithRealData(match) {
       }
     }
 
+    const deriveClean = events => {
+      if (!Array.isArray(events) || events.length === 0) return null;
+      let clean = 0, count = 0;
+      for (const e of events) {
+        if (!e.score) continue;
+        const parts = e.score.split('-').map(s => Number(s.trim()));
+        if (parts.length === 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) {
+          count++;
+          const rivalScore = e.atVs === '@' ? parts[0] : parts[1];
+          if (rivalScore === 0) clean++;
+        }
+      }
+      return count > 0 ? Number(((clean / count) * 100).toFixed(1)) : null;
+    };
+
+    const homeRecent = details.recentMatches?.find(g => g.teamId === match.homeTeamId || g.team === match.homeTeam?.name);
+    const awayRecent = details.recentMatches?.find(g => g.teamId === match.awayTeamId || g.team === match.awayTeam?.name);
+    const homeClean = match.homeTeam?.cleanSheetRate ?? deriveClean(homeRecent?.events);
+    const awayClean = match.awayTeam?.cleanSheetRate ?? deriveClean(awayRecent?.events);
+
     return {
       ...match,
+      homeTeam: { ...match.homeTeam, cleanSheetRate: homeClean },
+      awayTeam: { ...match.awayTeam, cleanSheetRate: awayClean },
       status: updatedStatus,
       liveMinute: updatedMinute,
       liveScore: updatedLiveScore,

@@ -52,9 +52,9 @@ function parseH2H(data, match) {
         score: `${hScore} - ${aScore}`,
         winner: hScore > aScore ? hShort : aScore > hScore ? aShort : 'Draw',
         btts: hScore > 0 && aScore > 0,
-        totalCorners: Math.max(6, Math.min(14, 8 + Math.round((hScore + aScore) * 1.2))),
-        yellowCards: Math.max(1, Math.min(7, 3 + Math.round((hScore + aScore) * 0.7))),
-        totalFouls: Math.max(14, Math.min(30, 20 + Math.round((hScore + aScore) * 1.5))),
+        totalCorners: null,
+        yellowCards: null,
+        totalFouls: null,
         isDirectH2H: true
       });
     });
@@ -84,9 +84,9 @@ function parseH2H(data, match) {
           score: `${hScore} - ${aScore}`,
           winner: ev.gameResult === 'W' ? (isHome ? hShort : aShort) : (ev.gameResult === 'L' ? (isHome ? aShort : hShort) : 'Draw'),
           btts: hScore > 0 && aScore > 0,
-          totalCorners: 9,
-          yellowCards: 4,
-          totalFouls: 22,
+          totalCorners: null,
+          yellowCards: null,
+          totalFouls: null,
           isDirectH2H: false,
           teamFocus: teamName
         });

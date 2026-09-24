@@ -58,3 +58,45 @@ test('half parser rejects contradictory scores, extra time, unfinished and futur
  comp.status.type.completed=true;assert.equal(readHistoricalSummary(data,'a',Date.parse('2025-01-01')),null);
  comp.competitors[0].linescores.push({displayValue:'6'});assert.equal(readHistoricalSummary(data,'a',cutoff).ownHalves,null);
 });
+
+test('cleanSheetRate and bttsRate are derived from recent matches, history, or Poisson fallback without fake data',()=>{
+ const teamA={id:'team-1',name:'Santos',gamesPlayed:10,goalsFor:15,goalsAgainst:10};
+ const matchWithRecent={
+  recentMatches:[
+   {
+    teamId:'team-1',
+    team:'Santos',
+    events:[
+     {score:'2 - 0',atVs:'vs'},
+     {score:'1 - 1',atVs:'vs'},
+     {score:'0 - 0',atVs:'@'},
+     {score:'3 - 2',atVs:'@'},
+     {score:'1 - 0',atVs:'vs'}
+    ]
+   }
+  ]
+ };
+ const statsA=calculateTeamDetailedStats(teamA,true,matchWithRecent);
+ assert.equal(statsA.cleanSheetRate,60);
+
+ const statsFallback=calculateTeamDetailedStats(teamA,true,{});
+ assert.equal(statsFallback.cleanSheetRate,37);
+
+ const statsEmpty=calculateTeamDetailedStats({},true,{});
+ assert.equal(statsEmpty.cleanSheetRate,null);
+
+ const sample=[
+  {cleanSheet:1,btts:0},
+  {cleanSheet:0,btts:1},
+  {cleanSheet:1,btts:0},
+  {cleanSheet:0,btts:1},
+  {cleanSheet:0,btts:1}
+ ];
+ const agg=aggregateHistory(sample);
+ assert.equal(agg.cleanSheetRate,40);
+ assert.equal(agg.bttsRate,60);
+
+ const aggSmall=aggregateHistory(sample.slice(0,4));
+ assert.equal(aggSmall.cleanSheetRate,null);
+ assert.equal(aggSmall.bttsRate,null);
+});

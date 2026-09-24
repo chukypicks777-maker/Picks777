@@ -19,8 +19,12 @@ export function readHistoricalSummary(data, teamId, cutoff) {
     return values;
   };
   const ownHalves = halves(own), rivalHalves = halves(rival);
+  const ownScore = numberOrNull(own.score);
+  const rivalScore = numberOrNull(rival.score);
+  const cleanSheet = rivalScore !== null ? (rivalScore === 0 ? 1 : 0) : null;
+  const btts = (ownScore !== null && rivalScore !== null) ? (ownScore > 0 && rivalScore > 0 ? 1 : 0) : null;
   return { id: comp.id, date: comp.date, corners: stat(own.id, 'wonCorners'), cornersAgainst: stat(rival.id, 'wonCorners'),
-    cards: stat(own.id, 'yellowCards'), fouls: stat(own.id, 'foulsCommitted'),
+    cards: stat(own.id, 'yellowCards'), fouls: stat(own.id, 'foulsCommitted'), cleanSheet, btts,
     ownHalves: ownHalves && rivalHalves ? ownHalves : null, rivalHalves: ownHalves && rivalHalves ? rivalHalves : null };
 }
 export function aggregateHistory(rows) {
@@ -32,9 +36,15 @@ export function aggregateHistory(rows) {
     sampleSizes[key] = values.length;
     metrics[key] = values.length >= MIN_SAMPLE ? values.reduce((a, b) => a + b, 0) / values.length : null;
   }
+  const cleanSheets = valid.map(r => r.cleanSheet).filter(n => Number.isFinite(n));
+  sampleSizes.cleanSheets = cleanSheets.length;
+  const cleanSheetRate = cleanSheets.length >= MIN_SAMPLE ? Number(((cleanSheets.reduce((a, b) => a + b, 0) / cleanSheets.length) * 100).toFixed(1)) : null;
+  const bttsList = valid.map(r => r.btts).filter(n => Number.isFinite(n));
+  sampleSizes.btts = bttsList.length;
+  const bttsRate = bttsList.length >= MIN_SAMPLE ? Number(((bttsList.reduce((a, b) => a + b, 0) / bttsList.length) * 100).toFixed(1)) : null;
   const halves = valid.filter(r => r.ownHalves && r.rivalHalves);
   sampleSizes.halves = halves.length;
-  return { ...metrics, sampleSizes, firstFor: halves.reduce((n, r) => n + r.ownHalves[0], 0),
+  return { ...metrics, sampleSizes, cleanSheetRate, bttsRate, firstFor: halves.reduce((n, r) => n + r.ownHalves[0], 0),
     firstAgainst: halves.reduce((n, r) => n + r.rivalHalves[0], 0),
     totalFor: halves.reduce((n, r) => n + r.ownHalves[0] + r.ownHalves[1], 0),
     totalAgainst: halves.reduce((n, r) => n + r.rivalHalves[0] + r.rivalHalves[1], 0),
@@ -80,7 +90,10 @@ export async function enrichHistoricalStats(match) {
   if (!match?.espnCode || !match.homeTeamId || !match.awayTeamId) return match;
   const histories = await Promise.all([match.homeTeamId, match.awayTeamId].map(id => history(match, id).catch(() => null)));
   const team = (original, stats) => stats ? { ...original, avgCorners: stats.corners, avgCornersConceded: stats.cornersAgainst,
-    avgYellowCards: stats.cards, avgFouls: stats.fouls, sampleSizes: stats.sampleSizes,
+    avgYellowCards: stats.cards, avgFouls: stats.fouls,
+    cleanSheetRate: stats.cleanSheetRate ?? original.cleanSheetRate ?? null,
+    bttsRate: stats.bttsRate ?? original.bttsRate ?? null,
+    sampleSizes: stats.sampleSizes,
     statsSource: 'ESPN boxscore', statsFetchedAt: stats.fetchedAt, statsRecords: stats.records } : original;
   return { ...match, homeTeam: team(match.homeTeam, histories[0]), awayTeam: team(match.awayTeam, histories[1]),
     halfGoals: (match.status !== 'POSTPONED' && match.status !== 'CANCELLED') ? halfGoalModel(match.model, ...histories) : null };
