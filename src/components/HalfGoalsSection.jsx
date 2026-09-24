@@ -22,7 +22,7 @@ export default function HalfGoalsSection({ match, isVip = false, onUnlockVip = n
           const isFirstHalfLocked = key === 'first' && !isVip;
 
           return (
-            <div key={key} className="relative bg-[#0b1019] rounded-xl p-3.5 border border-white/10 overflow-hidden flex flex-col justify-between">
+            <div key={key} className="relative bg-[#0b1019] rounded-xl p-3.5 border border-white/10 overflow-hidden flex flex-col justify-between min-h-[220px]">
               <div>
                 <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-1.5">
                   <h5 className="font-bold text-sky-300 text-xs sm:text-sm flex items-center space-x-1.5">

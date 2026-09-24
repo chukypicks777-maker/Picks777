@@ -18,7 +18,8 @@ export default function HeroFeaturedMatch({
 
   if (!match) return null;
 
-  const outcomes = roundDistribution({ homeWin: match.probabilities?.homeWin, draw: match.probabilities?.draw, awayWin: match.probabilities?.awayWin });
+  const baseProbs = match.model?.probabilities || match.probabilities || {};
+  const outcomes = roundDistribution({ homeWin: baseProbs.homeWin, draw: baseProbs.draw, awayWin: baseProbs.awayWin });
   const rawOpportunities = getTop3Opportunities(match);
   const parlayCandidates = rawOpportunities
     .map(pick => {
@@ -253,8 +254,8 @@ export default function HeroFeaturedMatch({
                         onClick={(e) => {
                           e.stopPropagation();
                           sounds.playAddParlay();
-                          const topOpportunities = parlayCandidates;
-                          onAddToParlay(topOpportunities);
+                          const topOpportunity = parlayCandidates[0];
+                          onAddToParlay(topOpportunity);
                         }}
                         className="py-2 px-3 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 cursor-pointer"
                       >

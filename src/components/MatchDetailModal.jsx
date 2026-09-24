@@ -403,9 +403,9 @@ export default function MatchDetailModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
       
-      <div className="relative w-full max-w-4xl bg-[#0c1017] border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] my-8">
+      <div className="relative w-full max-w-4xl bg-[#0c1017] border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] my-2 sm:my-8">
         
         {/* Header Ribbon */}
         <div className="bg-[#101622] border-b border-white/10 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
@@ -613,7 +613,14 @@ export default function MatchDetailModal({
               </div>
 
               <VerifiedPicks match={m} onAddToParlay={onAddToParlay} oddsFormat={oddsFormat} />
-              <OverUnderGroupedSection match={m} homeStats={homeDetailed} awayStats={awayDetailed} diff={diff} />
+              <OverUnderGroupedSection
+                match={m}
+                homeStats={homeDetailed}
+                awayStats={awayDetailed}
+                diff={diff}
+                isVip={effectiveIsVip}
+                onUnlockVip={onUnlockVip}
+              />
               {/* Narrative Analysis & AI Breakdown */}
               <div className="bg-[#111723] rounded-xl p-5 border border-white/5 space-y-4">
                 <div className="flex items-center justify-between border-b border-white/5 pb-2.5">

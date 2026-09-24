@@ -5,7 +5,7 @@ import { LEAGUES_DATA } from '../constants/leagues';
 export default function LeagueSelector({ selectedLeague, onSelectLeague, matchCounts = {} }) {
   return (
     <div className="w-full py-2.5 mb-1">
-      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1.5 scrollbar-none no-scrollbar">
+      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1.5 scrollbar-none no-scrollbar touch-pan-x">
         {LEAGUES_DATA.map((league) => {
           const isSelected = selectedLeague === league.id;
           const count = matchCounts[league.id] ?? (league.id === 'all' ? matchCounts.total : undefined);

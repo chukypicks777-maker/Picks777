@@ -293,8 +293,8 @@ export default function MatchCard({
               onClick={(e) => {
                 e.stopPropagation();
                 sounds.playAddParlay();
-                const topOpportunities = parlayCandidates;
-                onAddToParlay(topOpportunities);
+                const topOpportunity = parlayCandidates[0];
+                onAddToParlay(topOpportunity);
               }}
               className={`py-1.5 px-2 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 ${
                 parlayCandidates.length

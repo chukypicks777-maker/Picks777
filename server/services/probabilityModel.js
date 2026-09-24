@@ -74,10 +74,12 @@ export function buildPick(match) {
   const banker = getBestBankerPick(match);
   if (!banker) return null;
 
+  const odds = banker.odds ?? banker.estimatedOdds ?? (banker.probability > 0 ? Number(Math.max(1.01, 100 / banker.probability).toFixed(2)) : null);
+
   return {
     market: banker.market || 'Doble Oportunidad',
     selection: banker.selection,
-    odds: banker.odds,
+    odds,
     probability: Math.round(banker.probability),
     type: '💎 Pick Banquero Principal',
     confidence: `${Math.round(banker.probability)}%`,

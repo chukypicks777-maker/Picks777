@@ -116,6 +116,29 @@ test('parlays never fall back to fake fixtures or clamp probabilities', () => {
   assert.throws(() => calculateParlay([legs[0], legs[0]], 100));
   assert.throws(() => calculateParlay([{ matchId: 'a', odds: null }], 10));
   assert.throws(() => calculateParlay([], NaN));
+
+  const futureMatch1 = {
+    id: 'm-future-1',
+    status: 'SCHEDULED',
+    kickoff: new Date(Date.now() + 86400000).toISOString(),
+    homeTeam: { name: 'Alpha' },
+    awayTeam: { name: 'Beta' },
+    leagueName: 'LaLiga',
+    aiPick: { selection: 'Gana Alpha', probability: 75, estimatedOdds: 1.33 }
+  };
+  const futureMatch2 = {
+    id: 'm-future-2',
+    status: 'SCHEDULED',
+    kickoff: new Date(Date.now() + 86400000).toISOString(),
+    homeTeam: { name: 'Gamma' },
+    awayTeam: { name: 'Delta' },
+    leagueName: 'Premier League',
+    aiPick: { selection: 'Más de 2.5 Goles', probability: 70, estimatedOdds: 1.43 }
+  };
+  const dailyParlay = getAiDailyParlay([futureMatch1, futureMatch2]);
+  assert.ok(dailyParlay.bankerParlay != null);
+  assert.equal(dailyParlay.bankerParlay.legCount, 2);
+  assert.ok(dailyParlay.bankerParlay.totalDecimalOdds > 1.8);
 });
 
 test('codes persist, activate once, track sessions and revoke', async () => {

@@ -73,14 +73,45 @@ export function calculateDifferential(home, away, match = {}) {
 }
 export function getTop3Opportunities(match) {
   if (!match || match.status === 'POSTPONED' || match.status === 'CANCELLED') return [];
-  const p = match.model?.probabilities || match.probabilities || {};
+  const p = { ...(match.model?.probabilities || match.probabilities || {}) };
+
+  const parseOddsNum = val => {
+    const n = typeof val === 'number' ? val : parseFloat(val);
+    return Number.isFinite(n) && n > 1 ? n : null;
+  };
+  const oddsH = parseOddsNum(match.odds?.homeWin);
+  const oddsD = parseOddsNum(match.odds?.draw);
+  const oddsA = parseOddsNum(match.odds?.awayWin);
+  if ((p.homeWin == null || p.draw == null || p.awayWin == null) && oddsH && oddsD && oddsA) {
+    const invH = 1 / oddsH, invD = 1 / oddsD, invA = 1 / oddsA;
+    const invSum = invH + invD + invA;
+    if (invSum > 0) {
+      if (p.homeWin == null) p.homeWin = (invH / invSum) * 100;
+      if (p.draw == null) p.draw = (invD / invSum) * 100;
+      if (p.awayWin == null) p.awayWin = (invA / invSum) * 100;
+    }
+  }
+  const oddsOver25 = parseOddsNum(match.odds?.over25);
+  const oddsUnder25 = parseOddsNum(match.odds?.under25);
+  if ((p.over25 == null || p.under25 == null) && oddsOver25 && oddsUnder25) {
+    const invO = 1 / oddsOver25, invU = 1 / oddsUnder25;
+    const invSum = invO + invU;
+    if (invSum > 0) {
+      if (p.over25 == null) p.over25 = (invO / invSum) * 100;
+      if (p.under25 == null) p.under25 = (invU / invSum) * 100;
+    }
+  }
+
   const candidates = [];
   const add = (key, selection, market, probability, category) => {
     if (percent(probability) === null) return;
-    const odds = match.odds?.[key], rounded = percent(probability);
-    const estimatedOdds = validNumber(rounded) && rounded > 0 ? Number(Math.max(1.01, 100 / rounded).toFixed(2)) : null;
+    const rawOdds = match.odds?.[key];
+    const oddsNum = typeof rawOdds === 'number' ? rawOdds : parseFloat(rawOdds);
+    const odds = Number.isFinite(oddsNum) && oddsNum > 1 ? Number(oddsNum.toFixed(2)) : null;
+    const rounded = percent(probability);
+    const estimatedOdds = Number.isFinite(rounded) && rounded > 0 ? Number(Math.max(1.01, 100 / rounded).toFixed(2)) : null;
     candidates.push({ key, selection, market, category, probability: rounded, safetyScore: rounded,
-      odds: validNumber(odds) && odds > 1 ? Number(odds.toFixed(2)) : null,
+      odds,
       estimatedOdds,
       rationale: `Probabilidad estimada de ${rounded}% para ${selection.toLowerCase()}. ${match.model ? 'Modelo Poisson sobre goles registrados.' : 'Probabilidad implícita en las cuotas publicadas.'}`,
       matchId: match.id, matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visitante'}`, league: match.leagueName });
@@ -108,15 +139,44 @@ export function getTop3Opportunities(match) {
     used.add(candidate.category); selected.push(candidate);
     if (selected.length === 3) break;
   }
+  if (selected.length === 0 && candidates.length > 0) {
+    selected.push(candidates[0]);
+  }
+  if (selected.length === 0 && match.aiPick?.selection) {
+    const prob = percent(match.aiPick.probability) || 50;
+    const rawOdds = parseOddsNum(match.aiPick.odds);
+    const estOdds = parseOddsNum(match.aiPick.estimatedOdds) || Number(Math.max(1.01, 100 / prob).toFixed(2));
+    selected.push({
+      key: 'aiPick',
+      selection: match.aiPick.selection,
+      market: match.aiPick.market || 'Pronóstico IA',
+      category: 'ai',
+      probability: prob,
+      safetyScore: prob,
+      odds: rawOdds,
+      estimatedOdds: estOdds,
+      rationale: match.aiPick.summaryRationale || `Pronóstico cuantitativo IA con ${prob}% de probabilidad.`,
+      matchId: match.id,
+      matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visitante'}`,
+      league: match.leagueName
+    });
+  }
   return selected;
 }
 export const getBestBankerPick = match => getTop3Opportunities(match)[0] ?? null;
 export function getEffectiveOdds(pick) {
   if (!pick) return null;
-  if (validNumber(pick.odds) && pick.odds > 1) return Number(pick.odds.toFixed(2));
-  if (validNumber(pick.estimatedOdds) && pick.estimatedOdds > 1) return Number(pick.estimatedOdds.toFixed(2));
-  if (validNumber(pick.probability) && pick.probability > 0) {
-    return Number(Math.max(1.01, 100 / pick.probability).toFixed(2));
+  const parseOddsNum = val => {
+    const n = typeof val === 'number' ? val : parseFloat(val);
+    return Number.isFinite(n) && n > 1 ? Number(n.toFixed(2)) : null;
+  };
+  const realOdds = parseOddsNum(pick.odds);
+  if (realOdds) return realOdds;
+  const estOdds = parseOddsNum(pick.estimatedOdds);
+  if (estOdds) return estOdds;
+  const prob = typeof pick.probability === 'number' ? pick.probability : parseFloat(pick.probability);
+  if (Number.isFinite(prob) && prob > 0) {
+    return Number(Math.max(1.01, 100 / prob).toFixed(2));
   }
   return null;
 }

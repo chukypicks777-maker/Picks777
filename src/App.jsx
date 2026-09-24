@@ -293,6 +293,7 @@ export default function App() {
   const handleAddToParlay = (legOrLegs) => {
     const items = Array.isArray(legOrLegs) ? legOrLegs : [legOrLegs];
     let addedCount = 0;
+    let replacedCount = 0;
     const updated = [...parlayLegs];
 
     for (const rawLeg of items) {
@@ -303,14 +304,19 @@ export default function App() {
         if (est && est > 1) leg.odds = est;
       }
       if (!Number.isFinite(leg.odds) || leg.odds <= 1 || leg.odds > 1000 || updated.length >= 20) continue;
-      const exists = updated.some(l => l.matchId === leg.matchId);
-      if (!exists) {
+      const existingIdx = updated.findIndex(l => l.matchId === leg.matchId);
+      if (existingIdx >= 0) {
+        if (updated[existingIdx].selection !== leg.selection) {
+          updated[existingIdx] = leg;
+          replacedCount++;
+        }
+      } else {
         updated.push(leg);
         addedCount++;
       }
     }
 
-    if (addedCount === 0) {
+    if (addedCount === 0 && replacedCount === 0) {
       setShowParlayDrawer(true);
       showToast('Selección ya presente en el parlay o límite alcanzado.');
       return;
@@ -318,8 +324,10 @@ export default function App() {
 
     setParlayLegs(updated);
     setShowParlayDrawer(true);
-    if (items.length > 1) {
-      showToast(`🔥 Añadidas ${addedCount} mejores oportunidades al Parlay`);
+    if (replacedCount > 0 && addedCount === 0) {
+      showToast(`Actualizado: ${items[0].selection}`);
+    } else if (items.length > 1) {
+      showToast(`🔥 Añadidas ${addedCount} selecciones al Parlay`);
     } else {
       showToast(`Añadido: ${items[0].selection}`);
     }

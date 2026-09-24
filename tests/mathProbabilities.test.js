@@ -109,6 +109,9 @@ test('getEffectiveOdds prefers real published odds, falls back to estimatedOdds 
   assert.equal(getEffectiveOdds({ odds: null, probability: 80 }), 1.25);
   assert.equal(getEffectiveOdds({ odds: 0.9, probability: 50 }), 2.0);
   assert.equal(getEffectiveOdds({ odds: -1, probability: 0 }), null);
+  assert.equal(getEffectiveOdds({ odds: '1.95', probability: '55' }), 1.95);
+  assert.equal(getEffectiveOdds({ odds: null, probability: '50' }), 2.0);
+  assert.equal(getEffectiveOdds({ odds: null, estimatedOdds: '1.60', probability: 60 }), 1.6);
 });
 
 test('parlay candidates always provide finite effective odds > 1 when model probabilities exist', () => {
@@ -133,4 +136,50 @@ test('parlay candidates always provide finite effective odds > 1 when model prob
     const odds = getEffectiveOdds(pick);
     assert.ok(Number.isFinite(odds) && odds > 1 && odds <= 100);
   }
+});
+
+test('getTop3Opportunities derives opportunities when probabilities are missing but published odds exist', () => {
+  const matchOnlyOdds = {
+    id: 'm2',
+    status: 'SCHEDULED',
+    homeTeam: { name: 'Arsenal', shortName: 'ARS' },
+    awayTeam: { name: 'Chelsea', shortName: 'CHE' },
+    odds: { homeWin: 1.80, draw: 3.50, awayWin: 4.50, over25: 1.70, under25: 2.10 }
+  };
+  const opps = getTop3Opportunities(matchOnlyOdds);
+  assert.ok(opps.length > 0);
+  assert.equal(opps[0].key, 'dc1X');
+  assert.equal(getEffectiveOdds(opps[0]), 1.27);
+  assert.equal(getEffectiveOdds(opps[1]), 1.70);
+});
+
+test('getTop3Opportunities falls back to highest-probability candidate or aiPick when probabilities are under 50%', () => {
+  const matchLowProbs = {
+    id: 'm3',
+    status: 'SCHEDULED',
+    homeTeam: { name: 'Cadiz', shortName: 'CAD' },
+    awayTeam: { name: 'Getafe', shortName: 'GET' },
+    probabilities: {
+      homeWin: 35,
+      draw: 35,
+      awayWin: 30,
+      over15: 45,
+      under15: 55
+    }
+  };
+  const opps = getTop3Opportunities(matchLowProbs);
+  assert.ok(opps.length > 0);
+  assert.ok(getEffectiveOdds(opps[0]) > 1);
+
+  const matchAiOnly = {
+    id: 'm4',
+    status: 'SCHEDULED',
+    homeTeam: { name: 'Team X' },
+    awayTeam: { name: 'Team Y' },
+    aiPick: { selection: 'Más de 1.5 Goles', probability: 72, odds: 1.38 }
+  };
+  const oppsAi = getTop3Opportunities(matchAiOnly);
+  assert.equal(oppsAi.length, 1);
+  assert.equal(oppsAi[0].selection, 'Más de 1.5 Goles');
+  assert.equal(getEffectiveOdds(oppsAi[0]), 1.38);
 });
