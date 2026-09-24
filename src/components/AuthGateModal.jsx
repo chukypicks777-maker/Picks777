@@ -242,7 +242,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
   const canCloseModal = Boolean(onClose && (auth?.valid || pendingAuth?.valid) && !isTrialExpired);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
       <div className="relative w-full max-w-lg bg-[#0d1117] border border-white/10 rounded-2xl p-6 sm:p-8 text-center shadow-2xl overflow-hidden my-4">
         
         {/* Close button (only when access is valid and modal is dismissible) */}

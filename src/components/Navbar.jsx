@@ -46,29 +46,29 @@ export default function Navbar({
           
           {/* Brand Wordmark & Identity */}
           <div 
-            className="flex items-center space-x-2.5 cursor-pointer select-none" 
+            className="flex items-center space-x-2 sm:space-x-2.5 cursor-pointer select-none shrink-0 min-w-0" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
             {/* Official 777 Picks Circular Logo */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <img 
                 src="/logo.jpg" 
                 alt="777 Picks - Picks de Confianza" 
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-red-500/40 shadow-sm"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-red-500/40 shadow-sm"
               />
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-[#0d1117]" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-500 border-2 border-[#0d1117]" />
             </div>
 
-            <div>
-              <div className="flex items-center space-x-1.5">
-                <span className="font-black text-base sm:text-lg tracking-tight text-white font-sans">
+            <div className="min-w-0">
+              <div className="flex items-center space-x-1 sm:space-x-1.5">
+                <span className="font-black text-sm sm:text-lg tracking-tight text-white font-sans whitespace-nowrap">
                   777 <span className="text-red-500">PICKS</span>
                 </span>
-                <span className="bg-red-500/15 text-red-400 border border-red-500/30 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase">
+                <span className="bg-red-500/15 text-red-400 border border-red-500/30 text-[8.5px] sm:text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase shrink-0">
                   VIP
                 </span>
               </div>
-              <div className="flex items-center space-x-1 text-[10px] font-mono text-slate-400">
+              <div className="hidden xs:flex sm:flex items-center space-x-1 text-[9.5px] sm:text-[10px] font-mono text-slate-400 truncate">
                 <span className="text-slate-300 font-semibold">Picks de Confianza</span>
                 <span className="text-slate-600">•</span>
                 <span>8 Ligas</span>
@@ -201,7 +201,7 @@ export default function Navbar({
             <button
               onClick={() => { sounds.playClick(); onManualSync?.(); }}
               title="Sincronizar partidos en vivo"
-              className={`p-1.5 sm:p-2 bg-[#161b22] border border-white/10 rounded-lg text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition cursor-pointer ${
+              className={`p-1.5 sm:p-2 bg-[#161b22] border border-white/10 rounded-lg text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition cursor-pointer shrink-0 ${
                 isSyncing ? 'text-emerald-400' : ''
               }`}
             >
@@ -212,7 +212,7 @@ export default function Navbar({
             <select
               value={currency}
               onChange={(e) => { sounds.playClick(); setCurrency(e.target.value); }}
-              className="bg-[#161b22] text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer"
+              className="bg-[#161b22] text-[10px] sm:text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-1.5 sm:px-2 py-1 sm:py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shrink-0"
             >
               <option value="USD">USD ($)</option>
               <option value="MXN">MXN ($)</option>
@@ -225,7 +225,7 @@ export default function Navbar({
             <select
               value={oddsFormat}
               onChange={(e) => { sounds.playClick(); setOddsFormat(e.target.value); }}
-              className="hidden sm:block bg-[#161b22] text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer"
+              className="hidden md:block bg-[#161b22] text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shrink-0"
             >
               <option value="decimal">Decimal</option>
               <option value="american">Americano</option>
@@ -236,7 +236,7 @@ export default function Navbar({
             {auth && !auth.isAdmin && !auth.user?.hasCode && (
               <button
                 onClick={() => { sounds.playClick(); onOpenUpgrade?.(); }}
-                className="hidden sm:flex items-center space-x-1 px-2.5 py-1 bg-gradient-to-r from-amber-500/20 to-emerald-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-mono font-bold transition cursor-pointer"
+                className="hidden sm:flex items-center space-x-1 px-2.5 py-1 bg-gradient-to-r from-amber-500/20 to-emerald-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-mono font-bold transition cursor-pointer shrink-0"
                 title="Canjear Clave VIP"
               >
                 <Crown className="w-3 h-3 text-amber-400" />
@@ -246,24 +246,24 @@ export default function Navbar({
 
             {/* User Profile Chip */}
             {auth && (
-              <div className="flex items-center space-x-1.5 bg-[#161b22] border border-white/10 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-sans">
+              <div className="flex items-center space-x-1 sm:space-x-1.5 bg-[#161b22] border border-white/10 px-1.5 sm:px-2.5 py-1 rounded-lg text-xs font-sans shrink-0">
                 {auth.user?.picture ? (
                   <img
                     src={auth.user.picture}
                     alt=""
-                    className="w-5 h-5 rounded-full object-cover border border-emerald-500/40"
+                    className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover border border-emerald-500/40 shrink-0"
                   />
                 ) : (
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+                  <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-bold text-[9px] sm:text-[10px] shrink-0 ${
                     auth.isAdmin ? 'bg-amber-500 text-black' : (auth.isTrial ? 'bg-sky-500 text-black' : 'bg-emerald-500 text-black')
                   }`}>
-                    {auth.isAdmin ? <Crown className="w-3 h-3" /> : userInitial || <User className="w-3 h-3" />}
+                    {auth.isAdmin ? <Crown className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : userInitial || <User className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
                   </div>
                 )}
-                <span className="hidden sm:inline-block font-semibold text-slate-200 max-w-[90px] truncate text-[11px]">
+                <span className="hidden sm:inline-block font-semibold text-slate-200 max-w-[80px] md:max-w-[100px] truncate text-[11px]">
                   {userName}
                 </span>
-                <span className={`text-[10px] font-mono font-bold ${
+                <span className={`text-[9.5px] sm:text-[10px] font-mono font-bold ${
                   auth.isAdmin
                     ? 'text-amber-400'
                     : (auth.trialExpired
@@ -283,7 +283,7 @@ export default function Navbar({
             <button
               onClick={() => { sounds.playClick(); onLogout(); }}
               title="Cerrar sesión"
-              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer"
+              className="p-1 sm:p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer shrink-0"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
@@ -291,18 +291,24 @@ export default function Navbar({
           </div>
 
         </div>
-        <nav aria-label="Navegación móvil" className="flex md:hidden justify-center flex-wrap gap-1.5 pb-2 text-xs">
+        <nav aria-label="Navegación móvil" className="flex md:hidden items-center justify-between gap-1 pb-2 pt-1 border-t border-white/5 overflow-x-auto scrollbar-none no-scrollbar">
           <button
             onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
-            className={`px-2.5 py-1.5 rounded-lg font-medium transition ${
-              marketFilter === 'all' ? 'bg-white/10 text-white font-bold' : 'bg-slate-800 text-slate-300'
+            className={`flex-1 py-1.5 px-2 rounded-lg font-medium transition text-center whitespace-nowrap text-[11px] ${
+              marketFilter === 'all' ? 'bg-white/10 text-white font-bold border border-white/10' : 'bg-slate-800/80 text-slate-300'
             }`}
           >
             Partidos
           </button>
-          <button onClick={onOpenStats} className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-sky-300">Stats</button>
-          <button onClick={onOpenParlay} className="px-2.5 py-1.5 rounded-lg bg-slate-800 text-emerald-300">Parlay ({parlayCount})</button>
-          {auth?.isAdmin && <button onClick={onOpenAdmin} className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-300">Panel Owner</button>}
+          <button onClick={() => { sounds.playClick(); onOpenStats(); }} className="flex-1 py-1.5 px-2 rounded-lg bg-slate-800/80 text-sky-300 font-medium text-center whitespace-nowrap text-[11px]">Stats</button>
+          <button onClick={() => { sounds.playClick(); onOpenParlay(); }} className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 font-bold text-center whitespace-nowrap text-[11px]">
+            Parlay {parlayCount > 0 ? `(${parlayCount})` : ''}
+          </button>
+          {auth?.isAdmin && (
+            <button onClick={() => { sounds.playSuccess(); onOpenAdmin(); }} className="py-1.5 px-2.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-center whitespace-nowrap text-[11px]">
+              👑 Owner
+            </button>
+          )}
         </nav>
       </div>
     </header>

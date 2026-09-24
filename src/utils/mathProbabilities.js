@@ -78,8 +78,10 @@ export function getTop3Opportunities(match) {
   const add = (key, selection, market, probability, category) => {
     if (percent(probability) === null) return;
     const odds = match.odds?.[key], rounded = percent(probability);
+    const estimatedOdds = validNumber(rounded) && rounded > 0 ? Number(Math.max(1.01, 100 / rounded).toFixed(2)) : null;
     candidates.push({ key, selection, market, category, probability: rounded, safetyScore: rounded,
       odds: validNumber(odds) && odds > 1 ? Number(odds.toFixed(2)) : null,
+      estimatedOdds,
       rationale: `Probabilidad estimada de ${rounded}% para ${selection.toLowerCase()}. ${match.model ? 'Modelo Poisson sobre goles registrados.' : 'Probabilidad implícita en las cuotas publicadas.'}`,
       matchId: match.id, matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visitante'}`, league: match.leagueName });
   };
@@ -109,6 +111,15 @@ export function getTop3Opportunities(match) {
   return selected;
 }
 export const getBestBankerPick = match => getTop3Opportunities(match)[0] ?? null;
+export function getEffectiveOdds(pick) {
+  if (!pick) return null;
+  if (validNumber(pick.odds) && pick.odds > 1) return Number(pick.odds.toFixed(2));
+  if (validNumber(pick.estimatedOdds) && pick.estimatedOdds > 1) return Number(pick.estimatedOdds.toFixed(2));
+  if (validNumber(pick.probability) && pick.probability > 0) {
+    return Number(Math.max(1.01, 100 / pick.probability).toFixed(2));
+  }
+  return null;
+}
 export function getMatchSafetyScore(match) { return percent(match?.probabilities?.confidence) ?? getBestBankerPick(match)?.probability ?? 0; }
 export function calculateRealPoissonScore(match) { return match?.model?.predictedScore ?? null; }
 export const getCoherentPredictedScore = match => calculateRealPoissonScore(match) ?? 'N/D';

@@ -36,7 +36,9 @@ export default function MatchDetailModal({
   onClose, 
   onAddToParlay, 
   oddsFormat = 'decimal',
-  isOwner = false
+  isOwner = false,
+  isVip = false,
+  onUnlockVip = null
 }) {
   const effectiveIsOwner = Boolean(
     isOwner ||
@@ -44,6 +46,15 @@ export default function MatchDetailModal({
       localStorage.getItem('picks_user_role') === 'owner' ||
       localStorage.getItem('picks_is_owner') === 'true' ||
       localStorage.getItem('picks_owner_active') === 'true'
+    ))
+  );
+  const effectiveIsVip = Boolean(
+    effectiveIsOwner ||
+    isVip ||
+    (typeof window !== 'undefined' && (
+      localStorage.getItem('picks_user_role') === 'vip' ||
+      localStorage.getItem('picks_user_role') === 'vip_user' ||
+      localStorage.getItem('picks_is_vip') === 'true'
     ))
   );
   const initialCached = getCachedAnalysis(match?.id, match);
@@ -397,34 +408,35 @@ export default function MatchDetailModal({
       <div className="relative w-full max-w-4xl bg-[#0c1017] border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] my-8">
         
         {/* Header Ribbon */}
-        <div className="bg-[#101622] border-b border-white/10 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <span className="text-xl">{m.leagueFlag}</span>
-            <div>
-              <h3 className="font-bold text-sm md:text-base text-white flex items-center space-x-2">
-                <span>{m.leagueName}</span>
-                <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/30 px-1.5 py-0.2 rounded font-bold">
+        <div className="bg-[#101622] border-b border-white/10 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
+            <span className="text-lg sm:text-xl shrink-0">{m.leagueFlag}</span>
+            <div className="min-w-0">
+              <h3 className="font-bold text-xs sm:text-sm md:text-base text-white flex items-center space-x-1.5 sm:space-x-2">
+                <span className="truncate">{m.leagueName}</span>
+                <span className="text-[9px] sm:text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/30 px-1.5 py-0.2 rounded font-bold shrink-0">
                   PRO AI REPORT
                 </span>
               </h3>
-              <p className="text-xs font-mono text-slate-400">
-                {m.venue} • {new Date(m.kickoff).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' })}
+              <p className="text-[10px] sm:text-xs font-mono text-slate-400 truncate">
+                {m.venue} • {new Date(m.kickoff).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
             <button
               onClick={() => setIsScanning(!isScanning)}
-              className="px-2.5 py-1 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-lg text-xs font-mono flex items-center space-x-1 transition cursor-pointer"
+              className="px-2 sm:px-2.5 py-1 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-lg text-xs font-mono flex items-center space-x-1 transition cursor-pointer"
             >
               <Target className="w-3.5 h-3.5 animate-pulse" />
-              <span>{isScanning ? 'Cerrar Radar' : 'Radar Táctico'}</span>
+              <span className="hidden sm:inline">{isScanning ? 'Cerrar Radar' : 'Radar Táctico'}</span>
+              <span className="sm:hidden">{isScanning ? 'Cerrar' : 'Radar'}</span>
             </button>
 
             <button
               aria-label="Cerrar panel" onClick={() => { sounds.playClick(); onClose(); }}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
+              className="p-1 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -433,7 +445,7 @@ export default function MatchDetailModal({
 
         {/* Dynamic Radar Scanner Overlay if active */}
         {isScanning && (
-          <div className="p-4 border-b border-white/10">
+          <div className="p-3 sm:p-4 border-b border-white/10">
             <RadarScanner 
               matchTitle={`${m.homeTeam?.name} vs ${m.awayTeam?.name}`}
               onScanComplete={() => setIsScanning(false)}
@@ -442,29 +454,29 @@ export default function MatchDetailModal({
         )}
 
         {/* Matchup Header Banner */}
-        <div className="px-6 py-4 bg-[#0e131e] border-b border-white/5">
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 max-w-2xl mx-auto">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 bg-[#0e131e] border-b border-white/5">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-4 max-w-2xl mx-auto">
             
             {/* Team 1 */}
-            <div className="flex flex-col-reverse sm:flex-row items-center gap-2 text-center sm:text-right min-w-0 justify-end">
-              <div>
-                <p className="font-bold text-base md:text-lg text-white font-sans">
+            <div className="flex flex-col-reverse sm:flex-row items-center gap-1 sm:gap-2 text-center sm:text-right min-w-0 justify-end">
+              <div className="min-w-0">
+                <p className="font-bold text-xs sm:text-base md:text-lg text-white font-sans truncate">
                   {m.homeTeam?.name}
                 </p>
-                <p className="text-xs font-mono text-sky-400">
-                  Local{m.homeTeam?.position ? ` • #${m.homeTeam.position}${m.homeTeam.points != null ? ` (${m.homeTeam.points} pts)` : ''}` : ''}
+                <p className="text-[10px] sm:text-xs font-mono text-sky-400 truncate">
+                  Local{m.homeTeam?.position ? ` • #${m.homeTeam.position}` : ''}
                 </p>
               </div>
-              <img src={m.homeTeam?.logo} alt={m.homeTeam?.name} className="w-11 h-11 object-contain filter drop-shadow" />
+              <img src={m.homeTeam?.logo} alt={m.homeTeam?.name} className="w-8 h-8 sm:w-11 sm:h-11 object-contain filter drop-shadow shrink-0" />
             </div>
 
             {/* Center Status / Score */}
-            <div className="px-1 sm:px-6 text-center">
-              <div className="bg-[#141b29] border border-white/10 px-4 py-2 rounded-xl shadow-inner">
-                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                  {m.status === 'LIVE' ? (m.liveMinute ? `En Vivo · ${m.liveMinute}'` : 'En Vivo') : m.status === 'FINISHED' ? 'Resultado Final' : 'Marcador más probable'}
+            <div className="px-1 sm:px-4 text-center shrink-0">
+              <div className="bg-[#141b29] border border-white/10 px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl shadow-inner">
+                <span className="text-[8.5px] sm:text-[10px] font-mono text-slate-400 uppercase tracking-wider block whitespace-nowrap">
+                  {m.status === 'LIVE' ? (m.liveMinute ? `En Vivo · ${m.liveMinute}'` : 'En Vivo') : m.status === 'FINISHED' ? 'Final' : 'Más probable'}
                 </span>
-                <span className="text-2xl font-black font-mono text-white tracking-wider">
+                <span className="text-base sm:text-2xl font-black font-mono text-white tracking-wider">
                   {m.status === 'LIVE' 
                     ? `${m.liveScore?.home ?? m.finalScore?.home ?? 0} - ${m.liveScore?.away ?? m.finalScore?.away ?? 0}`
                     : m.status === 'FINISHED'
@@ -475,14 +487,14 @@ export default function MatchDetailModal({
             </div>
 
             {/* Team 2 */}
-            <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left min-w-0 justify-start">
-              <img src={m.awayTeam?.logo} alt={m.awayTeam?.name} className="w-11 h-11 object-contain filter drop-shadow" />
-              <div>
-                <p className="font-bold text-base md:text-lg text-white font-sans">
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 text-center sm:text-left min-w-0 justify-start">
+              <img src={m.awayTeam?.logo} alt={m.awayTeam?.name} className="w-8 h-8 sm:w-11 sm:h-11 object-contain filter drop-shadow shrink-0" />
+              <div className="min-w-0">
+                <p className="font-bold text-xs sm:text-base md:text-lg text-white font-sans truncate">
                   {m.awayTeam?.name}
                 </p>
-                <p className="text-xs font-mono text-indigo-400">
-                  Visita{m.awayTeam?.position ? ` • #${m.awayTeam.position}${m.awayTeam.points != null ? ` (${m.awayTeam.points} pts)` : ''}` : ''}
+                <p className="text-[10px] sm:text-xs font-mono text-indigo-400 truncate">
+                  Visita{m.awayTeam?.position ? ` • #${m.awayTeam.position}` : ''}
                 </p>
               </div>
             </div>
@@ -491,12 +503,12 @@ export default function MatchDetailModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center space-x-1 px-6 pt-3 border-b border-white/10 bg-[#0a0d14] overflow-x-auto">
+        <div className="flex items-center space-x-1 px-3 sm:px-6 pt-2 sm:pt-3 border-b border-white/10 bg-[#0a0d14] overflow-x-auto scrollbar-none no-scrollbar touch-pan-x">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => { sounds.playClick(); setActiveTab(tab.id); }}
-              className={`flex items-center space-x-2 px-4 py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer ${
+              className={`flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-[11px] sm:text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 ${
                 activeTab === tab.id
                   ? 'border-sky-400 text-sky-300 bg-sky-500/10'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -509,7 +521,7 @@ export default function MatchDetailModal({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 max-h-[60vh] overflow-y-auto">
+        <div className="p-3.5 sm:p-6 max-h-[72vh] sm:max-h-[60vh] overflow-y-auto">
           
           {/* TAB 1: AI REPORT & PICKS */}
           {activeTab === 'ai_report' && (
@@ -948,7 +960,11 @@ export default function MatchDetailModal({
                 </div>
               </div>
 
-              <HalfGoalsSection match={m} />
+              <HalfGoalsSection
+                match={m}
+                isVip={effectiveIsVip}
+                onUnlockVip={onUnlockVip}
+              />
 
               {/* 3. AGRUPACIÓN SIMÉTRICA: LADO OVERS (+) VS LADO UNDERS (-) */}
               <OverUnderGroupedSection
@@ -956,6 +972,8 @@ export default function MatchDetailModal({
                 homeStats={homeDetailed}
                 awayStats={awayDetailed}
                 diff={diff}
+                isVip={effectiveIsVip}
+                onUnlockVip={onUnlockVip}
               />
 
               {/* 4. HEAD-TO-HEAD COMPARATIVE METRIC BARS */}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { poissonProbability, poissonCumulative, calculateCornerProbabilities, calculateTeamDetailedStats, calculateDifferential, getTop3Opportunities, getBestBankerPick, getCoherentPredictedScore } from '../src/utils/mathProbabilities.js';
+import { poissonProbability, poissonCumulative, calculateCornerProbabilities, calculateTeamDetailedStats, calculateDifferential, getTop3Opportunities, getBestBankerPick, getCoherentPredictedScore, getEffectiveOdds } from '../src/utils/mathProbabilities.js';
 import { totalLines, scoreSimulation } from '../src/utils/probability.js';
 import { poissonModel } from '../server/services/probabilityModel.js';
 import { aggregateHistory, readHistoricalSummary, halfGoalModel } from '../server/services/verifiedStats.js';
@@ -99,4 +99,38 @@ test('cleanSheetRate and bttsRate are derived from recent matches, history, or P
  const aggSmall=aggregateHistory(sample.slice(0,4));
  assert.equal(aggSmall.cleanSheetRate,null);
  assert.equal(aggSmall.bttsRate,null);
+});
+
+test('getEffectiveOdds prefers real published odds, falls back to estimatedOdds from model, and preserves null on invalid data', () => {
+  assert.equal(getEffectiveOdds(null), null);
+  assert.equal(getEffectiveOdds({ odds: null, probability: null }), null);
+  assert.equal(getEffectiveOdds({ odds: 1.85, probability: 60 }), 1.85);
+  assert.equal(getEffectiveOdds({ odds: null, estimatedOdds: 1.45, probability: 70 }), 1.45);
+  assert.equal(getEffectiveOdds({ odds: null, probability: 80 }), 1.25);
+  assert.equal(getEffectiveOdds({ odds: 0.9, probability: 50 }), 2.0);
+  assert.equal(getEffectiveOdds({ odds: -1, probability: 0 }), null);
+});
+
+test('parlay candidates always provide finite effective odds > 1 when model probabilities exist', () => {
+  const match = {
+    id: 'm1',
+    status: 'SCHEDULED',
+    homeTeam: { name: 'Real Madrid', shortName: 'RMA' },
+    awayTeam: { name: 'Barcelona', shortName: 'BAR' },
+    probabilities: {
+      homeWin: 60,
+      draw: 20,
+      awayWin: 20,
+      over25: 75,
+      under25: 25,
+      bttsYes: 65,
+      bttsNo: 35
+    }
+  };
+  const picks = getTop3Opportunities(match);
+  assert.ok(picks.length > 0);
+  for (const pick of picks) {
+    const odds = getEffectiveOdds(pick);
+    assert.ok(Number.isFinite(odds) && odds > 1 && odds <= 100);
+  }
 });

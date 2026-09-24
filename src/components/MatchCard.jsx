@@ -5,7 +5,7 @@ import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
-import { getBestBankerPick, getTop3Opportunities } from '../utils/mathProbabilities';
+import { getBestBankerPick, getTop3Opportunities, getEffectiveOdds } from '../utils/mathProbabilities';
 
 export default function MatchCard({ 
   match, 
@@ -18,7 +18,13 @@ export default function MatchCard({
 }) {
   const base = match.model?.probabilities || match.probabilities || {};
   const p = { ...base, ...roundDistribution({ homeWin: base.homeWin, draw: base.draw, awayWin: base.awayWin }) };
-  const parlayCandidates = getTop3Opportunities(match).filter(p => Number.isFinite(p.odds) && p.odds > 1);
+  const rawOpportunities = getTop3Opportunities(match);
+  const parlayCandidates = rawOpportunities
+    .map(pick => {
+      const effectiveOdds = getEffectiveOdds(pick);
+      return effectiveOdds ? { ...pick, odds: effectiveOdds } : null;
+    })
+    .filter(Boolean);
   const homeProb = percent(p.homeWin), drawProb = percent(p.draw), awayProb = percent(p.awayWin);
   const getGP = t => {
     if (!t) return null;
@@ -64,7 +70,7 @@ export default function MatchCard({
   const bankerPick = getBestBankerPick(match);
   const isBankerMode = bankerRank != null;
   const displayPick = bankerPick?.selection || 'Sin datos suficientes';
-  const displayOdds = bankerPick?.odds;
+  const displayOdds = bankerPick?.odds ?? getEffectiveOdds(bankerPick);
   const displayProb = bankerPick?.probability;
   const confidenceScore = displayProb;
   const formatMatchTime = (iso) => {
@@ -104,15 +110,15 @@ export default function MatchCard({
       <div className={`flex flex-col justify-between h-full transition duration-300 ${isLocked ? 'filter blur-[4px] select-none pointer-events-none opacity-25' : ''}`}>
         <div>
           {/* Card Header: League & Match Status / Time */}
-          <div className="flex items-center justify-between text-xs mb-3 pb-2.5 border-b border-white/5">
-            <div className="flex items-center space-x-1.5 text-slate-300 font-sans">
-              <span>{match.leagueFlag}</span>
-              <span className="font-medium text-xs truncate max-w-[150px]">
+          <div className="flex items-center justify-between text-xs mb-3 pb-2.5 border-b border-white/5 gap-2">
+            <div className="flex items-center space-x-1.5 text-slate-300 font-sans min-w-0">
+              <span className="shrink-0">{match.leagueFlag}</span>
+              <span className="font-medium text-xs truncate max-w-[140px] sm:max-w-[160px]">
                 {match.leagueName}
               </span>
             </div>
 
-            <div className="flex items-center space-x-1 font-mono text-[11px]">
+            <div className="flex items-center space-x-1 font-mono text-[11px] shrink-0">
               {match.status === 'LIVE' ? (
                 <span className="flex items-center space-x-1 text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
@@ -134,18 +140,18 @@ export default function MatchCard({
           {/* Teams and Logos */}
           <div className="space-y-2 mb-3">
             {/* Home Team */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center space-x-2 min-w-0">
                 <img
                   src={match.homeTeam?.logo}
                   alt={match.homeTeam?.name}
-                  className="w-5 h-5 object-contain"
+                  className="w-5 h-5 object-contain shrink-0"
                 />
-                <span className="font-semibold text-xs text-white">
+                <span className="font-semibold text-xs text-white truncate">
                   {match.homeTeam?.name}
                 </span>
               </div>
-              <div className="flex items-center space-x-2 font-mono text-xs">
+              <div className="flex items-center space-x-2 font-mono text-xs shrink-0">
                 {match.status === 'LIVE' || match.status === 'FINISHED' ? (
                   <span className="font-bold text-white text-sm">
                     {match.status === 'LIVE' ? match.liveScore?.home ?? match.finalScore?.home ?? 0 : match.finalScore?.home ?? match.liveScore?.home ?? 0}
@@ -159,18 +165,18 @@ export default function MatchCard({
             </div>
 
             {/* Away Team */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center space-x-2 min-w-0">
                 <img
                   src={match.awayTeam?.logo}
                   alt={match.awayTeam?.name}
-                  className="w-5 h-5 object-contain"
+                  className="w-5 h-5 object-contain shrink-0"
                 />
-                <span className="font-semibold text-xs text-white">
+                <span className="font-semibold text-xs text-white truncate">
                   {match.awayTeam?.name}
                 </span>
               </div>
-              <div className="flex items-center space-x-2 font-mono text-xs">
+              <div className="flex items-center space-x-2 font-mono text-xs shrink-0">
                 {match.status === 'LIVE' || match.status === 'FINISHED' ? (
                   <span className="font-bold text-white text-sm">
                     {match.status === 'LIVE' ? match.liveScore?.away ?? match.finalScore?.away ?? 0 : match.finalScore?.away ?? match.liveScore?.away ?? 0}
@@ -282,14 +288,19 @@ export default function MatchCard({
               <span>Finalizado</span>
             </button>
           ) : (
-            <button disabled={!parlayCandidates.length}
+            <button
+              disabled={!parlayCandidates.length}
               onClick={(e) => {
                 e.stopPropagation();
                 sounds.playAddParlay();
                 const topOpportunities = parlayCandidates;
                 onAddToParlay(topOpportunities);
               }}
-              className="py-1.5 px-2 bg-emerald-600/15 hover:bg-emerald-600/25 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
+              className={`py-1.5 px-2 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 ${
+                parlayCandidates.length
+                  ? 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.15)]'
+                  : 'bg-slate-800/40 text-slate-500 border border-white/5 cursor-not-allowed opacity-60'
+              }`}
             >
               <Plus className="w-3 h-3" />
               <span>{parlayCandidates.length ? 'Al Parlay' : 'Sin cuota'}</span>

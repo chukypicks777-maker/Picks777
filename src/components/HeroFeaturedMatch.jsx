@@ -6,7 +6,7 @@ import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
 import RadarScanner from './RadarScanner';
-import { getTop3Opportunities, getCoherentPredictedScore } from '../utils/mathProbabilities';
+import { getTop3Opportunities, getCoherentPredictedScore, getEffectiveOdds } from '../utils/mathProbabilities';
 
 export default function HeroFeaturedMatch({ 
   match, 
@@ -19,7 +19,13 @@ export default function HeroFeaturedMatch({
   if (!match) return null;
 
   const outcomes = roundDistribution({ homeWin: match.probabilities?.homeWin, draw: match.probabilities?.draw, awayWin: match.probabilities?.awayWin });
-  const parlayCandidates = getTop3Opportunities(match).filter(p => Number.isFinite(p.odds) && p.odds > 1);
+  const rawOpportunities = getTop3Opportunities(match);
+  const parlayCandidates = rawOpportunities
+    .map(pick => {
+      const effectiveOdds = getEffectiveOdds(pick);
+      return effectiveOdds ? { ...pick, odds: effectiveOdds } : null;
+    })
+    .filter(Boolean);
   const homeProb = percent(outcomes.homeWin);
   const drawProb = percent(outcomes.draw);
   const awayProb = percent(outcomes.awayWin);

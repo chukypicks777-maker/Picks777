@@ -14,7 +14,7 @@ import StatsCenterModal from './components/StatsCenterModal';
 import FooterCommunityShowcase from './components/FooterCommunityShowcase';
 import { sounds } from './utils/audioEffects';
 import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
-import { getMatchSafetyScore, getBestBankerPick } from './utils/mathProbabilities';
+import { getMatchSafetyScore, getBestBankerPick, getEffectiveOdds } from './utils/mathProbabilities';
 
 export default function App() {
   // Auth state
@@ -295,8 +295,14 @@ export default function App() {
     let addedCount = 0;
     const updated = [...parlayLegs];
 
-    for (const leg of items) {
-      if (!leg?.matchId || !leg.selection || !Number.isFinite(leg.odds) || leg.odds <= 1 || leg.odds > 1000 || updated.length >= 20) continue;
+    for (const rawLeg of items) {
+      if (!rawLeg?.matchId || !rawLeg.selection) continue;
+      const leg = { ...rawLeg };
+      if (!Number.isFinite(leg.odds) || leg.odds <= 1) {
+        const est = getEffectiveOdds(leg);
+        if (est && est > 1) leg.odds = est;
+      }
+      if (!Number.isFinite(leg.odds) || leg.odds <= 1 || leg.odds > 1000 || updated.length >= 20) continue;
       const exists = updated.some(l => l.matchId === leg.matchId);
       if (!exists) {
         updated.push(leg);
@@ -306,7 +312,7 @@ export default function App() {
 
     if (addedCount === 0) {
       setShowParlayDrawer(true);
-      showToast('Se requiere una cuota publicada y solo una selección por partido.');
+      showToast('Selección ya presente en el parlay o límite alcanzado.');
       return;
     }
 
@@ -633,9 +639,9 @@ export default function App() {
             </div>
           )}
 
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-sm md:text-base text-white flex items-center space-x-2">
-              <span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-bold text-sm sm:text-base text-white">
                 {marketFilter === 'safe'
                   ? '💎 Ranking de Picks Banqueros'
                   : marketFilter === 'btts'
@@ -643,14 +649,16 @@ export default function App() {
                   : marketFilter === 'over'
                   ? '📈 Partidos Más de 2.5 Goles (Over)'
                   : 'Partidos & Pronósticos Cuantitativos'}
+              </h3>
+              <span className="text-[11px] sm:text-xs font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                {filteredMatches.length} {filteredMatches.length === 1 ? 'encuentro' : 'encuentros'}
               </span>
-              <span className="text-xs font-mono font-normal text-slate-400">
-                ({filteredMatches.length} encuentros)
-              </span>
-            </h3>
-            <span className="text-xs font-mono text-slate-400">
-              Formato: <strong>{oddsFormat.toUpperCase()}</strong> • Moneda: <strong>{currency}</strong>
-            </span>
+            </div>
+            <div className="flex items-center space-x-2 text-[11px] sm:text-xs font-mono text-slate-400 self-start sm:self-auto">
+              <span>Formato: <strong className="text-slate-200">{oddsFormat.toUpperCase()}</strong></span>
+              <span className="text-slate-600">•</span>
+              <span>Moneda: <strong className="text-slate-200">{currency}</strong></span>
+            </div>
           </div>
 
           {loadingMatches ? (
@@ -734,6 +742,8 @@ export default function App() {
           onAddToParlay={handleAddToParlay}
           oddsFormat={oddsFormat}
           isOwner={isOwner}
+          isVip={isVipUser}
+          onUnlockVip={() => setShowUpgradeModal(true)}
         />
       )}
 
