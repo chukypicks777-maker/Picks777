@@ -1,7 +1,7 @@
 import React from 'react';
 import { getTop3Opportunities, getEffectiveOdds } from '../utils/mathProbabilities';
 import { formatOdds } from '../utils/oddsFormatter';
-export default function VerifiedPicks({ match, onAddToParlay, oddsFormat }) {
+export default function VerifiedPicks({ match, onAddToParlay, oddsFormat = 'decimal' }) {
   const rawPicks = getTop3Opportunities(match);
   if (!rawPicks.length) return <p className="p-4 text-slate-400 text-sm">Sin datos suficientes para generar selecciones previas al partido.</p>;
   const isClosed = Boolean(match?.status && match.status !== 'SCHEDULED');

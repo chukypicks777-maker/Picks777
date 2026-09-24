@@ -33,8 +33,10 @@ export default function App() {
   const [currency, setCurrency] = useState(() => localStorage.getItem('deportepicks_curr') || 'USD');
   const [oddsFormat, setOddsFormat] = useState(() => {
     try {
-      const saved = localStorage.getItem('oddsFormat') || localStorage.getItem('deportepicks_odds');
-      return ['american', 'decimal', 'fractional'].includes(saved) ? saved : 'decimal';
+      const saved = (localStorage.getItem('oddsFormat') || localStorage.getItem('deportepicks_odds') || '').toLowerCase();
+      if (saved === 'american' || saved === 'americano' || saved === 'us') return 'american';
+      if (saved === 'fractional' || saved === 'fraccionario' || saved === 'fraction') return 'fractional';
+      return 'decimal';
     } catch {
       return 'decimal';
     }

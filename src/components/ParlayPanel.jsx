@@ -5,7 +5,7 @@ import { formatCurrency } from '../utils/currencyFormatter';
 import { calculateParlay } from '../../server/services/parlayEngine.js';
 import { dateTime, percent } from '../utils/api';
 import { useClock } from '../utils/clock';
-export default function ParlayPanel({ onClose, legs, onRemoveLeg, onClearAll, onLoadDailyBanker, currency, oddsFormat }) {
+export default function ParlayPanel({ onClose, legs, onRemoveLeg, onClearAll, onLoadDailyBanker, currency, oddsFormat = 'decimal' }) {
   const now = useClock();
   const [stake, setStake] = useState('50');
   const [message, setMessage] = useState('');

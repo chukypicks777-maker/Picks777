@@ -11,8 +11,15 @@ export function gcd(a, b) {
   return x || 1;
 }
 
+function parseOddsInput(val) {
+  if (val == null) return NaN;
+  if (typeof val === 'number') return val;
+  const s = String(val).trim().replace(',', '.');
+  return Number(s);
+}
+
 export function decimalToAmerican(decimalOdds) {
-  const num = Number(decimalOdds);
+  const num = parseOddsInput(decimalOdds);
   if (!Number.isFinite(num) || num <= 1.0) return 'N/D';
 
   if (num >= 2.0) {
@@ -25,32 +32,24 @@ export function decimalToAmerican(decimalOdds) {
 }
 
 export function decimalToFraction(decimalOdds) {
-  const num = Number(decimalOdds);
+  const num = parseOddsInput(decimalOdds);
   if (!Number.isFinite(num) || num <= 1.0) return 'N/D';
 
   const target = num - 1;
 
-  // Check common betting denominators (up to 20) with small tolerance (0.005)
-  // to prioritize standard betting fractions (e.g. 1.33 -> 1/3, 1.67 -> 2/3, 1.83 -> 5/6, 1.17 -> 1/6)
-  const standardDenominators = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20];
-  let bestFraction = null;
-  let minDiff = 0.005;
-
-  for (const d of standardDenominators) {
+  // Recurring betting fractions (thirds and sixths) with small tolerance (0.005)
+  // for standard 2-decimal rounded feeds (e.g. 1.33 -> 1/3, 1.67 -> 2/3, 1.83 -> 5/6, 1.17 -> 1/6)
+  for (const d of [3, 6]) {
     const n = Math.round(target * d);
     if (n <= 0) continue;
     const diff = Math.abs(target - n / d);
-    if (diff < minDiff) {
+    if (diff < 0.005) {
       const g = gcd(n, d);
-      bestFraction = `${n / g}/${d / g}`;
-      minDiff = diff;
-      if (diff === 0) break;
+      return `${n / g}/${d / g}`;
     }
   }
 
-  if (bestFraction) return bestFraction;
-
-  // General fallback using GCD of cents (e.g. 1.01 -> 1/100, 1.03 -> 3/100)
+  // Exact sports betting MCD / GCD reduction on base 100 cents (e.g. 2.50 -> 3/2, 1.50 -> 1/2, 5.00 -> 4/1)
   const n = Math.round(target * 100);
   const d = 100;
   const g = gcd(n, d);
@@ -58,7 +57,7 @@ export function decimalToFraction(decimalOdds) {
 }
 
 export function formatOdds(decimalOdds, format = 'decimal') {
-  const num = Number(decimalOdds);
+  const num = parseOddsInput(decimalOdds);
   if (!Number.isFinite(num) || num <= 1.0) return 'N/D';
 
   const fmt = (format || 'decimal').toLowerCase();

@@ -41,7 +41,7 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#0d1117] border-b border-white/10 shadow-md">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
           
           {/* Brand Wordmark & Identity */}
@@ -201,7 +201,7 @@ export default function Navbar({
             <button
               onClick={() => { sounds.playClick(); onManualSync?.(); }}
               title="Sincronizar partidos en vivo"
-              className={`p-1 sm:p-2 bg-[#161b22] border border-white/10 rounded-lg text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition cursor-pointer shrink-0 active:scale-95 ${
+              className={`hidden min-[350px]:block p-1 sm:p-2 bg-[#161b22] border border-white/10 rounded-lg text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition cursor-pointer shrink-0 active:scale-95 ${
                 isSyncing ? 'text-emerald-400' : ''
               }`}
             >
@@ -276,7 +276,7 @@ export default function Navbar({
                     ? 'OWNER'
                     : (auth.trialExpired
                       ? 'EXP'
-                      : (auth.user?.hasCode ? `VIP ${auth.user?.daysRemaining || 30}d` : `${auth.user?.daysRemaining || 3}d`))}
+                      : (auth.user?.hasCode ? <>VIP<span className="hidden min-[380px]:inline"> {auth.user?.daysRemaining || 30}d</span></> : `${auth.user?.daysRemaining || 3}d`))}
                 </span>
               </div>
             )}

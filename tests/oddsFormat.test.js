@@ -41,6 +41,12 @@ test('Decimal to American conversion adheres to exact sports betting standards',
   assert.equal(decimalToAmerican(1.05), '-2000');
   assert.equal(decimalToAmerican(1.01), '-10000');
 
+  // String formats and comma decimals (common in Spanish-speaking locales)
+  assert.equal(decimalToAmerican('2.50'), '+150');
+  assert.equal(decimalToAmerican('2,50'), '+150');
+  assert.equal(decimalToAmerican(' 1.50 '), '-200');
+  assert.equal(decimalToAmerican('1,95'), '-105');
+
   // Edge cases and invalid values
   assert.equal(decimalToAmerican(1.00), 'N/D');
   assert.equal(decimalToAmerican(0.90), 'N/D');
@@ -73,16 +79,29 @@ test('Decimal to Fractional conversion produces simplified fractions with standa
   assert.equal(decimalToFraction(1.60), '3/5');
   assert.equal(decimalToFraction(1.80), '4/5');
 
+  // Exact sports betting fractions reduced by GCD (MCD)
+  assert.equal(decimalToFraction(1.08), '2/25');
+  assert.equal(decimalToFraction(1.04), '1/25');
+  assert.equal(decimalToFraction(1.06), '3/50');
+  assert.equal(decimalToFraction(1.36), '9/25');
+  assert.equal(decimalToFraction(1.62), '31/50');
+  assert.equal(decimalToFraction(2.62), '81/50');
+
   // Standard recurring betting decimals with tolerance
   assert.equal(decimalToFraction(1.33), '1/3');
   assert.equal(decimalToFraction(1.67), '2/3');
   assert.equal(decimalToFraction(1.83), '5/6');
   assert.equal(decimalToFraction(1.17), '1/6');
+  assert.equal(decimalToFraction(4.33), '10/3');
 
   // Low odds
   assert.equal(decimalToFraction(1.10), '1/10');
   assert.equal(decimalToFraction(1.05), '1/20');
   assert.equal(decimalToFraction(1.01), '1/100');
+
+  // Comma strings
+  assert.equal(decimalToFraction('2,50'), '3/2');
+  assert.equal(decimalToFraction('1,50'), '1/2');
 
   // Invalid / non-betting inputs
   assert.equal(decimalToFraction(1.00), 'N/D');
@@ -98,12 +117,14 @@ test('formatOdds dynamically routes between american, decimal, and fractional fo
   assert.equal(formatOdds(2.5, 'decimal'), '2.50');
   assert.equal(formatOdds(1.95, 'decimal'), '1.95');
   assert.equal(formatOdds('2.50', 'decimal'), '2.50');
+  assert.equal(formatOdds('2,50', 'decimal'), '2.50');
   assert.equal(formatOdds(2.5), '2.50'); // default
 
   // American format
   assert.equal(formatOdds(2.5, 'american'), '+150');
   assert.equal(formatOdds(1.5, 'american'), '-200');
   assert.equal(formatOdds('1.95', 'american'), '-105');
+  assert.equal(formatOdds('2,50', 'american'), '+150');
   assert.equal(formatOdds(2.5, 'AMERICAN'), '+150');
   assert.equal(formatOdds(1.5, 'Americano'), '-200');
 
@@ -111,6 +132,7 @@ test('formatOdds dynamically routes between american, decimal, and fractional fo
   assert.equal(formatOdds(2.5, 'fractional'), '3/2');
   assert.equal(formatOdds(1.5, 'fractional'), '1/2');
   assert.equal(formatOdds(5.0, 'fractional'), '4/1');
+  assert.equal(formatOdds('2,50', 'fractional'), '3/2');
   assert.equal(formatOdds(2.5, 'FRACTIONAL'), '3/2');
   assert.equal(formatOdds(1.5, 'fraccionario'), '1/2');
 
