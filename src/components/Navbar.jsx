@@ -123,7 +123,7 @@ export default function Navbar({
           </nav>
 
           {/* Right Controls: Social Networks, Profile, Settings & Logout */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             
             {/* SOCIAL NETWORKS DIRECT ACCESS (Desktop) */}
             <div className="hidden lg:flex items-center space-x-1 border-r border-white/10 pr-2 mr-0.5">
@@ -168,7 +168,7 @@ export default function Navbar({
             <div className="relative lg:hidden">
               <button
                 onClick={() => setShowSocialMenu(!showSocialMenu)}
-                className="p-1.5 bg-[#161b22] border border-white/10 rounded-lg text-slate-300 hover:text-white transition"
+                className="p-1 sm:p-1.5 bg-[#161b22] border border-white/10 rounded-lg text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
                 title="Comunidades Oficiales"
               >
                 <Share2 className="w-3.5 h-3.5" />
@@ -201,7 +201,7 @@ export default function Navbar({
             <button
               onClick={() => { sounds.playClick(); onManualSync?.(); }}
               title="Sincronizar partidos en vivo"
-              className={`p-1.5 sm:p-2 bg-[#161b22] border border-white/10 rounded-lg text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition cursor-pointer shrink-0 ${
+              className={`p-1 sm:p-2 bg-[#161b22] border border-white/10 rounded-lg text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition cursor-pointer shrink-0 active:scale-95 ${
                 isSyncing ? 'text-emerald-400' : ''
               }`}
             >
@@ -212,13 +212,13 @@ export default function Navbar({
             <select
               value={currency}
               onChange={(e) => { sounds.playClick(); setCurrency(e.target.value); }}
-              className="bg-[#161b22] text-[10px] sm:text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-1.5 sm:px-2 py-1 sm:py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shrink-0"
+              className="bg-[#161b22] text-[10px] sm:text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-1 sm:px-2 py-1 sm:py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shrink-0"
             >
-              <option value="USD">USD ($)</option>
-              <option value="MXN">MXN ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="COP">COP ($)</option>
-              <option value="ARS">ARS ($)</option>
+              <option value="USD">USD</option>
+              <option value="MXN">MXN</option>
+              <option value="EUR">EUR</option>
+              <option value="COP">COP</option>
+              <option value="ARS">ARS</option>
             </select>
 
             {/* Odds Format Selector */}
@@ -246,7 +246,7 @@ export default function Navbar({
 
             {/* User Profile Chip */}
             {auth && (
-              <div className="flex items-center space-x-1 sm:space-x-1.5 bg-[#161b22] border border-white/10 px-1.5 sm:px-2.5 py-1 rounded-lg text-xs font-sans shrink-0">
+              <div className="flex items-center space-x-1 sm:space-x-1.5 bg-[#161b22] border border-white/10 px-1 sm:px-2.5 py-1 rounded-lg text-xs font-sans shrink-0">
                 {auth.user?.picture ? (
                   <img
                     src={auth.user.picture}
@@ -254,7 +254,7 @@ export default function Navbar({
                     className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover border border-emerald-500/40 shrink-0"
                   />
                 ) : (
-                  <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-bold text-[8.5px] sm:text-[10px] shrink-0 ${
+                  <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-bold text-[8px] sm:text-[10px] shrink-0 ${
                     auth.isAdmin ? 'bg-amber-500 text-black' : (auth.isTrial ? 'bg-sky-500 text-black' : 'bg-emerald-500 text-black')
                   }`}>
                     {auth.isAdmin ? <Crown className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : userInitial || <User className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
@@ -263,7 +263,7 @@ export default function Navbar({
                 <span className="hidden sm:inline-block font-semibold text-slate-200 max-w-[80px] md:max-w-[100px] truncate text-[11px]">
                   {userName}
                 </span>
-                <span className={`text-[8.5px] sm:text-[10px] font-mono font-bold whitespace-nowrap ${
+                <span className={`text-[8px] sm:text-[10px] font-mono font-bold whitespace-nowrap ${
                   auth.isAdmin
                     ? 'text-amber-400'
                     : (auth.trialExpired
@@ -283,7 +283,7 @@ export default function Navbar({
             <button
               onClick={() => { sounds.playClick(); onLogout(); }}
               title="Cerrar sesión"
-              className="p-1 sm:p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer shrink-0"
+              className="p-1 sm:p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition cursor-pointer shrink-0 active:scale-95"
             >
               <LogOut className="w-3.5 h-3.5" />
             </button>
@@ -291,10 +291,10 @@ export default function Navbar({
           </div>
 
         </div>
-        <nav aria-label="Navegación móvil" className="flex md:hidden items-center justify-between gap-1.5 pb-2 pt-1 border-t border-white/5 overflow-x-auto scrollbar-none no-scrollbar">
+        <nav aria-label="Navegación móvil" className="flex md:hidden items-center justify-between gap-1 sm:gap-1.5 pb-2 pt-1 border-t border-white/5 overflow-x-auto scrollbar-none no-scrollbar">
           <button
             onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
-            className={`flex-1 min-w-0 py-2 px-1 rounded-lg font-medium transition text-center whitespace-nowrap text-[11px] sm:text-xs flex items-center justify-center ${
+            className={`flex-1 min-w-0 py-2 px-1 rounded-lg font-medium transition text-center whitespace-nowrap text-[10.5px] sm:text-xs flex items-center justify-center active:scale-95 cursor-pointer ${
               marketFilter === 'all' ? 'bg-white/10 text-white font-bold border border-white/10' : 'bg-slate-800/80 text-slate-300'
             }`}
           >
@@ -302,20 +302,20 @@ export default function Navbar({
           </button>
           <button 
             onClick={() => { sounds.playClick(); onOpenStats(); }} 
-            className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-slate-800/80 text-sky-300 font-medium text-center whitespace-nowrap text-[11px] sm:text-xs flex items-center justify-center"
+            className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-slate-800/80 text-sky-300 font-medium text-center whitespace-nowrap text-[10.5px] sm:text-xs flex items-center justify-center active:scale-95 cursor-pointer"
           >
             <span className="truncate">Stats</span>
           </button>
           <button 
             onClick={() => { sounds.playClick(); onOpenParlay(); }} 
-            className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 font-bold text-center whitespace-nowrap text-[11px] sm:text-xs flex items-center justify-center"
+            className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 font-bold text-center whitespace-nowrap text-[10.5px] sm:text-xs flex items-center justify-center active:scale-95 cursor-pointer"
           >
             <span className="truncate">Parlay {parlayCount > 0 ? `(${parlayCount})` : ''}</span>
           </button>
           {auth?.isAdmin && (
             <button 
               onClick={() => { sounds.playSuccess(); onOpenAdmin(); }} 
-              className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-center whitespace-nowrap text-[11px] sm:text-xs flex items-center justify-center"
+              className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-center whitespace-nowrap text-[10.5px] sm:text-xs flex items-center justify-center active:scale-95 cursor-pointer"
             >
               <span className="truncate">👑 Owner</span>
             </button>

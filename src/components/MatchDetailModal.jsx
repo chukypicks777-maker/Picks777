@@ -503,22 +503,25 @@ export default function MatchDetailModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center space-x-1 px-3 sm:px-6 pt-2 sm:pt-3 border-b border-white/10 bg-[#0a0d14] overflow-x-auto scrollbar-none no-scrollbar touch-pan-x pr-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => { sounds.playClick(); setActiveTab(tab.id); }}
-              className={`flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-[11px] sm:text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 ${
-                activeTab === tab.id
-                  ? 'border-sky-400 text-sky-300 bg-sky-500/10'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          ))}
-          <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
+        <div className="relative">
+          <div className="flex items-center space-x-1 px-3 sm:px-6 pt-2 sm:pt-3 border-b border-white/10 bg-[#0a0d14] overflow-x-auto scrollbar-none no-scrollbar touch-pan-x pr-8">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => { sounds.playClick(); setActiveTab(tab.id); }}
+                className={`flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-[11px] sm:text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 active:scale-95 ${
+                  activeTab === tab.id
+                    ? 'border-sky-400 text-sky-300 bg-sky-500/10'
+                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            ))}
+            <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
+          </div>
+          <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#0a0d14] via-[#0a0d14]/70 to-transparent pointer-events-none sm:hidden" aria-hidden="true" />
         </div>
 
         {/* Modal Body */}

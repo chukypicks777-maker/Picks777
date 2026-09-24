@@ -52,7 +52,7 @@ export default function ParlayBuilderDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 z-40 w-[calc(100%_-_1.5rem)] sm:w-[calc(100%_-_2rem)] max-w-md animate-slide-up">
+    <div className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-4 sm:right-4 z-40 w-[calc(100%_-_1.5rem)] sm:w-[calc(100%_-_2rem)] max-w-md animate-slide-up">
       <div className="bg-[#0e131d]/95 backdrop-blur-xl border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
         
         {/* Drawer Header */}
@@ -211,7 +211,7 @@ export default function ParlayBuilderDrawer({
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={handleCopyTicket}
-                  className="py-2.5 px-3 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 shadow-[0_0_15px_rgba(56,189,248,0.2)] cursor-pointer"
+                  className="py-2.5 px-3 bg-sky-500/20 hover:bg-sky-500/30 active:scale-95 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 shadow-[0_0_15px_rgba(56,189,248,0.2)] cursor-pointer"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <Copy className="w-3.5 h-3.5 shrink-0" />}
                   <span className="truncate">{copied ? '¡Copiado!' : 'Copiar Ticket'}</span>
@@ -219,7 +219,7 @@ export default function ParlayBuilderDrawer({
 
                 <button
                   onClick={() => { sounds.playClick(); onClearAll(); }}
-                  className="py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 cursor-pointer"
+                  className="py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500/20 active:scale-95 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5 shrink-0" />
                   <span className="truncate">Vaciar</span>

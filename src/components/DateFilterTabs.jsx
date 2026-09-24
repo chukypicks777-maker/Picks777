@@ -107,32 +107,35 @@ export default function DateFilterTabs({
       </div>
 
       {/* Market Sub-Filters */}
-      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 px-0.5 pr-6 sm:pr-2 text-xs scrollbar-none no-scrollbar touch-pan-x">
-        <span className="text-[11px] font-mono text-slate-500 mr-1 shrink-0">Categoría:</span>
-        {markets.map((m) => {
-          const isSelected = marketFilter === m.id;
-          return (
-            <button
-              key={m.id}
-              onClick={() => {
-                sounds.playClick();
-                if (onNavigate) {
-                  onNavigate(m.id);
-                } else {
-                  setMarketFilter(m.id);
-                }
-              }}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer whitespace-nowrap border shrink-0 ${
-                isSelected
-                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-semibold shadow-[0_0_10px_rgba(16,185,129,0.2)]'
-                  : 'bg-[#121620] border-white/[0.06] text-slate-400 hover:text-slate-200 hover:border-white/15'
-              }`}
-            >
-              {m.label}
-            </button>
-          );
-        })}
-        <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
+      <div className="relative">
+        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 px-0.5 pr-6 sm:pr-2 text-xs scrollbar-none no-scrollbar touch-pan-x">
+          <span className="text-[11px] font-mono text-slate-500 mr-1 shrink-0">Categoría:</span>
+          {markets.map((m) => {
+            const isSelected = marketFilter === m.id;
+            return (
+              <button
+                key={m.id}
+                onClick={() => {
+                  sounds.playClick();
+                  if (onNavigate) {
+                    onNavigate(m.id);
+                  } else {
+                    setMarketFilter(m.id);
+                  }
+                }}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer whitespace-nowrap border shrink-0 active:scale-95 ${
+                  isSelected
+                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-semibold shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                    : 'bg-[#121620] border-white/[0.06] text-slate-400 hover:text-slate-200 hover:border-white/15'
+                }`}
+              >
+                {m.label}
+              </button>
+            );
+          })}
+          <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
+        </div>
+        <div className="absolute right-0 top-0 bottom-1 w-5 bg-gradient-to-l from-[#080b11] via-[#080b11]/70 to-transparent pointer-events-none sm:hidden" aria-hidden="true" />
       </div>
 
     </div>

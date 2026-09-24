@@ -419,50 +419,53 @@ export default function AdminDashboardModal({ onClose }) {
         </div>
 
         {/* Tab Selection */}
-        <div className="flex items-center space-x-1 px-3 sm:px-4 pt-2 sm:pt-3 border-b border-white/10 bg-[#0a0d14] overflow-x-auto scrollbar-none no-scrollbar touch-pan-x pr-6">
-          <button
-            onClick={() => { sounds.playClick(); setActiveTab('generator'); }}
-            className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 ${
-              activeTab === 'generator'
-                ? 'border-amber-400 text-amber-300 bg-amber-500/10'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Generador (Lotes)
-          </button>
+        <div className="relative">
+          <div className="flex items-center space-x-1 px-3 sm:px-4 pt-2 sm:pt-3 border-b border-white/10 bg-[#0a0d14] overflow-x-auto scrollbar-none no-scrollbar touch-pan-x pr-8">
+            <button
+              onClick={() => { sounds.playClick(); setActiveTab('generator'); }}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 active:scale-95 ${
+                activeTab === 'generator'
+                  ? 'border-amber-400 text-amber-300 bg-amber-500/10'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Generador (Lotes)
+            </button>
 
-          <button
-            onClick={() => { sounds.playClick(); setActiveTab('codes_list'); }}
-            className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 ${
-              activeTab === 'codes_list'
-                ? 'border-sky-400 text-sky-300 bg-sky-500/10'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Base de Datos ({codes.length})
-          </button>
+            <button
+              onClick={() => { sounds.playClick(); setActiveTab('codes_list'); }}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 active:scale-95 ${
+                activeTab === 'codes_list'
+                  ? 'border-sky-400 text-sky-300 bg-sky-500/10'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Base de Datos ({codes.length})
+            </button>
 
-          <button
-            onClick={() => { sounds.playClick(); setActiveTab('ai_config'); }}
-            className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 ${
-              activeTab === 'ai_config'
-                ? 'border-indigo-400 text-indigo-300 bg-indigo-500/10'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Configuración IA
-          </button>
-          <button
-            onClick={() => { sounds.playClick(); setActiveTab('groups'); }}
-            className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 ${
-              activeTab === 'groups'
-                ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Grupos y Comunidad
-          </button>
-          <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
+            <button
+              onClick={() => { sounds.playClick(); setActiveTab('ai_config'); }}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 active:scale-95 ${
+                activeTab === 'ai_config'
+                  ? 'border-indigo-400 text-indigo-300 bg-indigo-500/10'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Configuración IA
+            </button>
+            <button
+              onClick={() => { sounds.playClick(); setActiveTab('groups'); }}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 active:scale-95 ${
+                activeTab === 'groups'
+                  ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Grupos y Comunidad
+            </button>
+            <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
+          </div>
+          <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#0a0d14] via-[#0a0d14]/70 to-transparent pointer-events-none sm:hidden" aria-hidden="true" />
         </div>
 
         {/* Body Container */}
@@ -1293,13 +1296,13 @@ export default function AdminDashboardModal({ onClose }) {
                 )}
 
                 {/* Botones de Acción */}
-                <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-white/5">
-                  <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-3 border-t border-white/5">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <button
                       type="button"
                       onClick={handleSaveSettings}
                       disabled={isSaving}
-                      className="px-4 py-2 bg-sky-400 hover:bg-sky-300 text-black font-bold rounded-lg transition cursor-pointer shadow-[0_0_12px_rgba(56,189,248,0.3)] disabled:opacity-50 flex items-center space-x-1.5"
+                      className="px-4 py-2 bg-sky-400 hover:bg-sky-300 active:scale-95 text-black font-bold rounded-lg transition cursor-pointer shadow-[0_0_12px_rgba(56,189,248,0.3)] disabled:opacity-50 flex items-center justify-center space-x-1.5"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>{isSaving ? 'Guardando...' : 'Guardar Configuración de IA'}</span>
@@ -1309,7 +1312,7 @@ export default function AdminDashboardModal({ onClose }) {
                       type="button"
                       onClick={handleTestConnection}
                       disabled={isTesting}
-                      className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg font-semibold transition cursor-pointer flex items-center space-x-1.5 disabled:opacity-50"
+                      className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 active:scale-95 text-emerald-300 border border-emerald-500/30 rounded-lg font-semibold transition cursor-pointer flex items-center justify-center space-x-1.5 disabled:opacity-50"
                     >
                       <Zap className={`w-3.5 h-3.5 ${isTesting ? 'animate-pulse text-amber-400' : ''}`} />
                       <span>{isTesting ? 'Probando...' : 'Probar Conexión'}</span>
@@ -1319,7 +1322,7 @@ export default function AdminDashboardModal({ onClose }) {
                   <button
                     type="button"
                     onClick={handleClearCache}
-                    className="px-3 py-2 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-lg transition cursor-pointer text-[11px]"
+                    className="px-3 py-2 bg-rose-500/15 hover:bg-rose-500/25 active:scale-95 text-rose-300 border border-rose-500/30 rounded-lg transition cursor-pointer text-[11px] text-center"
                   >
                     Limpiar Caché de IA
                   </button>

@@ -83,25 +83,25 @@ export default function HeroFeaturedMatch({
                 </span>
                 {match.venue && (
                   <>
-                    <span className="text-slate-600 hidden xs:inline">•</span>
+                    <span className="text-slate-600 hidden sm:inline">•</span>
                     <span className="text-slate-400 truncate max-w-[130px] sm:max-w-none">{match.venue}</span>
                   </>
                 )}
               </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-white/5">
+              <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto shrink-0 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-white/5">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsScanning(true);
                   }}
-                  className="px-2 sm:px-2.5 py-1 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-lg text-[11px] sm:text-xs font-mono flex items-center space-x-1 transition cursor-pointer shrink-0"
+                  className="px-2 sm:px-2.5 py-1 bg-sky-500/10 hover:bg-sky-500/20 active:scale-95 text-sky-300 border border-sky-500/30 rounded-lg text-[11px] sm:text-xs font-mono flex items-center space-x-1 transition cursor-pointer shrink-0"
                 >
                   <Target className="w-3.5 h-3.5 animate-pulse text-sky-400 shrink-0" />
                   <span>Radar Scanner</span>
                 </button>
                 {match.referee && (
-                  <div className="text-[11px] sm:text-xs font-mono text-slate-400 truncate max-w-[150px] sm:max-w-none text-right">
+                  <div className="text-[11px] sm:text-xs font-mono text-slate-400 truncate max-w-[150px] sm:max-w-none text-right min-w-0 flex-1 sm:flex-initial">
                     Árbitro: <strong className="text-slate-200">{match.referee}</strong>
                   </div>
                 )}
@@ -120,21 +120,21 @@ export default function HeroFeaturedMatch({
                     <img
                       src={match.homeTeam?.logo}
                       alt={match.homeTeam?.name}
-                      className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 shrink-0"
+                      className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 shrink-0"
                     />
                     <div className="w-full px-0.5 sm:px-1">
                       <h4 className="font-bold text-xs sm:text-sm md:text-lg text-white truncate">
                         {match.homeTeam?.name}
                       </h4>
-                      <p className="text-[10px] sm:text-xs font-mono text-slate-400 truncate">
+                      <p className="text-[9.5px] sm:text-xs font-mono text-slate-400 truncate">
                         Local{match.homeTeam?.position ? ` • #${match.homeTeam.position} (${match.homeTeam.points ?? 0} pts)` : ''}
                       </p>
                     </div>
-                    <div className="flex space-x-1 mt-0.5 sm:mt-1 justify-center shrink-0">
+                    <div className="flex flex-wrap gap-0.5 sm:gap-1 mt-0.5 sm:mt-1 justify-center shrink-0 max-w-full">
                       {(match.homeTeam?.form || []).map((f, i) => (
                         <span
                           key={i}
-                          className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[8px] sm:text-[9px] font-bold font-mono rounded flex items-center justify-center shrink-0 ${
+                          className={`w-3 h-3 sm:w-4 sm:h-4 text-[7.5px] sm:text-[9px] font-bold font-mono rounded flex items-center justify-center shrink-0 ${
                             f === 'W' ? 'bg-emerald-600 text-white' : f === 'D' ? 'bg-amber-600 text-white' : 'bg-rose-600 text-white'
                           }`}
                         >
@@ -145,12 +145,13 @@ export default function HeroFeaturedMatch({
                   </div>
 
                   {/* Score Center */}
-                  <div className="flex flex-col items-center justify-center px-1 sm:px-4 shrink-0">
+                  <div className="flex flex-col items-center justify-center px-1 sm:px-3 shrink-0">
                     <div className="bg-[#141a27] border border-white/10 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-xl text-center shadow-inner">
-                      <span className="text-[8.5px] sm:text-[10px] font-mono text-slate-400 uppercase tracking-wider block whitespace-nowrap">
-                        {match.status === 'LIVE' ? 'Marcador en Vivo' : match.status === 'FINISHED' ? 'Resultado Final' : 'Marcador IA'}
+                      <span className="text-[8px] sm:text-[10px] font-mono text-slate-400 uppercase tracking-wider block whitespace-nowrap">
+                        <span className="sm:hidden">{match.status === 'LIVE' ? 'En Vivo' : match.status === 'FINISHED' ? 'Final' : 'Marcador IA'}</span>
+                        <span className="hidden sm:inline">{match.status === 'LIVE' ? 'Marcador en Vivo' : match.status === 'FINISHED' ? 'Resultado Final' : 'Marcador IA'}</span>
                       </span>
-                      <span className="text-base sm:text-xl md:text-2xl font-black font-mono text-white tracking-wider whitespace-nowrap">
+                      <span className="text-sm sm:text-xl md:text-2xl font-black font-mono text-white tracking-wider whitespace-nowrap">
                         {match.status === 'LIVE' 
                           ? `${match.liveScore?.home ?? match.finalScore?.home ?? 0} - ${match.liveScore?.away ?? match.finalScore?.away ?? 0}`
                           : match.status === 'FINISHED'
@@ -165,21 +166,21 @@ export default function HeroFeaturedMatch({
                     <img
                       src={match.awayTeam?.logo}
                       alt={match.awayTeam?.name}
-                      className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 shrink-0"
+                      className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 shrink-0"
                     />
                     <div className="w-full px-0.5 sm:px-1">
                       <h4 className="font-bold text-xs sm:text-sm md:text-lg text-white truncate">
                         {match.awayTeam?.name}
                       </h4>
-                      <p className="text-[10px] sm:text-xs font-mono text-slate-400 truncate">
+                      <p className="text-[9.5px] sm:text-xs font-mono text-slate-400 truncate">
                         Visita{match.awayTeam?.position ? ` • #${match.awayTeam.position} (${match.awayTeam.points ?? 0} pts)` : ''}
                       </p>
                     </div>
-                    <div className="flex space-x-1 mt-0.5 sm:mt-1 justify-center shrink-0">
+                    <div className="flex flex-wrap gap-0.5 sm:gap-1 mt-0.5 sm:mt-1 justify-center shrink-0 max-w-full">
                       {(match.awayTeam?.form || []).map((f, i) => (
                         <span
                           key={i}
-                          className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[8px] sm:text-[9px] font-bold font-mono rounded flex items-center justify-center shrink-0 ${
+                          className={`w-3 h-3 sm:w-4 sm:h-4 text-[7.5px] sm:text-[9px] font-bold font-mono rounded flex items-center justify-center shrink-0 ${
                             f === 'W' ? 'bg-emerald-600 text-white' : f === 'D' ? 'bg-amber-600 text-white' : 'bg-rose-600 text-white'
                           }`}
                         >

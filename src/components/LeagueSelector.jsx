@@ -17,7 +17,7 @@ export default function LeagueSelector({ selectedLeague, onSelectLeague, matchCo
                 sounds.playClick();
                 onSelectLeague(league.id);
               }}
-              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 cursor-pointer shrink-0 ${
+              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 cursor-pointer shrink-0 active:scale-95 ${
                 isSelected
                   ? 'bg-white text-slate-950 font-bold shadow-sm'
                   : 'bg-[#141923] text-slate-300 border border-white/[0.08] hover:border-white/20 hover:text-white hover:bg-[#1a2130]'
@@ -38,6 +38,8 @@ export default function LeagueSelector({ selectedLeague, onSelectLeague, matchCo
         {/* End safety padding spacer so last league never clips on mobile */}
         <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
       </div>
+      {/* Subtle right scroll indicator on mobile */}
+      <div className="absolute right-0 top-0 bottom-2.5 w-6 bg-gradient-to-l from-[#080b11] via-[#080b11]/70 to-transparent pointer-events-none sm:hidden" aria-hidden="true" />
     </div>
   );
 }
