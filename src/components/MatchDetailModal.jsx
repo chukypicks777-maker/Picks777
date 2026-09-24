@@ -190,6 +190,7 @@ export default function MatchDetailModal({
             modelName: data.modelName || 'DeepSeek V4.1 Flash',
             isConfigured: Boolean(data.isConfigured || storedAi?.isConfigured || (storedAi?.apiKey && storedAi.apiKey.length >= 4))
           };
+          cachedActiveModel = info;
           setActiveModelInfo(info);
         }
       } catch {
@@ -200,6 +201,7 @@ export default function MatchDetailModal({
             modelName: storedAi.modelName || 'DeepSeek V4.1 Flash',
             isConfigured: Boolean(storedAi.isConfigured || (storedAi.apiKey && storedAi.apiKey.length >= 4))
           };
+          cachedActiveModel = info;
           setActiveModelInfo(info);
         }
       }
@@ -215,6 +217,7 @@ export default function MatchDetailModal({
           provider: e.detail.provider || 'custom',
           isConfigured: e.detail.isConfigured ?? true
         };
+        cachedActiveModel = info;
         setActiveModelInfo(info);
         clearAllAnalysisCache();
         fetchAiAnalysis(true, newModel);
@@ -285,9 +288,53 @@ export default function MatchDetailModal({
 
   // Compute 10-match H2H historical statistics
   const h2hList = m.h2h || [];
-  const homeWins = h2hList.filter(h => h.winner === m.homeTeam?.name || h.winner === m.homeTeam?.shortName || (h.home === m.homeTeam?.name && parseInt(h.score?.split('-')[0], 10) > parseInt(h.score?.split('-')[1], 10))).length;
-  const awayWins = h2hList.filter(h => h.winner === m.awayTeam?.name || h.winner === m.awayTeam?.shortName || (h.away === m.awayTeam?.name && parseInt(h.score?.split('-')[1], 10) > parseInt(h.score?.split('-')[0], 10))).length;
-  const draws = h2hList.filter(h => h.winner === 'Draw' || h.winner === 'Empate' || parseInt(h.score?.split('-')[0], 10) === parseInt(h.score?.split('-')[1], 10)).length;
+  const normalize = str => (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  const homeNorm = normalize(m.homeTeam?.name);
+  const homeShortNorm = normalize(m.homeTeam?.shortName);
+  const awayNorm = normalize(m.awayTeam?.name);
+  const awayShortNorm = normalize(m.awayTeam?.shortName);
+
+  const isHome = teamStr => {
+    const t = normalize(teamStr);
+    if (!t) return false;
+    return t === homeNorm || (homeShortNorm && t === homeShortNorm) ||
+      (homeNorm && (t.includes(homeNorm) || homeNorm.includes(t)));
+  };
+  const isAway = teamStr => {
+    const t = normalize(teamStr);
+    if (!t) return false;
+    return t === awayNorm || (awayShortNorm && t === awayShortNorm) ||
+      (awayNorm && (t.includes(awayNorm) || awayNorm.includes(t)));
+  };
+
+  let homeWins = 0, awayWins = 0, draws = 0;
+  for (const h of h2hList) {
+    const parts = (h.score || '').split('-').map(s => parseInt(s.trim(), 10));
+    const hasScores = parts.length === 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1]);
+    if (hasScores && parts[0] === parts[1]) {
+      draws++;
+    } else if (hasScores && parts[0] > parts[1]) {
+      if (isHome(h.home)) homeWins++;
+      else if (isAway(h.home)) awayWins++;
+      else if (isHome(h.winner)) homeWins++;
+      else if (isAway(h.winner)) awayWins++;
+      else draws++;
+    } else if (hasScores && parts[1] > parts[0]) {
+      if (isHome(h.away)) homeWins++;
+      else if (isAway(h.away)) awayWins++;
+      else if (isHome(h.winner)) homeWins++;
+      else if (isAway(h.winner)) awayWins++;
+      else draws++;
+    } else if (h.winner === 'Draw' || h.winner === 'Empate') {
+      draws++;
+    } else if (isHome(h.winner)) {
+      homeWins++;
+    } else if (isAway(h.winner)) {
+      awayWins++;
+    } else {
+      draws++;
+    }
+  }
 
   const h2hHomeWinPct = h2hList.length > 0 ? Math.round((homeWins / h2hList.length) * 100) : 0;
   const h2hDrawPct = h2hList.length > 0 ? Math.round((draws / h2hList.length) * 100) : 0;
@@ -316,6 +363,26 @@ export default function MatchDetailModal({
   const homeDetailed = calculateTeamDetailedStats(m.homeTeam, true, m);
   const awayDetailed = calculateTeamDetailedStats(m.awayTeam, false, m);
   const diff = calculateDifferential(homeDetailed, awayDetailed, m);
+
+  const renderMetricBar = (hRaw, aRaw) => {
+    const hasHome = typeof hRaw === 'number' && Number.isFinite(hRaw);
+    const hasAway = typeof aRaw === 'number' && Number.isFinite(aRaw);
+    if (!hasHome && !hasAway) {
+      return <div className="h-full w-full bg-slate-800/40 rounded-full" />;
+    }
+    const hVal = hasHome ? hRaw : 0;
+    const aVal = hasAway ? aRaw : 0;
+    const total = hVal + aVal;
+    if (total <= 0) {
+      return <div className="h-full w-full bg-slate-800/40 rounded-full" />;
+    }
+    return (
+      <>
+        <div style={{ width: `${(hVal / total) * 100}%` }} className="h-full bg-sky-500" />
+        <div style={{ width: `${(aVal / total) * 100}%` }} className="h-full bg-indigo-500" />
+      </>
+    );
+  };
 
   const tabs = [
     { id: 'ai_report', label: 'Pronóstico IA & Picks', icon: <FileText className="w-3.5 h-3.5 text-sky-400" /> },
@@ -385,7 +452,7 @@ export default function MatchDetailModal({
                   {m.homeTeam?.name}
                 </p>
                 <p className="text-xs font-mono text-sky-400">
-                  Local{m.homeTeam?.position ? ` • #${m.homeTeam.position} (${m.homeTeam.points ?? 0} pts)` : ''}
+                  Local{m.homeTeam?.position ? ` • #${m.homeTeam.position}${m.homeTeam.points != null ? ` (${m.homeTeam.points} pts)` : ''}` : ''}
                 </p>
               </div>
               <img src={m.homeTeam?.logo} alt={m.homeTeam?.name} className="w-11 h-11 object-contain filter drop-shadow" />
@@ -415,7 +482,7 @@ export default function MatchDetailModal({
                   {m.awayTeam?.name}
                 </p>
                 <p className="text-xs font-mono text-indigo-400">
-                  Visita{m.awayTeam?.position ? ` • #${m.awayTeam.position} (${m.awayTeam.points ?? 0} pts)` : ''}
+                  Visita{m.awayTeam?.position ? ` • #${m.awayTeam.position}${m.awayTeam.points != null ? ` (${m.awayTeam.points} pts)` : ''}` : ''}
                 </p>
               </div>
             </div>
@@ -676,9 +743,9 @@ export default function MatchDetailModal({
                     </div>
 
                     <div className="h-2.5 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5 p-0.5 border border-white/5">
-                      <div style={{ width: `${h2hHomeWinPct}%` }} className="bg-sky-500 h-full rounded-l-full" />
-                      <div style={{ width: `${h2hDrawPct}%` }} className="bg-slate-500 h-full" />
-                      <div style={{ width: `${h2hAwayWinPct}%` }} className="bg-indigo-500 h-full rounded-r-full" />
+                      <div style={{ width: `${h2hList.length ? (homeWins / h2hList.length) * 100 : 0}%` }} className="bg-sky-500 h-full rounded-l-full" />
+                      <div style={{ width: `${h2hList.length ? (draws / h2hList.length) * 100 : 0}%` }} className="bg-slate-500 h-full" />
+                      <div style={{ width: `${h2hList.length ? (awayWins / h2hList.length) * 100 : 0}%` }} className="bg-indigo-500 h-full rounded-r-full" />
                     </div>
                   </div>
 
@@ -912,8 +979,7 @@ export default function MatchDetailModal({
                     <span>{displayNumber(awayDetailed.avgGF, 2)}</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
-                    <div style={{ width: `${(homeDetailed.avgGF / (homeDetailed.avgGF + awayDetailed.avgGF || 1)) * 100}%` }} className="h-full bg-sky-500" />
-                    <div style={{ width: `${(awayDetailed.avgGF / (homeDetailed.avgGF + awayDetailed.avgGF || 1)) * 100}%` }} className="h-full bg-indigo-500" />
+                    {renderMetricBar(homeDetailed.avgGF, awayDetailed.avgGF)}
                   </div>
                 </div>
 
@@ -925,21 +991,19 @@ export default function MatchDetailModal({
                     <span>{displayNumber(awayDetailed.avgGC, 2)}</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
-                    <div style={{ width: `${(homeDetailed.avgGC / (homeDetailed.avgGC + awayDetailed.avgGC || 1)) * 100}%` }} className="h-full bg-sky-500" />
-                    <div style={{ width: `${(awayDetailed.avgGC / (homeDetailed.avgGC + awayDetailed.avgGC || 1)) * 100}%` }} className="h-full bg-indigo-500" />
+                    {renderMetricBar(homeDetailed.avgGC, awayDetailed.avgGC)}
                   </div>
                 </div>
 
                 {/* Metric 3: Tiros de Esquina */}
                 <div>
                   <div className="flex justify-between text-slate-300 mb-1">
-                    <span>{displayNumber(homeDetailed.avgCorners)} 🚩</span>
+                    <span>{homeDetailed.avgCorners != null ? `${displayNumber(homeDetailed.avgCorners)} 🚩` : 'N/D'}</span>
                     <span className="text-slate-400 text-[11px]">Promedio de Córners a Favor</span>
-                    <span>{displayNumber(awayDetailed.avgCorners)} 🚩</span>
+                    <span>{awayDetailed.avgCorners != null ? `${displayNumber(awayDetailed.avgCorners)} 🚩` : 'N/D'}</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
-                    <div style={{ width: `${(homeDetailed.avgCorners / (homeDetailed.avgCorners + awayDetailed.avgCorners || 1)) * 100}%` }} className="h-full bg-sky-500" />
-                    <div style={{ width: `${(awayDetailed.avgCorners / (homeDetailed.avgCorners + awayDetailed.avgCorners || 1)) * 100}%` }} className="h-full bg-indigo-500" />
+                    {renderMetricBar(homeDetailed.avgCorners, awayDetailed.avgCorners)}
                   </div>
                 </div>
 
@@ -951,8 +1015,7 @@ export default function MatchDetailModal({
                     <span>{displayNumber(awayDetailed.fouls)}</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
-                    <div style={{ width: `${(homeDetailed.fouls / (homeDetailed.fouls + awayDetailed.fouls || 1)) * 100}%` }} className="h-full bg-sky-500" />
-                    <div style={{ width: `${(awayDetailed.fouls / (homeDetailed.fouls + awayDetailed.fouls || 1)) * 100}%` }} className="h-full bg-indigo-500" />
+                    {renderMetricBar(homeDetailed.fouls, awayDetailed.fouls)}
                   </div>
                 </div>
 
@@ -964,8 +1027,7 @@ export default function MatchDetailModal({
                     <span>{awayDetailed.cleanSheetRate != null ? `${Math.round(awayDetailed.cleanSheetRate)}%` : 'N/D'}</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">
-                    <div style={{ width: `${homeDetailed.cleanSheetRate ?? 50}%` }} className="h-full bg-sky-500" />
-                    <div style={{ width: `${awayDetailed.cleanSheetRate ?? 50}%` }} className="h-full bg-indigo-500" />
+                    {renderMetricBar(homeDetailed.cleanSheetRate, awayDetailed.cleanSheetRate)}
                   </div>
                 </div>
               </div>

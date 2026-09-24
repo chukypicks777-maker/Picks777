@@ -14,8 +14,8 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
       <div><h4 className="font-bold text-white text-base">{stats.name}</h4><p className="text-slate-400">{isHome ? 'Local' : 'Visitante'} · Posición {stats.position ?? 'N/D'} · {stats.points ?? 'N/D'} pts</p></div>
     </header>
     <div className="grid grid-cols-3 gap-2 text-slate-300 text-center">
-      <p>Goles a favor<br/><strong>{displayNumber(stats.avgGF)} / p</strong></p>
-      <p>Goles en contra<br/><strong>{displayNumber(stats.avgGC)} / p</strong></p>
+      <p>Goles a favor<br/><strong>{stats.avgGF != null ? `${displayNumber(stats.avgGF)} / p` : 'N/D'}</strong></p>
+      <p>Goles en contra<br/><strong>{stats.avgGC != null ? `${displayNumber(stats.avgGC)} / p` : 'N/D'}</strong></p>
       <p>Partidos<br/><strong>{stats.gamesPlayed ?? 'N/D'}</strong></p>
     </div>
     {sections.map(section => <section key={section.title} className="bg-[#121926] border border-white/10 rounded-xl p-3 space-y-2">
@@ -30,7 +30,7 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
       })}</div>)}
     </section>)}
     <footer className="text-slate-400 space-y-2">
-      <p>Córners: {displayNumber(stats.avgCorners)} / p · Amarillas: {displayNumber(stats.cards)} / p · Faltas: {displayNumber(stats.fouls)} / p</p>
+      <p>Córners: {stats.avgCorners != null ? `${displayNumber(stats.avgCorners)} / p` : 'N/D'} · Amarillas: {stats.cards != null ? `${displayNumber(stats.cards)} / p` : 'N/D'} · Faltas: {stats.fouls != null ? `${displayNumber(stats.fouls)} / p` : 'N/D'}</p>
       <p>{stats.statsSource || 'Estadísticas de detalle pendientes'} · Muestra córners: {stats.sampleSizes?.corners ?? 0}; tarjetas: {stats.sampleSizes?.cards ?? 0}.</p>
       <p>N/D: sin datos suficientes. Las probabilidades son estimaciones Poisson; los promedios corresponden a registros del proveedor.</p>
     </footer>

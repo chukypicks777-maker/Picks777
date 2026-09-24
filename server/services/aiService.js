@@ -74,16 +74,25 @@ export async function getEffectiveAiConfig() {
   const preset = PROVIDER_PRESETS[provider] || PROVIDER_PRESETS.custom;
   baseUrl = baseUrl || preset?.defaultBaseUrl || 'https://vyceai.com/v1';
 
-  let selectedModel = dbConfig?.selectedModel !== undefined
-    ? String(dbConfig.selectedModel).trim()
-    : String(preset?.defaultModel || CONFIG.DEFAULT_MODEL || 'deepseek-v4.1').trim();
+  let selectedModel;
+  if (dbConfig?.selectedModel !== undefined && (!dbConfig?.provider || dbConfig.provider === provider)) {
+    selectedModel = String(dbConfig.selectedModel).trim();
+  } else {
+    selectedModel = String(preset?.defaultModel || CONFIG.DEFAULT_MODEL || 'deepseek-v4.1').trim();
+  }
   if (selectedModel.includes('openrouter')) {
-    selectedModel = 'deepseek-v4.1';
+    selectedModel = preset?.defaultModel || 'deepseek-v4.1';
+  }
+  if (provider === 'gemini' && selectedModel && !selectedModel.startsWith('gemini')) {
+    selectedModel = preset?.defaultModel || 'gemini-2.5-flash';
+  }
+  if (provider === 'groq' && selectedModel && selectedModel.startsWith('deepseek-v4')) {
+    selectedModel = preset?.defaultModel || 'llama-3.3-70b-versatile';
   }
 
-  const modelName = dbConfig?.modelName !== undefined
+  const modelName = (dbConfig?.modelName !== undefined && (!dbConfig?.provider || dbConfig.provider === provider))
     ? String(dbConfig.modelName).trim()
-    : (selectedModel === 'deepseek-v4.1' ? 'DeepSeek V4.1 Flash' : '');
+    : (selectedModel === 'deepseek-v4.1' ? 'DeepSeek V4.1 Flash' : selectedModel.startsWith('gemini') ? 'Google Gemini 2.5 Flash' : selectedModel);
 
   return {
     provider,
@@ -189,17 +198,17 @@ export async function generateAiMatchReport(match, options = {}) {
     { id: 'source', text: `Fuente oficial: ${match.source || 'ESPN'}. Consulta: ${match.fetchedAt || 'N/D'}.` }
   ];
   for (const [side, team, pos, pts] of [['home', match.homeTeam, homePos, homePoints], ['away', match.awayTeam, awayPos, awayPoints]]) {
-    if (Number.isFinite(team?.gamesPlayed)) {
-      const gF = team.goalsFor ?? 'N/D';
-      const gA = team.goalsAgainst ?? 'N/D';
-      const pInfo = pos ? `Posición #${pos}` : '';
-      const ptsInfo = pts ? `(${pts})` : '';
-      const cRate = team.cleanSheetRate != null ? `valla invicta ${team.cleanSheetRate}%` : '';
-      const corners = team.avgCorners != null ? `${team.avgCorners} córners/p` : '';
-      const cards = team.avgYellowCards != null ? `${team.avgYellowCards} amarillas/p` : '';
-      const extra = [pInfo, ptsInfo, cRate, corners, cards].filter(Boolean).join(', ');
-      facts.push({ id: side, text: `${team.name} (${side === 'home' ? 'Local' : 'Visitante'}): ${team.gamesPlayed} PJ, ${gF} GF, ${gA} GC. ${extra ? `Registros: ${extra}.` : ''}` });
-    }
+    const tName = team?.name || (side === 'home' ? homeName : awayName);
+    const gpInfo = Number.isFinite(team?.gamesPlayed) ? `${team.gamesPlayed} PJ` : 'En disputa';
+    const gF = team?.goalsFor ?? 'N/D';
+    const gA = team?.goalsAgainst ?? 'N/D';
+    const pInfo = pos ? `Posición #${pos}` : '';
+    const ptsInfo = pts ? `(${pts})` : '';
+    const cRate = team?.cleanSheetRate != null ? `valla invicta ${team.cleanSheetRate}%` : '';
+    const corners = team?.avgCorners != null ? `${team.avgCorners} córners/p` : '';
+    const cards = team?.avgYellowCards != null ? `${team.avgYellowCards} amarillas/p` : '';
+    const extra = [pInfo, ptsInfo, cRate, corners, cards].filter(Boolean).join(', ');
+    facts.push({ id: side, text: `${tName} (${side === 'home' ? 'Local' : 'Visitante'}): ${gpInfo}, ${gF} GF, ${gA} GC. ${extra ? `Registros: ${extra}.` : ''}` });
   }
   if (match.model) {
     facts.push({ id: 'result', text: `Estimación Poisson: ${homeName} ${fmt(p.homeWin)}%, Empate ${fmt(p.draw)}%, ${awayName} ${fmt(p.awayWin)}%.` });
@@ -300,6 +309,12 @@ export async function generateAiMatchReport(match, options = {}) {
   if (!config.selectedModel) {
     config.selectedModel = PROVIDER_PRESETS[config.provider]?.defaultModel || 'deepseek-v4.1';
   }
+  if (config.provider === 'gemini' && config.selectedModel && !config.selectedModel.startsWith('gemini')) {
+    config.selectedModel = PROVIDER_PRESETS.gemini?.defaultModel || 'gemini-2.5-flash';
+  }
+  if (config.provider === 'groq' && config.selectedModel && config.selectedModel.startsWith('deepseek-v4')) {
+    config.selectedModel = PROVIDER_PRESETS.groq?.defaultModel || 'llama-3.3-70b-versatile';
+  }
   if (!config.isConfigured) return baseline;
   const cacheKey = 'ai:grounded-v3:' + createHash('sha256').update(JSON.stringify([facts, p, config.updatedAt, config.provider, config.selectedModel])).digest('hex');
   const generate = async () => {
@@ -307,7 +322,7 @@ export async function generateAiMatchReport(match, options = {}) {
       const promptCatalog = facts.map(f => ({ id: f.id, summary: f.text }));
       const validIdsList = facts.map(f => f.id);
 
-      // Candidate models list: configured model first, followed by preset default if distinct
+      // Candidate models list: configured model first, followed by preset default and resilient fallback candidates
       const candidateModels = [];
       let chosenModel = config.selectedModel;
       if (chosenModel && chosenModel.includes('openrouter')) chosenModel = 'deepseek-v4.1';
@@ -315,6 +330,16 @@ export async function generateAiMatchReport(match, options = {}) {
       const defaultForProvider = PROVIDER_PRESETS[config.provider]?.defaultModel || CONFIG.DEFAULT_MODEL || 'deepseek-v4.1';
       if (defaultForProvider && !candidateModels.includes(defaultForProvider)) {
         candidateModels.push(defaultForProvider);
+      }
+      const providerFallbacks = {
+        gemini: ['gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.1-pro-preview'],
+        custom: ['deepseek-chat', 'deepseek-v4-flash'],
+        agentrouter: ['deepseek-chat'],
+        deepseek: ['deepseek-reasoner'],
+        groq: ['llama-3.1-8b-instant']
+      }[config.provider] || [];
+      for (const fallback of providerFallbacks) {
+        if (!candidateModels.includes(fallback)) candidateModels.push(fallback);
       }
 
       let parsed = null;
@@ -370,10 +395,14 @@ Instrucciones analíticas estrictas:
           if (raw) {
             const candidateParsed = extractJsonFromAiResponse(raw);
             if (candidateParsed && typeof candidateParsed === 'object') {
-              const rawIds = candidateParsed.factIds || candidateParsed.fact_ids || candidateParsed.facts;
-              if (Array.isArray(rawIds) && rawIds.length >= 1 && rawIds.length <= 8) {
+              let rawIds = candidateParsed.factIds ?? candidateParsed.fact_ids ?? candidateParsed.facts ??
+                candidateParsed.analysis?.factIds ?? candidateParsed.analysis?.fact_ids ?? candidateParsed.analysis?.facts;
+              if (typeof rawIds === 'string') {
+                rawIds = rawIds.split(',').map(s => s.trim()).filter(Boolean);
+              }
+              if (Array.isArray(rawIds) && rawIds.length >= 1 && rawIds.length <= 12) {
                 const allStrings = rawIds.every(id => typeof id === 'string');
-                const validSelected = allStrings ? rawIds.filter(id => validIdsList.includes(id)) : [];
+                const validSelected = allStrings ? rawIds.map(s => s.trim()).filter(id => validIdsList.includes(id)) : [];
                 if (allStrings && validSelected.length >= 1) {
                   candidateParsed.factIds = validSelected;
                   if (!candidateParsed.analysis || typeof candidateParsed.analysis !== 'object') {
@@ -391,6 +420,11 @@ Instrucciones analíticas estrictas:
                 } else {
                   console.warn(`[aiService] Candidate model ${candidate} returned unauthorized or invalid factIds. Trying next candidate...`);
                 }
+              } else if (!rawIds && candidateParsed.analysis && typeof candidateParsed.analysis === 'object') {
+                candidateParsed.factIds = validIdsList.slice(0, 3);
+                parsed = candidateParsed;
+                usedModel = candidate;
+                break;
               } else {
                 console.warn(`[aiService] Candidate model ${candidate} returned missing or non-array factIds. Trying next candidate...`);
               }

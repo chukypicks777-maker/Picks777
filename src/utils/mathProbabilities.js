@@ -15,7 +15,14 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, match = {})
   const corners = calculateCornerProbabilities(team.avgCorners);
   let cleanSheetRate = percent(team.cleanSheetRate);
   if (cleanSheetRate === null && Array.isArray(match.recentMatches)) {
-    const group = match.recentMatches.find(g => String(g.teamId) === String(team.id) || g.team === team.name);
+    const targetId = team.id ? String(team.id) : (isHome ? String(match.homeTeamId || '') : String(match.awayTeamId || ''));
+    const targetName = (team.name || '').toLowerCase().trim();
+    const group = match.recentMatches.find(g => {
+      if (targetId && String(g.teamId) === targetId) return true;
+      if (!g.team || !targetName) return false;
+      const gName = g.team.toLowerCase().trim();
+      return gName === targetName || gName.includes(targetName) || targetName.includes(gName);
+    });
     if (group && Array.isArray(group.events)) {
       let clean = 0, count = 0;
       for (const e of group.events) {

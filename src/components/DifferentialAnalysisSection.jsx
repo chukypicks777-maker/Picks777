@@ -7,8 +7,8 @@ export default function DifferentialAnalysisSection({ homeStats, awayStats, diff
     <h4 className="text-white font-bold text-sm">Comparativa de promedios registrados</h4>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[homeStats, awayStats].map((s, i) => <div key={i} className="rounded-lg bg-[#151d2d] p-3 space-y-2">
       <h5 className="font-bold text-sky-300">{s.name}</h5>
-      <p>Goles a favor: {displayNumber(s.avgGF)} / p · En contra: {displayNumber(s.avgGC)} / p</p>
-      <p>Córners: {displayNumber(s.avgCorners)} / p</p>
+      <p>Goles a favor: {s.avgGF != null ? `${displayNumber(s.avgGF)} / p` : 'N/D'} · En contra: {s.avgGC != null ? `${displayNumber(s.avgGC)} / p` : 'N/D'}</p>
+      <p>Córners: {s.avgCorners != null ? `${displayNumber(s.avgCorners)} / p` : 'N/D'}</p>
       <p>+5.5 Córners: <NumberCounter value={s.cornerOver55} suffix="%"/> · −5.5: <NumberCounter value={s.cornerUnder55} suffix="%"/></p>
     </div>)}</div>
     <p>{diff.cornerDifferentialText}</p>

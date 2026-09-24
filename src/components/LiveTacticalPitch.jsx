@@ -42,7 +42,7 @@ export default function LiveTacticalPitch({ match }) {
                   <div className="space-y-1 text-slate-300 font-mono text-[11px]">
                     <div className="flex justify-between">
                       <span className="text-slate-400">Posesión:</span>
-                      <span className="font-bold text-white">{displayNumber(stats.possession)}%</span>
+                      <span className="font-bold text-white">{stats.possession != null ? `${displayNumber(stats.possession)}%` : 'N/D'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Remates totales:</span>
@@ -54,7 +54,7 @@ export default function LiveTacticalPitch({ match }) {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Tiros de esquina:</span>
-                      <span className="font-bold text-amber-300">{displayNumber(stats.corners, 0)} 🚩</span>
+                      <span className="font-bold text-amber-300">{stats.corners != null ? `${displayNumber(stats.corners, 0)} 🚩` : 'N/D'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Faltas cometidas:</span>
@@ -62,7 +62,7 @@ export default function LiveTacticalPitch({ match }) {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Tarjetas amarillas:</span>
-                      <span className="font-bold text-amber-400">{displayNumber(stats.yellowCards, 0)} 🟨</span>
+                      <span className="font-bold text-amber-400">{stats.yellowCards != null ? `${displayNumber(stats.yellowCards, 0)} 🟨` : 'N/D'}</span>
                     </div>
                   </div>
                 </div>
@@ -136,15 +136,15 @@ export default function LiveTacticalPitch({ match }) {
               </div>
               <div className="bg-[#121929] p-2 rounded-lg border border-white/5">
                 <span className="text-slate-400 block text-[9.5px]">Goles Favor / Contra:</span>
-                <span className="font-bold text-white">{team.goalsFor ?? 0} / {team.goalsAgainst ?? 0}</span>
+                <span className="font-bold text-white">{team.goalsFor != null ? team.goalsFor : 'N/D'} / {team.goalsAgainst != null ? team.goalsAgainst : 'N/D'}</span>
               </div>
               <div className="bg-[#121929] p-2 rounded-lg border border-white/5">
                 <span className="text-slate-400 block text-[9.5px]">Prom. Córners:</span>
-                <span className="font-bold text-amber-300">{team.avgCorners != null ? `${team.avgCorners} 🚩` : 'En cálculo'}</span>
+                <span className="font-bold text-amber-300">{team.avgCorners != null ? `${team.avgCorners} 🚩` : 'N/D'}</span>
               </div>
               <div className="bg-[#121929] p-2 rounded-lg border border-white/5">
                 <span className="text-slate-400 block text-[9.5px]">Prom. Tarjetas:</span>
-                <span className="font-bold text-rose-400">{team.avgYellowCards != null ? `${team.avgYellowCards} 🟨` : 'En cálculo'}</span>
+                <span className="font-bold text-rose-400">{team.avgYellowCards != null ? `${team.avgYellowCards} 🟨` : 'N/D'}</span>
               </div>
             </div>
 

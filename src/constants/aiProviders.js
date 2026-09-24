@@ -52,7 +52,7 @@ export const PROVIDER_PRESETS = {
     icon: '🔷',
     badge: 'Google AI Studio',
     defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1beta',
-    defaultModel: 'gemini-2.0-flash',
+    defaultModel: 'gemini-2.5-flash',
     keyPlaceholder: 'AIzaSy...',
     keyHelp: 'Obtén tu clave oficial en aistudio.google.com/apikey'
   }

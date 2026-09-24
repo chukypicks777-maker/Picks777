@@ -70,7 +70,9 @@ function parseH2H(data, match) {
         const isHome = ev.atVs === 'vs';
         const hTeam = isHome ? teamName : oppName;
         const aTeam = isHome ? oppName : teamName;
-        const scoreParts = (ev.score || '1-1').split('-').map(s => parseInt(s.trim(), 10) || 0);
+        if (!ev.score) return;
+        const scoreParts = ev.score.split('-').map(s => parseInt(s.trim(), 10) || 0);
+        if (scoreParts.length < 2) return;
         const hScore = isHome ? (scoreParts[0] || 0) : (scoreParts[1] || 0);
         const aScore = isHome ? (scoreParts[1] || 0) : (scoreParts[0] || 0);
         const hShort = hTeam.slice(0, 3).toUpperCase();
