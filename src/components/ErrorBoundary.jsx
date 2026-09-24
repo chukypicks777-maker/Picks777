@@ -25,6 +25,7 @@ export default class ErrorBoundary extends React.Component {
       localStorage.removeItem('deportepicks_auth');
       localStorage.removeItem('deportepicks_curr');
       localStorage.removeItem('deportepicks_odds');
+      localStorage.removeItem('oddsFormat');
     } catch {}
     window.location.reload();
   };

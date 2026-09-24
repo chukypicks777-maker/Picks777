@@ -31,7 +31,14 @@ export default function App() {
 
   // Settings states
   const [currency, setCurrency] = useState(() => localStorage.getItem('deportepicks_curr') || 'USD');
-  const [oddsFormat, setOddsFormat] = useState(() => localStorage.getItem('deportepicks_odds') || 'decimal');
+  const [oddsFormat, setOddsFormat] = useState(() => {
+    try {
+      const saved = localStorage.getItem('oddsFormat') || localStorage.getItem('deportepicks_odds');
+      return ['american', 'decimal', 'fractional'].includes(saved) ? saved : 'decimal';
+    } catch {
+      return 'decimal';
+    }
+  });
 
   // Filters
   const [selectedLeague, setSelectedLeague] = useState('all');
@@ -215,7 +222,10 @@ export default function App() {
   }, [currency]);
 
   useEffect(() => {
-    localStorage.setItem('deportepicks_odds', oddsFormat);
+    try {
+      localStorage.setItem('oddsFormat', oddsFormat);
+      localStorage.setItem('deportepicks_odds', oddsFormat);
+    } catch {}
   }, [oddsFormat]);
 
   // Load matches on filter changes or when auth session becomes valid
@@ -663,7 +673,7 @@ export default function App() {
               </span>
             </div>
             <div className="flex items-center space-x-2 text-[11px] sm:text-xs font-mono text-slate-400 self-start sm:self-auto">
-              <span>Formato: <strong className="text-slate-200">{oddsFormat.toUpperCase()}</strong></span>
+              <span>Formato: <strong className="text-slate-200">{oddsFormat === 'american' ? 'AMERICANO' : oddsFormat === 'fractional' ? 'FRACCIONARIO' : 'DECIMAL'}</strong></span>
               <span className="text-slate-600">•</span>
               <span>Moneda: <strong className="text-slate-200">{currency}</strong></span>
             </div>

@@ -64,7 +64,7 @@ export default function Navbar({
                 <span className="font-black text-xs sm:text-base md:text-lg tracking-tight text-white font-sans whitespace-nowrap">
                   777 <span className="text-red-500">PICKS</span>
                 </span>
-                <span className="bg-red-500/15 text-red-400 border border-red-500/30 text-[8px] sm:text-[9px] font-mono font-bold px-1 sm:px-1.5 py-0.2 rounded uppercase shrink-0">
+                <span className="hidden min-[380px]:inline-block bg-red-500/15 text-red-400 border border-red-500/30 text-[8px] sm:text-[9px] font-mono font-bold px-1 sm:px-1.5 py-0.2 rounded uppercase shrink-0">
                   VIP
                 </span>
               </div>
@@ -165,7 +165,7 @@ export default function Navbar({
             </div>
 
             {/* Mobile Social Menu Dropdown Trigger */}
-            <div className="relative lg:hidden">
+            <div className="relative hidden min-[360px]:block lg:hidden">
               <button
                 onClick={() => setShowSocialMenu(!showSocialMenu)}
                 className="p-1 sm:p-1.5 bg-[#161b22] border border-white/10 rounded-lg text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
@@ -221,14 +221,16 @@ export default function Navbar({
               <option value="ARS">ARS</option>
             </select>
 
-            {/* Odds Format Selector */}
+            {/* Odds Format Selector (Americano, Decimal, Fraccionario) */}
             <select
+              aria-label="Formato de Momios"
+              title="Formato de Momios / Cuotas"
               value={oddsFormat}
               onChange={(e) => { sounds.playClick(); setOddsFormat(e.target.value); }}
-              className="hidden md:block bg-[#161b22] text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shrink-0"
+              className="bg-[#161b22] text-[10px] sm:text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-1 sm:px-2 py-1 sm:py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shrink-0"
             >
-              <option value="decimal">Decimal</option>
               <option value="american">Americano</option>
+              <option value="decimal">Decimal</option>
               <option value="fractional">Fraccionario</option>
             </select>
 

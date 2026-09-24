@@ -239,7 +239,7 @@ export default function HeroFeaturedMatch({
                   <div className="flex items-center justify-between text-xs font-mono">
                     <span className="text-slate-400">Cuota Recomendada:</span>
                     <span className="text-sky-300 font-bold text-sm">
-                      {formatOdds(match.aiPick?.odds, oddsFormat)}
+                      {formatOdds(match.aiPick?.odds ?? match.aiPick?.estimatedOdds ?? parlayCandidates[0]?.odds, oddsFormat)}
                     </span>
                   </div>
 
