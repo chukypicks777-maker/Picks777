@@ -282,9 +282,9 @@ export default function MatchCard({
                 sounds.playClick();
                 onOpenModal(match);
               }}
-              className="py-1.5 px-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-white/5 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
+              className="py-2 px-2 bg-slate-800/80 hover:bg-slate-700 active:scale-95 text-slate-300 border border-white/5 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 cursor-pointer"
             >
-              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>Finalizado</span>
             </button>
           ) : (
@@ -296,14 +296,14 @@ export default function MatchCard({
                 const topOpportunity = parlayCandidates[0];
                 onAddToParlay(topOpportunity);
               }}
-              className={`py-1.5 px-2 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 ${
+              className={`py-2 px-2 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1 ${
                 parlayCandidates.length
-                  ? 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.15)]'
+                  ? 'bg-emerald-600/20 hover:bg-emerald-600/30 active:scale-95 text-emerald-300 border border-emerald-500/40 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.15)]'
                   : 'bg-slate-800/40 text-slate-500 border border-white/5 cursor-not-allowed opacity-60'
               }`}
             >
-              <Plus className="w-3 h-3" />
-              <span>{parlayCandidates.length ? 'Al Parlay' : 'Sin cuota'}</span>
+              <Plus className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{parlayCandidates.length ? '+ Al Parlay' : 'Sin cuota'}</span>
             </button>
           )}
 
@@ -313,9 +313,9 @@ export default function MatchCard({
               sounds.playClick();
               onOpenModal(match);
             }}
-            className="py-1.5 px-2 bg-sky-400 hover:bg-sky-300 text-black rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(56,189,248,0.3)]"
+            className="py-2 px-2 bg-sky-400 hover:bg-sky-300 active:scale-95 text-black rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 cursor-pointer shadow-[0_0_10px_rgba(56,189,248,0.3)]"
           >
-            <Eye className="w-3 h-3" />
+            <Eye className="w-3.5 h-3.5 shrink-0" />
             <span>Detalle</span>
           </button>
         </div>

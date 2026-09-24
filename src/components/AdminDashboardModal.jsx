@@ -364,27 +364,27 @@ export default function AdminDashboardModal({ onClose }) {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-5xl bg-[#0c1017] border border-white/10 rounded-2xl overflow-hidden shadow-2xl my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-5xl bg-[#0c1017] border border-white/10 rounded-2xl overflow-hidden shadow-2xl my-2 sm:my-8 overflow-x-hidden">
         
         {/* Header */}
-        <div className="bg-[#101622] border-b border-white/10 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
+        <div className="bg-[#101622] border-b border-white/10 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div className="relative shrink-0">
               <img 
                 src="/logo.jpg" 
                 alt="777 Picks" 
-                className="w-9 h-9 rounded-full object-cover border border-amber-500/50"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-amber-500/50"
               />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-amber-500 text-black flex items-center justify-center">
-                <Crown className="w-2.5 h-2.5" />
+              <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-500 text-black flex items-center justify-center">
+                <Crown className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
               </div>
             </div>
-            <div>
-              <h3 className="font-bold text-base text-white">
+            <div className="min-w-0">
+              <h3 className="font-bold text-xs sm:text-base text-white truncate">
                 Panel de Administración • 777 Picks Owner
               </h3>
-              <p className="text-xs font-mono text-slate-400">
+              <p className="text-[10px] sm:text-xs font-mono text-slate-400 truncate">
                 Gestión centralizada de licencias y generación de códigos
               </p>
             </div>
@@ -392,48 +392,48 @@ export default function AdminDashboardModal({ onClose }) {
 
           <button
             aria-label="Cerrar panel" onClick={() => { sounds.playClick(); onClose(); }}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-5 bg-[#0e131e] border-b border-white/5 font-mono text-xs">
-          <div className="bg-[#121824] p-3 rounded-xl border border-white/5">
-            <span className="text-slate-400 block text-[11px]">Total Códigos</span>
-            <span className="text-xl font-bold text-white mt-0.5 block">{stats.total}</span>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 p-3.5 sm:p-5 bg-[#0e131e] border-b border-white/5 font-mono text-xs">
+          <div className="bg-[#121824] p-2.5 sm:p-3 rounded-xl border border-white/5">
+            <span className="text-slate-400 block text-[10px] sm:text-[11px]">Total Códigos</span>
+            <span className="text-lg sm:text-xl font-bold text-white mt-0.5 block">{stats.total}</span>
           </div>
-          <div className="bg-[#121824] p-3 rounded-xl border border-emerald-500/20">
-            <span className="text-emerald-400 block text-[11px]">Activos / Reclamados</span>
-            <span className="text-xl font-bold text-emerald-400 mt-0.5 block">{stats.active}</span>
+          <div className="bg-[#121824] p-2.5 sm:p-3 rounded-xl border border-emerald-500/20">
+            <span className="text-emerald-400 block text-[10px] sm:text-[11px] truncate">Activos / Reclamados</span>
+            <span className="text-lg sm:text-xl font-bold text-emerald-400 mt-0.5 block">{stats.active}</span>
           </div>
-          <div className="bg-[#121824] p-3 rounded-xl border border-sky-500/20">
-            <span className="text-sky-400 block text-[11px]">Disponibles</span>
-            <span className="text-xl font-bold text-sky-400 mt-0.5 block">{stats.available}</span>
+          <div className="bg-[#121824] p-2.5 sm:p-3 rounded-xl border border-sky-500/20">
+            <span className="text-sky-400 block text-[10px] sm:text-[11px]">Disponibles</span>
+            <span className="text-lg sm:text-xl font-bold text-sky-400 mt-0.5 block">{stats.available}</span>
           </div>
-          <div className="bg-[#121824] p-3 rounded-xl border border-rose-500/20">
-            <span className="text-rose-400 block text-[11px]">Expirados</span>
-            <span className="text-xl font-bold text-rose-400 mt-0.5 block">{stats.expired}</span>
+          <div className="bg-[#121824] p-2.5 sm:p-3 rounded-xl border border-rose-500/20">
+            <span className="text-rose-400 block text-[10px] sm:text-[11px]">Expirados</span>
+            <span className="text-lg sm:text-xl font-bold text-rose-400 mt-0.5 block">{stats.expired}</span>
           </div>
         </div>
 
         {/* Tab Selection */}
-        <div className="flex flex-wrap items-center gap-1 px-4 pt-3 border-b border-white/10 bg-[#0a0d14]">
+        <div className="flex items-center space-x-1 px-3 sm:px-4 pt-2 sm:pt-3 border-b border-white/10 bg-[#0a0d14] overflow-x-auto scrollbar-none no-scrollbar touch-pan-x pr-6">
           <button
             onClick={() => { sounds.playClick(); setActiveTab('generator'); }}
-            className={`px-4 py-2.5 border-b-2 text-xs font-semibold transition ${
+            className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'generator'
                 ? 'border-amber-400 text-amber-300 bg-amber-500/10'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            Generador de Códigos (Lotes)
+            Generador (Lotes)
           </button>
 
           <button
             onClick={() => { sounds.playClick(); setActiveTab('codes_list'); }}
-            className={`px-4 py-2.5 border-b-2 text-xs font-semibold transition ${
+            className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'codes_list'
                 ? 'border-sky-400 text-sky-300 bg-sky-500/10'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -444,7 +444,7 @@ export default function AdminDashboardModal({ onClose }) {
 
           <button
             onClick={() => { sounds.playClick(); setActiveTab('ai_config'); }}
-            className={`px-4 py-2.5 border-b-2 text-xs font-semibold transition ${
+            className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'ai_config'
                 ? 'border-indigo-400 text-indigo-300 bg-indigo-500/10'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -454,7 +454,7 @@ export default function AdminDashboardModal({ onClose }) {
           </button>
           <button
             onClick={() => { sounds.playClick(); setActiveTab('groups'); }}
-            className={`px-4 py-2.5 border-b-2 text-xs font-semibold transition ${
+            className={`px-3 sm:px-4 py-2 sm:py-2.5 border-b-2 text-xs font-semibold transition whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'groups'
                 ? 'border-emerald-400 text-emerald-300 bg-emerald-500/10'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -462,10 +462,11 @@ export default function AdminDashboardModal({ onClose }) {
           >
             Grupos y Comunidad
           </button>
+          <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
         </div>
 
         {/* Body Container */}
-        <div className="p-6 max-h-[55vh] overflow-y-auto">
+        <div className="p-3.5 sm:p-6 max-h-[70vh] sm:max-h-[55vh] overflow-y-auto overflow-x-hidden">
           
           {activeTab === 'groups' && <AdminGroups />}
           {/* TAB 1: GENERATOR */}
@@ -645,7 +646,7 @@ export default function AdminDashboardModal({ onClose }) {
 
               {/* Table */}
               <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#0e131d]">
-                <table className="w-full text-left text-xs font-mono">
+                <table className="w-full text-left text-xs font-mono whitespace-nowrap min-w-[600px]">
                   <thead className="bg-[#121824] text-slate-400 border-b border-white/10">
                     <tr>
                       <th className="py-2.5 px-3.5">Código</th>

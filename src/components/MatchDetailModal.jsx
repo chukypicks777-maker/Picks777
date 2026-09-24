@@ -405,7 +405,7 @@ export default function MatchDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
       
-      <div className="relative w-full max-w-4xl bg-[#0c1017] border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] my-2 sm:my-8">
+      <div className="relative w-full max-w-4xl bg-[#0c1017] border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] my-2 sm:my-8 overflow-x-hidden">
         
         {/* Header Ribbon */}
         <div className="bg-[#101622] border-b border-white/10 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
@@ -503,7 +503,7 @@ export default function MatchDetailModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center space-x-1 px-3 sm:px-6 pt-2 sm:pt-3 border-b border-white/10 bg-[#0a0d14] overflow-x-auto scrollbar-none no-scrollbar touch-pan-x">
+        <div className="flex items-center space-x-1 px-3 sm:px-6 pt-2 sm:pt-3 border-b border-white/10 bg-[#0a0d14] overflow-x-auto scrollbar-none no-scrollbar touch-pan-x pr-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -518,10 +518,11 @@ export default function MatchDetailModal({
               <span>{tab.label}</span>
             </button>
           ))}
+          <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
         </div>
 
         {/* Modal Body */}
-        <div className="p-3.5 sm:p-6 max-h-[72vh] sm:max-h-[60vh] overflow-y-auto">
+        <div className="p-3.5 sm:p-6 max-h-[75vh] sm:max-h-[60vh] overflow-y-auto overflow-x-hidden">
           
           {/* TAB 1: AI REPORT & PICKS */}
           {activeTab === 'ai_report' && (

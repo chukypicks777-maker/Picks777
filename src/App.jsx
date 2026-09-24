@@ -454,7 +454,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#080b11] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#080b11] text-slate-100 flex flex-col font-sans w-full overflow-x-hidden relative">
       
       {/* Toast Notification */}
       {toastMessage && (
@@ -501,7 +501,7 @@ export default function App() {
       <LiveTicker matches={matches} />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4">
+      <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-32 sm:pb-28 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
         
         {/* Community VIP Channels (Telegram, WhatsApp, Instagram) */}
         <CommunityBanner />
@@ -735,9 +735,9 @@ export default function App() {
       {!showParlayDrawer && parlayLegs.length > 0 && (
         <button
           onClick={() => { sounds.playClick(); setShowParlayDrawer(true); }}
-          className="fixed bottom-6 right-6 z-40 px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-xl flex items-center space-x-2 cursor-pointer text-xs font-mono transition"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-30 px-3.5 sm:px-4 py-2.5 sm:py-3 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.7)] border border-emerald-400/40 flex items-center space-x-2 cursor-pointer text-xs font-mono transition-all backdrop-blur-md"
         >
-          <Layers className="w-4 h-4" />
+          <Layers className="w-4 h-4 text-emerald-200 shrink-0" />
           <span>Ver Parlay Ticket ({parlayLegs.length})</span>
         </button>
       )}

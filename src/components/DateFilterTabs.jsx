@@ -42,7 +42,7 @@ export default function DateFilterTabs({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5">
         
         {/* Status Tabs */}
-        <div className="flex items-center space-x-1 bg-[#121620] p-1 rounded-xl border border-white/[0.08] w-full sm:w-auto overflow-x-auto scrollbar-none no-scrollbar touch-pan-x">
+        <div className="flex items-center space-x-1 bg-[#121620] p-1 rounded-xl border border-white/[0.08] w-full sm:w-auto overflow-x-auto scrollbar-none no-scrollbar touch-pan-x pr-4 sm:pr-1">
           {statusOptions.map((opt) => {
             const isSelected = (opt.id === 'LIVE' || opt.id === 'FINISHED') 
               ? matchStatusFilter === opt.id 
@@ -79,6 +79,7 @@ export default function DateFilterTabs({
               </button>
             );
           })}
+          <div className="w-2 shrink-0 pointer-events-none sm:hidden" aria-hidden="true" />
         </div>
 
         {/* Search Input */}
@@ -106,7 +107,7 @@ export default function DateFilterTabs({
       </div>
 
       {/* Market Sub-Filters */}
-      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-xs scrollbar-none no-scrollbar touch-pan-x">
+      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 px-0.5 pr-6 sm:pr-2 text-xs scrollbar-none no-scrollbar touch-pan-x">
         <span className="text-[11px] font-mono text-slate-500 mr-1 shrink-0">Categoría:</span>
         {markets.map((m) => {
           const isSelected = marketFilter === m.id;
@@ -131,6 +132,7 @@ export default function DateFilterTabs({
             </button>
           );
         })}
+        <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
       </div>
 
     </div>

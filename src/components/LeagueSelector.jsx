@@ -4,8 +4,8 @@ import { LEAGUES_DATA } from '../constants/leagues';
 
 export default function LeagueSelector({ selectedLeague, onSelectLeague, matchCounts = {} }) {
   return (
-    <div className="w-full py-2.5 mb-1">
-      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1.5 scrollbar-none no-scrollbar touch-pan-x">
+    <div className="w-full py-2.5 mb-1 relative">
+      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1.5 px-0.5 pr-6 sm:pr-8 scrollbar-none no-scrollbar touch-pan-x">
         {LEAGUES_DATA.map((league) => {
           const isSelected = selectedLeague === league.id;
           const count = matchCounts[league.id] ?? (league.id === 'all' ? matchCounts.total : undefined);
@@ -35,6 +35,8 @@ export default function LeagueSelector({ selectedLeague, onSelectLeague, matchCo
             </button>
           );
         })}
+        {/* End safety padding spacer so last league never clips on mobile */}
+        <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
       </div>
     </div>
   );

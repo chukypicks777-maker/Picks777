@@ -52,35 +52,35 @@ export default function ParlayBuilderDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 w-[calc(100%_-_2rem)] max-w-md animate-slide-up">
+    <div className="fixed bottom-3 right-3 sm:bottom-4 sm:right-4 z-40 w-[calc(100%_-_1.5rem)] sm:w-[calc(100%_-_2rem)] max-w-md animate-slide-up">
       <div className="bg-[#0e131d]/95 backdrop-blur-xl border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
         
         {/* Drawer Header */}
-        <div className="bg-[#121824] px-4 py-3 border-b border-white/5 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+        <div className="bg-[#121824] px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center space-x-2 min-w-0">
             <img 
-              src="/logo.jpeg"
+              src="/logo.jpeg" 
               alt="777 Picks" 
-              className="w-7 h-7 rounded-full object-cover border border-red-500/50 shrink-0"
+              className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border border-red-500/50 shrink-0"
             />
-            <h4 className="font-bold text-xs text-white flex items-center space-x-1.5 font-sans">
-              <span>Boleto 777 Picks</span>
-              <span className="px-1.5 py-0.2 bg-red-500 text-white font-mono font-bold text-[10px] rounded">
+            <h4 className="font-bold text-xs text-white flex items-center space-x-1.5 font-sans truncate">
+              <span className="truncate">Boleto 777 Picks</span>
+              <span className="px-1.5 py-0.2 bg-red-500 text-white font-mono font-bold text-[10px] rounded shrink-0">
                 {legs.length}
               </span>
             </h4>
           </div>
 
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 shrink-0">
             <button
               onClick={() => setIsMinimized(!isMinimized)}
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/5 transition"
+              className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/5 transition cursor-pointer"
             >
               {isMinimized ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             <button
               onClick={() => { sounds.playClick(); onClose(); }}
-              className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-white/5 transition"
+              className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-white/5 transition cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -88,13 +88,13 @@ export default function ParlayBuilderDrawer({
         </div>
 
         {!isMinimized && (
-          <div className="p-4 space-y-3 max-h-[70vh] overflow-y-auto font-mono text-xs">
+          <div className="p-3.5 sm:p-4 space-y-3 max-h-[72vh] sm:max-h-[70vh] overflow-y-auto overflow-x-hidden font-mono text-xs">
             
             {/* Quick 1-Click Banker Import */}
-            <div className="flex items-center justify-between p-2.5 bg-[#141c2b] rounded-xl border border-sky-500/20 shadow-inner">
-              <div className="flex items-center space-x-1.5 text-slate-300 font-sans">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[11px]">¿Cargar Parlay Banquero IA?</span>
+            <div className="flex items-center justify-between p-2.5 bg-[#141c2b] rounded-xl border border-sky-500/20 shadow-inner gap-2">
+              <div className="flex items-center space-x-1.5 text-slate-300 font-sans min-w-0">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span className="text-[11px] truncate">¿Cargar Parlay Banquero IA?</span>
               </div>
               <button
                 onClick={() => {
@@ -211,18 +211,18 @@ export default function ParlayBuilderDrawer({
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={handleCopyTicket}
-                  className="py-2.5 px-3 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 shadow-[0_0_15px_rgba(56,189,248,0.2)]"
+                  className="py-2.5 px-3 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 shadow-[0_0_15px_rgba(56,189,248,0.2)] cursor-pointer"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copied ? '¡Copiado!' : 'Copiar Ticket'}</span>
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <Copy className="w-3.5 h-3.5 shrink-0" />}
+                  <span className="truncate">{copied ? '¡Copiado!' : 'Copiar Ticket'}</span>
                 </button>
 
                 <button
                   onClick={() => { sounds.playClick(); onClearAll(); }}
-                  className="py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1"
+                  className="py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Vaciar</span>
+                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">Vaciar</span>
                 </button>
               </div>
             )}

@@ -57,78 +57,84 @@ export default function HeroFeaturedMatch({
           }}
           className="rounded-2xl border border-sky-500/20 bg-[#0c111a] shadow-[0_10px_35px_rgba(0,0,0,0.6)] cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-400/50"
         >
-          <div className="p-6 md:p-7 relative overflow-hidden">
+          <div className="p-3.5 sm:p-5 md:p-7 relative overflow-hidden">
             
             {/* Header Info */}
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-              <div className="flex items-center space-x-2 text-xs font-mono">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 mb-4 sm:mb-6">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-mono">
                 {match.status === 'LIVE' ? (
-                  <span className="px-2.5 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded-md font-bold flex items-center space-x-1.5 shadow-[0_0_12px_rgba(244,63,94,0.3)]">
-                    <span className="w-2 h-2 rounded-full bg-rose-400 live-dot"></span>
+                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded-md font-bold flex items-center space-x-1.5 shadow-[0_0_12px_rgba(244,63,94,0.3)] shrink-0">
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-rose-400 live-dot"></span>
                     <span>EN VIVO {match.liveMinute}</span>
                   </span>
                 ) : match.status === 'FINISHED' ? (
-                  <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md font-bold">
+                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-md font-bold shrink-0">
                     FINALIZADO (FT)
                   </span>
                 ) : (
-                  <span className="px-2.5 py-1 bg-sky-500/15 text-sky-300 border border-sky-500/25 rounded-md font-medium flex items-center space-x-1">
-                    <Clock className="w-3.5 h-3.5 text-sky-400" />
+                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-sky-500/15 text-sky-300 border border-sky-500/25 rounded-md font-medium flex items-center space-x-1 shrink-0">
+                    <Clock className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-sky-400 shrink-0" />
                     <span>{new Date(match.kickoff).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
                   </span>
                 )}
 
-                <span className="text-slate-300 font-sans font-semibold">
+                <span className="text-slate-300 font-sans font-semibold shrink-0">
                   {match.leagueFlag} {match.leagueName}
                 </span>
-                <span className="text-slate-600">•</span>
-                <span className="text-slate-400">{match.venue}</span>
+                {match.venue && (
+                  <>
+                    <span className="text-slate-600 hidden xs:inline">•</span>
+                    <span className="text-slate-400 truncate max-w-[130px] sm:max-w-none">{match.venue}</span>
+                  </>
+                )}
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-white/5">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsScanning(true);
                   }}
-                  className="px-2.5 py-1 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-lg text-xs font-mono flex items-center space-x-1 transition cursor-pointer"
+                  className="px-2 sm:px-2.5 py-1 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-lg text-[11px] sm:text-xs font-mono flex items-center space-x-1 transition cursor-pointer shrink-0"
                 >
-                  <Target className="w-3.5 h-3.5 animate-pulse" />
+                  <Target className="w-3.5 h-3.5 animate-pulse text-sky-400 shrink-0" />
                   <span>Radar Scanner</span>
                 </button>
-                <div className="text-xs font-mono text-slate-400">
-                  Árbitro: <strong className="text-slate-200">{match.referee}</strong>
-                </div>
+                {match.referee && (
+                  <div className="text-[11px] sm:text-xs font-mono text-slate-400 truncate max-w-[150px] sm:max-w-none text-right">
+                    Árbitro: <strong className="text-slate-200">{match.referee}</strong>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Teams Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-center">
               
               {/* Teams Matchup (7 cols) */}
               <div className="lg:col-span-7 flex flex-col justify-center">
-                <div className="flex items-center justify-between sm:justify-around gap-4 py-2">
+                <div className="flex items-center justify-between sm:justify-around gap-1.5 sm:gap-4 py-1 sm:py-2">
                   
                   {/* Home Team */}
-                  <div className="flex flex-col items-center text-center space-y-2 flex-1">
+                  <div className="flex flex-col items-center text-center space-y-1 sm:space-y-2 flex-1 min-w-0">
                     <img
                       src={match.homeTeam?.logo}
                       alt={match.homeTeam?.name}
-                      className="w-14 h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-transform hover:scale-105"
+                      className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 shrink-0"
                     />
-                    <div>
-                      <h4 className="font-bold text-base md:text-lg text-white">
+                    <div className="w-full px-0.5 sm:px-1">
+                      <h4 className="font-bold text-xs sm:text-sm md:text-lg text-white truncate">
                         {match.homeTeam?.name}
                       </h4>
-                      <p className="text-xs font-mono text-slate-400">
+                      <p className="text-[10px] sm:text-xs font-mono text-slate-400 truncate">
                         Local{match.homeTeam?.position ? ` • #${match.homeTeam.position} (${match.homeTeam.points ?? 0} pts)` : ''}
                       </p>
                     </div>
-                    <div className="flex space-x-1 mt-1">
+                    <div className="flex space-x-1 mt-0.5 sm:mt-1 justify-center shrink-0">
                       {(match.homeTeam?.form || []).map((f, i) => (
                         <span
                           key={i}
-                          className={`w-4 h-4 text-[9px] font-bold font-mono rounded flex items-center justify-center ${
+                          className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[8px] sm:text-[9px] font-bold font-mono rounded flex items-center justify-center shrink-0 ${
                             f === 'W' ? 'bg-emerald-600 text-white' : f === 'D' ? 'bg-amber-600 text-white' : 'bg-rose-600 text-white'
                           }`}
                         >
@@ -139,12 +145,12 @@ export default function HeroFeaturedMatch({
                   </div>
 
                   {/* Score Center */}
-                  <div className="flex flex-col items-center justify-center px-4">
-                    <div className="bg-[#141a27] border border-white/10 px-4 py-2.5 rounded-xl text-center shadow-inner">
-                      <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                  <div className="flex flex-col items-center justify-center px-1 sm:px-4 shrink-0">
+                    <div className="bg-[#141a27] border border-white/10 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-xl text-center shadow-inner">
+                      <span className="text-[8.5px] sm:text-[10px] font-mono text-slate-400 uppercase tracking-wider block whitespace-nowrap">
                         {match.status === 'LIVE' ? 'Marcador en Vivo' : match.status === 'FINISHED' ? 'Resultado Final' : 'Marcador IA'}
                       </span>
-                      <span className="text-xl md:text-2xl font-black font-mono text-white tracking-wider">
+                      <span className="text-base sm:text-xl md:text-2xl font-black font-mono text-white tracking-wider whitespace-nowrap">
                         {match.status === 'LIVE' 
                           ? `${match.liveScore?.home ?? match.finalScore?.home ?? 0} - ${match.liveScore?.away ?? match.finalScore?.away ?? 0}`
                           : match.status === 'FINISHED'
@@ -155,25 +161,25 @@ export default function HeroFeaturedMatch({
                   </div>
 
                   {/* Away Team */}
-                  <div className="flex flex-col items-center text-center space-y-2 flex-1">
+                  <div className="flex flex-col items-center text-center space-y-1 sm:space-y-2 flex-1 min-w-0">
                     <img
                       src={match.awayTeam?.logo}
                       alt={match.awayTeam?.name}
-                      className="w-14 h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-transform hover:scale-105"
+                      className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 shrink-0"
                     />
-                    <div>
-                      <h4 className="font-bold text-base md:text-lg text-white">
+                    <div className="w-full px-0.5 sm:px-1">
+                      <h4 className="font-bold text-xs sm:text-sm md:text-lg text-white truncate">
                         {match.awayTeam?.name}
                       </h4>
-                      <p className="text-xs font-mono text-slate-400">
+                      <p className="text-[10px] sm:text-xs font-mono text-slate-400 truncate">
                         Visita{match.awayTeam?.position ? ` • #${match.awayTeam.position} (${match.awayTeam.points ?? 0} pts)` : ''}
                       </p>
                     </div>
-                    <div className="flex space-x-1 mt-1">
+                    <div className="flex space-x-1 mt-0.5 sm:mt-1 justify-center shrink-0">
                       {(match.awayTeam?.form || []).map((f, i) => (
                         <span
                           key={i}
-                          className={`w-4 h-4 text-[9px] font-bold font-mono rounded flex items-center justify-center ${
+                          className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[8px] sm:text-[9px] font-bold font-mono rounded flex items-center justify-center shrink-0 ${
                             f === 'W' ? 'bg-emerald-600 text-white' : f === 'D' ? 'bg-amber-600 text-white' : 'bg-rose-600 text-white'
                           }`}
                         >
@@ -186,13 +192,13 @@ export default function HeroFeaturedMatch({
                 </div>
 
                 {/* Segmented Probabilities Bar with Counters */}
-                <div className="mt-4 space-y-1.5">
-                  <div className="flex justify-between text-xs font-mono text-slate-300">
+                <div className="mt-3 sm:mt-4 space-y-1.5">
+                  <div className="flex justify-between text-[11px] sm:text-xs font-mono text-slate-300">
                     <span>Local: <strong><NumberCounter value={homeProb} suffix="%" /></strong></span>
                     <span>Empate: <strong><NumberCounter value={drawProb} suffix="%" /></strong></span>
                     <span>Visita: <strong><NumberCounter value={awayProb} suffix="%" /></strong></span>
                   </div>
-                  <div className="h-2.5 w-full bg-[#161c28] rounded-full overflow-hidden flex gap-0.5 p-0.5 border border-white/5">
+                  <div className="h-2 sm:h-2.5 w-full bg-[#161c28] rounded-full overflow-hidden flex gap-0.5 p-0.5 border border-white/5">
                     <div style={{ width: `${homeProb}%` }} className="bg-sky-500 h-full rounded-l-full transition-all duration-700 shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
                     <div style={{ width: `${drawProb}%` }} className="bg-slate-500 h-full transition-all duration-700" />
                     <div style={{ width: `${awayProb}%` }} className="bg-indigo-500 h-full rounded-r-full transition-all duration-700 shadow-[0_0_8px_rgba(129,140,248,0.5)]" />
@@ -202,7 +208,7 @@ export default function HeroFeaturedMatch({
               </div>
 
               {/* AI Pick Box (5 cols) */}
-              <div className="lg:col-span-5 bg-[#111724] border border-sky-500/30 rounded-xl p-5 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+              <div className="lg:col-span-5 bg-[#111724] border border-sky-500/30 rounded-xl p-3.5 sm:p-5 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[11px] font-mono text-sky-400 font-bold uppercase tracking-wide flex items-center space-x-1">

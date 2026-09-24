@@ -46,7 +46,7 @@ export default function Navbar({
           
           {/* Brand Wordmark & Identity */}
           <div 
-            className="flex items-center space-x-2 sm:space-x-2.5 cursor-pointer select-none shrink-0 min-w-0" 
+            className="flex items-center space-x-1.5 sm:space-x-2.5 cursor-pointer select-none shrink min-w-0" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
             {/* Official 777 Picks Circular Logo */}
@@ -54,21 +54,21 @@ export default function Navbar({
               <img 
                 src="/logo.jpg" 
                 alt="777 Picks - Picks de Confianza" 
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-red-500/40 shadow-sm"
+                className="w-7 h-7 sm:w-10 sm:h-10 rounded-full object-cover border border-red-500/40 shadow-sm"
               />
               <span className="absolute -bottom-0.5 -right-0.5 w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-500 border-2 border-[#0d1117]" />
             </div>
 
             <div className="min-w-0">
               <div className="flex items-center space-x-1 sm:space-x-1.5">
-                <span className="font-black text-sm sm:text-lg tracking-tight text-white font-sans whitespace-nowrap">
+                <span className="font-black text-xs sm:text-base md:text-lg tracking-tight text-white font-sans whitespace-nowrap">
                   777 <span className="text-red-500">PICKS</span>
                 </span>
-                <span className="bg-red-500/15 text-red-400 border border-red-500/30 text-[8.5px] sm:text-[9px] font-mono font-bold px-1.5 py-0.2 rounded uppercase shrink-0">
+                <span className="bg-red-500/15 text-red-400 border border-red-500/30 text-[8px] sm:text-[9px] font-mono font-bold px-1 sm:px-1.5 py-0.2 rounded uppercase shrink-0">
                   VIP
                 </span>
               </div>
-              <div className="hidden xs:flex sm:flex items-center space-x-1 text-[9.5px] sm:text-[10px] font-mono text-slate-400 truncate">
+              <div className="hidden sm:flex items-center space-x-1 text-[9.5px] sm:text-[10px] font-mono text-slate-400 truncate">
                 <span className="text-slate-300 font-semibold">Picks de Confianza</span>
                 <span className="text-slate-600">•</span>
                 <span>8 Ligas</span>
@@ -254,7 +254,7 @@ export default function Navbar({
                     className="w-4 h-4 sm:w-5 sm:h-5 rounded-full object-cover border border-emerald-500/40 shrink-0"
                   />
                 ) : (
-                  <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-bold text-[9px] sm:text-[10px] shrink-0 ${
+                  <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-bold text-[8.5px] sm:text-[10px] shrink-0 ${
                     auth.isAdmin ? 'bg-amber-500 text-black' : (auth.isTrial ? 'bg-sky-500 text-black' : 'bg-emerald-500 text-black')
                   }`}>
                     {auth.isAdmin ? <Crown className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : userInitial || <User className="w-2.5 h-2.5 sm:w-3 sm:h-3" />}
@@ -263,7 +263,7 @@ export default function Navbar({
                 <span className="hidden sm:inline-block font-semibold text-slate-200 max-w-[80px] md:max-w-[100px] truncate text-[11px]">
                   {userName}
                 </span>
-                <span className={`text-[9.5px] sm:text-[10px] font-mono font-bold ${
+                <span className={`text-[8.5px] sm:text-[10px] font-mono font-bold whitespace-nowrap ${
                   auth.isAdmin
                     ? 'text-amber-400'
                     : (auth.trialExpired
@@ -273,8 +273,8 @@ export default function Navbar({
                   {auth.isAdmin
                     ? 'OWNER'
                     : (auth.trialExpired
-                      ? 'VENCIDO'
-                      : (auth.user?.hasCode ? `VIP ${auth.user?.daysRemaining || 30}d` : `PRUEBA ${auth.user?.daysRemaining || 3}d`))}
+                      ? 'EXP'
+                      : (auth.user?.hasCode ? `VIP ${auth.user?.daysRemaining || 30}d` : `${auth.user?.daysRemaining || 3}d`))}
                 </span>
               </div>
             )}
@@ -291,22 +291,33 @@ export default function Navbar({
           </div>
 
         </div>
-        <nav aria-label="Navegación móvil" className="flex md:hidden items-center justify-between gap-1 pb-2 pt-1 border-t border-white/5 overflow-x-auto scrollbar-none no-scrollbar">
+        <nav aria-label="Navegación móvil" className="flex md:hidden items-center justify-between gap-1.5 pb-2 pt-1 border-t border-white/5 overflow-x-auto scrollbar-none no-scrollbar">
           <button
             onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
-            className={`flex-1 py-1.5 px-2 rounded-lg font-medium transition text-center whitespace-nowrap text-[11px] ${
+            className={`flex-1 min-w-0 py-2 px-1 rounded-lg font-medium transition text-center whitespace-nowrap text-[11px] sm:text-xs flex items-center justify-center ${
               marketFilter === 'all' ? 'bg-white/10 text-white font-bold border border-white/10' : 'bg-slate-800/80 text-slate-300'
             }`}
           >
-            Partidos
+            <span className="truncate">Partidos</span>
           </button>
-          <button onClick={() => { sounds.playClick(); onOpenStats(); }} className="flex-1 py-1.5 px-2 rounded-lg bg-slate-800/80 text-sky-300 font-medium text-center whitespace-nowrap text-[11px]">Stats</button>
-          <button onClick={() => { sounds.playClick(); onOpenParlay(); }} className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 font-bold text-center whitespace-nowrap text-[11px]">
-            Parlay {parlayCount > 0 ? `(${parlayCount})` : ''}
+          <button 
+            onClick={() => { sounds.playClick(); onOpenStats(); }} 
+            className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-slate-800/80 text-sky-300 font-medium text-center whitespace-nowrap text-[11px] sm:text-xs flex items-center justify-center"
+          >
+            <span className="truncate">Stats</span>
+          </button>
+          <button 
+            onClick={() => { sounds.playClick(); onOpenParlay(); }} 
+            className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 font-bold text-center whitespace-nowrap text-[11px] sm:text-xs flex items-center justify-center"
+          >
+            <span className="truncate">Parlay {parlayCount > 0 ? `(${parlayCount})` : ''}</span>
           </button>
           {auth?.isAdmin && (
-            <button onClick={() => { sounds.playSuccess(); onOpenAdmin(); }} className="py-1.5 px-2.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-center whitespace-nowrap text-[11px]">
-              👑 Owner
+            <button 
+              onClick={() => { sounds.playSuccess(); onOpenAdmin(); }} 
+              className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-center whitespace-nowrap text-[11px] sm:text-xs flex items-center justify-center"
+            >
+              <span className="truncate">👑 Owner</span>
             </button>
           )}
         </nav>

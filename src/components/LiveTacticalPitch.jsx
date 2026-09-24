@@ -29,7 +29,7 @@ export default function LiveTacticalPitch({ match }) {
             El proveedor aún no ha publicado el registro detallado de posesión y remates en vivo para este encuentro.
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {['home', 'away'].map(side => {
               const team = match[`${side}Team`];
               const stats = live?.[side] || {};
