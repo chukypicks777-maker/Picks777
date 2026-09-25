@@ -195,8 +195,14 @@ export async function generateAiMatchReport(match, options = {}) {
 
   const facts = [
     { id: 'fixture', text: `${homeName} vs ${awayName}. Torneo: ${match.leagueName || 'Oficial'}. Estado: ${match.status}. Inicio: ${match.kickoff}.` },
-    { id: 'source', text: `Fuente oficial: ${match.source || 'ESPN'}. Consulta: ${match.fetchedAt || 'N/D'}.` }
+    { id: 'source', text: `Fuente oficial: ${match.source || 'ESPN'}.` }
   ];
+  if (match.status === 'LIVE') {
+    facts.push({
+      id: 'liveState',
+      text: `Marcador en directo: ${homeName} ${match.liveScore?.home ?? 0} - ${match.liveScore?.away ?? 0} ${awayName}. Minuto: ${match.liveMinute || match.minute || 'En juego'}.`
+    });
+  }
   for (const [side, team, pos, pts] of [['home', match.homeTeam, homePos, homePoints], ['away', match.awayTeam, awayPos, awayPoints]]) {
     const tName = team?.name || (side === 'home' ? homeName : awayName);
     const gpInfo = Number.isFinite(team?.gamesPlayed) ? `${team.gamesPlayed} PJ` : 'En disputa';
@@ -496,5 +502,11 @@ Instrucciones analíticas estrictas:
       };
     }
   };
-  return options.forceRefresh ? generate() : cachedData(cacheKey, 600, generate);
+  let ttlSeconds = 48 * 3600; // 48 horas de persistencia duradera para partidos programados
+  if (match.status === 'FINISHED') {
+    ttlSeconds = 7 * 86400; // 7 días para partidos finalizados
+  } else if (match.status === 'LIVE') {
+    ttlSeconds = 120; // 2 minutos para partidos en juego
+  }
+  return cachedData(cacheKey, ttlSeconds, generate, { forceRefresh: Boolean(options.forceRefresh) });
 }

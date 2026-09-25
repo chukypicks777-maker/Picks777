@@ -163,6 +163,108 @@ export function getTop3Opportunities(match) {
   }
   return selected;
 }
+export function deriveSeasonPoisson(match) {
+  if (!match) return null;
+  const home = match.homeTeam || {};
+  const away = match.awayTeam || {};
+  const getGP = t => {
+    if (!t) return null;
+    if (Number.isFinite(t.gamesPlayed)) return t.gamesPlayed;
+    if (t.homeRecord && Number.isFinite(t.homeRecord.w + t.homeRecord.d + t.homeRecord.l)) return t.homeRecord.w + t.homeRecord.d + t.homeRecord.l;
+    if (t.awayRecord && Number.isFinite(t.awayRecord.w + t.awayRecord.d + t.awayRecord.l)) return t.awayRecord.w + t.awayRecord.d + t.awayRecord.l;
+    if (t.record && Number.isFinite(t.record.w + t.record.d + t.record.l)) return t.record.w + t.record.d + t.record.l;
+    return null;
+  };
+  const homeGP = getGP(home);
+  const awayGP = getGP(away);
+  if (Number.isFinite(homeGP) && homeGP >= 5 && Number.isFinite(awayGP) && awayGP >= 5 &&
+      Number.isFinite(home.goalsFor) && home.goalsFor >= 0 && Number.isFinite(home.goalsAgainst) && home.goalsAgainst >= 0 &&
+      Number.isFinite(away.goalsFor) && away.goalsFor >= 0 && Number.isFinite(away.goalsAgainst) && away.goalsAgainst >= 0) {
+    const lambda = (home.goalsFor / homeGP + away.goalsAgainst / awayGP) / 2;
+    const mu = (away.goalsFor / awayGP + home.goalsAgainst / homeGP) / 2;
+    const totalLambda = lambda + mu;
+    if (lambda > 0 && mu > 0 && lambda <= 10 && mu <= 10 && totalLambda <= 20) {
+      const p0 = Math.exp(-totalLambda);
+      const p1 = totalLambda * p0;
+      const p2 = (totalLambda * totalLambda / 2) * p0;
+      const pHome = 1 - Math.exp(-lambda);
+      const pAway = 1 - Math.exp(-mu);
+      return {
+        over15: Math.round((1 - p0 - p1) * 100),
+        over25: Math.round((1 - p0 - p1 - p2) * 100),
+        bttsYes: Math.round(pHome * pAway * 100)
+      };
+    }
+  }
+  return null;
+}
+
+export function getContextualPick(match, marketFilter = 'all') {
+  if (!match || match.status === 'POSTPONED' || match.status === 'CANCELLED') return null;
+
+  const parseOddsNum = val => {
+    const n = typeof val === 'number' ? val : parseFloat(val);
+    return Number.isFinite(n) && n > 1 ? Number(n.toFixed(2)) : null;
+  };
+
+  const p = { ...(match.model?.probabilities || match.probabilities || {}) };
+  const poisson = deriveSeasonPoisson(match);
+  const matchTitle = `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visitante'}`;
+
+  const buildCandidate = (key, selection, market, category, rawProb, rawOdds, defaultRationale) => {
+    const prob = percent(rawProb);
+    if (prob === null || prob <= 0) return null;
+    const odds = parseOddsNum(rawOdds);
+    const estimatedOdds = Number(Math.max(1.01, 100 / prob).toFixed(2));
+    return {
+      key,
+      selection,
+      market,
+      category,
+      probability: prob,
+      safetyScore: prob,
+      odds,
+      estimatedOdds,
+      rationale: defaultRationale || `Probabilidad estimada de ${prob}% para ${selection.toLowerCase()}.`,
+      matchId: match.id,
+      matchTitle,
+      league: match.leagueName
+    };
+  };
+
+  if (marketFilter === 'over' || marketFilter === 'over25') {
+    const prob25 = percent(p.over25) ?? percent(match.model?.probabilities?.over25) ?? percent(match.probabilities?.over25) ?? poisson?.over25;
+    const odds25 = match.odds?.over25;
+    const rationale = match.model
+      ? `Modelo Poisson proyecta ${prob25}% de probabilidad para Más de 2.5 Goles${match.model?.predictedScore ? ` (marcador previsto: ${match.model.predictedScore})` : ''}.`
+      : `Probabilidad estimada de ${prob25}% para Más de 2.5 Goles según métricas de goles registradas.`;
+    const pick = buildCandidate('over25', 'Más de 2.5 Goles', 'Total Goles Over 2.5', 'goals', prob25, odds25, rationale);
+    if (pick) return pick;
+  }
+
+  if (marketFilter === 'btts') {
+    const probBtts = percent(p.bttsYes) ?? percent(match.model?.probabilities?.bttsYes) ?? percent(match.probabilities?.bttsYes) ?? poisson?.bttsYes;
+    const oddsBtts = match.odds?.bttsYes;
+    const rationale = match.model
+      ? `Modelo Poisson proyecta ${probBtts}% de probabilidad de que ambos equipos anoten.`
+      : `Probabilidad estimada de ${probBtts}% para Ambos Equipos Anotan (BTTS Sí).`;
+    const pick = buildCandidate('bttsYes', 'Ambos anotan: Sí', 'Ambos anotan', 'btts', probBtts, oddsBtts, rationale);
+    if (pick) return pick;
+  }
+
+  if (marketFilter === 'under' || marketFilter === 'under25') {
+    const probUnder25 = percent(p.under25) ?? percent(match.model?.probabilities?.under25) ?? (p.over25 != null ? 100 - percent(p.over25) : (poisson?.over25 != null ? 100 - poisson.over25 : null));
+    const oddsUnder25 = match.odds?.under25;
+    const rationale = match.model
+      ? `Modelo Poisson proyecta ${probUnder25}% de probabilidad para Menos de 2.5 Goles.`
+      : `Probabilidad estimada de ${probUnder25}% para Menos de 2.5 Goles según balance defensivo.`;
+    const pick = buildCandidate('under25', 'Menos de 2.5 Goles', 'Total Goles Under 2.5', 'goals', probUnder25, oddsUnder25, rationale);
+    if (pick) return pick;
+  }
+
+  return getBestBankerPick(match);
+}
+
 export const getBestBankerPick = match => getTop3Opportunities(match)[0] ?? null;
 export function getEffectiveOdds(pick) {
   if (!pick) return null;

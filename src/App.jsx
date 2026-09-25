@@ -750,6 +750,7 @@ export default function App() {
                   bankerRank={marketFilter === 'safe' ? idx + 1 : null}
                   isLocked={marketFilter === 'safe' && !isVipUser && idx >= 3}
                   onUnlockVip={() => setShowUpgradeModal(true)}
+                  marketFilter={marketFilter}
                 />
               ))}
             </div>

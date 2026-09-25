@@ -1,21 +1,44 @@
 /**
  * analysisCache.js
  * Sistema inteligente de caché en cliente para análisis tácticos y reportes de IA.
- * Evita recargas innecesarias cuando el usuario abre y cierra partidos,
- * invalidando automáticamente solo si el partido cambia (marcador, estado, minuto)
- * o si el usuario solicita regeneración manual vía "Reintentar / Regenerar con IA".
+ * Almacena en localStorage de forma duradera (48 horas para partidos programados)
+ * para evitar que los datos se borren al cerrar pestañas, recargar o si nadie entra.
+ * Invalida automáticamente solo cuando cambian los hechos deportivos reales (marcador en vivo,
+ * estado, minuto o modelo) o si el usuario solicita regeneración manual vía "Reintentar / Regenerar con IA".
  */
 
 const memoryCache = new Map();
+const STORAGE_PREFIX = 'picks777_ai_cache_v3';
 const SESSION_STORAGE_KEY = 'picks777_analysis_cache_v2';
 
 function getStorage() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage;
+    }
+  } catch {}
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
       return window.sessionStorage;
     }
   } catch {}
   return null;
+}
+
+export function getMatchCacheTtlMs(matchOrStatus, aiReport) {
+  // Si el reporte es baseline no-IA (falló o no había clave), expirar en 1 minuto para reintentar
+  if (aiReport && aiReport.aiAvailable === false) {
+    return 60 * 1000;
+  }
+  const status = typeof matchOrStatus === 'string' ? matchOrStatus : matchOrStatus?.status;
+  if (status === 'FINISHED') {
+    return 7 * 24 * 3600 * 1000; // 7 días para partidos finalizados
+  }
+  if (status === 'LIVE') {
+    return 2 * 60 * 1000; // 2 minutos para partidos en juego (marcador cambiante)
+  }
+  // Partidos programados (SCHEDULED): 48 horas de persistencia duradera
+  return 48 * 3600 * 1000;
 }
 
 /**
@@ -27,15 +50,20 @@ function getStorage() {
 export function computeMatchFingerprint(m) {
   if (!m) return '';
   return [
-    JSON.stringify([m.kickoff, m.model, m.probabilities, m.odds, m.homeTeam, m.awayTeam]),
     m.id || '',
     m.status || '',
+    m.kickoff || '',
     m.liveScore?.home ?? '',
     m.liveScore?.away ?? '',
     m.finalScore?.home ?? '',
     m.finalScore?.away ?? '',
     m.probabilities?.homeWin != null ? Math.round(Number(m.probabilities.homeWin)) : '',
-    m.probabilities?.awayWin != null ? Math.round(Number(m.probabilities.awayWin)) : ''
+    m.probabilities?.draw != null ? Math.round(Number(m.probabilities.draw)) : '',
+    m.probabilities?.awayWin != null ? Math.round(Number(m.probabilities.awayWin)) : '',
+    m.probabilities?.over25 != null ? Math.round(Number(m.probabilities.over25)) : '',
+    m.probabilities?.bttsYes != null ? Math.round(Number(m.probabilities.bttsYes)) : '',
+    m.homeTeam?.id || m.homeTeam?.name || '',
+    m.awayTeam?.id || m.awayTeam?.name || ''
   ].join('|');
 }
 
@@ -49,12 +77,15 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
   // 1. Memoria primero (más rápido)
   let entry = memoryCache.get(matchId);
 
-  // 2. Si no está en memoria, consultar sessionStorage
+  // 2. Si no está en memoria, consultar almacenamiento persistente (localStorage / sessionStorage)
   if (!entry) {
     const storage = getStorage();
     if (storage) {
       try {
-        const raw = storage.getItem(`${SESSION_STORAGE_KEY}_${matchId}`);
+        let raw = storage.getItem(`${STORAGE_PREFIX}_${matchId}`);
+        if (!raw) {
+          raw = storage.getItem(`${SESSION_STORAGE_KEY}_${matchId}`);
+        }
         if (raw) {
           entry = JSON.parse(raw);
           memoryCache.set(matchId, entry);
@@ -64,7 +95,13 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
   }
 
   if (!entry) return null;
-  if (!entry.timestamp || Date.now() - entry.timestamp > 10 * 60000) { removeCachedAnalysis(matchId); return null; }
+
+  // Comprobar TTL dinámico según el estado del partido (48h para SCHEDULED, 7d para FINISHED)
+  const ttl = getMatchCacheTtlMs(currentMatch || entry.matchStatus, entry.aiReport);
+  if (!entry.timestamp || Date.now() - entry.timestamp > ttl) {
+    removeCachedAnalysis(matchId);
+    return null;
+  }
 
   // Verificar si el partido cambió (estado, goles o probabilidades principales)
   if (currentFingerprint && entry.fingerprint && entry.fingerprint !== currentFingerprint) {
@@ -97,6 +134,7 @@ export function setCachedAnalysis(matchId, currentMatch, { aiReport, enrichedMat
   const fingerprint = computeMatchFingerprint(currentMatch);
   const entry = {
     matchId,
+    matchStatus: currentMatch?.status || existing?.matchStatus || 'SCHEDULED',
     fingerprint,
     aiReport: aiReport !== undefined ? aiReport : (existing?.aiReport || null),
     enrichedMatch: enrichedMatch !== undefined ? enrichedMatch : (existing?.enrichedMatch || null),
@@ -104,8 +142,8 @@ export function setCachedAnalysis(matchId, currentMatch, { aiReport, enrichedMat
     timestamp: Date.now()
   };
 
-  // Evict oldest entries if in-memory cache exceeds 100 items
-  if (memoryCache.size > 100) {
+  // Evict oldest entries if in-memory cache exceeds 150 items
+  if (memoryCache.size > 150) {
     const oldestKey = memoryCache.keys().next().value;
     memoryCache.delete(oldestKey);
   }
@@ -115,8 +153,22 @@ export function setCachedAnalysis(matchId, currentMatch, { aiReport, enrichedMat
   const storage = getStorage();
   if (storage) {
     try {
-      storage.setItem(`${SESSION_STORAGE_KEY}_${matchId}`, JSON.stringify(entry));
-    } catch {}
+      storage.setItem(`${STORAGE_PREFIX}_${matchId}`, JSON.stringify(entry));
+    } catch {
+      // Si la cuota está llena, purgar entradas antiguas y reintentar
+      try {
+        const keys = Object.keys(storage);
+        let purged = 0;
+        for (const k of keys) {
+          if (k.startsWith(STORAGE_PREFIX) || k.startsWith(SESSION_STORAGE_KEY)) {
+            storage.removeItem(k);
+            purged++;
+            if (purged >= 20) break;
+          }
+        }
+        storage.setItem(`${STORAGE_PREFIX}_${matchId}`, JSON.stringify(entry));
+      } catch {}
+    }
   }
 }
 
@@ -126,12 +178,14 @@ export function setCachedAnalysis(matchId, currentMatch, { aiReport, enrichedMat
 export function removeCachedAnalysis(matchId) {
   if (!matchId) return;
   memoryCache.delete(matchId);
-  const storage = getStorage();
-  if (storage) {
-    try {
-      storage.removeItem(`${SESSION_STORAGE_KEY}_${matchId}`);
-    } catch {}
-  }
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage?.removeItem(`${STORAGE_PREFIX}_${matchId}`);
+      window.localStorage?.removeItem(`${SESSION_STORAGE_KEY}_${matchId}`);
+      window.sessionStorage?.removeItem(`${STORAGE_PREFIX}_${matchId}`);
+      window.sessionStorage?.removeItem(`${SESSION_STORAGE_KEY}_${matchId}`);
+    }
+  } catch {}
 }
 
 /**
@@ -139,16 +193,18 @@ export function removeCachedAnalysis(matchId) {
  */
 export function clearAllAnalysisCache() {
   memoryCache.clear();
-  const storage = getStorage();
-  if (storage) {
-    try {
-      const keys = Object.keys(storage);
-      for (const k of keys) {
-        if (k.startsWith(SESSION_STORAGE_KEY)) {
-          storage.removeItem(k);
+  try {
+    if (typeof window !== 'undefined') {
+      for (const storage of [window.localStorage, window.sessionStorage]) {
+        if (!storage) continue;
+        const keys = Object.keys(storage);
+        for (const k of keys) {
+          if (k.startsWith(STORAGE_PREFIX) || k.startsWith(SESSION_STORAGE_KEY)) {
+            storage.removeItem(k);
+          }
         }
       }
-    } catch {}
-  }
+    }
+  } catch {}
 }
 

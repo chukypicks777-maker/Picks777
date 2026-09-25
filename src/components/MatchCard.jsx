@@ -5,7 +5,7 @@ import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
-import { getBestBankerPick, getTop3Opportunities, getEffectiveOdds } from '../utils/mathProbabilities';
+import { getBestBankerPick, getEffectiveOdds, getContextualPick } from '../utils/mathProbabilities';
 
 export default function MatchCard({ 
   match, 
@@ -16,17 +16,11 @@ export default function MatchCard({
   oddsFormat = 'decimal',
   bankerRank = null,
   isLocked = false,
-  onUnlockVip = null
+  onUnlockVip = null,
+  marketFilter = 'all'
 }) {
   const base = match.model?.probabilities || match.probabilities || {};
   const p = { ...base, ...roundDistribution({ homeWin: base.homeWin, draw: base.draw, awayWin: base.awayWin }) };
-  const rawOpportunities = getTop3Opportunities(match);
-  const parlayCandidates = rawOpportunities
-    .map(pick => {
-      const effectiveOdds = getEffectiveOdds(pick);
-      return effectiveOdds ? { ...pick, odds: effectiveOdds } : null;
-    })
-    .filter(Boolean);
   const homeProb = percent(p.homeWin), drawProb = percent(p.draw), awayProb = percent(p.awayWin);
   const getGP = t => {
     if (!t) return null;
@@ -70,11 +64,16 @@ export default function MatchCard({
   const over25Prob = percent(p.over25) ?? percent(match.model?.probabilities?.over25) ?? percent(match.probabilities?.over25) ?? seasonPoisson?.over25 ?? null;
   const bttsProb = percent(p.bttsYes) ?? percent(match.model?.probabilities?.bttsYes) ?? percent(match.probabilities?.bttsYes) ?? seasonPoisson?.bttsYes ?? null;
   const bankerPick = getBestBankerPick(match);
-  const isBankerMode = bankerRank != null;
-  const displayPick = bankerPick?.selection || 'Sin datos suficientes';
-  const displayOdds = bankerPick?.odds ?? getEffectiveOdds(bankerPick);
-  const displayProb = bankerPick?.probability;
+  const isBankerMode = bankerRank != null || marketFilter === 'safe';
+  const contextualPick = getContextualPick(match, marketFilter);
+  const activePick = contextualPick || bankerPick;
+  const displayPick = activePick?.selection || bankerPick?.selection || 'Sin datos suficientes';
+  const displayOdds = activePick?.odds ?? getEffectiveOdds(activePick) ?? bankerPick?.odds ?? getEffectiveOdds(bankerPick);
+  const displayProb = activePick?.probability ?? bankerPick?.probability;
   const confidenceScore = displayProb;
+  const isLegInParlay = Boolean(parlayLegs?.some(
+    l => l.matchId === match.id && l.selection === activePick?.selection
+  ));
   const formatMatchTime = (iso) => {
     const d = new Date(iso);
     return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -239,7 +238,17 @@ export default function MatchCard({
             <div className="flex items-center justify-between mb-0.5">
               <span className="text-[9.5px] font-mono font-bold text-sky-400 uppercase tracking-wide flex items-center space-x-1">
                 <Zap className="w-2.5 h-2.5 fill-sky-400" />
-                <span>{isBankerMode || confidenceScore >= 80 ? 'Pick Banquero IA' : 'Pronóstico IA'}</span>
+                <span>
+                  {marketFilter === 'over' || marketFilter === 'over25'
+                    ? 'Pronóstico Over 2.5'
+                    : marketFilter === 'btts'
+                    ? 'Pronóstico Ambos Anotan'
+                    : marketFilter === 'under' || marketFilter === 'under25'
+                    ? 'Pronóstico Under 2.5'
+                    : isBankerMode || confidenceScore >= 80
+                    ? 'Pick Banquero IA'
+                    : 'Pronóstico IA'}
+                </span>
               </span>
               {match.aiPick?.settlement === 'WON' ? (
                 <span className="text-[9.5px] font-mono text-emerald-400 font-bold flex items-center space-x-0.5">
@@ -266,9 +275,7 @@ export default function MatchCard({
               <Sparkles className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
               <p className="line-clamp-2">
                 <strong className="text-emerald-400 font-sans">Base del cálculo: </strong>
-                {isBankerMode
-                  ? (bankerPick?.rationale || match.aiPick?.summaryRationale || 'Sin datos suficientes para justificar una selección.')
-                  : (match.aiPick?.summaryRationale || bankerPick?.rationale || 'Sin datos suficientes para justificar una selección.')}
+                {activePick?.rationale || bankerPick?.rationale || match.aiPick?.summaryRationale || 'Sin datos suficientes para justificar una selección.'}
               </p>
             </div>
           </div>
@@ -291,27 +298,30 @@ export default function MatchCard({
             </button>
           ) : (
             <button
-              disabled={!parlayCandidates.length}
+              disabled={!activePick}
               onClick={(e) => {
                 e.stopPropagation();
-                const topOpportunity = parlayCandidates[0];
-                if (!topOpportunity) return;
+                if (!activePick) return;
+                const candidateToAdd = {
+                  ...activePick,
+                  odds: activePick.odds || getEffectiveOdds(activePick)
+                };
                 if (onToggleParlay) {
-                  onToggleParlay(topOpportunity);
+                  onToggleParlay(candidateToAdd);
                 } else {
                   sounds.playAddParlay();
-                  onAddToParlay?.(topOpportunity);
+                  onAddToParlay?.(candidateToAdd);
                 }
               }}
               className={`py-2 px-2 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 ${
-                !parlayCandidates.length
+                !activePick
                   ? 'bg-slate-800/40 text-slate-500 border border-white/5 cursor-not-allowed opacity-60'
-                  : parlayLegs?.some(l => l.matchId === match.id)
+                  : isLegInParlay
                     ? 'bg-emerald-500/25 hover:bg-rose-500/20 text-emerald-200 hover:text-rose-200 border border-emerald-400/80 hover:border-rose-400/60 active:scale-95 shadow-[0_0_12px_rgba(16,185,129,0.3)] cursor-pointer'
                     : 'bg-emerald-600/20 hover:bg-emerald-600/30 active:scale-95 text-emerald-300 border border-emerald-500/40 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.15)]'
               }`}
             >
-              {parlayLegs?.some(l => l.matchId === match.id) ? (
+              {isLegInParlay ? (
                 <>
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span className="truncate">En Parlay</span>
@@ -319,7 +329,7 @@ export default function MatchCard({
               ) : (
                 <>
                   <Plus className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">{parlayCandidates.length ? '+ Al Parlay' : 'Sin cuota'}</span>
+                  <span className="truncate">{activePick ? '+ Al Parlay' : 'Sin cuota'}</span>
                 </>
               )}
             </button>
