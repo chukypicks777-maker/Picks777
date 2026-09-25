@@ -1,21 +1,21 @@
 {
-  "checkedAt": "2026-09-17T22:08:49.162Z",
+  "checkedAt": "2026-09-25T01:44:08.752Z",
   "source": "ESPN",
   "coverage": [
     {
       "leagueId": "inglaterra",
       "name": "Premier League",
       "status": "available",
-      "count": 10,
-      "fetchedAt": "2026-09-17T22:08:27.103Z",
+      "count": 0,
+      "fetchedAt": "2026-09-25T01:43:46.806Z",
       "standingsAvailable": true
     },
     {
       "leagueId": "espana",
       "name": "LaLiga",
       "status": "available",
-      "count": 15,
-      "fetchedAt": "2026-09-17T22:08:27.584Z",
+      "count": 0,
+      "fetchedAt": "2026-09-25T01:43:46.892Z",
       "standingsAvailable": true
     },
     {
@@ -23,238 +23,179 @@
       "name": "Liga MX",
       "status": "available",
       "count": 9,
-      "fetchedAt": "2026-09-17T22:08:27.754Z",
+      "fetchedAt": "2026-09-25T01:43:47.003Z",
       "standingsAvailable": true
     },
     {
       "leagueId": "mls",
       "name": "MLS",
       "status": "available",
-      "count": 15,
-      "fetchedAt": "2026-09-17T22:08:27.474Z",
+      "count": 17,
+      "fetchedAt": "2026-09-25T01:43:47.209Z",
       "standingsAvailable": true
     },
     {
       "leagueId": "italia",
       "name": "Serie A",
       "status": "available",
-      "count": 10,
-      "fetchedAt": "2026-09-17T22:08:28.260Z",
+      "count": 0,
+      "fetchedAt": "2026-09-25T01:43:46.980Z",
       "standingsAvailable": true
     },
     {
       "leagueId": "francia",
       "name": "Ligue 1",
       "status": "available",
-      "count": 9,
-      "fetchedAt": "2026-09-17T22:08:27.727Z",
+      "count": 0,
+      "fetchedAt": "2026-09-25T01:43:47.428Z",
       "standingsAvailable": true
     },
     {
       "leagueId": "champions",
       "name": "UEFA Champions League",
       "status": "available",
-      "count": 6,
-      "fetchedAt": "2026-09-17T22:08:27.823Z",
+      "count": 0,
+      "fetchedAt": "2026-09-25T01:43:47.423Z",
       "standingsAvailable": true
     },
     {
       "leagueId": "leagues_cup",
       "name": "Leagues Cup",
       "status": "available",
-      "count": 2,
-      "fetchedAt": "2026-09-17T22:08:27.725Z",
+      "count": 0,
+      "fetchedAt": "2026-09-25T01:43:47.117Z",
       "standingsAvailable": true
     }
   ],
-  "feedMatches": 76,
-  "scheduledMatches": 63,
+  "feedMatches": 26,
+  "scheduledMatches": 25,
   "checked": [
     {
-      "id": "espn-401882862",
-      "title": "Espanyol vs Elche",
-      "kickoff": "2026-09-18T19:00Z",
-      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401882862",
+      "id": "espn-401876964",
+      "title": "Atlante vs Monterrey",
+      "kickoff": "2026-09-26T01:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401876964",
       "modelSample": {
-        "home": 6,
-        "away": 6
+        "home": 9,
+        "away": 8
       },
       "halvesAvailable": true,
       "halfSample": {
-        "home": 6,
-        "away": 6
+        "home": 9,
+        "away": 8
       },
       "checks": [
         {
-          "team": "Espanyol",
+          "team": "Atlante",
           "metric": "avgCorners",
-          "count": 6,
-          "reported": 2.1666666666666665,
-          "recomputed": 2.1666666666666665,
+          "count": 9,
+          "reported": 4.555555555555555,
+          "recomputed": 4.555555555555555,
           "pass": true
         },
         {
-          "team": "Espanyol",
+          "team": "Atlante",
           "metric": "avgYellowCards",
-          "count": 6,
-          "reported": 3,
-          "recomputed": 3,
+          "count": 9,
+          "reported": 1.5555555555555556,
+          "recomputed": 1.5555555555555556,
           "pass": true
         },
         {
-          "team": "Espanyol",
+          "team": "Atlante",
           "metric": "avgFouls",
-          "count": 6,
-          "reported": 17.666666666666668,
-          "recomputed": 17.666666666666668,
+          "count": 9,
+          "reported": 13.555555555555555,
+          "recomputed": 13.555555555555555,
           "pass": true
         },
         {
-          "team": "Elche",
+          "team": "Monterrey",
           "metric": "avgCorners",
-          "count": 6,
-          "reported": 4.833333333333333,
-          "recomputed": 4.833333333333333,
+          "count": 8,
+          "reported": 6.75,
+          "recomputed": 6.75,
           "pass": true
         },
         {
-          "team": "Elche",
+          "team": "Monterrey",
           "metric": "avgYellowCards",
-          "count": 6,
-          "reported": 2.5,
-          "recomputed": 2.5,
+          "count": 8,
+          "reported": 1.375,
+          "recomputed": 1.375,
           "pass": true
         },
         {
-          "team": "Elche",
+          "team": "Monterrey",
           "metric": "avgFouls",
-          "count": 6,
-          "reported": 14.333333333333334,
-          "recomputed": 14.333333333333334,
+          "count": 8,
+          "reported": 13.25,
+          "recomputed": 13.25,
           "pass": true
         }
       ]
     },
     {
-      "id": "espn-761815",
-      "title": "New York City FC vs Red Bull New York",
-      "kickoff": "2026-09-18T23:30Z",
-      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/761815",
+      "id": "espn-401876963",
+      "title": "Tijuana vs Atlas",
+      "kickoff": "2026-09-26T03:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401876963",
       "modelSample": {
-        "home": 25,
-        "away": 25
+        "home": 8,
+        "away": 9
       },
       "halvesAvailable": true,
       "halfSample": {
-        "home": 10,
-        "away": 10
+        "home": 8,
+        "away": 9
       },
       "checks": [
         {
-          "team": "New York City FC",
+          "team": "Tijuana",
           "metric": "avgCorners",
-          "count": 10,
-          "reported": 3.9,
-          "recomputed": 3.9,
+          "count": 8,
+          "reported": 3.75,
+          "recomputed": 3.75,
           "pass": true
         },
         {
-          "team": "New York City FC",
+          "team": "Tijuana",
           "metric": "avgYellowCards",
-          "count": 10,
-          "reported": 1.9,
-          "recomputed": 1.9,
+          "count": 8,
+          "reported": 1.375,
+          "recomputed": 1.375,
           "pass": true
         },
         {
-          "team": "New York City FC",
+          "team": "Tijuana",
           "metric": "avgFouls",
-          "count": 10,
-          "reported": 10.9,
-          "recomputed": 10.9,
+          "count": 8,
+          "reported": 10.25,
+          "recomputed": 10.25,
           "pass": true
         },
         {
-          "team": "Red Bull New York",
+          "team": "Atlas",
           "metric": "avgCorners",
-          "count": 10,
-          "reported": 5.1,
-          "recomputed": 5.1,
+          "count": 9,
+          "reported": 4.888888888888889,
+          "recomputed": 4.888888888888889,
           "pass": true
         },
         {
-          "team": "Red Bull New York",
+          "team": "Atlas",
           "metric": "avgYellowCards",
-          "count": 10,
-          "reported": 2,
-          "recomputed": 2,
+          "count": 9,
+          "reported": 1.6666666666666667,
+          "recomputed": 1.6666666666666667,
           "pass": true
         },
         {
-          "team": "Red Bull New York",
+          "team": "Atlas",
           "metric": "avgFouls",
-          "count": 10,
-          "reported": 11.4,
-          "recomputed": 11.4,
-          "pass": true
-        }
-      ]
-    },
-    {
-      "id": "espn-401874756",
-      "title": "Monza vs Sassuolo",
-      "kickoff": "2026-09-18T18:45Z",
-      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401874756",
-      "modelSample": null,
-      "halvesAvailable": false,
-      "halfSample": null,
-      "checks": [
-        {
-          "team": "Monza",
-          "metric": "avgCorners",
-          "count": 4,
-          "reported": null,
-          "recomputed": null,
-          "pass": true
-        },
-        {
-          "team": "Monza",
-          "metric": "avgYellowCards",
-          "count": 4,
-          "reported": null,
-          "recomputed": null,
-          "pass": true
-        },
-        {
-          "team": "Monza",
-          "metric": "avgFouls",
-          "count": 4,
-          "reported": null,
-          "recomputed": null,
-          "pass": true
-        },
-        {
-          "team": "Sassuolo",
-          "metric": "avgCorners",
-          "count": 4,
-          "reported": null,
-          "recomputed": null,
-          "pass": true
-        },
-        {
-          "team": "Sassuolo",
-          "metric": "avgYellowCards",
-          "count": 4,
-          "reported": null,
-          "recomputed": null,
-          "pass": true
-        },
-        {
-          "team": "Sassuolo",
-          "metric": "avgFouls",
-          "count": 4,
-          "reported": null,
-          "recomputed": null,
+          "count": 9,
+          "reported": 11.88888888888889,
+          "recomputed": 11.88888888888889,
           "pass": true
         }
       ]

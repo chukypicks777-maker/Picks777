@@ -345,6 +345,20 @@ export default function App() {
     }
   };
 
+  const handleToggleParlay = (rawLeg) => {
+    if (!rawLeg?.matchId || !rawLeg.selection) return;
+    const existingIdx = parlayLegs.findIndex(l => l.matchId === rawLeg.matchId && l.selection === rawLeg.selection);
+    if (existingIdx >= 0) {
+      sounds.playClick();
+      const updated = parlayLegs.filter((_, i) => i !== existingIdx);
+      setParlayLegs(updated);
+      showToast(`Eliminado del parlay: ${rawLeg.selection}`);
+      return;
+    }
+    sounds.playAddParlay();
+    handleAddToParlay(rawLeg);
+  };
+
   const handleRemoveParlayLeg = (index) => {
     const updated = parlayLegs.filter((_, i) => i !== index);
     setParlayLegs(updated);
@@ -470,8 +484,8 @@ export default function App() {
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-4 z-50 bg-[#111827] border border-white/10 text-slate-200 px-4 py-2.5 rounded-xl shadow-xl font-mono text-xs flex items-center space-x-2">
-          <Zap className="w-3.5 h-3.5 text-sky-400" />
+        <div className="fixed top-20 right-4 z-[80] bg-[#111827]/95 backdrop-blur-md border border-sky-400/40 text-slate-100 px-4 py-2.5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] font-mono text-xs flex items-center space-x-2 animate-bounce-short">
+          <Zap className="w-3.5 h-3.5 text-sky-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -531,6 +545,8 @@ export default function App() {
             match={featuredMatch}
             onOpenMatch={setSelectedMatch}
             onAddToParlay={handleAddToParlay}
+            onToggleParlay={handleToggleParlay}
+            parlayLegs={parlayLegs}
             oddsFormat={oddsFormat}
           />
         )}
@@ -728,6 +744,8 @@ export default function App() {
                   match={m}
                   onOpenModal={setSelectedMatch}
                   onAddToParlay={handleAddToParlay}
+                  onToggleParlay={handleToggleParlay}
+                  parlayLegs={parlayLegs}
                   oddsFormat={oddsFormat}
                   bankerRank={marketFilter === 'safe' ? idx + 1 : null}
                   isLocked={marketFilter === 'safe' && !isVipUser && idx >= 3}
@@ -747,7 +765,7 @@ export default function App() {
       {!showParlayDrawer && parlayLegs.length > 0 && (
         <button
           onClick={() => { sounds.playClick(); setShowParlayDrawer(true); }}
-          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-6 sm:right-6 z-35 px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.7)] border border-emerald-400/40 flex items-center space-x-2 cursor-pointer text-xs font-mono transition-all backdrop-blur-md"
+          className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-6 sm:right-6 z-[65] px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.7)] border border-emerald-400/40 flex items-center space-x-2 cursor-pointer text-xs font-mono transition-all backdrop-blur-md"
         >
           <Layers className="w-4 h-4 text-emerald-200 shrink-0" />
           <span className="whitespace-nowrap">Ver Parlay Ticket ({parlayLegs.length})</span>
@@ -760,6 +778,8 @@ export default function App() {
           match={selectedMatch}
           onClose={() => setSelectedMatch(null)}
           onAddToParlay={handleAddToParlay}
+          onToggleParlay={handleToggleParlay}
+          parlayLegs={parlayLegs}
           oddsFormat={oddsFormat}
           isOwner={isOwner}
           isVip={isVipUser}
@@ -791,7 +811,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-slate-300">DEPORTEPICKS AI VIP</span>
-            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.0.0</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.0.3</span>
             <span>•</span>
             <span>Plataforma de Análisis Cuantitativo para Apuestas</span>
           </div>

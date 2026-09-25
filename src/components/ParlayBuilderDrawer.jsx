@@ -52,7 +52,7 @@ export default function ParlayBuilderDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-4 sm:right-4 z-40 w-[calc(100%_-_1.5rem)] sm:w-[calc(100%_-_2rem)] max-w-md animate-slide-up">
+    <div className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-4 sm:right-4 z-[70] w-[calc(100%_-_1.5rem)] sm:w-[calc(100%_-_2rem)] max-w-md animate-slide-up">
       <div className="bg-[#0e131d]/95 backdrop-blur-xl border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
         
         {/* Drawer Header */}

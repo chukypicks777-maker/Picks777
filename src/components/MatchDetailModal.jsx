@@ -35,6 +35,8 @@ export default function MatchDetailModal({
   match, 
   onClose, 
   onAddToParlay, 
+  onToggleParlay,
+  parlayLegs = [],
   oddsFormat = 'decimal',
   isOwner = false,
   isVip = false,
@@ -616,7 +618,13 @@ export default function MatchDetailModal({
                 </div>
               </div>
 
-              <VerifiedPicks match={m} onAddToParlay={onAddToParlay} oddsFormat={oddsFormat} />
+              <VerifiedPicks 
+                match={m} 
+                onAddToParlay={onAddToParlay} 
+                onToggleParlay={onToggleParlay}
+                parlayLegs={parlayLegs}
+                oddsFormat={oddsFormat} 
+              />
               <OverUnderGroupedSection
                 match={m}
                 homeStats={homeDetailed}

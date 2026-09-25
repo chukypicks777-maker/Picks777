@@ -1,7 +1,7 @@
 {
-  "verifiedAt": "2026-09-24T06:07:44.920Z",
+  "verifiedAt": "2026-09-25T01:53:18.655Z",
   "allVerified": true,
-  "totalAiAvailable": 3,
+  "totalAiAvailable": 12,
   "results": [
     {
       "index": 1,
@@ -10,9 +10,9 @@
       "league": "Liga MX",
       "status": "SCHEDULED",
       "kickoff": "2026-09-26T01:00Z",
-      "latencyMs": 50276,
-      "aiAvailable": false,
-      "modelUsed": null,
+      "latencyMs": 58310,
+      "aiAvailable": true,
+      "modelUsed": "gemini-3.5-flash-lite",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -30,18 +30,18 @@
         "predictedScore": "1 - 1"
       },
       "analysisSections": {
-        "dataVerification": "Datos oficiales de ESPN para Atlante vs Monterrey (Puesto #14 vs #10). Muestra cuantitativa: 9 partidos (local) y 8 partidos (visitante). Rachas recientes: Atlante [D-L-D-D-L] vs Monterrey [W-D-L-W-L]. xG proyectado: Atlante 1.1 xG vs Monterrey 1.6 xG.",
-        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 49.8% y Under 2.5 en 50.2%. Ambos Anotan (BTTS) en 52.4% (Over 1.5 en 74.5%). Dinámica prevista: Encuentro cerrado y de rigor táctico donde el control defensivo predominará entre Atlante y Monterrey.",
+        "dataVerification": "Con base en los datos oficiales recopilados desde ESPN para este duelo de Liga MX, Atlante funge como local ubicado en la posición #14 de la tabla con 8 puntos tras 9 partidos, evidenciando dificultades defensivas reflejadas en sus 13 goles concedidos y una baja tasa de valla invicta del 11.1%. En la acera de enfrente, Monterrey se presenta como visitante en el puesto #10 con 13 unidades en 8 presentaciones, ostentando una estructura más sólida que se valida con un 37.5% de vallas invictas y un promedio destacado de 6.75 córners por encuentro. El tamaño de la muestra es estadísticamente suficiente para dimensionar la disparidad actual entre el rendimiento de Atlante en casa y la jerarquía de plantilla que despliega Monterrey a domicilio.",
+        "goalsAnalysis": "El motor analítico proyecta un escenario de xG donde Atlante genera 1.1 goles esperados frente a los 1.6 xG calculados para Monterrey, sustentando una distribución Poisson que otorga un 49.6% de favoritismo a la visita, 25% al empate y 25.4% al triunfo de Atlante. En cuanto al mercado de goles, la probabilidad de rebasar la línea de Más de 1.5 se sitúa en un sólido 74.5%, mientras que el umbral de Más de 2.5 registra un equilibrio casi exacto con el 49.8%, reflejando partidos cerrados pero con margen para intercambio en las áreas. El mercado de Ambos Anotan (BTTS) se inclina ligeramente hacia el 'Sí' con un 52.4%, indicando que las fisuras defensivas de Atlante (13 GC) y la capacidad ofensiva de Monterrey (14 GF) habilitan la opción de que ambos logren vulnerar la portería rival.",
         "positiveFactors": [
-          "Atlante: 8 goles a favor en 9 partidos disputados (8 pts).",
-          "Probabilidad matemática principal: Monterrey (49.6%) bajo distribución Poisson.",
-          "Selección destacada: MTY o Empate (X2) con 75% de probabilidad estadística."
+          "Factor positivo 1: La superioridad métrica de Monterrey avalada por su xG proyectado de 1.6 y su volumen ofensivo de 6.75 córners por partido, lo que le otorga control territorial frente a la zaga de Atlante.",
+          "Factor positivo 2: La necesidad imperiosa de Atlante por revertir su posición #14 en la tabla le obligará a proponer en condición de local, abriendo espacios ideales para la transición rápida de Monterrey.",
+          "Factor positivo 3: La coincidencia matemática del modelo Poisson que ubica al marcador 1 - 1 como el resultado individual más probable (11.9%), respaldado por la alta probabilidad de Más de 1.5 goles (74.5%)."
         ],
         "negativeFactors": [
-          "Margen de empate o sorpresa para Monterrey estimado en 50.4%.",
-          "Monterrey promedia capacidad goleadora con 14 tantos anotados (13 pts)."
+          "Factor de riesgo 1: La vulnerabilidad táctica de Atlante puede derivar en un planteamiento excesivamente ultradefensivo que nuble las capacidades de creación de Monterrey y atrase el ritmo del juego.",
+          "Factor de riesgo 2: La alta varianza inherente a los 90 minutos de la Liga MX y la disciplina arbitral —considerando las amonestaciones promedio de ambos clubes— podrían alterar el desarrollo fluido del encuentro."
         ],
-        "verdict": "Marcador individual más probable: 1 - 1 (11.9%). Selección recomendada por modelo: Doble Oportunidad (X2) (MTY o Empate (X2)) con 75%."
+        "verdict": "El veredicto cuantitativo y táctico señala un duelo donde Monterrey parte con ventaja teórica, pero donde las urgencias de Atlante en su feudo nivelan las acciones. El cálculo Poisson identifica con máxima precisión matemática el marcador exacto de 1 - 1 (11.9%). Como selección de valor recomendada, se aconseja optar por el mercado de Más de 1.5 goles (74.5%) o la doble oportunidad orientada a proteger el rendimiento visitante, manteniendo siempre una gestión disciplinada y conservadora del riesgo en el bankroll."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -52,9 +52,9 @@
       "league": "MLS",
       "status": "SCHEDULED",
       "kickoff": "2026-09-26T23:30Z",
-      "latencyMs": 6794,
-      "aiAvailable": false,
-      "modelUsed": null,
+      "latencyMs": 21252,
+      "aiAvailable": true,
+      "modelUsed": "gemini-2.5-flash",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -72,18 +72,18 @@
         "predictedScore": "1 - 1"
       },
       "analysisSections": {
-        "dataVerification": "Datos oficiales de ESPN para Atlanta United FC vs New York City FC (Puesto #14 vs #10). Muestra cuantitativa: 26 partidos (local) y 26 partidos (visitante). Rachas recientes: Atlanta United FC [W-D-L-D-L] vs New York City FC [L-W-L-D-D]. xG proyectado: Atlanta United FC 1.2 xG vs New York City FC 1.6 xG.",
-        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 53.2% y Under 2.5 en 46.8%. Ambos Anotan (BTTS) en 56.2% (Over 1.5 en 77%). Dinámica prevista: Partido de ritmo alto con Atlanta United FC y New York City FC buscando el arco rival.",
+        "dataVerification": "El análisis se fundamenta en datos oficiales de ESPN, con una muestra robusta de 26 partidos para Atlanta United FC como local y 26 partidos para New York City FC como visitante en la actual temporada de la MLS. Esta amplitud de datos confiere una solidez estadística considerable a las métricas de rendimiento ofensivo y defensivo de ambos equipos. Atlanta United FC se sitúa en la posición #14 con 26 puntos, habiendo anotado 30 goles y concedido 43. Por su parte, New York City FC ocupa una posición superior, #10 con 32 puntos, con un registro de 39 goles a favor y 34 en contra. La diferencia en la clasificación y en el balance de goles ya sugiere una ventaja para New York City FC, lo cual será contrastado con las proyecciones de goles esperados (xG) y las probabilidades Poisson.",
+        "goalsAnalysis": "La dinámica goleadora proyectada para el encuentro entre Atlanta United FC y New York City FC sugiere un partido con oportunidades para ambos bandos. El modelo xG Poisson estima que Atlanta United FC generará 1.2 goles esperados, mientras que New York City FC se proyecta con 1.6 goles esperados, lo que indica una mayor capacidad ofensiva para el equipo visitante. Esta diferencia en xG se alinea con el rendimiento general de ambos equipos en la temporada, donde New York City FC ha marcado más goles (39 GF) y concedido menos (34 GC) que Atlanta United FC (30 GF, 43 GC). Las probabilidades de goles totales son significativas: un 77% para Más de 1.5 goles y un 53.2% para Más de 2.5 goles, lo que sugiere una alta probabilidad de un encuentro con al menos dos o tres anotaciones. La probabilidad de que Ambos Anoten (BTTS) es del 56.2%, lo cual es consistente con la capacidad ofensiva de New York City FC y la necesidad de Atlanta United FC de buscar el gol en casa. El marcador individual más probable, según el modelo Poisson, es un 1 - 1, con una probabilidad del 11.7%, lo que subraya la expectativa de un partido disputado donde ambos equipos contribuyen al marcador, a pesar de la ligera ventaja ofensiva de New York City FC en términos de xG.",
         "positiveFactors": [
-          "Atlanta United FC: 30 goles a favor en 26 partidos disputados (26 pts).",
-          "Probabilidad matemática principal: New York City FC (45.4%) bajo distribución Poisson.",
-          "Selección destacada: Más de 1.5 Goles con 77% de probabilidad estadística."
+          "New York City FC presenta una superioridad táctica y cuantitativa, evidenciada por su mejor posición en la tabla (#10 vs #14 de Atlanta United FC) y un diferencial de goles más favorable (39 GF / 34 GC vs 30 GF / 43 GC). Su proyección de 1.6 xG supera significativamente el 1.2 xG de Atlanta United FC, indicando una mayor eficiencia y volumen de oportunidades ofensivas esperadas.",
+          "El historial directo (H2H) reciente entre Atlanta United FC y New York City FC muestra que New York City FC ha sido un rival complicado, incluyendo una victoria contundente por 4-0 y múltiples empates. Aunque Atlanta United FC logró una victoria por 4-3 en un encuentro anterior, la tendencia general y la probabilidad de victoria del modelo Poisson (45.4% para New York City FC vs 29.8% para Atlanta United FC) inclinan la balanza hacia el equipo visitante o al menos a evitar la derrota.",
+          "La alta probabilidad de 'Ambos Anotan' (56.2%) y 'Más de 2.5 goles' (53.2%) se alinea con la capacidad ofensiva de New York City FC y la vulnerabilidad defensiva de Atlanta United FC. Esto sugiere un partido abierto donde la estrategia de ambos equipos probablemente buscará el gol, lo cual es un factor positivo para pronósticos de goles y para la expectativa de un encuentro entretenido."
         ],
         "negativeFactors": [
-          "Margen de empate o sorpresa para New York City FC estimado en 54.6%.",
-          "New York City FC promedia capacidad goleadora con 39 tantos anotados (32 pts)."
+          "A pesar de la ventaja estadística de New York City FC, Atlanta United FC juega en casa, un factor que históricamente puede nivelar las diferencias de rendimiento. La variabilidad inherente a la MLS y la capacidad de Atlanta United FC para anotar en casa, como se vio en el 4-3 H2H, podrían complicar el pronóstico directo a favor de New York City FC, especialmente considerando que el marcador más probable es un empate 1-1.",
+          "La inconsistencia en la forma reciente de ambos equipos (Atlanta United FC [W-D-L-D-L] y New York City FC [L-W-L-D-D]) introduce un grado de incertidumbre. Las rotaciones de plantilla, decisiones arbitrales o momentos puntuales de inspiración/error pueden alterar significativamente el desarrollo del partido, desviándolo de las proyecciones estadísticas y afectando la solidez de cualquier pronóstico de resultado exacto."
         ],
-        "verdict": "Marcador individual más probable: 1 - 1 (11.7%). Selección recomendada por modelo: Total Goles Over 1.5 (Más de 1.5 Goles) con 77%."
+        "verdict": "El análisis cuantitativo y táctico para el enfrentamiento entre Atlanta United FC y New York City FC sugiere un partido equilibrado en el marcador final, a pesar de la superioridad estadística de New York City FC en la tabla y en las proyecciones de xG. El modelo Poisson proyecta el marcador más probable como un 1 - 1 (11.7% de probabilidad), lo que indica una alta probabilidad de empate. Sin embargo, la probabilidad de victoria de New York City FC (45.4%) es notablemente superior a la de Atlanta United FC (29.8%). Dada la alta probabilidad de 'Ambos Anotan' (56.2%) y 'Más de 2.5 goles' (53.2%), y el xG de 1.2 para Atlanta United FC y 1.6 para New York City FC, la selección de valor recomendada es 'Ambos Anotan y Más de 2.5 goles'. Esta apuesta capitaliza la tendencia de ambos equipos a marcar y la propensión a partidos con múltiples goles, ofreciendo un margen de seguridad ante la posibilidad de un empate o una victoria ajustada de cualquiera de los dos. Se recomienda una gestión disciplinada del riesgo, dada la variabilidad inherente a los partidos de la MLS y la inconsistencia en la forma reciente de ambos equipos."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -94,9 +94,9 @@
       "league": "Liga MX",
       "status": "SCHEDULED",
       "kickoff": "2026-09-26T03:00Z",
-      "latencyMs": 4677,
-      "aiAvailable": false,
-      "modelUsed": null,
+      "latencyMs": 39282,
+      "aiAvailable": true,
+      "modelUsed": "gemini-2.5-flash",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -114,18 +114,18 @@
         "predictedScore": "1 - 1"
       },
       "analysisSections": {
-        "dataVerification": "Datos oficiales de ESPN para Tijuana vs Atlas (Puesto #7 vs #9). Muestra cuantitativa: 8 partidos (local) y 9 partidos (visitante). Rachas recientes: Tijuana [D-L-W-L-W] vs Atlas [D-L-D-L-W]. xG proyectado: Tijuana 1.6 xG vs Atlas 1.3 xG.",
-        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 56.1% y Under 2.5 en 43.9%. Ambos Anotan (BTTS) en 58.8% (Over 1.5 en 79%). Dinámica prevista: Partido de ritmo alto con Tijuana y Atlas buscando el arco rival.",
+        "dataVerification": "El análisis se fundamenta en datos oficiales de ESPN, consultados el 25 de septiembre de 2026, lo que garantiza la fiabilidad de las métricas. La muestra estadística para Tijuana comprende 8 partidos jugados como local, mientras que para Atlas se consideran 9 partidos como visitante. Estos tamaños de muestra, aunque no exhaustivos para una temporada completa, son suficientemente representativos para establecer tendencias iniciales y calcular proyecciones Poisson con una solidez estadística aceptable en el contexto de la Liga MX. Ambos equipos se encuentran en posiciones muy similares en la tabla (Tijuana #7, Atlas #9), ambos con 14 puntos, lo que sugiere una paridad competitiva que el modelo debe desglosar.",
+        "goalsAnalysis": "La dinámica goleadora proyectada para este encuentro entre Tijuana y Atlas es de un xG de 1.6 para Tijuana y 1.3 para Atlas, lo que suma un total de 2.9 xG esperados. Esta proyección sugiere un partido con oportunidades de gol para ambos lados. Las probabilidades de goles totales indican un 79% para Más de 1.5 goles y un 56.1% para Más de 2.5 goles, lo que refuerza la expectativa de un encuentro abierto y con anotaciones. Específicamente, la probabilidad de que Ambos Anoten (BTTS) es del 58.8%, un porcentaje significativo que se alinea con la capacidad ofensiva de Tijuana (12 GF en 8 PJ) y Atlas (13 GF en 9 PJ), así como con sus respectivas fragilidades defensivas (Tijuana 10 GC en 8 PJ, Atlas 15 GC en 9 PJ). El modelo Poisson, de hecho, identifica el marcador de 1 - 1 como el resultado individual más probable, con una probabilidad del 11.4%, lo que subraya la expectativa de que ambos equipos encuentren la red.",
         "positiveFactors": [
-          "Tijuana: 12 goles a favor en 8 partidos disputados (14 pts).",
-          "Probabilidad matemática principal: Tijuana (43%) bajo distribución Poisson.",
-          "Selección destacada: Más de 1.5 Goles con 79% de probabilidad estadística."
+          "El ataque de Tijuana, con un xG proyectado de 1.6, se enfrenta a una defensa de Atlas que ha concedido 15 goles en 9 partidos como visitante (un promedio de 1.67 goles por partido). Esta vulnerabilidad defensiva de Atlas podría ser explotada por Tijuana, que promedia 1.5 goles por partido en casa, generando un escenario favorable para que los locales anoten.",
+          "La alta probabilidad de que Ambos Anoten (Sí) del 58.8% y de Más de 2.5 goles (56.1%) sugiere que el partido no será un duelo cerrado. La capacidad de Tijuana para marcar en casa y la tendencia de Atlas a conceder goles como visitante, combinada con su propia capacidad ofensiva (1.3 xG), crea un entorno propicio para un encuentro con múltiples anotaciones.",
+          "A pesar de la paridad en la tabla (ambos con 14 puntos), Tijuana tiene una ligera ventaja en la solidez defensiva en casa, manteniendo su valla invicta en el 37.5% de sus partidos, en contraste con el 22.2% de Atlas como visitante. Esta diferencia, aunque modesta, podría ser un factor determinante para que Tijuana, al menos, no sea superado en su estadio."
         ],
         "negativeFactors": [
-          "Margen de empate o sorpresa para Atlas estimado en 57%.",
-          "Atlas promedia capacidad goleadora con 13 tantos anotados (14 pts)."
+          "A pesar de la proyección de xG ligeramente inferior para Atlas (1.3), su capacidad goleadora de 13 tantos en 9 partidos como visitante (1.44 goles por partido) demuestra que pueden ser efectivos en ataque. La inconsistencia defensiva de Tijuana, que ha concedido 10 goles en 8 partidos, podría ser aprovechada por Atlas para complicar el pronóstico de un dominio claro de los locales.",
+          "La alta probabilidad de empate (24.4%) y el hecho de que el marcador 1 - 1 sea el más probable según el modelo Poisson, introducen una varianza considerable. La racha reciente de ambos equipos es irregular (Tijuana [D-L-W-L-W] y Atlas [D-L-D-L-W]), lo que sugiere que el rendimiento puede fluctuar, y cualquier factor externo como decisiones arbitrales o rotaciones de plantilla podría inclinar la balanza hacia un resultado inesperado o un empate."
         ],
-        "verdict": "Marcador individual más probable: 1 - 1 (11.4%). Selección recomendada por modelo: Total Goles Over 1.5 (Más de 1.5 Goles) con 79%."
+        "verdict": "El análisis cuantitativo y táctico profundo sugiere un encuentro equilibrado entre Tijuana y Atlas, con una clara tendencia a que ambos equipos anoten. El marcador más probable derivado del cálculo Poisson es un 1 - 1 (11.4%), lo que refuerza la expectativa de un partido donde las defensas serán vulnerables. Considerando las probabilidades de xG (Tijuana 1.6 vs Atlas 1.3), la alta probabilidad de Más de 2.5 goles (56.1%) y, especialmente, la probabilidad del 58.8% para que Ambos Anoten (Sí), la selección de valor recomendada es 'Ambos Anotan (Sí)'. Esta apuesta ofrece una excelente relación riesgo-recompensa, alineándose con la dinámica goleadora proyectada y el escenario de empate con goles. Se recomienda una gestión disciplinada del riesgo, dada la inherente varianza del fútbol y la paridad entre ambos equipos."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -136,9 +136,9 @@
       "league": "MLS",
       "status": "SCHEDULED",
       "kickoff": "2026-09-26T23:30Z",
-      "latencyMs": 50356,
-      "aiAvailable": false,
-      "modelUsed": null,
+      "latencyMs": 53100,
+      "aiAvailable": true,
+      "modelUsed": "gemini-3.5-flash-lite",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -156,18 +156,18 @@
         "predictedScore": "1 - 2"
       },
       "analysisSections": {
-        "dataVerification": "Datos oficiales de ESPN para CF Montréal vs FC Cincinnati (Puesto #15 vs #9). Muestra cuantitativa: 26 partidos (local) y 25 partidos (visitante). Rachas recientes: CF Montréal [L-L-L-L-L] vs FC Cincinnati [D-D-L-L-D]. xG proyectado: CF Montréal 1.8 xG vs FC Cincinnati 2.1 xG.",
-        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 74.9% y Under 2.5 en 25.1%. Ambos Anotan (BTTS) en 73.5% (Over 1.5 en 90.2%). Dinámica prevista: Partido de ritmo alto con CF Montréal y FC Cincinnati buscando el arco rival.",
+        "dataVerification": "El análisis cuantitativo de este encuentro de la Major League Soccer se fundamenta en los registros oficiales procesados y extraídos de ESPN con fecha de consulta 2026-09-25. La muestra evaluada comprende 26 partidos disputados por CF Montréal como local y 25 encuentros de FC Cincinnati en condición de visitante, otorgando una robustez estadística altamente fiable para la modelización matemática. En la tabla de clasificación de la MLS, CF Montréal se ubica en la posición #15 con 21 puntos, evidenciando graves problemas estructurales en su zaga defensiva que ha encajado 53 goles (0% de valla invicta). Por su parte, FC Cincinnati se posiciona en el puesto #9 con 33 unidades, mostrando un perfil marcadamente ofensivo pero también vulnerable en defensa, con 54 goles a favor y 61 goles en contra en 25 apariciones.",
+        "goalsAnalysis": "El modelo de distribución de Poisson proyecta un escenario de alta producción ofensiva y volatilidad defensiva, situando los goles esperados (xG) en 1.8 xG para CF Montréal frente a 2.1 xG para FC Cincinnati. Esta asimetría táctica impulsa las probabilidades de mercado hacia los totales altos: la estimación de Más de 1.5 goles alcanza un contundente 90.2% (dejando el Menos de 1.5 en un escaso 9.8%), mientras que el umbral de Más de 2.5 goles se sitúa en el 74.9%, respaldado por un mercado de Ambos Anotan (BTTS) muy elevado del 73.5%. El emparejamiento directo entre la inestable defensa local de CF Montréal y el dinámico caudal ofensivo de FC Cincinnati justifica que el marcador más probable derivado del cálculo Poisson sea el 1-2, con una probabilidad puntual del 8% en el abanico de resultados exactos.",
         "positiveFactors": [
-          "CF Montréal: 31 goles a favor en 26 partidos disputados (21 pts).",
-          "Probabilidad matemática principal: FC Cincinnati (45.1%) bajo distribución Poisson.",
-          "Selección destacada: Más de 1.5 Goles con 90% de probabilidad estadística."
+          "Factor positivo 1: El modelo xG proyecta 2.1 goles esperados para FC Cincinnati, aprovechando directamente la deficiente solidez defensiva de CF Montréal, que acumula 53 goles en contra y un 0% de valla invicta.",
+          "Factor positivo 2: La capacidad ofensiva de CF Montréal en su estadio, promediando un xG de 1.8, le permite capitalizar los espacios que deja FC Cincinnati, cuya defensa ha concedido 61 tantos en 25 partidos.",
+          "Factor positivo 3: La alta probabilidad matemática del mercado de Ambos Anotan (73.5%) y del Más de 2.5 goles (74.9%), avalada por la convergencia de ambos equipos en conceder oportunidades claras de gol de manera recurrente."
         ],
         "negativeFactors": [
-          "Margen de empate o sorpresa para FC Cincinnati estimado en 54.9%.",
-          "FC Cincinnati promedia capacidad goleadora con 54 tantos anotados (33 pts)."
+          "Factor de riesgo 1: La pésima racha de resultados recientes de CF Montréal genera una alta volatilidad psicológica y táctica que puede alterar el patrón normal del partido si encajan un gol tempranero.",
+          "Factor de riesgo 2: La fragilidad defensiva global de FC Cincinnati como visitante introduce un margen de error elevado ante cualquier reacción de orgullo del conjunto local, incrementando la varianza en los minutos finales."
         ],
-        "verdict": "Marcador individual más probable: 1 - 2 (8%). Selección recomendada por modelo: Total Goles Over 1.5 (Más de 1.5 Goles) con 90%."
+        "verdict": "El análisis táctico y cuantitativo profundo revela un encuentro abierto y de alto voltaje ofensivo entre CF Montréal y FC Cincinnati. El modelo Poisson identifica con precisión matemática el marcador de 1 - 2 (8% de probabilidad) como el escenario más verosímil, impulsado por los xG proyectados de 1.8 para el local y 2.1 para la visita. Se recomienda una selección de valor en la combinación de 'Más de 2.5 Goles' y 'Ambos Anotan (BTTS) Sí', operando con una gestión disciplinada del riesgo debido a la inestabilidad defensiva crónica de ambas escuadras en la presente campaña de la MLS."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -178,9 +178,9 @@
       "league": "Liga MX",
       "status": "SCHEDULED",
       "kickoff": "2026-09-26T22:50Z",
-      "latencyMs": 35887,
-      "aiAvailable": false,
-      "modelUsed": null,
+      "latencyMs": 53515,
+      "aiAvailable": true,
+      "modelUsed": "gemini-3.5-flash-lite",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -198,18 +198,18 @@
         "predictedScore": "1 - 1"
       },
       "analysisSections": {
-        "dataVerification": "Datos oficiales de ESPN para Cruz Azul vs Toluca (Puesto #4 vs #1). Muestra cuantitativa: 9 partidos (local) y 9 partidos (visitante). Rachas recientes: Cruz Azul [L-L-W-W-W] vs Toluca [L-W-W-W-W]. xG proyectado: Cruz Azul 1.4 xG vs Toluca 1.9 xG.",
-        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 64.7% y Under 2.5 en 35.3%. Ambos Anotan (BTTS) en 64.3% (Over 1.5 en 84.5%). Dinámica prevista: Partido de ritmo alto con Cruz Azul y Toluca buscando el arco rival.",
+        "dataVerification": "Mediante el cruce de datos oficiales provenientes de ESPN, el presente análisis examina el choque de la Liga MX entre Cruz Azul y Toluca con una muestra homogénea de 9 partidos disputados por cada institución. Cruz Azul se ubica en la posición #4 de la tabla general con 15 unidades, 16 goles a favor y 15 en contra (presentando una modesta valla invicta del 11.1%), mientras que Toluca lidera la clasificación general en el puesto #1 con 19 puntos, respaldado por un potente aparato ofensivo de 20 tantos anotados y una sólida retaguardia que solo ha concedido 9 goles, logrando una destacada efectividad de valla invicta del 44.4%.",
+        "goalsAnalysis": "El modelo de distribución de Poisson proyecta un escenario de xG donde Cruz Azul genera 1.4 goles esperados frente a los 1.9 xG estimados para Toluca, reflejando el poderío del líder en condición de visitante. En cuanto a los mercados de goles, la probabilidad de superar la línea de Más de 1.5 tantos se eleva hasta el 84.5%, mientras que el Más de 2.5 goles registra un sólido 64.7%, indicando tendencias de partidos abiertos. Asimismo, el indicador de Ambos Anotan (BTTS) se sitúa en un 64.3%, lo que avala que las líneas ofensivas de Cruz Azul y Toluca tienen alta capacidad para vulnerar los entramados defensivos contrarios.",
         "positiveFactors": [
-          "Cruz Azul: 16 goles a favor en 9 partidos disputados (15 pts).",
-          "Probabilidad matemática principal: Toluca (50.5%) bajo distribución Poisson.",
-          "Selección destacada: Más de 1.5 Goles con 85% de probabilidad estadística."
+          "Cruz Azul mantiene un promedio productivo en ataque con 1.77 goles por partido y un volumen constante de 6.55 córners por encuentro, lo que le permite generar presión sostenida en campo rival.",
+          "Toluca llega con la etiqueta de líder absoluto (#1) y una impresionante solidez defensiva que se traduce en un 44.4% de vallas invictas, complementada por un índice de 1.9 xG proyectado.",
+          "Las estadísticas de cuota de gol combinadas señalan que las probabilidades para Más de 1.5 (84.5%) y Ambos Anotan (64.3%) ofrecen un soporte matemático muy favorable para buscar mercados dinámicos."
         ],
         "negativeFactors": [
-          "Margen de empate o sorpresa para Toluca estimado en 49.5%.",
-          "Toluca promedia capacidad goleadora con 20 tantos anotados (19 pts)."
+          "La baja eficiencia defensiva de Cruz Azul, con apenas un 11.1% de vallas invictas, representa un riesgo crítico al medirse ante la ofensiva más letal de Toluca.",
+          "La alta variabilidad propia de los 90 minutos de un duelo directo en la parte alta de la tabla puede alterar el marcador más probable estimado por el modelo Poisson ante cualquier desatención táctica o decisión arbitral."
         ],
-        "verdict": "Marcador individual más probable: 1 - 1 (9.6%). Selección recomendada por modelo: Total Goles Over 1.5 (Más de 1.5 Goles) con 85%."
+        "verdict": "El modelo matemático de Poisson identifica el marcador de 1 - 1 (9.6%) como el escenario estipulado de máxima probabilidad debido al balance entre la contundencia de Toluca y la necesidad de respuesta de Cruz Azul en su estadio. No obstante, dado el xG proyectado (Cruz Azul 1.4 xG vs Toluca 1.9 xG) y las probabilidades de Ambos Anotan (64.3%), se recomienda seleccionar la línea de Más de 1.5 goles o el BTTS como opciones de valor superior, manteniendo una gestión de riesgo disciplinada y acorde a la volatilidad del líder contra el cuarto clasificado."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -220,9 +220,9 @@
       "league": "MLS",
       "status": "SCHEDULED",
       "kickoff": "2026-09-26T23:30Z",
-      "latencyMs": 16748,
-      "aiAvailable": false,
-      "modelUsed": null,
+      "latencyMs": 21753,
+      "aiAvailable": true,
+      "modelUsed": "gemini-2.5-flash",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -240,18 +240,18 @@
         "predictedScore": "1 - 1"
       },
       "analysisSections": {
-        "dataVerification": "Datos oficiales de ESPN para Charlotte FC vs Chicago Fire FC (Puesto #4 vs #5). Muestra cuantitativa: 26 partidos (local) y 25 partidos (visitante). Rachas recientes: Charlotte FC [W-D-W-D-W] vs Chicago Fire FC [L-L-D-D-D]. xG proyectado: Charlotte FC 1.7 xG vs Chicago Fire FC 1.6 xG.",
-        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 63.6% y Under 2.5 en 36.4%. Ambos Anotan (BTTS) en 64.9% (Over 1.5 en 83.8%). Dinámica prevista: Partido de ritmo alto con Charlotte FC y Chicago Fire FC buscando el arco rival.",
+        "dataVerification": "El análisis se fundamenta en datos oficiales de ESPN, consultados el 25 de septiembre de 2026, lo que garantiza la fiabilidad de las métricas. Se ha procesado una muestra robusta de 26 partidos para Charlotte FC como local y 25 partidos para Chicago Fire FC como visitante en la presente temporada de la MLS. Esta amplitud de la muestra confiere una solidez estadística considerable a las proyecciones, permitiendo una evaluación precisa de las tendencias de rendimiento de ambos equipos. Charlotte FC ocupa la 4ª posición con 43 puntos, mientras que Chicago Fire FC se sitúa en la 5ª posición con 39 puntos, indicando un enfrentamiento entre equipos de rendimiento similar en la tabla.",
+        "goalsAnalysis": "La dinámica goleadora de este encuentro entre Charlotte FC y Chicago Fire FC se perfila como abierta y con alta probabilidad de anotaciones. El modelo Poisson proyecta un xG de 1.7 para Charlotte FC y 1.6 para Chicago Fire FC, lo que subraya una capacidad ofensiva equilibrada y la expectativa de que ambos equipos generen oportunidades claras de gol. Charlotte FC ha marcado 47 goles y recibido 37 en 26 partidos, mientras que Chicago Fire FC ha anotado 45 y encajado 38 en 25 encuentros, confirmando su perfil ofensivo y ciertas vulnerabilidades defensivas. Las probabilidades de goles totales son contundentes: 'Más de 1.5 goles' se sitúa en un 83.8%, y 'Más de 2.5 goles' alcanza un 63.6%, lo que sugiere un partido con al menos tres anotaciones. Además, la probabilidad de que 'Ambos Anotan (BTTS) - Sí' es del 64.9%, un valor elevado que se alinea con el xG proyectado y el historial de ambos equipos. El marcador individual más probable, según el modelo Poisson, es un 1 - 1 (10.1%), lo cual es consistente con la alta probabilidad de BTTS y la paridad ofensiva y defensiva esperada.",
         "positiveFactors": [
-          "Charlotte FC: 47 goles a favor en 26 partidos disputados (43 pts).",
-          "Probabilidad matemática principal: Charlotte FC (39.5%) bajo distribución Poisson.",
-          "Selección destacada: Más de 1.5 Goles con 84% de probabilidad estadística."
+          "Charlotte FC presenta una ligera ventaja ofensiva y de localía, evidenciada por su xG proyectado de 1.7 frente al 1.6 de Chicago Fire FC. Además, su posición en la tabla (#4 vs #5) y su mejor diferencia de goles (47 GF / 37 GC para Charlotte FC vs 45 GF / 38 GC para Chicago Fire FC) sugieren una mayor eficacia general.",
+          "La racha reciente de Charlotte FC es notablemente superior, con un registro de [W-D-W-D-W] en sus últimos cinco partidos, lo que indica un excelente momento de forma y confianza. En contraste, Chicago Fire FC llega con una racha de [L-L-D-D-D], lo que podría afectar su moral y rendimiento en un partido tan crucial.",
+          "La alta probabilidad de 'Ambos Anotan (BTTS) - Sí' (64.9%) y 'Más de 2.5 goles' (63.6%) es un factor positivo para un pronóstico de valor. Estos porcentajes, combinados con el marcador más probable de 1-1, refuerzan la expectativa de un partido abierto donde ambos equipos contribuirán al marcador, lo que es favorable para selecciones de mercado de goles."
         ],
         "negativeFactors": [
-          "Margen de empate o sorpresa para Chicago Fire FC estimado en 60.5%.",
-          "Chicago Fire FC promedia capacidad goleadora con 45 tantos anotados (39 pts)."
+          "A pesar de su reciente mala racha, Chicago Fire FC mantiene una capacidad ofensiva considerable, con un xG de 1.6 y 45 goles anotados en 25 partidos. Su historial directo (H2H) contra Charlotte FC incluye victorias con marcadores altos (ej. 4-1, 3-2), lo que demuestra su capacidad para complicar a Charlotte FC y anotar incluso en condición de visitante.",
+          "La paridad en las probabilidades del modelo Poisson (Charlotte FC 39.5%, Empate 23.1%, Chicago Fire FC 37.3%) indica que el resultado es altamente incierto. La diferencia mínima entre la victoria local y visitante (2.2%) subraya la alta varianza inherente a este tipo de encuentros, donde factores como decisiones arbitrales, rotaciones de plantilla o momentos puntuales del partido pueden inclinar la balanza."
         ],
-        "verdict": "Marcador individual más probable: 1 - 1 (10.1%). Selección recomendada por modelo: Total Goles Over 1.5 (Más de 1.5 Goles) con 84%."
+        "verdict": "El análisis cuantitativo y táctico para el Charlotte FC vs Chicago Fire FC sugiere un encuentro sumamente disputado y con alta probabilidad de goles. El marcador más probable derivado del cálculo Poisson es un 1 - 1 (10.1%), lo que refleja la paridad ofensiva y la capacidad de ambos equipos para anotar. No obstante, la probabilidad de 'Más de 2.5 goles' (63.6%) y 'Ambos Anotan (BTTS) - Sí' (64.9%) es significativamente alta, indicando que, si bien el 1-1 es el resultado exacto más probable, la distribución de otros marcadores con goles de ambos lados es muy fuerte. Considerando la forma reciente de Charlotte FC y la capacidad ofensiva de Chicago Fire FC, la selección de valor recomendada es 'Ambos Anotan (BTTS) - Sí'. Esta opción ofrece una sólida probabilidad y se alinea con el perfil de ambos equipos. Se recomienda una gestión disciplinada del riesgo, dada la estrecha diferencia en las probabilidades de victoria entre ambos equipos."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -262,9 +262,9 @@
       "league": "Liga MX",
       "status": "SCHEDULED",
       "kickoff": "2026-09-26T23:07Z",
-      "latencyMs": 42918,
-      "aiAvailable": false,
-      "modelUsed": null,
+      "latencyMs": 54346,
+      "aiAvailable": true,
+      "modelUsed": "gemini-3.5-flash-lite",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -282,18 +282,18 @@
         "predictedScore": "1 - 1"
       },
       "analysisSections": {
-        "dataVerification": "Datos oficiales de ESPN para Guadalajara vs Querétaro (Puesto #2 vs #5). Muestra cuantitativa: 9 partidos (local) y 8 partidos (visitante). Rachas recientes: Guadalajara [D-W-W-D-W] vs Querétaro [D-W-W-L-D]. xG proyectado: Guadalajara 1.4 xG vs Querétaro 1.1 xG.",
-        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 47.6% y Under 2.5 en 52.4%. Ambos Anotan (BTTS) en 51.8% (Over 1.5 en 72.8%). Dinámica prevista: Encuentro cerrado y de rigor táctico donde el control defensivo predominará entre Guadalajara y Querétaro.",
+        "dataVerification": "Tras la verificación de las fuentes oficiales (ESPN) para este duelo de Liga MX, Guadalajara se ubica en el puesto #2 con 18 puntos, respaldado por una muestra de 9 partidos en los que ha registrado 17 goles a favor y 8 en contra, además de una sólida valla invicta del 44.4% y un volumen ofensivo destacado de 7.44 córners por partido. Por su parte, Querétaro se posiciona en el escalón #5 con 14 unidades tras 8 encuentros disputados, acumulando 11 goles anotados y 8 recibidos, una efectividad defensiva del 25% en valla invicta y un promedio disciplinario elevado de 4 tarjetas amarillas por encuentro, lo que configura un choque de alto voltaje táctico entre dos protagonistas de la zona alta.",
+        "goalsAnalysis": "El análisis cuantitativo de la dinámica goleadora sitúa el xG Poisson proyectado de Guadalajara en 1.4 goles, mientras que Querétaro registra un índice esperado de 1.1 xG. En cuanto a la distribución de probabilidades de goles, el mercado de Más de 1.5 se eleva hasta el 72.8% (reflejando una alta fiabilidad para superar la barrera mínima), en contraste con el Menos de 2.5 que se sitúa ligeramente como favorito con el 52.4% frente al 47.6% del Más de 2.5, debido a la compacidad táctica que suelen proponer ambos bloques. Asimismo, el mercado de Ambos Anotan (BTTS) presenta un equilibrio casi simétrico con el 51.8% para el 'Sí' y el 48.2% para el 'No', convergiendo de manera directa con el marcador individual más probable del modelo Poisson: el empate 1 - 1, que encabeza los escenarios con una probabilidad de 12.4%.",
         "positiveFactors": [
-          "Guadalajara: 17 goles a favor en 9 partidos disputados (18 pts).",
-          "Probabilidad matemática principal: Guadalajara (44.2%) bajo distribución Poisson.",
-          "Selección destacada: Menos de 3.5 Goles con 74% de probabilidad estadística."
+          "El poderío ofensivo y la consistencia en el Estadio Akron le otorgan a Guadalajara un promedio de 1.4 xG respaldado por la generación de 7.44 córners por partido, lo que someterá de manera constante a la zaga visitante.",
+          "La ubicación de Guadalajara en el puesto #2 de la tabla general refleja una estructura táctica consolidada y una mayor eficacia de cara al arco rival en comparación con los desplazamientos de Querétaro.",
+          "Las probabilidades del modelo Poisson otorgan un firme 72.8% al mercado de Más de 1.5 goles, validando que el intercambio de golpes en ambas áreas posee un fundamento estadístico muy sólido."
         ],
         "negativeFactors": [
-          "Margen de empate o sorpresa para Querétaro estimado en 55.8%.",
-          "Querétaro promedia capacidad goleadora con 11 tantos anotados (14 pts)."
+          "Querétaro ha demostrado solidez al ubicarse en la posición #5 con solo 8 goles en contra en 8 partidos, lo que evidencia que su bloque bajo puede entorpecer el volumen generador de Guadalajara.",
+          "La alta indisciplina táctica de Querétaro (4 amarillas por partido) puede derivar en un encuentro cortado, aumentando la varianza arbitral y propiciando un trámite trabado en el medio campo."
         ],
-        "verdict": "Marcador individual más probable: 1 - 1 (12.4%). Selección recomendada por modelo: Total Goles Under 3.5 (Menos de 3.5 Goles) con 74%."
+        "verdict": "El veredicto cuantitativo y táctico de 777 Picks AI Engine señala que el encuentro entre Guadalajara y Querétaro posee todos los ingredientes para un desarrollo disputado en las áreas. El cálculo de distribución Poisson identifica de manera óptima el marcador 1 - 1 (12.4%) como el escenario central más probable, sustentado por los xG de 1.4 para Guadalajara y 1.1 para Querétaro. Ante este equilibrio y el 51.8% de probabilidad en el Ambos Anotan (BTTS), se recomienda operar con prudencia seleccionando mercados combinados moderados (como hándicap asiático favorable al local o el Ambos Anotan) bajo una gestión de bankroll rigurosa y disciplinada."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -304,9 +304,9 @@
       "league": "MLS",
       "status": "SCHEDULED",
       "kickoff": "2026-09-26T23:30Z",
-      "latencyMs": 20118,
+      "latencyMs": 29089,
       "aiAvailable": true,
-      "modelUsed": "gemini-2.5-flash",
+      "modelUsed": "gemini-3.5-flash-lite",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -324,18 +324,18 @@
         "predictedScore": "2 - 1"
       },
       "analysisSections": {
-        "dataVerification": "La información proporcionada para el encuentro entre Philadelphia Union y Orlando City SC proviene de una fuente oficial como ESPN, lo que garantiza su fiabilidad. La muestra estadística es robusta, abarcando 26 partidos para ambos equipos en la presente temporada de la MLS, tanto en condición de local para Philadelphia Union como de visitante para Orlando City SC. Esto permite una evaluación precisa de sus métricas de rendimiento. Philadelphia Union se sitúa en la 6ª posición con 36 puntos, mientras que Orlando City SC le sigue de cerca en la 7ª posición con 34 puntos, lo que subraya la importancia de este enfrentamiento directo en la tabla de clasificación y la solidez de los datos para un análisis cuantitativo profundo.",
-        "goalsAnalysis": "El análisis de la dinámica goleadora revela un escenario de alta probabilidad de goles. Philadelphia Union, con un promedio de 50 goles a favor en 26 partidos y un xG Poisson proyectado de 2.1, demuestra una capacidad ofensiva considerable. Se enfrentan a una defensa de Orlando City SC que ha concedido 60 goles en 26 partidos y tiene un xG Poisson proyectado de 1.7 en contra, lo que sugiere vulnerabilidad. El modelo Poisson estima una probabilidad del 89.3% para Más de 1.5 goles y un 73.2% para Más de 2.5 goles, indicando un partido abierto. Además, la probabilidad de que Ambos Anoten (BTTS) es del 71.8%, lo que refuerza la expectativa de un intercambio de golpes. El marcador individual más probable, según el modelo Poisson, es un 2 - 1 a favor de Philadelphia Union, con una probabilidad del 8.4%, reflejando la ventaja ofensiva del local y la capacidad de Orlando City SC para marcar.",
+        "dataVerification": "El presente análisis cuantitativo procesa los datos oficiales extraídos de ESPN para el duelo de la Major League Soccer (MLS) entre Philadelphia Union y Orlando City SC. Con una muestra sólida de 26 partidos disputados por ambos contendientes, la tabla de posiciones refleja una lucha directa en la zona alta de la conferencia: Philadelphia Union se ubica en la posición #6 con 36 puntos, superando por un margen estrecho a Orlando City SC, que marcha en la posición #7 con 34 unidades. La consistencia estadística de ambas escuadras valida un estudio profundo de su eficiencia ofensiva y vulnerabilidad defensiva.",
+        "goalsAnalysis": "El modelo de distribución de Poisson proyecta un escenario de alta producción ofensiva, otorgando a Philadelphia Union un valor esperado de 2.1 xG frente a los 1.7 xG estimados para Orlando City SC. Esta sinergia de peligro en las áreas se traduce en probabilidades contundentes en los mercados de goles: el Más de 1.5 goles alcanza un imponente 89.3%, mientras que el Más de 2.5 goles se sitúa en un robusto 73.2%. Asimismo, la probabilidad de que ambos equipos marquen (BTTS) asciende al 71.8%, reflejando las deficiencias defensivas de Orlando City SC —que acumula 60 goles en contra— combinadas con el acierto anotador de Philadelphia Union, que registra 50 dianas a favor.",
         "positiveFactors": [
-          "La superioridad ofensiva de Philadelphia Union es un factor clave. Con 50 goles a favor en 26 partidos y un xG proyectado de 2.1, su ataque es significativamente más potente que la defensa de Orlando City SC, que ha encajado 60 goles en el mismo número de encuentros y tiene una tasa de valla invicta del 30%, inferior al 40% de Philadelphia Union. Esta disparidad sugiere que Philadelphia Union tiene una alta probabilidad de capitalizar sus oportunidades.",
-          "Philadelphia Union llega a este encuentro con una racha de cinco victorias consecutivas ([W-W-W-W-W]), lo que indica un excelente estado de forma y una moral alta. Jugar en casa, donde suelen ser más fuertes, amplifica esta ventaja. En contraste, Orlando City SC presenta una forma más irregular en sus últimos cinco partidos ([L-L-W-W-W]), lo que podría afectar su confianza y rendimiento en un partido tan crucial.",
-          "El modelo Poisson otorga a Philadelphia Union una probabilidad de victoria del 47.9%, considerablemente superior al 31.3% de Orlando City SC y al 20.8% del empate. Esta ventaja estadística, respaldada por el xG proyectado (2.1 para Philadelphia Union vs 1.7 para Orlando City SC) y la posición en la tabla (6º vs 7º), consolida la predicción de una victoria local como el escenario más probable y con valor."
+          "Philadelphia Union promedia un volumen ofensivo destacado y se enfrenta a la endeble retaguardia de Orlando City SC, que ha concedido 60 goles en 26 encuentros.",
+          "La superioridad local de Philadelphia Union se ve respaldada por su posición #6 en la tabla y un diferencial táctico en la generación de córners (6 por partido) que someterá constantemente a la defensa visitante.",
+          "Los xG proyectados (2.1 para Philadelphia Union y 1.7 para Orlando City SC) respaldan matemáticamente una alta probabilidad de superar el umbral de 2.5 goles totales en el encuentro."
         ],
         "negativeFactors": [
-          "A pesar de sus deficiencias defensivas, Orlando City SC posee una capacidad ofensiva notable, habiendo anotado 46 goles en 26 partidos. Su xG proyectado de 1.7 indica que tienen la calidad para generar ocasiones de gol y complicar a la defensa de Philadelphia Union, especialmente considerando que la probabilidad de que Ambos Anoten es alta (71.8%). El historial H2H también muestra que Orlando City SC ha ganado 3 de los últimos 5 enfrentamientos directos, lo que sugiere que pueden ser un rival incómodo para Philadelphia Union.",
-          "La alta probabilidad de un partido con muchos goles (Más de 2.5 al 73.2%) y la naturaleza competitiva de la MLS introducen una varianza inherente. Un error defensivo puntual, una decisión arbitral controvertida o una rotación inesperada de jugadores por parte de cualquiera de los equipos podría alterar drásticamente el flujo del partido y el resultado final, haciendo que el pronóstico, aunque estadísticamente sólido, no esté exento de riesgos."
+          "Orlando City SC posee capacidad de respuesta en transición ofensiva, lo cual se alinea con su proyección de 1.7 xG y amenaza la valla invicta de Philadelphia Union.",
+          "La alta fricción en duelos directos y la tensión por la proximidad en la clasificación (#6 vs #7) introducen un factor de varianza arbitral y potencial disciplina táctica que podría alterar el ritmo del partido."
         ],
-        "verdict": "El veredicto táctico y cuantitativo apunta a una victoria de Philadelphia Union. El marcador más probable derivado del cálculo Poisson es 2 - 1 a favor de Philadelphia Union (8.4%), lo cual se alinea con su superioridad ofensiva (2.1 xG proyectado) y su excelente estado de forma reciente. La selección de valor recomendada es 'Philadelphia Union Gana y Ambos Anotan (BTTS Sí)', combinando la fortaleza local y ofensiva de Philadelphia Union con la capacidad goleadora de Orlando City SC, respaldada por una probabilidad del 71.8% para BTTS. Se recomienda una gestión disciplinada del riesgo, dada la naturaleza de alto puntaje y la capacidad ofensiva de ambos equipos, que podría llevar a un partido dinámico y con giros inesperados."
+        "verdict": "El análisis cuantitativo y táctico converge en que Philadelphia Union ejerce una ligera superioridad para hacerse con la victoria en su feudo. El marcador exacto más probable derivado del cálculo Poisson es el 2 - 1 (8.4%), reflejando la capacidad de respuesta de Orlando City SC pero la jerarquía local de Philadelphia Union. Se recomienda seleccionar la combinada de Victoria de Philadelphia Union con Más de 1.5 goles o el mercado de Ambos Anotan (BTTS Sí) al 71.8%, manteniendo una gestión disciplinada del riesgo acorde a la volatilidad de la MLS."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -346,9 +346,9 @@
       "league": "Liga MX",
       "status": "SCHEDULED",
       "kickoff": "2026-09-27T03:05Z",
-      "latencyMs": 45131,
-      "aiAvailable": false,
-      "modelUsed": null,
+      "latencyMs": 53545,
+      "aiAvailable": true,
+      "modelUsed": "gemini-3.5-flash-lite",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -366,18 +366,18 @@
         "predictedScore": "1 - 1"
       },
       "analysisSections": {
-        "dataVerification": "Datos oficiales de ESPN para Santos vs Pachuca (Puesto #17 vs #11). Muestra cuantitativa: 9 partidos (local) y 9 partidos (visitante). Rachas recientes: Santos [W-W-L-D-L] vs Pachuca [D-W-W-D-D]. xG proyectado: Santos 1.1 xG vs Pachuca 1.7 xG.",
-        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 51.2% y Under 2.5 en 48.8%. Ambos Anotan (BTTS) en 52.9% (Over 1.5 en 75.5%). Dinámica prevista: Partido de ritmo alto con Santos y Pachuca buscando el arco rival.",
+        "dataVerification": "Tras procesar y verificar las fuentes oficiales obtenidas a través de ESPN, el presente análisis cuantitativo examina el duelo de la Liga MX entre Santos y Pachuca con base en una muestra estadística robusta de 9 partidos disputados por cada institución. En la tabla general, Santos se ubica en la posición #17 con 7 puntos, evidenciando graves problemas defensivos al acumular 15 goles en contra y una escasa valla invicta del 11.1%, además de un volumen ofensivo limitado a 9 tantos. En contraparte, Pachuca visita el territorio lagunero posicionado en el peldaño #11 con 12 unidades, sustentado en un rendimiento más equilibrado que refleja 15 goles a favor y 10 en contra, junto a una respetable solidez traducida en un 33.3% de porterías a cero. Las métricas colaterales muestran que Santos genera un promedio de 7.66 córners y recibe 1.66 amarillas por encuentro, mientras que Pachuca promedia 5.11 tiros de esquina y 2.66 amonestaciones, anticipando un choque de contrastes tácticos.",
+        "goalsAnalysis": "El modelo de distribución de Poisson proyecta un escenario de producción ofensiva favorable para los Tuzos, estimando un valor de xG de 1.1 para Santos frente a 1.7 xG para Pachuca. Las probabilidades de goles derivados de este análisis matemático indican una alta propensión a superar la línea mínima, con un 75.5% de probabilidad para Más de 1.5 goles (frente a un 24.5% para el Menos), mientras que el mercado de Más de 2.5 goles se sitúa ligeramente por encima de la marca de equilibrio con un 51.2%. En cuanto al mercado de Ambos Anotan (BTTS), el modelo calcula una probabilidad del 52.9% para la opción 'Sí', lo que valida la expectativa de vulnerabilidad mutua en las zagas. No obstante, al ponderar la distribución de matrices de goles exactos, el marcador individual más probable arrojado por el modelo Poisson es el empate 1 - 1, con una probabilidad estimada del 11.6%, representando el punto de convergencia más conservador entre la capacidad de respuesta de Santos como local y la superioridad teórica de Pachuca.",
         "positiveFactors": [
-          "Santos: 9 goles a favor en 9 partidos disputados (7 pts).",
-          "Probabilidad matemática principal: Pachuca (51.7%) bajo distribución Poisson.",
-          "Selección destacada: PAC o Empate (X2) con 76% de probabilidad estadística."
+          "Factor positivo 1: La superioridad visitante en la métrica de goles esperados (1.7 xG de Pachuca frente a 1.1 xG de Santos), respaldada por su mejor ubicación en la clasificación general (#11 frente a #17).",
+          "Factor positivo 2: El rendimiento de Pachuca en su solidez defensiva a domicilio, registrando un respetable 33.3% de vallas invictas que contrasta con la precaria estabilidad defensiva de Santos (15 goles encajados en 9 partidos).",
+          "Factor positivo 3: La alta probabilidad estadística del 75.5% para Más de 1.5 goles en el encuentro, asegurando un margen de cobertura amplio para dinámicas ofensivas en el desarrollo del cotejo."
         ],
         "negativeFactors": [
-          "Margen de empate o sorpresa para Pachuca estimado en 48.3%.",
-          "Pachuca promedia capacidad goleadora con 15 tantos anotados (12 pts)."
+          "Factor de riesgo 1: La tendencia histórica y reciente de Santos a competir de manera cerrada en su estadio, lo cual valida la alta probabilidad del marcador exacto 1 - 1 (11.6%) y reduce la brecha de victoria absoluta para Pachuca.",
+          "Factor de riesgo 2: La alta tasa de amonestaciones de Pachuca (2.66 tarjetas amarillas por partido) y la varianza inherente a los 90 minutos de juego que puedan alterar el ritmo táctico mediante expulsiones o faltas tácticas."
         ],
-        "verdict": "Marcador individual más probable: 1 - 1 (11.6%). Selección recomendada por modelo: Doble Oportunidad (X2) (PAC o Empate (X2)) con 76%."
+        "verdict": "Veredicto táctico y cuantitativo final: El análisis probabilístico refleja un favoritismo técnico para Pachuca (51.7% de probabilidad de victoria según el modelo Poisson), fundamentado en su superioridad en xG (1.7) y su mejor posición clasificatoria (#11 vs #17). Sin embargo, la necesidad imperiosa de Santos como local y la consistencia del modelo en señalar el empate 1 - 1 (11.6%) como el marcador más probable sugieren un trámite disputado. Se recomienda una selección de valor orientada a la doble oportunidad a favor de Pachuca o el mercado de Más de 1.5 goles (75.5%), manteniendo una gestión disciplinada del riesgo ante la volatilidad de la Liga MX."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -388,9 +388,9 @@
       "league": "MLS",
       "status": "SCHEDULED",
       "kickoff": "2026-09-26T23:30Z",
-      "latencyMs": 32057,
-      "aiAvailable": false,
-      "modelUsed": null,
+      "latencyMs": 53822,
+      "aiAvailable": true,
+      "modelUsed": "gemini-3.5-flash-lite",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -408,18 +408,18 @@
         "predictedScore": "1 - 1"
       },
       "analysisSections": {
-        "dataVerification": "Datos oficiales de ESPN para Red Bull New York vs St. Louis CITY SC (Puesto #8 vs #3). Muestra cuantitativa: 26 partidos (local) y 26 partidos (visitante). Rachas recientes: Red Bull New York [W-W-L-D-L] vs St. Louis CITY SC [W-W-W-D-W]. xG proyectado: Red Bull New York 1.3 xG vs St. Louis CITY SC 1.8 xG.",
-        "goalsAnalysis": "Modelo Poisson proyecta Over 2.5 en 60.6% y Under 2.5 en 39.4%. Ambos Anotan (BTTS) en 61.6% (Over 1.5 en 82%). Dinámica prevista: Partido de ritmo alto con Red Bull New York y St. Louis CITY SC buscando el arco rival.",
+        "dataVerification": "Con base en los registros oficiales de ESPN con muestras completas de 26 partidos, analizamos el enfrentamiento en la MLS entre Red Bull New York, ubicado en la posición #8 con 33 puntos, y St. Louis CITY SC, situado sólidamente en el puesto #3 con 44 unidades. La solidez estadística de Red Bull New York como local se contrasta con la alta productividad ofensiva del visitante St. Louis CITY SC, evidenciando un diferencial de goles de 34 GF frente a 48 GC para el dueño de casa, y de 45 GF frente a 36 GC para el cuadro forastero.",
+        "goalsAnalysis": "El modelo de distribución Poisson proyecta un escenario dinámico con un xG de 1.3 para Red Bull New York y 1.8 para St. Louis CITY SC. Las métricas globales sugieren una alta probabilidad de superar el umbral conservador, situando el Más de 1.5 goles en un 82% y el Más de 2.5 goles en un 60.6%. Asimismo, el mercado de Ambos Anotan (BTTS) se eleva al 61.6%, respaldado por las concesiones defensivas del local (48 goles en contra) y la consistencia anotadora del visitante.",
         "positiveFactors": [
-          "Red Bull New York: 34 goles a favor en 26 partidos disputados (33 pts).",
-          "Probabilidad matemática principal: St. Louis CITY SC (47.9%) bajo distribución Poisson.",
-          "Selección destacada: Más de 1.5 Goles con 82% de probabilidad estadística."
+          "Factor positivo 1: El volumen ofensivo de St. Louis CITY SC como visitante (45 goles en 26 partidos) avala la proyección de su xG en 1.8 frente a la vulnerable zaga de Red Bull New York.",
+          "Factor positivo 2: La alta probabilidad del mercado Ambos Anotan (61.6%) y del Más de 2.5 goles (60.6%) debido a la balanza entre la necesidad de puntos de Red Bull New York (#8) y la contundencia de St. Louis CITY SC (#3).",
+          "Factor positivo 3: Las estadísticas de saques de esquina (5.2 por parte de Red Bull New York y 5.1 de St. Louis CITY SC) aseguran un ritmo de juego vertical constante que alimenta las proyecciones de gol."
         ],
         "negativeFactors": [
-          "Margen de empate o sorpresa para St. Louis CITY SC estimado en 52.1%.",
-          "St. Louis CITY SC promedia capacidad goleadora con 45 tantos anotados (44 pts)."
+          "Factor de riesgo 1: La capacidad de Red Bull New York de mantener el arco en cero en un 30% de sus encuentros podría frustrar parcialmente el potencial ofensivo superior de St. Louis CITY SC.",
+          "Factor de riesgo 2: La varianza táctica propia de los 90 minutos de la MLS, sumada a la disciplina táctica donde ambos registran promedios cercanos a 2-2.2 tarjetas amarillas por partido, podría derivar en un trámite cortado que afecte el flujo de xG."
         ],
-        "verdict": "Marcador individual más probable: 1 - 1 (10.5%). Selección recomendada por modelo: Total Goles Over 1.5 (Más de 1.5 Goles) con 82%."
+        "verdict": "El veredicto táctico y cuantitativo final indica que, aunque el modelo Poisson señala al marcador 1 - 1 (10.5%) como el resultado individual más probable debido al equilibrio de fuerzas en momentos específicos, el volumen global de goles favorece la selección de valor en el mercado de Más de 2.5 goles o el Ambos Anotan (Sí), dada la producción combinada de St. Louis CITY SC y las urgencias clasificatorias de Red Bull New York. Se recomienda una gestión disciplinada del riesgo ajustada a una estrategia de cuotas con valor esperado positivo."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -430,7 +430,7 @@
       "league": "Liga MX",
       "status": "SCHEDULED",
       "kickoff": "2026-09-27T03:10Z",
-      "latencyMs": 22250,
+      "latencyMs": 21890,
       "aiAvailable": true,
       "modelUsed": "gemini-2.5-flash",
       "mathVerification": {
@@ -450,19 +450,19 @@
         "predictedScore": "1 - 1"
       },
       "analysisSections": {
-        "dataVerification": "El presente análisis se fundamenta en métricas oficiales de la Liga MX, obtenidas de la fuente ESPN, con una consulta reciente que asegura la actualidad de los datos. La muestra estadística para Tigres UANL y Puebla abarca 9 partidos de la temporada actual para cada equipo (local y visitante respectivamente), lo que proporciona un tamaño de muestra adecuado para inferencias estadísticas robustas en el contexto de una liga de fútbol. Tigres UANL se encuentra en una posición preocupante (#16 con 7 puntos), mientras que Puebla ostenta una posición significativamente mejor (#8 con 14 puntos), lo que ya establece una disparidad clara en el rendimiento global de la temporada. La solidez estadística se refuerza al considerar que estos 9 partidos representan una porción considerable del torneo, permitiendo una evaluación fiable de las tendencias de ataque, defensa y resultados proyectados para este enfrentamiento específico.",
-        "goalsAnalysis": "La dinámica goleadora proyectada por el modelo Poisson para este encuentro entre Tigres UANL y Puebla sugiere un partido de baja a moderada producción de goles. Tigres UANL presenta un xG esperado de 1.1, lo que indica una capacidad ofensiva limitada en promedio, mientras que Puebla muestra un xG ligeramente superior de 1.3, reflejando una ofensiva un poco más eficiente. Estas proyecciones de xG se traducen en probabilidades de goles totales: el 'Más de 1.5 goles' tiene una probabilidad del 70.1%, lo que sugiere que al menos dos goles son bastante probables. Sin embargo, la probabilidad de 'Más de 2.5 goles' desciende al 44.2%, con un 'Menos de 2.5 goles' siendo más probable (55.8%), indicando que un partido con tres o más goles es menos esperado. La probabilidad de 'Ambos Anotan (BTTS)' es casi un volado (Sí 49.4%, No 50.6%), lo que subraya la incertidumbre sobre si ambos equipos lograrán perforar la red. El marcador individual más probable, derivado de la distribución Poisson, es un 1 - 1 con una probabilidad del 12.9%, lo que se alinea con las proyecciones de xG ajustadas y la tendencia a un bajo volumen de goles, sugiriendo un encuentro equilibrado y disputado donde ambos equipos podrían marcar, pero sin una avalancha ofensiva.",
+        "dataVerification": "El análisis se fundamenta en datos oficiales de ESPN, con una muestra robusta de 9 partidos de Liga MX para ambos equipos en la temporada actual, lo que confiere solidez estadística a las proyecciones. Tigres UANL, actuando como local, se encuentra en una preocupante posición #16 con solo 7 puntos, habiendo anotado 9 goles y concedido 13. Por otro lado, Puebla llega como visitante en una posición significativamente mejor, #8 con 14 puntos, mostrando un balance goleador más equilibrado con 11 goles a favor y 11 en contra. Esta disparidad en la clasificación y el rendimiento general es un factor crítico para la evaluación del encuentro.",
+        "goalsAnalysis": "La dinámica goleadora proyectada por el modelo Poisson indica un xG de 1.1 para Tigres UANL y 1.3 para Puebla, sugiriendo que Puebla tiene una ligera ventaja ofensiva esperada en este enfrentamiento. Al contrastar el ataque de Tigres UANL (1.1 xG) con la defensa de Puebla (que ha concedido 11 goles en 9 partidos, un promedio de 1.22 GC/p), se observa que Tigres UANL podría tener dificultades para superar esa solidez. Recíprocamente, el ataque de Puebla (1.3 xG) se enfrenta a una defensa de Tigres UANL que ha encajado 13 goles en 9 partidos (1.44 GC/p), lo que podría permitir a Puebla generar más oportunidades. Las probabilidades de goles totales son: Más de 1.5 goles (70.1%), Más de 2.5 goles (44.2%) y Menos de 2.5 goles (55.8%). Esto sugiere una inclinación hacia un partido con dos goles o menos. La probabilidad de que Ambos Anoten (BTTS) es del 49.4% (Sí) frente al 50.6% (No), lo que indica una ligera preferencia por que al menos uno de los equipos no marque, a pesar de que el marcador más probable sea 1-1 (12.9%), el cual se alinea con los xG proyectados cercanos a un gol por equipo.",
         "positiveFactors": [
-          "Puebla llega a este enfrentamiento con una ventaja táctica y cuantitativa clara, reflejada en su posición en la tabla (#8 con 14 puntos) frente a la de Tigres UANL (#16 con 7 puntos). Esta diferencia de 7 puntos en 9 jornadas es sustancial y denota una mayor consistencia y eficacia por parte de Puebla en lo que va de la temporada.",
-          "El modelo Poisson otorga a Puebla una probabilidad de victoria del 41.8%, la más alta entre los tres posibles resultados (Empate 27.2%, Tigres UANL 31.1%). Esto, combinado con un xG proyectado de 1.3 para Puebla frente a 1.1 para Tigres UANL, sugiere que Puebla tiene una ligera superioridad ofensiva esperada y una mayor capacidad para capitalizar oportunidades, incluso jugando como visitante.",
-          "La solidez defensiva de Puebla, que ha encajado 11 goles en 9 partidos (1.22 GC/PJ), es superior a la de Tigres UANL, que ha recibido 13 goles en la misma cantidad de encuentros (1.44 GC/PJ). Esta ligera ventaja defensiva, sumada a su mejor posición en la tabla, refuerza la probabilidad de que Puebla pueda contener el ataque de Tigres UANL y obtener un resultado positivo."
+          "Puebla exhibe una superioridad en la clasificación (#8 con 14 puntos frente a Tigres UANL en #16 con 7 puntos) y un rendimiento más consistente a lo largo de la temporada, lo que se traduce en una mayor probabilidad de victoria según el modelo Poisson (41.8% para Puebla vs 31.1% para Tigres UANL).",
+          "La proyección de xG (1.1 para Tigres UANL vs 1.3 para Puebla) indica que Puebla tiene una ligera ventaja en la generación de oportunidades de gol, lo cual es un factor clave considerando la debilidad defensiva de Tigres UANL (13 goles concedidos en 9 partidos).",
+          "La forma reciente de Puebla [D-L-W-L-W] es marginalmente mejor que la de Tigres UANL [L-D-D-D-W], lo que sugiere una mayor capacidad para obtener resultados positivos, incluso jugando como visitante."
         ],
         "negativeFactors": [
-          "A pesar de la superioridad de Puebla en la tabla y las proyecciones, Tigres UANL juega en casa, lo que siempre introduce un factor de ventaja local que no siempre se refleja completamente en las estadísticas de forma. Su promedio de 7 córners por partido, aunque no se traduzca en goles, indica una cierta presión ofensiva que podría generar oportunidades en un partido cerrado.",
-          "La alta probabilidad de empate (27.2%) y el marcador más probable de 1 - 1 (12.9%) sugieren que el partido podría ser extremadamente reñido y que la varianza inherente al fútbol podría fácilmente inclinar la balanza hacia un reparto de puntos, complicando una apuesta directa por la victoria de Puebla.",
-          "La probabilidad de 'Ambos Anotan' está casi dividida al 50/50 (Sí 49.4%, No 50.6%), lo que introduce un elemento de riesgo para cualquier pronóstico basado en la capacidad goleadora de ambos equipos. Además, la tendencia de Tigres UANL a acumular tarjetas amarillas (2 por partido) podría llevar a situaciones disciplinarias que alteren el curso del juego, como una expulsión, introduciendo una variabilidad adicional."
+          "La inconsistencia de Tigres UANL, evidenciada por su posición en la tabla y su racha reciente de [L-D-D-D-W], representa un riesgo significativo. A pesar de la ventaja de localía, su bajo rendimiento ofensivo (9 GF en 9 PJ) y defensivo (13 GC en 9 PJ) podría complicar cualquier intento de control del partido.",
+          "La probabilidad de Ambos Anotan (BTTS) está casi dividida (49.4% Sí vs 50.6% No), lo que introduce una varianza considerable en el resultado final. Si bien el 1-1 es el marcador más probable, la baja probabilidad de Más de 2.5 goles (44.2%) sugiere que un solo gol podría ser decisivo y que el partido podría ser de baja anotación, aumentando la volatilidad de las apuestas sobre el total de goles.",
+          "El historial directo (H2H) muestra resultados variados, incluyendo una victoria abultada de Tigres UANL (7-0) y una de Puebla (3-1), lo que indica que, aunque el modelo suaviza estas variaciones, la naturaleza de los enfrentamientos entre estos equipos puede ser impredecible en términos de margen de victoria."
         ],
-        "verdict": "El análisis cuantitativo y táctico profundo indica que el encuentro entre Tigres UANL y Puebla será un duelo ajustado, con una ligera inclinación a favor de Puebla, a pesar de la localía de Tigres UANL. El marcador más probable derivado del cálculo Poisson es un 1 - 1 (12.9%), lo que refuerza la expectativa de un partido con pocos goles y un resultado apretado. Sin embargo, la estimación Poisson otorga a Puebla la mayor probabilidad de victoria (41.8%), seguida de cerca por el empate (27.2%), y luego Tigres UANL (31.1%). Dada la superioridad de Puebla en la clasificación, su mejor xG proyectado y la alta probabilidad de empate, la selección de valor recomendada es 'Doble Oportunidad: Empate o Puebla'. Esta opción mitiga el riesgo de una victoria directa de Puebla y cubre el escenario de un partido igualado, que es el resultado individual más probable. La gestión disciplinada del riesgo es crucial, considerando la probabilidad del 'Menos de 2.5 goles' (55.8%) y la incertidumbre en 'Ambos Anotan'."
+        "verdict": "El análisis cuantitativo y táctico sugiere un encuentro reñido, con el marcador más probable derivado del cálculo Poisson siendo 1 - 1 (12.9%). A pesar de la localía de Tigres UANL, su pobre rendimiento general y su posición en la tabla los colocan en desventaja frente a un Puebla más consistente y con una ligera ventaja en xG. La selección de valor recomendada, considerando la probabilidad de victoria de Puebla (41.8%) y la alta probabilidad de empate (27.2%), es la 'Doble Oportunidad: Empate o Puebla (X2)'. Esta apuesta ofrece una cobertura sólida, alineándose con el escenario de máxima probabilidad de un empate 1-1 y la superioridad estadística de Puebla. Se recomienda una gestión disciplinada del riesgo, dada la naturaleza de baja anotación proyectada y la ligera incertidumbre en el BTTS."
       },
       "verificationStatus": "VERIFIED_OK"
     },
@@ -473,9 +473,9 @@
       "league": "MLS",
       "status": "SCHEDULED",
       "kickoff": "2026-09-27T00:30Z",
-      "latencyMs": 24041,
+      "latencyMs": 55408,
       "aiAvailable": true,
-      "modelUsed": "gemini-2.5-flash",
+      "modelUsed": "gemini-3.5-flash-lite",
       "mathVerification": {
         "sumOutcome": 100,
         "sumGoals25": 100,
@@ -493,18 +493,18 @@
         "predictedScore": "1 - 1"
       },
       "analysisSections": {
-        "dataVerification": "El análisis se fundamenta en datos oficiales de la MLS, obtenidos a través de ESPN, con una consulta realizada el 24 de septiembre de 2026. La muestra estadística abarca 26 partidos completos para Austin FC como local y 26 partidos para San Diego FC como visitante, lo que confiere una robustez considerable a las métricas utilizadas. Austin FC se encuentra en la posición #12 con 30 puntos, mientras que San Diego FC está ligeramente por encima en la posición #11 con 31 puntos, lo que indica una paridad competitiva entre ambos equipos en la tabla de clasificación. Esta solidez en el tamaño de la muestra permite una proyección Poisson fiable para el encuentro.",
-        "goalsAnalysis": "La dinámica goleadora proyectada para este enfrentamiento entre Austin FC y San Diego FC sugiere un partido con anotaciones. El modelo Poisson estima que Austin FC tiene un xG de 1.5, mientras que San Diego FC presenta un xG ligeramente superior de 1.7. Esta cercanía en los valores de goles esperados, combinada con el hecho de que ambos equipos han concedido 44 goles en 26 partidos, refuerza la probabilidad de que ambos anoten. La probabilidad de 'Más de 1.5 goles' es muy alta (82.3%), y 'Más de 2.5 goles' se sitúa en un 61%, lo que indica una tendencia a un encuentro abierto. Específicamente, la probabilidad de que 'Ambos Anoten (BTTS) - Sí' es del 62.7%, lo cual es consistente con las vulnerabilidades defensivas de Austin FC (solo 10% de vallas invictas) y San Diego FC (30% de vallas invictas), y la capacidad ofensiva de San Diego FC (44 GF) y la de Austin FC en casa. El marcador individual más probable, 1-1 (10.6%), emerge directamente de esta distribución de xG y las tendencias defensivas compartidas.",
+        "dataVerification": "El presente análisis cuantitativo procesa datos oficiales extraídos de ESPN con fecha de consulta del 25 de septiembre de 2026, abarcando una muestra consolidada de 26 partidos disputados por cada institución en la temporada actual de la MLS. En la tabla de clasificación, Austin FC se ubica en la posición número 12 con 30 puntos, mientras que San Diego FC marcha inmediatamente arriba, en el puesto número 11 con 31 unidades. La solidez estadística de Austin FC refleja fragilidad defensiva con 44 goles encajados y una escasa tasa de valla invicta del 10%, promediando 4.8 córners y 2 amarillas por encuentro. Por su parte, San Diego FC presenta un balance de 44 goles a favor y 44 en contra, exhibiendo una mayor eficiencia ofensiva y una tasa de portería a cero del 30%, además de registrar 5.3 córners y 1.4 tarjetas amarillas por partido.",
+        "goalsAnalysis": "La dinámica goleadora modelada mediante la distribución de Poisson proyecta un xG de 1.5 para Austin FC frente a 1.7 xG para San Diego FC, evidenciando un duelo equilibrado pero con ligera inclinación visitante. Las probabilidades de mercado indican un escenario altamente favorable para rebasar los umbrales conservadores: el Más de 1.5 goles se sitúa en un sólido 82.3%, mientras que el Más de 2.5 goles alcanza el 61%, reflejando que la endeblez defensiva de Austin FC (44 GC) contrasta con la capacidad anotadora de San Diego FC (44 GF). En cuanto al mercado de Ambos Anotan (BTTS), la probabilidad se eleva al 62.7% debido a las constantes concesiones defensivas de ambos conjuntos. El modelo Poisson identifica con precisión quirúrgica el marcador individual de 1 - 1 como el resultado exacto más probable con un 10.6%, encapsulando la paridad competitiva que existe entre ambas escuadras.",
         "positiveFactors": [
-          "La capacidad ofensiva de San Diego FC es un factor positivo, con 44 goles a favor en 26 partidos y un xG proyectado de 1.7, lo que sugiere que tienen la potencia para perforar la defensa de Austin FC, que también ha concedido 44 goles en la temporada.",
-          "La alta probabilidad de que 'Ambos Anoten (BTTS) - Sí' (62.7%) y 'Más de 2.5 goles' (61%) es un indicativo de un partido con oportunidades claras de gol para Austin FC y San Diego FC, impulsado por las estadísticas de goles concedidos por ambos equipos y sus respectivos xG.",
-          "A pesar de la ligera ventaja de San Diego FC en la tabla, Austin FC juega en casa, donde buscará capitalizar su xG de 1.5. La paridad en la clasificación (Austin FC #12 vs San Diego FC #11) sugiere un encuentro disputado donde ambos equipos tienen incentivos para buscar la victoria, favoreciendo un desarrollo de juego abierto."
+          "Factor positivo 1: El volumen ofensivo de San Diego FC respaldado por sus 44 goles en 26 partidos y un xG proyectado de 1.7, el cual capitaliza los espacios que cede la retaguardia de Austin FC.",
+          "Factor positivo 2: La condición de local de Austin FC, que a pesar de sus dificultades en la tabla (#12), le otorga un incentivo táctico para buscar transiciones rápidas y sostener una producción de 1.5 xG según el modelo Poisson.",
+          "Factor positivo 3: La alta probabilidad matemática del mercado de Ambos Anotan (62.7%) y del Más de 2.5 goles (61%), respaldada por métricas cruzadas donde ambos equipos registran idéntica cifra de goles recibidos (44 GC)."
         ],
         "negativeFactors": [
-          "Las defensas de Austin FC y San Diego FC son un factor de riesgo significativo, ya que ambos equipos han encajado 44 goles en 26 partidos. Esta fragilidad defensiva compartida podría llevar a un resultado más volátil de lo esperado, donde errores individuales o momentos de desorganización puedan alterar rápidamente el marcador.",
-          "La reciente forma de San Diego FC muestra cierta inconsistencia (D-L-L-L-W), con tres derrotas consecutivas antes de su última victoria. Aunque Austin FC tiene una forma ligeramente mejor (D-W-D-D-W), la variabilidad en el rendimiento reciente de San Diego FC podría generar un partido impredecible, donde su ataque potente podría no siempre compensar sus debilidades defensivas."
+          "Factor de riesgo 1: La irregularidad en las rachas recientes de ambos equipos, donde San Diego FC ha mostrado altibajos (D-L-L-L-W) y Austin FC alterna empates frecuentes (D-W-D-D-W), lo que podría derivar en un partido trabado en mediocampo.",
+          "Factor de riesgo 2: La varianza inherente a los 90 minutos y la presión clasificatoria (separados por un solo punto en la tabla), factores que a menudo inducen a planteamientos tácticos excesivamente cautelosos en el tramo final del encuentro."
         ],
-        "verdict": "El análisis cuantitativo y táctico para el Austin FC vs San Diego FC apunta a un encuentro equilibrado pero con goles. El modelo Poisson proyecta el marcador 1 - 1 como el más probable (10.6%), lo cual es consistente con los xG de 1.5 para Austin FC y 1.7 para San Diego FC, y las vulnerabilidades defensivas de ambos equipos (44 goles concedidos cada uno). La selección de valor recomendada es 'Ambos Anotan (BTTS) - Sí', con una robusta probabilidad del 62.7%. Esta apuesta capitaliza la capacidad ofensiva de San Diego FC y la expectativa de que Austin FC anote en casa, frente a defensas que no son particularmente sólidas. Se aconseja una gestión disciplinada del riesgo, considerando la posibilidad de un empate con goles o un resultado ajustado a favor de cualquiera de los dos equipos."
+        "verdict": "El veredicto táctico y cuantitativo final corrobora la proyección del modelo Poisson que sitúa el marcador más probable en un empate 1 - 1 (10.6%). No obstante, debido al alto índice de xG combinado (3.2 xG totales) y a la debilidad defensiva compartida de 44 goles en contra, la selección de valor recomendada se orienta hacia el mercado de Ambos Anotan (Sí) o el Más de 2.5 goles como coberturas ideales. Se aconseja una gestión disciplinada del riesgo, dimensionando el stake de manera moderada ante la alta volatilidad que caracteriza la parte baja de la tabla en la MLS."
       },
       "verificationStatus": "VERIFIED_OK"
     }
