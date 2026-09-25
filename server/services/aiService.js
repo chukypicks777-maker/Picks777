@@ -304,7 +304,7 @@ export async function generateAiMatchReport(match, options = {}) {
           ...config,
           ...validated,
           isConfigured: true,
-          updatedAt: new Date().toISOString()
+          updatedAt: options.aiConfig.updatedAt || 'client_override'
         };
       }
     } catch {}
@@ -507,6 +507,8 @@ Instrucciones analíticas estrictas:
     ttlSeconds = 7 * 86400; // 7 días para partidos finalizados
   } else if (match.status === 'LIVE') {
     ttlSeconds = 120; // 2 minutos para partidos en juego
+  } else if (match.status === 'SCHEDULED' && match.kickoff && Date.now() > Date.parse(match.kickoff)) {
+    ttlSeconds = 120; // 2 minutos si la hora del partido ya pasó
   }
   return cachedData(cacheKey, ttlSeconds, generate, { forceRefresh: Boolean(options.forceRefresh) });
 }

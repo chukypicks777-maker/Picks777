@@ -5,7 +5,8 @@ import {
   getCachedAnalysis,
   setCachedAnalysis,
   removeCachedAnalysis,
-  clearAllAnalysisCache
+  clearAllAnalysisCache,
+  computeMatchFingerprint
 } from '../src/utils/analysisCache.js';
 import { cachedData, clearCachePattern } from '../server/services/dataCache.js';
 
@@ -25,6 +26,13 @@ test('getMatchCacheTtlMs assigns proper durable TTLs based on match status', () 
   // Baseline without AI availability expires in 1 minute to allow quick retry
   const baselineTtl = getMatchCacheTtlMs('SCHEDULED', { aiAvailable: false });
   assert.equal(baselineTtl, 60 * 1000);
+
+  // SCHEDULED match whose kickoff already passed expires in 2 minutes (no stale pre-match analysis)
+  const pastMatch = {
+    status: 'SCHEDULED',
+    kickoff: new Date(Date.now() - 3600 * 1000).toISOString()
+  };
+  assert.equal(getMatchCacheTtlMs(pastMatch, { aiAvailable: true }), 2 * 60 * 1000);
 });
 
 test('scheduled match analysis remains valid in cache well beyond 10 minutes (up to 48 hours)', () => {
@@ -113,30 +121,64 @@ test('localStorage persistence allows retrieval across mock browser sessions', (
   }
 });
 
-test('backend cachedData persists ai: keys to disk cache across in-memory wipes', async () => {
-  clearCachePattern('ai:');
-
-  const cacheKey = 'ai:test-disk-persisted-' + Date.now();
-  let calls = 0;
-  const loader = async () => {
-    calls++;
-    return { aiAvailable: true, text: 'Análisis generado' };
+test('computeMatchFingerprint is identical whether probabilities are attached at root or model', () => {
+  const matchA = {
+    id: 'm-123',
+    status: 'SCHEDULED',
+    kickoff: '2026-09-30T20:00:00Z',
+    probabilities: { homeWin: 60, draw: 20, awayWin: 20, over25: 65, bttsYes: 55 },
+    homeTeam: { id: 'h1', name: 'Real Madrid' },
+    awayTeam: { id: 'a1', name: 'Barcelona' }
   };
 
-  // 1. First call computes and saves
-  const res1 = await cachedData(cacheKey, 172800, loader);
-  assert.equal(calls, 1);
-  assert.equal(res1.text, 'Análisis generado');
+  const matchB = {
+    id: 'm-123',
+    status: 'SCHEDULED',
+    kickoff: '2026-09-30T20:00:00Z',
+    model: {
+      probabilities: { homeWin: 60, draw: 20, awayWin: 20, over25: 65, bttsYes: 55 }
+    },
+    homeTeam: { id: 'h1', name: 'Real Madrid' },
+    awayTeam: { id: 'a1', name: 'Barcelona' }
+  };
 
-  // 2. Second call hits cache without calling loader
-  const res2 = await cachedData(cacheKey, 172800, loader);
-  assert.equal(calls, 1);
-  assert.equal(res2.text, 'Análisis generado');
+  const fpA = computeMatchFingerprint(matchA);
+  const fpB = computeMatchFingerprint(matchB);
+  assert.equal(fpA, fpB, 'Fingerprints must match across root and model probability placements');
+});
 
-  // 3. Force refresh bypasses cache and increments calls
-  const res3 = await cachedData(cacheKey, 172800, loader, { forceRefresh: true });
-  assert.equal(calls, 2);
-  assert.equal(res3.text, 'Análisis generado');
+test('backend cachedData persists ai: keys to disk cache across in-memory wipes and isolates deletion', async () => {
+  clearCachePattern('ai:');
 
-  clearCachePattern(cacheKey);
+  const cacheKey1 = 'ai:test-disk-persisted-1-' + Date.now();
+  const cacheKey2 = 'ai:test-disk-persisted-2-' + Date.now();
+  let calls1 = 0;
+  let calls2 = 0;
+
+  const res1 = await cachedData(cacheKey1, 172800, async () => {
+    calls1++;
+    return { aiAvailable: true, text: 'Reporte 1' };
+  });
+  const res2 = await cachedData(cacheKey2, 172800, async () => {
+    calls2++;
+    return { aiAvailable: true, text: 'Reporte 2' };
+  });
+
+  assert.equal(calls1, 1);
+  assert.equal(calls2, 1);
+  assert.equal(res1.text, 'Reporte 1');
+  assert.equal(res2.text, 'Reporte 2');
+
+  // Deleting cacheKey1 must NOT purge cacheKey2 from disk
+  clearCachePattern(cacheKey1);
+
+  // Calling cacheKey2 should STILL hit disk cache without re-invoking loader
+  const hit2 = await cachedData(cacheKey2, 172800, async () => {
+    calls2++;
+    return { aiAvailable: true, text: 'Re-llamada no esperada' };
+  });
+  assert.equal(calls2, 1, 'Key 2 should still be cached');
+  assert.equal(hit2.text, 'Reporte 2');
+
+  clearCachePattern('ai:');
 });

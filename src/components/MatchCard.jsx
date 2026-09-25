@@ -65,12 +65,13 @@ export default function MatchCard({
   const bttsProb = percent(p.bttsYes) ?? percent(match.model?.probabilities?.bttsYes) ?? percent(match.probabilities?.bttsYes) ?? seasonPoisson?.bttsYes ?? null;
   const bankerPick = getBestBankerPick(match);
   const isBankerMode = bankerRank != null || marketFilter === 'safe';
+  const isSpecificMarket = ['over', 'over25', 'btts', 'under', 'under25'].includes(marketFilter);
   const contextualPick = getContextualPick(match, marketFilter);
-  const activePick = contextualPick || bankerPick;
-  const displayPick = activePick?.selection || bankerPick?.selection || 'Sin datos suficientes';
-  const displayOdds = activePick?.odds ?? getEffectiveOdds(activePick) ?? bankerPick?.odds ?? getEffectiveOdds(bankerPick);
-  const displayProb = activePick?.probability ?? bankerPick?.probability;
-  const confidenceScore = displayProb;
+  const activePick = isSpecificMarket ? contextualPick : (contextualPick || bankerPick);
+  const displayPick = activePick?.selection || (isSpecificMarket ? 'Sin pronóstico para este mercado' : (bankerPick?.selection || 'Sin datos suficientes'));
+  const displayOdds = activePick?.odds ?? getEffectiveOdds(activePick);
+  const displayProb = activePick?.probability;
+  const confidenceScore = displayProb ?? bankerPick?.probability ?? 0;
   const isLegInParlay = Boolean(parlayLegs?.some(
     l => l.matchId === match.id && l.selection === activePick?.selection
   ));

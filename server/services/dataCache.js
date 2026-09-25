@@ -135,10 +135,27 @@ export function clearCachePattern(prefix) {
     if (key.startsWith(prefix) || key.includes(prefix)) memory.delete(key);
   }
   if (prefix.includes('ai:') || prefix.startsWith('ai:')) {
-    aiFileCacheMap.clear();
-    try {
-      const file = defaultAiCacheFile();
-      fs.unlink(file).catch(() => {});
-    } catch {}
+    if (prefix === 'ai:' || prefix === 'ai') {
+      aiFileCacheMap.clear();
+      try {
+        const file = defaultAiCacheFile();
+        fs.unlink(file).catch(() => {});
+      } catch {}
+    } else {
+      let changed = false;
+      for (const k of aiFileCacheMap.keys()) {
+        if (k.startsWith(prefix) || k.includes(prefix)) {
+          aiFileCacheMap.delete(k);
+          changed = true;
+        }
+      }
+      if (changed) {
+        try {
+          const file = defaultAiCacheFile();
+          const obj = Object.fromEntries(aiFileCacheMap.entries());
+          fs.writeFile(file, JSON.stringify(obj), 'utf8').catch(() => {});
+        } catch {}
+      }
+    }
   }
 }

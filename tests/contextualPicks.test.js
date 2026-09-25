@@ -124,6 +124,77 @@ test('deriveSeasonPoisson derives over25 and btts probabilities when model is mi
   assert.ok(getEffectiveOdds(contextualBtts) > 1);
 });
 
+test('getContextualPick returns null when probability is under 50% without falling back to banker pick', () => {
+  const matchLowOver = {
+    id: 'match-low-over',
+    status: 'SCHEDULED',
+    homeTeam: { name: 'Team A', shortName: 'TMA' },
+    awayTeam: { name: 'Team B', shortName: 'TMB' },
+    probabilities: {
+      over15: 75,
+      over25: 42,
+      bttsYes: 38,
+      under25: 58
+    },
+    odds: {
+      over15: 1.30,
+      over25: 2.20,
+      under25: 1.65,
+      bttsYes: 2.30
+    },
+    leagueName: 'Premier League'
+  };
+
+  // When asking for 'over', 42% is < 50%, MUST return null, NEVER Over 1.5!
+  const overPick = getContextualPick(matchLowOver, 'over');
+  assert.equal(overPick, null, 'Must return null when over25 is under 50%, not fallback to 1.5');
+
+  // When asking for 'btts', 38% is < 50%, MUST return null, NEVER Over 1.5!
+  const bttsPick = getContextualPick(matchLowOver, 'btts');
+  assert.equal(bttsPick, null, 'Must return null when bttsYes is under 50%');
+
+  // When asking for 'under', 58% is >= 50%, MUST return Menos de 2.5 Goles!
+  const underPick = getContextualPick(matchLowOver, 'under');
+  assert.ok(underPick);
+  assert.equal(underPick.key, 'under25');
+  assert.equal(underPick.selection, 'Menos de 2.5 Goles');
+  assert.equal(underPick.probability, 58);
+  assert.equal(underPick.odds, 1.65);
+
+  // When asking for 'all', banker pick (Over 1.5) is returned
+  const allPick = getContextualPick(matchLowOver, 'all');
+  assert.equal(allPick.selection, 'Más de 1.5 Goles');
+});
+
+test('getContextualPick derives over25 and btts from published odds when model probabilities are absent', () => {
+  const matchOnlyOdds = {
+    id: 'match-only-odds',
+    status: 'SCHEDULED',
+    homeTeam: { name: 'Team X', shortName: 'TMX' },
+    awayTeam: { name: 'Team Y', shortName: 'TMY' },
+    probabilities: {},
+    odds: {
+      over25: 1.60,
+      under25: 2.40,
+      bttsYes: 1.55,
+      bttsNo: 2.50
+    },
+    leagueName: 'LaLiga'
+  };
+
+  const overPick = getContextualPick(matchOnlyOdds, 'over');
+  assert.ok(overPick);
+  assert.equal(overPick.selection, 'Más de 2.5 Goles');
+  assert.equal(overPick.odds, 1.60);
+  assert.ok(overPick.probability >= 50);
+
+  const bttsPick = getContextualPick(matchOnlyOdds, 'btts');
+  assert.ok(bttsPick);
+  assert.equal(bttsPick.selection, 'Ambos anotan: Sí');
+  assert.equal(bttsPick.odds, 1.55);
+  assert.ok(bttsPick.probability >= 50);
+});
+
 test('getContextualPick gracefully handles invalid or postponed matches', () => {
   assert.equal(getContextualPick(null, 'over'), null);
   assert.equal(getContextualPick({ status: 'POSTPONED' }, 'over'), null);

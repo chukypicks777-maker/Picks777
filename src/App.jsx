@@ -14,7 +14,7 @@ import StatsCenterModal from './components/StatsCenterModal';
 import FooterCommunityShowcase from './components/FooterCommunityShowcase';
 import { sounds } from './utils/audioEffects';
 import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
-import { getMatchSafetyScore, getBestBankerPick, getEffectiveOdds } from './utils/mathProbabilities';
+import { getMatchSafetyScore, getBestBankerPick, getEffectiveOdds, getContextualPick } from './utils/mathProbabilities';
 
 export default function App() {
   // Auth state
@@ -95,6 +95,7 @@ export default function App() {
   const [showParlayDrawer, setShowParlayDrawer] = useState(false);
   const [parlayLegs, setParlayLegs] = useState([]);
   const [toastMessage, setToastMessage] = useState('');
+  const [currentEpoch, setCurrentEpoch] = useState(() => Date.now());
 
   // Auto-polling interval reference
   const pollingRef = useRef(null);
@@ -183,6 +184,7 @@ export default function App() {
       if (controller.signal.aborted) return;
       if (data.success && Array.isArray(data.matches)) {
         setMatches(data.matches);
+        setCurrentEpoch(Date.now());
         setMatchError('');
       } else {
         setMatchError(data.message || 'No se pudieron procesar los partidos.');
@@ -203,6 +205,7 @@ export default function App() {
       });
       const data = await res.json();
       if (data.success && data.matches) {
+        setCurrentEpoch(Date.now());
         setMatches(prev => {
           return prev.map(m => {
             const updated = data.matches.find(u => u.id === m.id);
@@ -380,25 +383,28 @@ export default function App() {
   let filteredMatches = matches.filter(m => {
     if (!m) return false;
     // Si no está seleccionada la pestaña de 'Resultados' (FINISHED),
-    // no mezclar partidos pasados/finalizados con los partidos activos o próximos para apostar
-    if (matchStatusFilter !== 'FINISHED' && m.status === 'FINISHED') return false;
+    // no mezclar partidos pasados/finalizados o cancelados con los partidos activos o próximos para apostar
+    if (matchStatusFilter !== 'FINISHED') {
+      if (m.status === 'FINISHED' || m.status === 'POSTPONED' || m.status === 'CANCELLED' || m.status === 'ABANDONED') {
+        return false;
+      }
+      // Evitar mostrar partidos programados que debieron iniciar hace más de 3.5 horas y no están en vivo (partidos pasados/desfasados)
+      if (m.status === 'SCHEDULED' && m.kickoff) {
+        const kTime = new Date(m.kickoff).getTime();
+        if (Number.isFinite(kTime) && currentEpoch - kTime > 3.5 * 3600 * 1000) {
+          return false;
+        }
+      }
+    }
     if (marketFilter === 'safe') {
       if (bankerSubFilter === 'live') {
         return m.status === 'LIVE';
       }
       return true;
     }
-    if (marketFilter === 'btts') {
-      const btts = m.model?.probabilities?.bttsYes ?? m.probabilities?.bttsYes;
-      return btts != null && btts >= 50;
-    }
-    if (marketFilter === 'over') {
-      const o25 = m.model?.probabilities?.over25 ?? m.probabilities?.over25;
-      return o25 != null && o25 >= 50;
-    }
-    if (marketFilter === 'under') {
-      const u25 = m.model?.probabilities?.under25 ?? m.probabilities?.under25 ?? (m.probabilities?.over25 != null ? 100 - m.probabilities.over25 : null);
-      return u25 != null && u25 >= 50;
+    if (marketFilter === 'btts' || marketFilter === 'over' || marketFilter === 'under') {
+      const pick = getContextualPick(m, marketFilter);
+      return Boolean(pick && pick.probability >= 50);
     }
     return true;
   });
@@ -437,11 +443,25 @@ export default function App() {
     // Máximo de 10 mejores picks banqueros oficiales
     filteredMatches = filteredMatches.slice(0, 10);
   } else if (marketFilter === 'btts') {
-    // Para Ambos Anotan (BTTS), ordenar por probabilidad de BTTS descendente
+    // Para Ambos Anotan (BTTS), ordenar por probabilidad contextual de BTTS descendente
     filteredMatches = [...filteredMatches].sort((a, b) => {
-      const bttsA = a.model?.probabilities?.bttsYes ?? a.probabilities?.bttsYes ?? 0;
-      const bttsB = b.model?.probabilities?.bttsYes ?? b.probabilities?.bttsYes ?? 0;
+      const bttsA = getContextualPick(a, 'btts')?.probability ?? 0;
+      const bttsB = getContextualPick(b, 'btts')?.probability ?? 0;
       return bttsB - bttsA;
+    });
+  } else if (marketFilter === 'over') {
+    // Para Más de 2.5 Goles (Over), ordenar por probabilidad contextual de Over 2.5 descendente
+    filteredMatches = [...filteredMatches].sort((a, b) => {
+      const overA = getContextualPick(a, 'over')?.probability ?? 0;
+      const overB = getContextualPick(b, 'over')?.probability ?? 0;
+      return overB - overA;
+    });
+  } else if (marketFilter === 'under') {
+    // Para Menos de 2.5 Goles (Under), ordenar por probabilidad contextual de Under 2.5 descendente
+    filteredMatches = [...filteredMatches].sort((a, b) => {
+      const underA = getContextualPick(a, 'under')?.probability ?? 0;
+      const underB = getContextualPick(b, 'under')?.probability ?? 0;
+      return underB - underA;
     });
   }
 

@@ -30,6 +30,7 @@ export function getMatchCacheTtlMs(matchOrStatus, aiReport) {
   if (aiReport && aiReport.aiAvailable === false) {
     return 60 * 1000;
   }
+  const match = typeof matchOrStatus === 'object' ? matchOrStatus : null;
   const status = typeof matchOrStatus === 'string' ? matchOrStatus : matchOrStatus?.status;
   if (status === 'FINISHED') {
     return 7 * 24 * 3600 * 1000; // 7 días para partidos finalizados
@@ -37,7 +38,14 @@ export function getMatchCacheTtlMs(matchOrStatus, aiReport) {
   if (status === 'LIVE') {
     return 2 * 60 * 1000; // 2 minutos para partidos en juego (marcador cambiante)
   }
-  // Partidos programados (SCHEDULED): 48 horas de persistencia duradera
+  // Si el partido figura como SCHEDULED pero la hora de kickoff ya pasó, no mantener análisis pre-partido por 48h
+  if (status === 'SCHEDULED' && match?.kickoff) {
+    const kTime = new Date(match.kickoff).getTime();
+    if (Number.isFinite(kTime) && Date.now() > kTime) {
+      return 2 * 60 * 1000;
+    }
+  }
+  // Partidos programados futuros (SCHEDULED): 48 horas de persistencia duradera
   return 48 * 3600 * 1000;
 }
 
@@ -49,6 +57,7 @@ export function getMatchCacheTtlMs(matchOrStatus, aiReport) {
  */
 export function computeMatchFingerprint(m) {
   if (!m) return '';
+  const p = m.probabilities || m.model?.probabilities || {};
   return [
     m.id || '',
     m.status || '',
@@ -57,11 +66,11 @@ export function computeMatchFingerprint(m) {
     m.liveScore?.away ?? '',
     m.finalScore?.home ?? '',
     m.finalScore?.away ?? '',
-    m.probabilities?.homeWin != null ? Math.round(Number(m.probabilities.homeWin)) : '',
-    m.probabilities?.draw != null ? Math.round(Number(m.probabilities.draw)) : '',
-    m.probabilities?.awayWin != null ? Math.round(Number(m.probabilities.awayWin)) : '',
-    m.probabilities?.over25 != null ? Math.round(Number(m.probabilities.over25)) : '',
-    m.probabilities?.bttsYes != null ? Math.round(Number(m.probabilities.bttsYes)) : '',
+    p.homeWin != null ? Math.round(Number(p.homeWin)) : '',
+    p.draw != null ? Math.round(Number(p.draw)) : '',
+    p.awayWin != null ? Math.round(Number(p.awayWin)) : '',
+    p.over25 != null ? Math.round(Number(p.over25)) : '',
+    p.bttsYes != null ? Math.round(Number(p.bttsYes)) : '',
     m.homeTeam?.id || m.homeTeam?.name || '',
     m.awayTeam?.id || m.awayTeam?.name || ''
   ].join('|');

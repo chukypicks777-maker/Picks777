@@ -211,6 +211,29 @@ export function getContextualPick(match, marketFilter = 'all') {
   const poisson = deriveSeasonPoisson(match);
   const matchTitle = `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visitante'}`;
 
+  // Implied probabilities from odds if probabilities are absent
+  const oddsOver25 = parseOddsNum(match.odds?.over25);
+  const oddsUnder25 = parseOddsNum(match.odds?.under25);
+  if ((p.over25 == null || p.under25 == null) && oddsOver25 && oddsUnder25) {
+    const invO = 1 / oddsOver25, invU = 1 / oddsUnder25;
+    const invSum = invO + invU;
+    if (invSum > 0) {
+      if (p.over25 == null) p.over25 = (invO / invSum) * 100;
+      if (p.under25 == null) p.under25 = (invU / invSum) * 100;
+    }
+  }
+
+  const oddsBttsYes = parseOddsNum(match.odds?.bttsYes);
+  const oddsBttsNo = parseOddsNum(match.odds?.bttsNo);
+  if ((p.bttsYes == null || p.bttsNo == null) && oddsBttsYes && oddsBttsNo) {
+    const invY = 1 / oddsBttsYes, invN = 1 / oddsBttsNo;
+    const invSum = invY + invN;
+    if (invSum > 0) {
+      if (p.bttsYes == null) p.bttsYes = (invY / invSum) * 100;
+      if (p.bttsNo == null) p.bttsNo = (invN / invSum) * 100;
+    }
+  }
+
   const buildCandidate = (key, selection, market, category, rawProb, rawOdds, defaultRationale) => {
     const prob = percent(rawProb);
     if (prob === null || prob <= 0) return null;
@@ -234,32 +257,38 @@ export function getContextualPick(match, marketFilter = 'all') {
 
   if (marketFilter === 'over' || marketFilter === 'over25') {
     const prob25 = percent(p.over25) ?? percent(match.model?.probabilities?.over25) ?? percent(match.probabilities?.over25) ?? poisson?.over25;
-    const odds25 = match.odds?.over25;
-    const rationale = match.model
-      ? `Modelo Poisson proyecta ${prob25}% de probabilidad para Más de 2.5 Goles${match.model?.predictedScore ? ` (marcador previsto: ${match.model.predictedScore})` : ''}.`
-      : `Probabilidad estimada de ${prob25}% para Más de 2.5 Goles según métricas de goles registradas.`;
-    const pick = buildCandidate('over25', 'Más de 2.5 Goles', 'Total Goles Over 2.5', 'goals', prob25, odds25, rationale);
-    if (pick) return pick;
+    if (prob25 != null && prob25 >= 50) {
+      const odds25 = match.odds?.over25;
+      const rationale = match.model
+        ? `Modelo Poisson proyecta ${prob25}% de probabilidad para Más de 2.5 Goles${match.model?.predictedScore ? ` (marcador previsto: ${match.model.predictedScore})` : ''}.`
+        : `Probabilidad estimada de ${prob25}% para Más de 2.5 Goles según métricas de goles registradas.`;
+      return buildCandidate('over25', 'Más de 2.5 Goles', 'Total Goles Over 2.5', 'goals', prob25, odds25, rationale);
+    }
+    return null;
   }
 
   if (marketFilter === 'btts') {
     const probBtts = percent(p.bttsYes) ?? percent(match.model?.probabilities?.bttsYes) ?? percent(match.probabilities?.bttsYes) ?? poisson?.bttsYes;
-    const oddsBtts = match.odds?.bttsYes;
-    const rationale = match.model
-      ? `Modelo Poisson proyecta ${probBtts}% de probabilidad de que ambos equipos anoten.`
-      : `Probabilidad estimada de ${probBtts}% para Ambos Equipos Anotan (BTTS Sí).`;
-    const pick = buildCandidate('bttsYes', 'Ambos anotan: Sí', 'Ambos anotan', 'btts', probBtts, oddsBtts, rationale);
-    if (pick) return pick;
+    if (probBtts != null && probBtts >= 50) {
+      const oddsBtts = match.odds?.bttsYes;
+      const rationale = match.model
+        ? `Modelo Poisson proyecta ${probBtts}% de probabilidad de que ambos equipos anoten.`
+        : `Probabilidad estimada de ${probBtts}% para Ambos Equipos Anotan (BTTS Sí).`;
+      return buildCandidate('bttsYes', 'Ambos anotan: Sí', 'Ambos anotan', 'btts', probBtts, oddsBtts, rationale);
+    }
+    return null;
   }
 
   if (marketFilter === 'under' || marketFilter === 'under25') {
     const probUnder25 = percent(p.under25) ?? percent(match.model?.probabilities?.under25) ?? (p.over25 != null ? 100 - percent(p.over25) : (poisson?.over25 != null ? 100 - poisson.over25 : null));
-    const oddsUnder25 = match.odds?.under25;
-    const rationale = match.model
-      ? `Modelo Poisson proyecta ${probUnder25}% de probabilidad para Menos de 2.5 Goles.`
-      : `Probabilidad estimada de ${probUnder25}% para Menos de 2.5 Goles según balance defensivo.`;
-    const pick = buildCandidate('under25', 'Menos de 2.5 Goles', 'Total Goles Under 2.5', 'goals', probUnder25, oddsUnder25, rationale);
-    if (pick) return pick;
+    if (probUnder25 != null && probUnder25 >= 50) {
+      const oddsUnder25 = match.odds?.under25;
+      const rationale = match.model
+        ? `Modelo Poisson proyecta ${probUnder25}% de probabilidad para Menos de 2.5 Goles.`
+        : `Probabilidad estimada de ${probUnder25}% para Menos de 2.5 Goles según balance defensivo.`;
+      return buildCandidate('under25', 'Menos de 2.5 Goles', 'Total Goles Under 2.5', 'goals', probUnder25, oddsUnder25, rationale);
+    }
+    return null;
   }
 
   return getBestBankerPick(match);
