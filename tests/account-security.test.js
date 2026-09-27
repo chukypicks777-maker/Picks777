@@ -111,3 +111,68 @@ test('Vercel serverless mode gracefully permits session checking without 503 blo
     await new Promise(resolve => server.close(resolve));
   }
 });
+
+test('Vercel serverless mode preserves expired trial state and supports cold-start code redemption', async () => {
+  const previousEnv = process.env.NODE_ENV;
+  const previousVercel = process.env.VERCEL;
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'picks-serverless-'));
+  const originalFile = storage.file;
+  storage.file = path.join(dir, 'serverless.json');
+  const server = app.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  try {
+    process.env.NODE_ENV = 'production';
+    process.env.VERCEL = '1';
+    const base = `http://127.0.0.1:${server.address().port}`;
+
+    // 1. Simulate an expired trial cookie
+    const { setSession } = await import('../server/session.js');
+    let simulatedCookie = '';
+    const mockRes = {
+      cookie(name, val) {
+        simulatedCookie = `${name}=${val}`;
+      }
+    };
+    setSession(mockRes, {
+      userId: 'test-expired-user-id',
+      email: 'expired@example.com',
+      name: 'Expired User',
+      role: 'trial_user',
+      expires: Date.now() - 10000,
+      trialExpired: true,
+      issuedAt: Date.now() - 86400000
+    });
+
+    // Storage does NOT contain test-expired-user-id (simulating a cold start)
+    const checkRes = await realFetch(`${base}/api/auth/session`, {
+      method: 'POST',
+      headers: { cookie: simulatedCookie }
+    });
+    assert.equal(checkRes.status, 200);
+    const checkData = await checkRes.json();
+    assert.equal(checkData.success, true);
+    assert.equal(checkData.trialExpired, true);
+    assert.equal(checkData.valid, false);
+    assert.equal(checkData.role, 'expired_user');
+
+    // 2. User can redeem master code on cold-start even when missing from storage
+    const redeemRes = await realFetch(`${base}/api/auth/redeem-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie: simulatedCookie },
+      body: JSON.stringify({ code: process.env.MASTER_ADMIN_CODE })
+    });
+    assert.equal(redeemRes.status, 200);
+    const redeemData = await redeemRes.json();
+    assert.equal(redeemData.success, true);
+    assert.equal(redeemData.role, 'owner');
+    assert.equal(redeemData.isAdmin, true);
+  } finally {
+    process.env.NODE_ENV = previousEnv;
+    if (previousVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = previousVercel;
+    await new Promise(resolve => server.close(resolve));
+    storage.file = originalFile;
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+

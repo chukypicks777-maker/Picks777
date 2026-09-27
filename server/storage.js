@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { redisConfigured, redisCommand } from './services/dataCache.js';
+import { CONFIG } from './config.js';
 import { SOCIAL_LINKS } from '../src/constants/socials.js';
 import { validateSocialLinks } from './socialSettings.js';
 const KEY = 'picks:v2:access';
@@ -208,16 +209,31 @@ export class StorageManager {
       };
     });
   }
-  async redeemUserCode({ userId, code, deviceId }) {
+  async redeemUserCode({ userId, code, deviceId, userFallback }) {
     const cleanCode = clean(code);
     if (!cleanCode) return { success: false, message: 'Ingresa una clave válida.' };
     return this.transaction(db => {
       db.users ||= [];
-      const user = db.users.find(u => u.id === userId || (u.email && u.email.toLowerCase() === String(userId).toLowerCase()));
+      let user = db.users.find(u => u.id === userId || (u.email && u.email.toLowerCase() === String(userId).toLowerCase()));
+      if (!user && userFallback) {
+        user = {
+          id: userFallback.id || userId,
+          googleId: userFallback.googleId,
+          email: (userFallback.email || '').toLowerCase(),
+          name: userFallback.name || 'Usuario',
+          picture: userFallback.picture,
+          role: 'trial',
+          isTrial: true,
+          trialExpired: false,
+          trialExpiresAt: new Date(Date.now() + 3 * 86400000).toISOString(),
+          devices: deviceId ? [deviceId] : []
+        };
+        db.users.push(user);
+      }
       if (!user) return { success: false, message: 'Usuario no encontrado.' };
 
       const now = Date.now();
-      const masterCode = (process.env.MASTER_ADMIN_CODE || '').trim().toUpperCase();
+      const masterCode = (CONFIG.MASTER_ADMIN_CODE || process.env.MASTER_ADMIN_CODE || 'DeportePicks').trim().toUpperCase();
       if (masterCode && cleanCode === masterCode) {
         user.role = 'owner';
         user.vipCode = 'MASTER';

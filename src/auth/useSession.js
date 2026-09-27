@@ -16,7 +16,7 @@ export function useSession() {
     setChecking(true);
     setError('');
     try {
-      const data = await sessionRequest('check-session', {}, signal);
+      const data = await sessionRequest('session', {}, signal);
       if (!signal?.aborted && started === revision.current) setAuthState(data.success && data.user ? data : null);
     } catch (cause) {
       if (!signal?.aborted && started === revision.current) {

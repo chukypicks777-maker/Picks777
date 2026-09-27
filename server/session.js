@@ -55,18 +55,21 @@ export async function currentSession(req) {
     }
 
     if (!user) {
-      if (process.env.VERCEL && session.expires && session.expires > Date.now()) {
-        const now = Date.now();
+      const now = Date.now();
+      const cookieAgeLimit = (session.issuedAt || 0) + 30 * 86400000;
+      if (cookieAgeLimit > now) {
         const expires = session.expires || 0;
-        const trialExpired = session.trialExpired || (expires > 0 && expires <= now);
+        const trialExpired = Boolean(session.trialExpired || (expires > 0 && expires <= now));
         const isOwner = session.role === 'owner';
         const isVip = session.role === 'vip_user' || session.role === 'vip';
         const isTrial = !isOwner && !isVip && !trialExpired;
-        const daysRemaining = session.daysRemaining !== undefined
-          ? session.daysRemaining
-          : Math.max(0, Math.ceil((expires - now) / 86400000));
+        const daysRemaining = isOwner
+          ? 365
+          : (isVip ? Math.max(0, Math.ceil((expires - now) / 86400000)) : (isTrial ? Math.max(1, Math.ceil((expires - now) / 86400000)) : 0));
         return {
           ...session,
+          role: isOwner ? 'owner' : (isVip ? 'vip_user' : (trialExpired ? 'expired_user' : 'trial_user')),
+          plan: isOwner ? 'Owner' : (isVip ? 'VIP' : (trialExpired ? 'Prueba Vencida' : 'Prueba 3 Días')),
           isTrial,
           trialExpired,
           daysRemaining

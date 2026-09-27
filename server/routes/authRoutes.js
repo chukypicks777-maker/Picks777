@@ -138,7 +138,18 @@ router.post('/redeem-code', async (req, res) => {
     const deviceId = session?.deviceId || readSession(req)?.deviceId || randomUUID();
 
     if (session?.userId) {
-      const result = await storage.redeemUserCode({ userId: session.userId, code: code.trim(), deviceId });
+      const result = await storage.redeemUserCode({
+        userId: session.userId,
+        code: code.trim(),
+        deviceId,
+        userFallback: {
+          id: session.userId,
+          email: session.email,
+          name: session.name,
+          picture: session.picture,
+          googleId: session.googleId
+        }
+      });
       if (!result.success) return res.status(400).json(result);
 
       const isOwner = result.role === 'owner';
@@ -183,7 +194,18 @@ router.post('/verify-code', async (req, res) => {
     const deviceId = existingSession?.deviceId || readSession(req)?.deviceId || randomUUID();
 
     if (existingSession?.userId) {
-      const result = await storage.redeemUserCode({ userId: existingSession.userId, code: code.trim(), deviceId });
+      const result = await storage.redeemUserCode({
+        userId: existingSession.userId,
+        code: code.trim(),
+        deviceId,
+        userFallback: {
+          id: existingSession.userId,
+          email: existingSession.email,
+          name: existingSession.name,
+          picture: existingSession.picture,
+          googleId: existingSession.googleId
+        }
+      });
       if (!result.success) return res.status(400).json(result);
       const isOwner = result.role === 'owner';
       const updatedSession = {
