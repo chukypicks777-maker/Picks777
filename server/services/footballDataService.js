@@ -1,6 +1,6 @@
 import { enrichHistoricalStats } from './verifiedStats.js';
 import { cachedData, fetchJson } from './dataCache.js';
-import { poissonModel, buildPick } from './probabilityModel.js';
+import { poissonModel, deriveCalibratedPoissonModel, buildPick } from './probabilityModel.js';
 
 export const LEAGUES = [
   ['inglaterra', 'Premier League', '🏴', 'eng.1'],
@@ -42,13 +42,14 @@ function flattenStandings(node, group = '') {
   return rows.concat((node.children || []).flatMap(c => flattenStandings(c, c.name || c.abbreviation || group)));
 }
 
-async function standingsFor(league) {
+async function standingsFor(league, options = {}) {
+  const forceRefresh = Boolean(options?.forceRefresh);
   return cachedData(`standings:${league.id}`, 1800, async () => {
     const url = `https://site.api.espn.com/apis/v2/sports/soccer/${league.espnCode}/standings`;
     const data = await fetchJson(url);
     if (!Array.isArray(data.children) && !data.standings) throw new Error('Clasificación no disponible.');
     return { rows: flattenStandings(data), sourceUrl: url, fetchedAt: new Date().toISOString(), seasonYear: data.season?.year ?? null, season: data.season?.displayName || data.season?.year || null };
-  });
+  }, { forceRefresh });
 }
 
 export function parseEspnEvent(event, league, standings = [], fetchedAt = new Date().toISOString(), season = null) {
@@ -103,19 +104,29 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
   if (match.model) {
     match.probabilities = match.model.probabilities;
     match.probabilities.predictedScore = match.model.predictedScore;
-  } else if (status === 'SCHEDULED' && odds.homeWin && odds.draw && odds.awayWin) {
-    const invH = 1 / odds.homeWin, invD = 1 / odds.draw, invA = 1 / odds.awayWin;
+  } else if (status !== 'POSTPONED' && status !== 'CANCELLED') {
+    const invH = odds.homeWin ? 1 / odds.homeWin : 0;
+    const invD = odds.draw ? 1 / odds.draw : 0;
+    const invA = odds.awayWin ? 1 / odds.awayWin : 0;
     const tot = invH + invD + invA;
-    const over25P = odds.over25 && odds.under25 ? ((1 / odds.over25) / (1 / odds.over25 + 1 / odds.under25)) * 100 : null;
-    match.probabilities = {
-      homeWin: (invH / tot) * 100,
-      draw: (invD / tot) * 100,
-      awayWin: (invA / tot) * 100,
+    const over25P = odds.over25 && odds.under25 ? ((1 / odds.over25) / (1 / odds.over25 + 1 / odds.under25)) * 100 : (odds.over25 ? (100 / odds.over25) : null);
+    const rawProbs = {
+      homeWin: tot > 0 ? (invH / tot) * 100 : null,
+      draw: tot > 0 ? (invD / tot) * 100 : null,
+      awayWin: tot > 0 ? (invA / tot) * 100 : null,
       over25: over25P,
       under25: over25P != null ? 100 - over25P : null,
       bttsYes: null,
       bttsNo: null
     };
+    const calibrated = deriveCalibratedPoissonModel(rawProbs, match.homeTeam, match.awayTeam, odds);
+    if (calibrated) {
+      match.model = calibrated;
+      match.probabilities = calibrated.probabilities;
+      match.probabilities.predictedScore = calibrated.predictedScore;
+    } else {
+      match.probabilities = rawProbs;
+    }
   } else {
     match.probabilities = {};
   }
@@ -128,7 +139,8 @@ function getScoreboardDates() {
   const fmt = value => new Date(value).toISOString().slice(0, 10).replaceAll('-', '');
   return [-2, -1, 0, 1, 2, 3, 4, 5, 6].map(offset => fmt(now + offset * 86400000));
 }
-export async function getFootballFeed() {
+export async function getFootballFeed(options = {}) {
+  const forceRefresh = Boolean(options?.forceRefresh);
   const dates = getScoreboardDates();
   const rangeKey = `${dates[0]}-${dates[dates.length - 1]}`;
   const results = await Promise.all(LEAGUES.map(async league => {
@@ -162,8 +174,8 @@ export async function getFootballFeed() {
             },
             fetchedAt: new Date().toISOString()
           };
-        }),
-        standingsFor(league).catch(() => null)
+        }, { forceRefresh }),
+        standingsFor(league, { forceRefresh }).catch(() => null)
       ]);
       const matches = scoreboard.data.events.map(e => {
         const season = scoreboard.data.leagues?.[0]?.season;
@@ -258,14 +270,19 @@ export function parseSummaryDetails(data, match) {
   }));
   return { realH2H, recentMatches, boxscore: { home: side(match.homeTeamId), away: side(match.awayTeamId) } };
 }
-export async function enrichMatchWithRealData(match) {
-  match = await enrichHistoricalStats(match);
-  if (!match.model && match.status !== 'POSTPONED' && match.status !== 'CANCELLED') {
-    const computed = poissonModel(match.homeTeam, match.awayTeam);
+export async function enrichMatchWithRealData(match, options = {}) {
+  const forceRefresh = Boolean(options?.forceRefresh);
+  match = await enrichHistoricalStats(match, { forceRefresh });
+  if ((!match.model || forceRefresh) && match.status !== 'POSTPONED' && match.status !== 'CANCELLED') {
+    let computed = poissonModel(match.homeTeam, match.awayTeam);
+    if (!computed && (match.probabilities?.over25 || match.odds?.over25 || (match.odds?.homeWin && match.odds?.awayWin) || (match.homeTeam?.gamesPlayed > 0 && match.awayTeam?.gamesPlayed > 0))) {
+      computed = deriveCalibratedPoissonModel(match.probabilities, match.homeTeam, match.awayTeam, match.odds);
+    }
     if (computed) {
       match.model = computed;
       match.probabilities = computed.probabilities;
       match.probabilities.predictedScore = computed.predictedScore;
+      match.aiPick = buildPick(match);
     }
   }
   try {
@@ -273,7 +290,7 @@ export async function enrichMatchWithRealData(match) {
       const url = `${BASE}/${match.espnCode}/summary?event=${match.espnEventId}`;
       const data = await fetchJson(url);
       return { ...parseSummaryDetails(data, match), rawHeader: data.header, fetchedAt: new Date().toISOString(), sourceUrl: url };
-    });
+    }, { forceRefresh });
 
     let updatedLiveScore = match.liveScore;
     let updatedFinalScore = match.finalScore;
@@ -308,6 +325,24 @@ export async function enrichMatchWithRealData(match) {
       }
     }
 
+    let updatedOdds = match.odds;
+    const compOdds = headerComp?.odds?.[0];
+    if (compOdds) {
+      const odds = { ...(match.odds || {}) };
+      for (const [key, side] of [['homeWin', 'home'], ['draw', 'draw'], ['awayWin', 'away']]) {
+        const val = americanToDecimal(compOdds.moneyline?.[side]?.close?.odds ?? compOdds[`${side}TeamOdds`]?.moneyLine ?? (side === 'draw' ? compOdds.drawOdds?.moneyLine : null));
+        if (val) odds[key] = val;
+      }
+      for (const side of ['over', 'under']) {
+        const total = compOdds.total?.[side]?.close;
+        if (total?.line === `${side === 'over' ? 'o' : 'u'}2.5`) {
+          const val = americanToDecimal(total.odds);
+          if (val) odds[`${side}25`] = val;
+        }
+      }
+      updatedOdds = odds;
+    }
+
     const deriveClean = events => {
       if (!Array.isArray(events) || events.length === 0) return null;
       let clean = 0, count = 0;
@@ -328,8 +363,9 @@ export async function enrichMatchWithRealData(match) {
     const homeClean = match.homeTeam?.cleanSheetRate ?? deriveClean(homeRecent?.events);
     const awayClean = match.awayTeam?.cleanSheetRate ?? deriveClean(awayRecent?.events);
 
-    return {
+    const enriched = {
       ...match,
+      odds: updatedOdds,
       homeTeam: { ...match.homeTeam, cleanSheetRate: homeClean },
       awayTeam: { ...match.awayTeam, cleanSheetRate: awayClean },
       status: updatedStatus,
@@ -343,6 +379,19 @@ export async function enrichMatchWithRealData(match) {
       detailsSourceUrl: details.sourceUrl,
       detailsAvailable: true
     };
+    if ((forceRefresh || !enriched.model) && updatedStatus !== 'POSTPONED' && updatedStatus !== 'CANCELLED') {
+      let computed = poissonModel(enriched.homeTeam, enriched.awayTeam);
+      if (!computed && (enriched.probabilities?.over25 || enriched.odds?.over25 || (enriched.odds?.homeWin && enriched.odds?.awayWin))) {
+        computed = deriveCalibratedPoissonModel(enriched.probabilities, enriched.homeTeam, enriched.awayTeam, enriched.odds);
+      }
+      if (computed) {
+        enriched.model = computed;
+        enriched.probabilities = computed.probabilities;
+        enriched.probabilities.predictedScore = computed.predictedScore;
+      }
+    }
+    enriched.aiPick = buildPick(enriched);
+    return enriched;
   } catch {
     return { ...match, detailsAvailable: false, detailsError: 'El proveedor no entrega detalles en este momento.' };
   }

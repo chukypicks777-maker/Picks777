@@ -1,14 +1,17 @@
+import { verifyGoogleToken } from '../auth/googleVerifier.js';
+export { verifyGoogleToken } from '../auth/googleVerifier.js';
 import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { CONFIG } from '../config.js';
 import { storage } from '../storage.js';
-import { currentSession, readSession, setSession, ownerVersion } from '../session.js';
+import { currentSession, readSession, setSession, ownerVersion, sessionIdentifier } from '../session.js';
 import { rateLimit } from '../rateLimit.js';
 
 const router = express.Router();
 router.use('/verify-code', rateLimit('auth'));
 router.use('/redeem-code', rateLimit('auth'));
 router.use('/google', rateLimit('auth'));
+router.use('/delete-account', rateLimit('auth'));
 
 function publicSession(session) {
   const isOwner = session.role === 'owner';
@@ -40,27 +43,6 @@ function publicSession(session) {
       hasCode: Boolean(session.code && session.code !== 'MASTER')
     }
   };
-}
-
-export async function verifyGoogleToken(credential) {
-  if (typeof credential !== 'string' || credential.length > 12000 || !credential) return null;
-  try {
-    const response = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(credential), { signal: AbortSignal.timeout(8000) });
-    if (response.ok) {
-      const data = await response.json();
-      if (data.aud === CONFIG.GOOGLE_CLIENT_ID && ['accounts.google.com', 'https://accounts.google.com'].includes(data.iss) && Number(data.exp) * 1000 > Date.now() && [true, 'true'].includes(data.email_verified) && data.sub && data.email) return data;
-    }
-  } catch {}
-  try {
-    const key = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8';
-    const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(key), {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: credential }), signal: AbortSignal.timeout(8000)
-    });
-    if (!response.ok) return null;
-    const data = await response.json(), user = data.users?.[0];
-    if (!user?.localId || !user.emailVerified || !user.email || user.disabled || !user.providerUserInfo?.some(p => p.providerId === 'google.com')) return null;
-    return { sub: user.localId, email: user.email, name: user.displayName, picture: user.photoUrl };
-  } catch { return null; }
 }
 
 router.get('/google-config', (req, res) => {
@@ -149,7 +131,7 @@ router.post('/redeem-code', async (req, res) => {
       return res.json({ ...publicSession(updatedSession), message: result.message });
     }
 
-    const masterCode = (CONFIG.MASTER_ADMIN_CODE || 'DeportePicks').trim();
+    const masterCode = (CONFIG.MASTER_ADMIN_CODE || '').trim();
     let newSession;
     if (masterCode && code.trim().toUpperCase() === masterCode.toUpperCase()) {
       newSession = { role: 'owner', name: 'Dueño', deviceId, expires: Date.now() + 8 * 3600000, ownerVersion: ownerVersion() };
@@ -195,7 +177,7 @@ router.post('/verify-code', async (req, res) => {
 
     const name = String(username || 'Usuario VIP').trim().slice(0, 80);
     let session;
-    const masterCode = (CONFIG.MASTER_ADMIN_CODE || 'DeportePicks').trim();
+    const masterCode = (CONFIG.MASTER_ADMIN_CODE || '').trim();
     if (masterCode && code.trim().toUpperCase() === masterCode.toUpperCase()) {
       session = { role: 'owner', name, deviceId, expires: Date.now() + 8 * 3600000, ownerVersion: ownerVersion() };
     } else {
@@ -215,9 +197,30 @@ router.post('/check-session', async (req, res) => {
   res.json(session ? publicSession(session) : { success: false, valid: false });
 });
 
-router.post('/logout', (req, res) => {
+router.post('/logout', async (req, res) => {
+  const session = readSession(req);
+  if (session) await storage.revokeSession(sessionIdentifier(session), Math.max(session.expires || 0, (session.issuedAt || 0) + 30 * 86400000));
   res.clearCookie('picks_session', { path: '/' });
   res.json({ success: true, message: 'Sesión finalizada.' });
+});
+
+router.post('/delete-account', async (req, res) => {
+  const session = await currentSession(req);
+  if (!session?.userId) return res.status(401).json({ success: false, message: 'Inicia sesión con la cuenta que deseas eliminar.' });
+  const identity = await verifyGoogleToken(req.body?.credential);
+  if (!identity || identity.email.toLowerCase() !== session.email?.toLowerCase()) {
+    return res.status(403).json({ success: false, message: 'Confirma la misma cuenta de Google para eliminarla.' });
+  }
+  // Delete only this application's Firebase identity, never the Google account itself.
+  const key = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8';
+  const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:delete?key=' + encodeURIComponent(key), {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: req.body.credential }), signal: AbortSignal.timeout(8000)
+  });
+  if (!response.ok) return res.status(503).json({ success: false, message: 'No se pudo eliminar la identidad. Vuelve a confirmar tu cuenta e inténtalo otra vez.' });
+  await storage.deleteUserData(session.userId);
+  res.clearCookie('picks_session', { path: '/' });
+  res.json({ success: true, message: 'Cuenta y datos de perfil eliminados de 777 Picks.' });
 });
 
 export default router;

@@ -1,0 +1,51 @@
+plugins { id 'com.android.application' }
+
+def mobile = new groovy.json.JsonSlurper().parse(rootProject.file('../mobile.config.json'))
+def origin = new URI(mobile.origin)
+if (origin.scheme != 'https' || !origin.host || origin.rawUserInfo || origin.port != -1 || origin.query || origin.fragment || !(origin.path in ['', '/'])) {
+    throw new GradleException('mobile.config.json requires an HTTPS origin without path, port or credentials')
+}
+def signingAvailable = ['PICKS_KEYSTORE', 'PICKS_STORE_PASSWORD', 'PICKS_KEY_ALIAS', 'PICKS_KEY_PASSWORD'].every { System.getenv(it) }
+if (gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') } && !signingAvailable) {
+    throw new GradleException('Release requires PICKS_KEYSTORE, PICKS_STORE_PASSWORD, PICKS_KEY_ALIAS and PICKS_KEY_PASSWORD. Debug builds need no release secrets.')
+}
+
+android {
+    namespace 'app.picks777.mobile'
+    compileSdk 36
+    defaultConfig {
+        applicationId mobile.applicationId
+        minSdk 23
+        targetSdk 36
+        versionCode mobile.versionCode
+        versionName mobile.versionName
+        manifestPlaceholders = [launchUrl: mobile.origin + '/', appHost: origin.host]
+        resValue 'string', 'app_name', mobile.name
+        resValue 'string', 'asset_statements', groovy.json.JsonOutput.toJson([
+            [relation: ['delegate_permission/common.handle_all_urls'], target: [namespace: 'web', site: mobile.origin]]
+        ])
+    }
+    signingConfigs {
+        release {
+            if (signingAvailable) {
+                storeFile file(System.getenv('PICKS_KEYSTORE'))
+                storePassword System.getenv('PICKS_STORE_PASSWORD')
+                keyAlias System.getenv('PICKS_KEY_ALIAS')
+                keyPassword System.getenv('PICKS_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+dependencies { implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.3' }

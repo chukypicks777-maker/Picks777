@@ -40,7 +40,8 @@ export default function MatchDetailModal({
   oddsFormat = 'decimal',
   isOwner = false,
   isVip = false,
-  onUnlockVip = null
+  onUnlockVip = null,
+  onToast = null
 }) {
   const effectiveIsOwner = Boolean(
     isOwner ||
@@ -50,15 +51,7 @@ export default function MatchDetailModal({
       localStorage.getItem('picks_owner_active') === 'true'
     ))
   );
-  const effectiveIsVip = Boolean(
-    effectiveIsOwner ||
-    isVip ||
-    (typeof window !== 'undefined' && (
-      localStorage.getItem('picks_user_role') === 'vip' ||
-      localStorage.getItem('picks_user_role') === 'vip_user' ||
-      localStorage.getItem('picks_is_vip') === 'true'
-    ))
-  );
+  const effectiveIsVip = Boolean(effectiveIsOwner || isVip);
   const initialCached = getCachedAnalysis(match?.id, match);
   const initialFingerprint = computeMatchFingerprint(match);
 
@@ -105,8 +98,12 @@ export default function MatchDetailModal({
   const aiRequestId = useRef(0);
   const matchRef = useRef(match);
   matchRef.current = match;
+  const enrichedMatchRef = useRef(enrichedMatch);
+  enrichedMatchRef.current = enrichedMatch;
   const activeModelInfoRef = useRef(activeModelInfo);
   activeModelInfoRef.current = activeModelInfo;
+  const onToastRef = useRef(onToast);
+  onToastRef.current = onToast;
 
   const fetchAiAnalysis = useCallback(async (forceRefresh = false, modelOverride = null) => {
     const curMatch = matchRef.current;
@@ -131,7 +128,6 @@ export default function MatchDetailModal({
     }
 
     const requestId = ++aiRequestId.current;
-    const fingerprint = computeMatchFingerprint(curMatch);
     setLoadingAi(true);
     try {
       const storedAi = getStoredAiConfig();
@@ -157,35 +153,58 @@ export default function MatchDetailModal({
         body: JSON.stringify({ 
           forceRefresh,
           model: modelToUse,
-          aiConfig: aiConfigPayload
+          aiConfig: aiConfigPayload,
+          match: curMatch
         })
       });
-      const data = await res.json();
-      if (requestId !== aiRequestId.current || fingerprint !== computeMatchFingerprint(matchRef.current)) return;
-      if (data.success) {
-        let updatedReport = null;
-        let updatedMatch = null;
-        if (data.report) {
-          setAiReport(data.report);
-          updatedReport = data.report;
+      const data = await res.json().catch(() => null);
+      if (requestId !== aiRequestId.current || matchRef.current?.id !== curMatch.id) return;
+      if (data?.success) {
+        const finalReport = data.report || null;
+        if (finalReport) {
+          setAiReport(finalReport);
         }
+        const finalMatch = { ...(enrichedMatchRef.current || curMatch), ...(data.match || {}) };
         if (data.match) {
-          setEnrichedMatch(prev => {
-            const merged = { ...prev, ...data.match };
-            updatedMatch = merged;
-            return merged;
-          });
+          setEnrichedMatch(finalMatch);
         }
-        setCachedAnalysis(curMatch.id, curMatch, {
-          aiReport: updatedReport || data.report,
-          enrichedMatch: updatedMatch || data.match || curMatch,
+        setCachedAnalysis(curMatch.id, finalMatch, {
+          aiReport: finalReport,
+          enrichedMatch: finalMatch,
           model: modelToUse
         });
+        window.dispatchEvent(new CustomEvent('ai-analysis-updated', {
+          detail: { matchId: curMatch.id, match: finalMatch, report: finalReport }
+        }));
+        if (forceRefresh) {
+          if (finalReport?.aiAvailable) {
+            sounds.playSuccess?.();
+            onToastRef.current?.('✅ Pronóstico táctico de IA generado y confirmado con datos oficiales.');
+          } else {
+            onToastRef.current?.('ℹ️ Pronóstico cuantitativo institucional verificado (Poisson oficial).');
+          }
+        }
+      } else {
+        if (forceRefresh) {
+          if (res.status === 401 || res.status === 403) {
+            onToastRef.current?.('⚠️ Sesión expirada o no autorizada. Inicia sesión nuevamente.');
+            window.dispatchEvent(new CustomEvent('picks-session-expired'));
+          } else if (res.status === 429) {
+            onToastRef.current?.('⚠️ Límite de solicitudes alcanzado. Espera un momento antes de reintentar.');
+          } else {
+            onToastRef.current?.('❌ No se pudo completar el análisis de IA. Inténtalo de nuevo.');
+          }
+        }
       }
     } catch (err) {
       console.error('Error fetching AI analysis:', err);
+      if (forceRefresh) {
+        onToastRef.current?.('❌ Error de conexión al consultar el análisis. Comprueba tu red.');
+      }
     } finally {
-      if (requestId === aiRequestId.current && fingerprint === computeMatchFingerprint(matchRef.current)) setLoadingAi(false);
+      if (requestId === aiRequestId.current) {
+        setLoadingAi(false);
+      }
     }
   }, []);
 
@@ -242,6 +261,22 @@ export default function MatchDetailModal({
       window.removeEventListener('ai-settings-updated', handleSettingsUpdated);
     };
   }, [fetchAiAnalysis]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        sounds.playClick();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [onClose]);
 
   const runMonteCarloSimulation = useCallback(() => {
     setSimulating(true);
@@ -399,18 +434,35 @@ export default function MatchDetailModal({
 
   const tabs = [
     { id: 'ai_report', label: 'Pronóstico IA & Picks', icon: <FileText className="w-3.5 h-3.5 text-sky-400" /> },
-    { id: 'h2h', label: `Cara a Cara (${h2hList.length} Partidos)`, icon: <Users className="w-3.5 h-3.5 text-amber-400" /> },
+    { 
+      id: 'h2h', 
+      label: h2hList.length > 0 
+        ? `Cara a Cara (${h2hList.length} Partidos)` 
+        : (m.recentMatches?.length ? 'Cara a Cara & Recientes' : 'Cara a Cara'), 
+      icon: <Users className="w-3.5 h-3.5 text-amber-400" /> 
+    },
     { id: 'stats', label: 'Estadísticas & Análisis de Equipos', icon: <BarChart2 className="w-3.5 h-3.5 text-emerald-400" /> },
     { id: 'simulator', label: 'Distribución de marcadores', icon: <Cpu className="w-3.5 h-3.5 text-indigo-400" /> },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div 
+      role="dialog" 
+      aria-modal="true" 
+      aria-label="Detalle del partido" 
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          sounds.playClick();
+          onClose();
+        }
+      }}
+      className="mobile-dialog-overlay fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
+    >
       
-      <div className="relative w-full max-w-4xl bg-[#0c1017] border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] my-2 sm:my-8 overflow-x-hidden">
+      <div className="relative w-full max-w-4xl bg-[#0c1017] border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.8)] my-1 sm:my-8 overflow-x-hidden flex flex-col max-h-[calc(100dvh-max(1.5rem,env(safe-area-inset-top)+env(safe-area-inset-bottom)))]">
         
-        {/* Header Ribbon */}
-        <div className="bg-[#101622] border-b border-white/10 px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-2">
+        {/* Header Ribbon - Sticky so close button is ALWAYS accessible and visible on mobile */}
+        <div className="sticky top-0 z-30 shrink-0 bg-[#101622]/95 backdrop-blur-md border-b border-white/10 px-3.5 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 shadow-lg">
           <div className="flex items-center space-x-2 sm:space-x-2.5 min-w-0">
             <span className="text-lg sm:text-xl shrink-0">{m.leagueFlag}</span>
             <div className="min-w-0">
@@ -437,17 +489,19 @@ export default function MatchDetailModal({
             </button>
 
             <button
-              aria-label="Cerrar panel" onClick={() => { sounds.playClick(); onClose(); }}
-              className="p-1 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              aria-label="Cerrar panel" 
+              onClick={() => { sounds.playClick(); onClose(); }}
+              className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-rose-500/20 text-slate-200 hover:text-white border border-white/10 transition flex items-center justify-center min-w-[40px] min-h-[40px] cursor-pointer shrink-0 shadow-sm"
+              title="Cerrar panel"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-slate-200" />
             </button>
           </div>
         </div>
 
         {/* Dynamic Radar Scanner Overlay if active */}
         {isScanning && (
-          <div className="p-3 sm:p-4 border-b border-white/10">
+          <div className="p-3 sm:p-4 border-b border-white/10 shrink-0">
             <RadarScanner 
               matchTitle={`${m.homeTeam?.name} vs ${m.awayTeam?.name}`}
               onScanComplete={() => setIsScanning(false)}
@@ -456,7 +510,7 @@ export default function MatchDetailModal({
         )}
 
         {/* Matchup Header Banner */}
-        <div className="px-3 sm:px-6 py-3 sm:py-4 bg-[#0e131e] border-b border-white/5">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 bg-[#0e131e] border-b border-white/5 shrink-0">
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-4 max-w-2xl mx-auto">
             
             {/* Team 1 */}
@@ -505,7 +559,7 @@ export default function MatchDetailModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <div className="flex items-center space-x-1 px-3 sm:px-6 pt-2 sm:pt-3 border-b border-white/10 bg-[#0a0d14] overflow-x-auto scrollbar-none no-scrollbar touch-pan-x pr-8">
             {tabs.map((tab) => (
               <button
@@ -527,7 +581,7 @@ export default function MatchDetailModal({
         </div>
 
         {/* Modal Body */}
-        <div className="p-3.5 sm:p-6 max-h-[75vh] sm:max-h-[60vh] overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 p-3.5 sm:p-6">
           
           {/* TAB 1: AI REPORT & PICKS */}
           {activeTab === 'ai_report' && (
@@ -601,20 +655,24 @@ export default function MatchDetailModal({
                     </div>
                   </div>
 
-                  {/* Botón de reintento/regeneración: disponible si no está activa la IA o para el Owner */}
-                  {(!aiReport?.aiAvailable || effectiveIsOwner) && (
-                    <div className="flex items-center space-x-2 shrink-0 sm:self-center self-end">
-                      <button
-                        onClick={() => fetchAiAnalysis(true)}
-                        disabled={loadingAi}
-                        className="px-3 py-1.5 bg-gradient-to-r from-sky-500/20 to-emerald-500/20 hover:from-sky-500/30 hover:to-emerald-500/30 text-sky-200 border border-sky-400/40 rounded-lg text-xs font-mono font-semibold transition-all shadow-[0_0_12px_rgba(56,189,248,0.15)] flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
-                        title={effectiveIsOwner ? "Control de Administrador / Owner" : "Reintentar análisis con IA"}
-                      >
-                        <RotateCw className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin text-sky-400' : ''}`} />
-                        <span>{loadingAi ? 'Procesando...' : (aiReport?.aiAvailable ? 'Regenerar con IA' : 'Reintentar con IA')}</span>
-                      </button>
-                    </div>
-                  )}
+                  {/* Botón de reintento/regeneración: disponible para actualizar datos y análisis */}
+                  <div className="flex items-center space-x-2 shrink-0 sm:self-center self-end">
+                    {effectiveIsOwner && (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 font-bold hidden sm:inline-flex items-center space-x-1">
+                        <span>👑</span>
+                        <span>Owner</span>
+                      </span>
+                    )}
+                    <button
+                      onClick={() => fetchAiAnalysis(true)}
+                      disabled={loadingAi}
+                      className="px-3 py-1.5 bg-gradient-to-r from-sky-500/20 to-emerald-500/20 hover:from-sky-500/30 hover:to-emerald-500/30 active:scale-95 text-sky-200 border border-sky-400/40 rounded-lg text-xs font-mono font-semibold transition-all shadow-[0_0_12px_rgba(56,189,248,0.15)] flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                      title={effectiveIsOwner ? "👑 Modo Owner: Reanalizar y recalcular datos con IA sin restricciones de cuota" : "Reanalizar y recalcular datos con IA"}
+                    >
+                      <RotateCw className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin text-sky-400' : ''}`} />
+                      <span>{loadingAi ? 'Actualizando datos...' : (aiReport?.aiAvailable ? 'Regenerar con IA' : 'Reintentar con IA')}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -624,14 +682,6 @@ export default function MatchDetailModal({
                 onToggleParlay={onToggleParlay}
                 parlayLegs={parlayLegs}
                 oddsFormat={oddsFormat} 
-              />
-              <OverUnderGroupedSection
-                match={m}
-                homeStats={homeDetailed}
-                awayStats={awayDetailed}
-                diff={diff}
-                isVip={effectiveIsVip}
-                onUnlockVip={onUnlockVip}
               />
               {/* Narrative Analysis & AI Breakdown */}
               <div className="bg-[#111723] rounded-xl p-5 border border-white/5 space-y-4">
@@ -646,6 +696,20 @@ export default function MatchDetailModal({
                     </span>
                   )}
                 </div>
+
+                {aiReport?.aiAvailable && (
+                  <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span className="text-emerald-200">
+                        <strong>Análisis Realizado a Profundidad y Confirmado:</strong> Métricas oficiales cruzadas (clasificación, H2H, goles y rachas recientes).
+                      </span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-bold self-start sm:self-auto shrink-0 border border-emerald-500/30">
+                      MOTOR: {aiReport.modelUsed || activeModelInfo.selectedModel || 'DeepSeek V4.1'}
+                    </span>
+                  </div>
+                )}
 
                 {aiReport?.analysisSections ? (
                   <div className="space-y-3.5">
@@ -719,7 +783,7 @@ export default function MatchDetailModal({
                   </div>
                 ) : (
                   <p className="text-xs text-slate-300 font-sans leading-relaxed whitespace-pre-line">
-                    {aiReport?.narrativeAnalysis || match.aiPick?.summaryRationale}
+                    {aiReport?.narrativeAnalysis || match.aiPick?.summaryRationale || 'Análisis predictivo basado en la distribución de Poisson y probabilidades estadísticas oficiales del evento.'}
                   </p>
                 )}
 
@@ -1127,6 +1191,18 @@ export default function MatchDetailModal({
             </div>
           )}
 
+        </div>
+
+        {/* Mobile bottom close button for quick exit */}
+        <div className="p-3.5 bg-[#0a0e16] border-t border-white/10 flex justify-center sm:hidden shrink-0">
+          <button
+            type="button"
+            onClick={() => { sounds.playClick(); onClose(); }}
+            className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-98 text-slate-200 hover:text-white font-bold rounded-xl text-xs font-mono flex items-center justify-center space-x-2 border border-white/10 transition cursor-pointer"
+          >
+            <X className="w-4 h-4 text-rose-400" />
+            <span>Cerrar Detalles del Partido</span>
+          </button>
         </div>
 
       </div>

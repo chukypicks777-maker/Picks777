@@ -7,6 +7,7 @@ import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
 import RadarScanner from './RadarScanner';
 import { getTop3Opportunities, getCoherentPredictedScore, getEffectiveOdds } from '../utils/mathProbabilities';
+import { isMatchAnalyzed, getAnalyzedModelName } from '../utils/analysisCache';
 
 export default function HeroFeaturedMatch({ 
   match, 
@@ -77,6 +78,12 @@ export default function HeroFeaturedMatch({
                   <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-sky-500/15 text-sky-300 border border-sky-500/25 rounded-md font-medium flex items-center space-x-1 shrink-0">
                     <Clock className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-sky-400 shrink-0" />
                     <span>{new Date(match.kickoff).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </span>
+                )}
+                {isMatchAnalyzed(match.id, match) && (
+                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-md font-mono text-[10px] sm:text-[11px] font-bold flex items-center space-x-1 shadow-[0_0_12px_rgba(16,185,129,0.2)] shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{getAnalyzedModelName(match.id, match) ? `IA: ${getAnalyzedModelName(match.id, match).slice(0, 15)}` : 'ANÁLISIS IA CONFIRMADO'}</span>
                   </span>
                 )}
 

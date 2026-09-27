@@ -1,8 +1,9 @@
 import { protectMutations } from './security.js';
+import { securityHeaders } from './httpHeaders.js';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CONFIG } from './config.js';
+import { CONFIG, secureConfiguration } from './config.js';
 import { readiness } from './health.js';
 import { requireSession } from './session.js';
 import authRoutes from './routes/authRoutes.js';
@@ -14,9 +15,13 @@ import { getEffectiveAiConfig } from './services/aiService.js';
 import { storage } from './storage.js';
 const app = express();
 app.disable('x-powered-by');
+app.use(securityHeaders);
+app.use('/api', (req, res, next) => {
+  if (!secureConfiguration()) return res.status(503).json({ success: false, message: 'Configuración de seguridad del servidor incompleta.' });
+  next();
+});
 app.use('/api', protectMutations);
 app.use(express.json({ limit: '32kb' }));
-app.use((req, res, next) => { res.set('X-Content-Type-Options', 'nosniff'); res.set('Referrer-Policy', 'same-origin'); res.set('X-Frame-Options', 'DENY'); next(); });
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
 app.get('/api/health', readiness);
 app.use('/api/auth', authRoutes);
@@ -66,6 +71,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api', (req, res) => res.status(404).json({ success: false, message: 'Endpoint no encontrado.' }));
 const dist = fileURLToPath(new URL('../dist', import.meta.url));
 if (!process.env.VERCEL) {
+  app.get('/.well-known/assetlinks.json', (req, res) => res.sendFile(path.join(dist, '.well-known', 'assetlinks.json')));
   app.use(express.static(dist));
   app.use((req, res) => res.sendFile(path.join(dist, 'index.html')));
 }

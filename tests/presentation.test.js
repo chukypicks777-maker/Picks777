@@ -18,7 +18,8 @@ async function loadComponent(relativePath, filename, extraReplaces = {}) {
     .replaceAll('"lucide-react"', JSON.stringify(import.meta.resolve('lucide-react')))
     .replaceAll('"./NumberCounter"', JSON.stringify(numberCounterDataUri))
     .replaceAll('"../utils/audioEffects"', JSON.stringify(import.meta.resolve('../src/utils/audioEffects.js')))
-    .replaceAll('"../utils/probability"', JSON.stringify(import.meta.resolve('../src/utils/probability.js')));
+    .replaceAll('"../utils/probability"', JSON.stringify(import.meta.resolve('../src/utils/probability.js')))
+    .replaceAll('"../utils/mathProbabilities"', JSON.stringify(import.meta.resolve('../src/utils/mathProbabilities.js')));
   for (const [key, val] of Object.entries(extraReplaces)) {
     modCode = modCode.replaceAll(key, val);
   }
@@ -86,4 +87,38 @@ test('OverUnderGroupedSection locks LADO OVERS with VIP overlay when isVip=false
   assert.doesNotMatch(unlockedHtml, /SOLO ACCESO VIP/);
   assert.doesNotMatch(unlockedHtml, /Desbloquear con VIP/);
   assert.doesNotMatch(unlockedHtml, /blur-\[5px\]/);
+});
+
+test('OverUnderGroupedSection reconstructs full goal ladder and cards without N/D when feed only has over25', () => {
+  const sparseMatch = {
+    status: 'SCHEDULED',
+    probabilities: { over25: 59, under25: 41 },
+    odds: { over25: 1.70, under25: 2.10 }
+  };
+  const sparseDiff = {};
+
+  const html = renderToStaticMarkup(React.createElement(OverUnderGroupedSection, {
+    match: sparseMatch,
+    homeStats: {},
+    awayStats: {},
+    diff: sparseDiff,
+    isVip: true
+  }));
+
+  // Assert that none of the goal lines or cards show N/D
+  assert.match(html, /\+0\.5 Goles[\s\S]*?(\d+)%/);
+  assert.match(html, /\+1\.5 Goles[\s\S]*?(\d+)%/);
+  assert.match(html, /\+2\.5 Goles[\s\S]*?59%/);
+  assert.match(html, /\+3\.5 Goles[\s\S]*?(\d+)%/);
+  assert.match(html, /\+3\.5 Tarjetas[\s\S]*?(\d+)%/);
+
+  // Extract percentages to verify monotonicity
+  const p05 = Number(html.match(/\+0\.5 Goles[\s\S]*?(\d+)%/)[1]);
+  const p15 = Number(html.match(/\+1\.5 Goles[\s\S]*?(\d+)%/)[1]);
+  const p25 = 59;
+  const p35 = Number(html.match(/\+3\.5 Goles[\s\S]*?(\d+)%/)[1]);
+
+  assert.ok(p05 > p15, `Over 0.5 (${p05}%) must be greater than Over 1.5 (${p15}%)`);
+  assert.ok(p15 > p25, `Over 1.5 (${p15}%) must be greater than Over 2.5 (${p25}%)`);
+  assert.ok(p25 > p35, `Over 2.5 (${p25}%) must be greater than Over 3.5 (${p35}%)`);
 });

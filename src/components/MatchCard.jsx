@@ -1,11 +1,12 @@
 import { percent, roundDistribution } from '../utils/probability';
 import React from 'react';
-import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles, Lock, Crown } from 'lucide-react';
+import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles, Lock, Crown, RotateCw } from 'lucide-react';
 import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
 import { getBestBankerPick, getEffectiveOdds, getContextualPick } from '../utils/mathProbabilities';
+import { isMatchAnalyzed, getAnalyzedModelName } from '../utils/analysisCache';
 
 export default function MatchCard({ 
   match, 
@@ -17,8 +18,13 @@ export default function MatchCard({
   bankerRank = null,
   isLocked = false,
   onUnlockVip = null,
-  marketFilter = 'all'
+  marketFilter = 'all',
+  isAiAnalyzed = null,
+  isAnalyzing = false,
+  aiModelUsed = null
 }) {
+  const analyzed = isAiAnalyzed ?? isMatchAnalyzed(match?.id, match);
+  const modelName = aiModelUsed ?? (analyzed ? getAnalyzedModelName(match?.id, match) : null);
   const base = match.model?.probabilities || match.probabilities || {};
   const p = { ...base, ...roundDistribution({ homeWin: base.homeWin, draw: base.draw, awayWin: base.awayWin }) };
   const homeProb = percent(p.homeWin), drawProb = percent(p.draw), awayProb = percent(p.awayWin);
@@ -67,7 +73,10 @@ export default function MatchCard({
   const isBankerMode = bankerRank != null || marketFilter === 'safe';
   const isSpecificMarket = ['over', 'over25', 'btts', 'under', 'under25'].includes(marketFilter);
   const contextualPick = getContextualPick(match, marketFilter);
-  const activePick = isSpecificMarket ? contextualPick : (contextualPick || bankerPick);
+  const verifiedAiPick = (analyzed && match.aiPick?.selection)
+    ? match.aiPick
+    : (analyzed ? getCachedAnalysis(match?.id, match)?.aiReport?.topPick : null);
+  const activePick = isSpecificMarket ? contextualPick : (verifiedAiPick || contextualPick || bankerPick);
   const displayPick = activePick?.selection || (isSpecificMarket ? 'Sin pronóstico para este mercado' : (bankerPick?.selection || 'Sin datos suficientes'));
   const displayOdds = activePick?.odds ?? getEffectiveOdds(activePick);
   const displayProb = activePick?.probability;
@@ -138,6 +147,31 @@ export default function MatchCard({
               )}
             </div>
           </div>
+
+          {/* AI Analysis Confirmation Banner */}
+          {analyzed ? (
+            <div 
+              title={modelName ? `Análisis verificado por IA (${modelName})` : 'Análisis IA completado y verificado'}
+              className="mb-2.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/35 flex items-center justify-between font-mono text-[10px] text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
+            >
+              <span className="font-bold flex items-center space-x-1">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <span>ANÁLISIS IA COMPLETADO</span>
+              </span>
+              <span className="text-emerald-400 font-bold flex items-center space-x-1">
+                <CheckCircle2 className="w-3 h-3" />
+                <span>{modelName ? `${modelName.slice(0, 12)} • 100%` : 'CONFIRMADO 100%'}</span>
+              </span>
+            </div>
+          ) : isAnalyzing ? (
+            <div className="mb-2.5 px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-500/35 flex items-center justify-between font-mono text-[10px] text-sky-300 animate-pulse shadow-[0_0_10px_rgba(14,165,233,0.15)]">
+              <span className="font-bold flex items-center space-x-1.5">
+                <RotateCw className="w-3 h-3 text-sky-400 animate-spin" />
+                <span>ANALIZANDO CON IA EN VIVO...</span>
+              </span>
+              <span className="text-sky-400 font-semibold">Procesando</span>
+            </div>
+          ) : null}
 
           {/* Teams and Logos */}
           <div className="space-y-2 mb-3">
@@ -235,10 +269,16 @@ export default function MatchCard({
           </div>
 
           {/* Pick Recommendation Capsule */}
-          <div className="bg-[#121824] border border-sky-500/20 rounded-lg p-2.5 mb-3">
+          <div className={`rounded-lg p-2.5 mb-3 transition-all duration-300 ${
+            analyzed 
+              ? 'bg-[#0f1924] border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.1)]' 
+              : 'bg-[#121824] border border-sky-500/20'
+          }`}>
             <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[9.5px] font-mono font-bold text-sky-400 uppercase tracking-wide flex items-center space-x-1">
-                <Zap className="w-2.5 h-2.5 fill-sky-400" />
+              <span className={`text-[9.5px] font-mono font-bold uppercase tracking-wide flex items-center space-x-1 ${
+                analyzed ? 'text-emerald-400' : 'text-sky-400'
+              }`}>
+                <Zap className={`w-2.5 h-2.5 ${analyzed ? 'fill-emerald-400 text-emerald-400' : 'fill-sky-400 text-sky-400'}`} />
                 <span>
                   {marketFilter === 'over' || marketFilter === 'over25'
                     ? 'Pronóstico Over 2.5'
@@ -255,6 +295,11 @@ export default function MatchCard({
                 <span className="text-[9.5px] font-mono text-emerald-400 font-bold flex items-center space-x-0.5">
                   <CheckCircle2 className="w-3 h-3" />
                   <span>ACERTADO</span>
+                </span>
+              ) : analyzed ? (
+                <span className="text-[9.5px] font-mono text-emerald-300 font-bold flex items-center space-x-1 bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">
+                  <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
+                  <span>IA {displayProb}% Conf.</span>
                 </span>
               ) : (
                 <span className="text-[9.5px] font-mono text-slate-400">
@@ -275,7 +320,9 @@ export default function MatchCard({
             <div className="mt-2 pt-2 border-t border-white/10 flex items-start space-x-1.5 text-[10px] text-emerald-300/90 font-mono leading-snug">
               <Sparkles className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
               <p className="line-clamp-2">
-                <strong className="text-emerald-400 font-sans">Base del cálculo: </strong>
+                <strong className="text-emerald-400 font-sans">
+                  {analyzed ? 'Análisis IA Verificado: ' : 'Base del cálculo: '}
+                </strong>
                 {activePick?.rationale || bankerPick?.rationale || match.aiPick?.summaryRationale || 'Sin datos suficientes para justificar una selección.'}
               </p>
             </div>

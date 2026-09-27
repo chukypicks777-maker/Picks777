@@ -71,13 +71,24 @@ export function rateLimit(kind) {
         ];
       } else {
         if (!req.session) return res.status(401).json({ success: false, message: 'Sesión requerida.' });
+        // Owner has unconstrained access to trigger retries and re-analysis without rate limit collapse
+        const isOwner = Boolean(
+          req.session.role === 'owner' ||
+          req.session.plan === 'Owner' ||
+          req.session.isAdmin === true ||
+          req.session.code === 'MASTER' ||
+          req.session.user?.role === 'owner' ||
+          req.session.user?.plan === 'Owner'
+        );
+        if (isOwner) {
+          return next();
+        }
         // VIP quota is per code, or per Google user for trial users
-        const subject = req.session.role === 'owner'
-          ? 'owner'
-          : (req.session.code ? `vip:${req.session.code}` : `user:${req.session.userId || clientIdentity(req)}`);
+        const subject = req.session.code ? `vip:${req.session.code}` : `user:${req.session.userId || clientIdentity(req)}`;
+        const userLimit = positiveInteger('AI_MAX_ANALYSES', 100);
         buckets = [
-          { key: `ai:${digest(subject)}`, limit: positiveInteger('AI_MAX_ANALYSES', 20), windowMs: positiveInteger('AI_WINDOW_SECONDS', 3600, 86400) * 1000 },
-          { key: 'ai:global', limit: positiveInteger('AI_GLOBAL_MAX_ANALYSES', 200), windowMs: positiveInteger('AI_GLOBAL_WINDOW_SECONDS', 86400, 604800) * 1000 }
+          { key: `ai:${digest(subject)}`, limit: userLimit, windowMs: positiveInteger('AI_WINDOW_SECONDS', 3600, 86400) * 1000 },
+          { key: 'ai:global', limit: positiveInteger('AI_GLOBAL_MAX_ANALYSES', 1000), windowMs: positiveInteger('AI_GLOBAL_WINDOW_SECONDS', 86400, 604800) * 1000 }
         ];
       }
       const result = await consumeLimits(buckets);

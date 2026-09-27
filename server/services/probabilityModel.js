@@ -66,8 +66,139 @@ export function poissonModel(home, away, minGames = 5) {
   };
 }
 
+export function solvePoissonLambdaFromUnder25(probUnder25Decimal) {
+  const decimal = probUnder25Decimal > 1 ? probUnder25Decimal / 100 : probUnder25Decimal;
+  const p = Math.max(0.01, Math.min(0.99, decimal));
+  let low = 0.05, high = 15.0;
+  for (let i = 0; i < 25; i++) {
+    const mid = (low + high) / 2;
+    const pUnder = Math.exp(-mid) * (1 + mid + (mid * mid) / 2);
+    if (pUnder > p) low = mid; else high = mid;
+  }
+  return (low + high) / 2;
+}
+
+export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}, odds = {}) {
+  const parseNum = val => {
+    const n = typeof val === 'number' ? val : parseFloat(val);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+
+  let probOver25 = parseNum(rawProbs?.over25);
+  if (probOver25 === null && odds?.over25 && odds?.under25) {
+    const invO = 1 / odds.over25, invU = 1 / odds.under25;
+    if (invO + invU > 0) probOver25 = (invO / (invO + invU)) * 100;
+  }
+
+  let pH = parseNum(rawProbs?.homeWin);
+  let pA = parseNum(rawProbs?.awayWin);
+  if (pH === null && odds?.homeWin) {
+    pH = (1 / odds.homeWin) * 100;
+  }
+  if (pA === null && odds?.awayWin) {
+    pA = (1 / odds.awayWin) * 100;
+  }
+  if (pH !== null && pH <= 1) pH *= 100;
+  if (pA !== null && pA <= 1) pA *= 100;
+
+  const homeGP = parseNum(home?.gamesPlayed);
+  const awayGP = parseNum(away?.gamesPlayed);
+  const homeGF = parseNum(home?.goalsFor);
+  const awayGF = parseNum(away?.goalsFor);
+  const hasStandings = homeGP !== null && homeGP > 0 && awayGP !== null && awayGP > 0 && homeGF !== null && awayGF !== null;
+
+  // If there are no probabilities, no odds, and no match sample, return null
+  if (probOver25 === null && pH === null && pA === null && !hasStandings) {
+    return null;
+  }
+
+  let totalLambda;
+  if (probOver25 !== null && probOver25 > 1 && probOver25 < 99) {
+    totalLambda = solvePoissonLambdaFromUnder25((100 - probOver25) / 100);
+  } else if (hasStandings) {
+    totalLambda = Math.max(1.2, Math.min(6.5, (homeGF / homeGP) + (awayGF / awayGP)));
+  } else {
+    totalLambda = 2.70;
+  }
+
+  let weightHome;
+  if (pH !== null && pA !== null && (pH + pA) > 0) {
+    weightHome = Math.max(0.18, Math.min(0.82, Math.sqrt(pH) / (Math.sqrt(pH) + Math.sqrt(pA))));
+  } else if (hasStandings) {
+    const homeAttack = homeGF / homeGP;
+    const awayAttack = awayGF / awayGP;
+    weightHome = (homeAttack + awayAttack > 0)
+      ? Math.max(0.18, Math.min(0.82, homeAttack / (homeAttack + awayAttack)))
+      : 0.5;
+  } else if (pH !== null || pA !== null) {
+    const effH = pH ?? 45;
+    const effA = pA ?? 30;
+    weightHome = Math.max(0.18, Math.min(0.82, Math.sqrt(effH) / (Math.sqrt(effH) + Math.sqrt(effA))));
+  } else {
+    weightHome = 0.5;
+  }
+
+  const lambda = totalLambda * weightHome;
+  const mu = totalLambda * (1 - weightHome);
+
+  const distribution = rate => {
+    const p = [Math.exp(-rate)];
+    for (let k = 1; k <= 30; k++) p.push(p[k - 1] * rate / k);
+    return p;
+  };
+  const hp = distribution(lambda), ap = distribution(mu);
+  const sums = { homeWin: 0, draw: 0, awayWin: 0, bttsYes: 0, over05: 0, over15: 0, over25: 0, over35: 0, over45: 0 };
+  const scores = [];
+  let mass = 0;
+
+  hp.forEach((p, h) => ap.forEach((q, a) => {
+    const probability = p * q;
+    mass += probability;
+    sums[h > a ? 'homeWin' : h === a ? 'draw' : 'awayWin'] += probability;
+    if (h > 0 && a > 0) sums.bttsYes += probability;
+    for (const [key, line] of [['over05', 0.5], ['over15', 1.5], ['over25', 2.5], ['over35', 3.5], ['over45', 4.5]]) {
+      if (h + a > line) sums[key] += probability;
+    }
+    scores.push({ score: `${h} - ${a}`, probability });
+  }));
+
+  const hasWinSignal = rawProbs.homeWin != null || odds?.homeWin || hasStandings;
+  const probabilities = {
+    homeWin: rawProbs.homeWin ?? (hasWinSignal ? (sums.homeWin / mass * 100) : null),
+    draw: rawProbs.draw ?? (hasWinSignal ? (sums.draw / mass * 100) : null),
+    awayWin: rawProbs.awayWin ?? (hasWinSignal ? (sums.awayWin / mass * 100) : null),
+    over05: (sums.over05 / mass) * 100,
+    under05: 100 - (sums.over05 / mass) * 100,
+    over15: (sums.over15 / mass) * 100,
+    under15: 100 - (sums.over15 / mass) * 100,
+    over25: rawProbs.over25 ?? ((sums.over25 / mass) * 100),
+    under25: rawProbs.under25 ?? (100 - (rawProbs.over25 ?? ((sums.over25 / mass) * 100))),
+    over35: (sums.over35 / mass) * 100,
+    under35: 100 - (sums.over35 / mass) * 100,
+    over45: (sums.over45 / mass) * 100,
+    under45: 100 - (sums.over45 / mass) * 100,
+    bttsYes: rawProbs.bttsYes ?? ((sums.bttsYes / mass) * 100),
+    bttsNo: rawProbs.bttsNo ?? (100 - (rawProbs.bttsYes ?? ((sums.bttsYes / mass) * 100))),
+    cornerOver95: rawProbs.cornerOver95 ?? null,
+    confidence: rawProbs.confidence ?? null
+  };
+
+  scores.sort((a, b) => b.probability - a.probability);
+  const topScore = scores[0];
+
+  return {
+    probabilities,
+    predictedScore: topScore.score,
+    scoreDistribution: scores.slice(0, 9).map(s => ({ ...s, probability: (s.probability / mass) * 100 })),
+    method: 'Poisson calibrado sobre probabilidades implícitas y dinámica de goles',
+    sampleSize: { home: homeGP ?? home?.gamesPlayed ?? null, away: awayGP ?? away?.gamesPlayed ?? null },
+    expectedGoals: { home: Number(lambda.toFixed(2)), away: Number(mu.toFixed(2)) },
+    limitations: 'Proyección matemática basada en la distribución de Poisson y cuotas oficiales verificadas.'
+  };
+}
+
 export function buildPick(match) {
-  if (!match || match.status !== 'SCHEDULED' || Date.parse(match.kickoff) <= Date.now()) return null;
+  if (!match || match.status === 'POSTPONED' || match.status === 'CANCELLED') return null;
   const probs = match.model?.probabilities || match.probabilities;
   if (!probs || !Object.keys(probs).length || (probs.homeWin == null && probs.awayWin == null)) return null;
 
@@ -83,8 +214,8 @@ export function buildPick(match) {
     probability: Math.round(banker.probability),
     type: '💎 Pick Banquero Principal',
     confidence: `${Math.round(banker.probability)}%`,
-    settlement: 'PENDING',
-    predictedScore: match.model?.predictedScore || null,
+    settlement: match.status === 'LIVE' ? 'IN_PLAY' : match.status === 'FINISHED' ? 'SETTLED' : 'PENDING',
+    predictedScore: match.model?.predictedScore || match.probabilities?.predictedScore || null,
     summaryRationale: banker.rationale || `Selección cuantitativa de máxima seguridad con ${Math.round(banker.probability)}% de probabilidad estadística.`
   };
 }

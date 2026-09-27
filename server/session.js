@@ -1,15 +1,14 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual, randomBytes, randomUUID } from 'node:crypto';
 import { CONFIG } from './config.js';
 import { storage } from './storage.js';
+const developmentSecret = randomBytes(32).toString('hex');
 const secret = () => {
   if (process.env.SESSION_SECRET?.length >= 16) return process.env.SESSION_SECRET;
-  return createHmac('sha256', 'deportepicks-vip-salt-2026')
-    .update((process.env.MASTER_ADMIN_CODE || 'DeportePicks').trim())
-    .digest('hex');
+  return developmentSecret;
 };
 const sign = payload => createHmac('sha256', secret()).update(payload).digest('base64url');
 export function setSession(res, data) {
-  const payload = Buffer.from(JSON.stringify({ ...data, issuedAt: Date.now() })).toString('base64url');
+  const payload = Buffer.from(JSON.stringify({ ...data, sessionId: randomUUID(), issuedAt: Date.now() })).toString('base64url');
   const cookieMaxAge = Math.max(30 * 86400000, Math.max(0, (data.expires || 0) - Date.now()));
   res.cookie('picks_session', `${payload}.${sign(payload)}`, { httpOnly: true, secure: Boolean(process.env.VERCEL || process.env.NODE_ENV === 'production'), sameSite: 'lax', path: '/', maxAge: cookieMaxAge });
 }
@@ -32,7 +31,11 @@ export function readSession(req) {
 export async function currentSession(req) {
   const session = readSession(req);
   if (!session) return null;
-  if (session.role === 'owner') return session.ownerVersion === ownerVersion() ? session : null;
+  if (await storage.isSessionRevoked(sessionIdentifier(session))) return null;
+  if (session.role === 'owner') {
+    if (session.userId && !(await storage.getUser(session.userId))) return null;
+    return session.ownerVersion === ownerVersion() ? session : null;
+  }
 
   if (session.userId) {
     const user = await storage.getUser(session.userId);
@@ -87,7 +90,8 @@ export async function currentSession(req) {
   const code = await storage.getCode(session.code);
   return code && !code.revoked && code.isClaimed && Date.parse(code.expiresAt) > Date.now() ? session : null;
 }
-export function ownerVersion() { return createHmac('sha256', secret()).update((CONFIG.MASTER_ADMIN_CODE || 'DeportePicks').trim().toUpperCase()).digest('hex'); }
+export const sessionIdentifier = session => session.sessionId || sign(JSON.stringify(session));
+export function ownerVersion() { return createHmac('sha256', secret()).update((CONFIG.MASTER_ADMIN_CODE || '').trim().toUpperCase()).digest('hex'); }
 export async function requireSession(req, res, next) {
   try {
     req.session = await currentSession(req);

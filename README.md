@@ -1,3 +1,5 @@
+> Android: proyecto, compilación, firma y pendientes de Play Store en [ANDROID-RELEASE.md](ANDROID-RELEASE.md). Evidencias de esta entrega en [VALIDATION-ANDROID.md](VALIDATION-ANDROID.md).
+
 # ⚽ DEPORTEPICKS AI VIP — Plataforma de Inteligencia Predictiva para Apuestas de Fútbol
 
 > Plataforma web de análisis deportivo impulsada por Inteligencia Artificial de última generación (**VyceAI / DeepSeek V4.1 / AgentRouter**) y modelos predictivos cuantitativos. Diseñada con una interfaz ultra-premium (estilo terminal de \$300,000 inspirada en **MasterCuota**, **Jarvis Bet** y **Picks777**).
@@ -68,7 +70,7 @@
 ### 6. 👑 Sistema de Acceso VIP y Panel de Administración (Owner)
 
 #### Acceso del propietario
-Configura `MASTER_ADMIN_CODE` en las variables de entorno (por defecto `DeportePicks`). Al ingresar este código en la pantalla de login, el sistema inicia sesión con rol `Owner` y da acceso completo al panel de administración para generar códigos por lote, consultar activaciones y revocar accesos.
+Configura `MASTER_ADMIN_CODE` en las variables de entorno (sin valor predeterminado; usa una clave aleatoria privada). Al ingresar este código en la pantalla de login, el sistema inicia sesión con rol `Owner` y da acceso completo al panel de administración para generar códigos por lote, consultar activaciones y revocar accesos.
 
 #### Funcionalidades del Panel Owner:
 1. **Generador Masivo de Códigos Aleatorios**:

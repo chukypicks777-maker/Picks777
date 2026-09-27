@@ -27,6 +27,7 @@ export default function ParlayBuilderDrawer({
 }) {
   const [stake, setStake] = useState(50);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
 
   let totalDecimalOdds = 1.0;
@@ -38,15 +39,18 @@ export default function ParlayBuilderDrawer({
   const potentialPayout = parseFloat((stake * totalDecimalOdds).toFixed(2));
   const netProfit = parseFloat((potentialPayout - stake).toFixed(2));
 
-  const handleCopyTicket = () => {
+  const handleCopyTicket = async () => {
     sounds.playClick();
     const summary = `🏆 DEPORTEPICKS PRO — TICKET DE PARLAY 🏆\n\n` +
       legs.map((l, i) => `${i + 1}. [${l.league}] ${l.matchTitle}\n   👉 Selección: ${l.selection} @ ${formatOdds(l.odds, oddsFormat)}${l.probability != null ? ` (${Math.round(l.probability)}% prob)` : ''}`).join('\n\n') +
       `\n\n📊 Cuota Total: ${formatOdds(totalDecimalOdds, oddsFormat)}\n💰 Monto: ${formatCurrency(stake, currency)}\n💵 Retorno: ${formatCurrency(potentialPayout, currency)}\n⚠️ Todos los eventos deben cumplirse.`;
 
-    navigator.clipboard.writeText(summary);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopyError('');
+    try {
+      await navigator.clipboard.writeText(summary);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { setCopyError('No se pudo copiar. Revisa los permisos del navegador.'); }
   };
 
   if (!isOpen) return null;
@@ -55,6 +59,7 @@ export default function ParlayBuilderDrawer({
     <div className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-4 sm:right-4 z-[70] w-[calc(100%_-_1.5rem)] sm:w-[calc(100%_-_2rem)] max-w-md animate-slide-up">
       <div className="bg-[#0e131d]/95 backdrop-blur-xl border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
         
+        {copyError && <p role="status" className="p-3 text-rose-300 text-xs">{copyError}</p>}
         {/* Drawer Header */}
         <div className="bg-[#121824] px-3.5 sm:px-4 py-2.5 sm:py-3 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center space-x-2 min-w-0">
@@ -73,13 +78,13 @@ export default function ParlayBuilderDrawer({
 
           <div className="flex items-center space-x-1 shrink-0">
             <button
-              onClick={() => setIsMinimized(!isMinimized)}
+              aria-label={isMinimized ? "Expandir parlay" : "Minimizar parlay"} onClick={() => setIsMinimized(!isMinimized)}
               className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/5 transition cursor-pointer"
             >
               {isMinimized ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             <button
-              onClick={() => { sounds.playClick(); onClose(); }}
+              aria-label="Cerrar parlay" onClick={() => { sounds.playClick(); onClose(); }}
               className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-white/5 transition cursor-pointer"
             >
               <X className="w-4 h-4" />

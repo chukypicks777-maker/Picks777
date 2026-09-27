@@ -1,13 +1,13 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, setPersistence, inMemoryPersistence } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8",
-  authDomain: "ia-luz.firebaseapp.com",
-  projectId: "ia-luz",
-  storageBucket: "ia-luz.firebasestorage.app",
-  messagingSenderId: "102504637276",
-  appId: "1:102504637276:web:19e05e46caaac04f159799"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "ia-luz.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "ia-luz",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "ia-luz.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "102504637276",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:102504637276:web:19e05e46caaac04f159799"
 };
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
@@ -16,6 +16,7 @@ export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export async function loginWithRealGoogle() {
+  await setPersistence(auth, inMemoryPersistence);
   const result = await signInWithPopup(auth, googleProvider);
   const user = result.user;
   const token = await user.getIdToken();
@@ -29,3 +30,5 @@ export async function loginWithRealGoogle() {
     token
   };
 }
+
+export const logoutIdentity = () => signOut(auth);

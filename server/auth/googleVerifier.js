@@ -1,0 +1,23 @@
+import { CONFIG } from '../config.js';
+
+export async function verifyGoogleToken(credential) {
+  if (typeof credential !== 'string' || credential.length > 12000 || !credential) return null;
+  try {
+    const response = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(credential), { signal: AbortSignal.timeout(8000) });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.aud === CONFIG.GOOGLE_CLIENT_ID && ['accounts.google.com', 'https://accounts.google.com'].includes(data.iss) && Number(data.exp) * 1000 > Date.now() && [true, 'true'].includes(data.email_verified) && data.sub && data.email) return data;
+    }
+  } catch {}
+  try {
+    const key = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8';
+    const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(key), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: credential }), signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) return null;
+    const data = await response.json(), user = data.users?.[0];
+    if (!user?.localId || !user.emailVerified || !user.email || user.disabled || !user.providerUserInfo?.some(p => p.providerId === 'google.com')) return null;
+    return { sub: user.localId, email: user.email, name: user.displayName, picture: user.photoUrl };
+  } catch { return null; }
+}
+

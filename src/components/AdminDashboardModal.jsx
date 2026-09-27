@@ -364,7 +364,7 @@ export default function AdminDashboardModal({ onClose }) {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div className="mobile-dialog-overlay fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
       <div className="relative w-full max-w-5xl bg-[#0c1017] border border-white/10 rounded-2xl overflow-hidden shadow-2xl my-2 sm:my-8 overflow-x-hidden">
         
         {/* Header */}

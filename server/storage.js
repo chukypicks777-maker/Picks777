@@ -4,7 +4,6 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { redisConfigured, redisCommand } from './services/dataCache.js';
 import { SOCIAL_LINKS } from '../src/constants/socials.js';
 import { validateSocialLinks } from './socialSettings.js';
-import { defaultSeedData } from './data/defaultSeed.js';
 const KEY = 'picks:v2:access';
 const clean = code => String(code || '').trim().toUpperCase();
 const initial = () => ({ codes: [], users: [], aiConfig: null });
@@ -20,7 +19,7 @@ export class StorageManager {
           try {
             return await fs.readFile(path.resolve('server/data/access-v2.json'), 'utf8');
           } catch {}
-          return JSON.stringify(defaultSeedData);
+          return JSON.stringify(initial());
         }
         return null;
       }
@@ -106,6 +105,24 @@ export class StorageManager {
   async deleteCode(code) { return this.transaction(db => { db.codes = db.codes.filter(c => c.code !== clean(code)); return true; }); }
   async revokeCode(code) { return this.transaction(db => { const c = db.codes.find(c => c.code === clean(code)); if (c) { c.revoked = true; c.expiresAt = new Date().toISOString(); } return Boolean(c); }); }
   async getUsers() { return (await this.load()).users || []; }
+  async deleteUserData(userId) {
+    return this.transaction(db => {
+      const user = (db.users || []).find(item => item.id === userId);
+      if (!user) return;
+      db.users = db.users.filter(item => item.id !== userId);
+      for (const code of db.codes || []) {
+        if ([user.email, user.name].includes(code.claimedBy)) delete code.claimedBy;
+        code.devices = (code.devices || []).filter(id => !(user.devices || []).includes(id));
+      }
+    });
+  }
+  async revokeSession(id, expires) {
+    return this.transaction(db => {
+      db.revokedSessions = Object.fromEntries(Object.entries(db.revokedSessions || {}).filter(([, end]) => end > Date.now()));
+      db.revokedSessions[id] = expires;
+    });
+  }
+  async isSessionRevoked(id) { return Boolean((await this.load()).revokedSessions?.[id]); }
   async getUser(idOrEmailOrGoogleId) {
     const users = await this.getUsers();
     const query = String(idOrEmailOrGoogleId || '').trim().toLowerCase();
@@ -200,8 +217,8 @@ export class StorageManager {
       if (!user) return { success: false, message: 'Usuario no encontrado.' };
 
       const now = Date.now();
-      const masterCode = (process.env.MASTER_ADMIN_CODE || 'DeportePicks').trim().toUpperCase();
-      if (cleanCode === masterCode) {
+      const masterCode = (process.env.MASTER_ADMIN_CODE || '').trim().toUpperCase();
+      if (masterCode && cleanCode === masterCode) {
         user.role = 'owner';
         user.vipCode = 'MASTER';
         user.vipExpiresAt = new Date(now + 365 * 86400000).toISOString();

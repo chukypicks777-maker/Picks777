@@ -112,21 +112,83 @@ router.get('/btts', async (req, res) => {
   res.json({ success: true, count: bttsMatches.length, matches: bttsMatches, coverage: feed.coverage });
 });
 router.get('/:id', async (req, res) => {
-  const feed = await getFootballFeed();
-  const match = feed.matches.find(m => m.id === req.params.id);
-  if (!match) return res.status(404).json({ success: false, message: 'Partido no disponible en el feed actual.' });
-  res.json({ success: true, match: await enrichMatchWithRealData(match) });
+  try {
+    let feed;
+    try {
+      feed = await getFootballFeed();
+    } catch {
+      feed = { matches: [] };
+    }
+    let match = feed.matches?.find(m => m.id === req.params.id);
+    if (!match) {
+      try {
+        feed = await getFootballFeed({ forceRefresh: true });
+        match = feed.matches?.find(m => m.id === req.params.id);
+      } catch (err) {
+        console.warn('[matchRoutes] Error refreshing feed for match by id:', err?.message || err);
+      }
+    }
+    if (!match) return res.status(404).json({ success: false, message: 'Partido no disponible en el feed actual.' });
+    let enriched = match;
+    try {
+      enriched = await enrichMatchWithRealData(match);
+    } catch (err) {
+      console.warn('[matchRoutes] Error enriching match in GET /:id:', err?.message || err);
+    }
+    res.json({ success: true, match: enriched });
+  } catch (error) {
+    console.error('[matchRoutes] Error in GET /:id:', error.message);
+    res.status(500).json({ success: false, message: 'Error consultando detalles del partido.' });
+  }
 });
 router.post('/:id/ai-analysis', rateLimit('ai'), async (req, res) => {
   try {
-    const feed = await getFootballFeed();
-    const match = feed.matches.find(m => m.id === req.params.id);
-    if (!match) return res.status(404).json({ success: false, message: 'Partido no disponible en el feed actual.' });
-    const enriched = await enrichMatchWithRealData(match);
     const forceRefresh = Boolean(req.query.force === '1' || req.body?.forceRefresh);
+    let feed;
+    try {
+      feed = await getFootballFeed();
+    } catch {
+      feed = { matches: [] };
+    }
+    let match = feed.matches?.find(m => m.id === req.params.id);
+    if (!match && req.body?.match && req.body.match.id === req.params.id) {
+      match = req.body.match;
+    }
+    if (!match && forceRefresh) {
+      try {
+        feed = await getFootballFeed({ forceRefresh: true });
+        match = feed.matches?.find(m => m.id === req.params.id);
+      } catch (err) {
+        console.warn('[matchRoutes] Error refreshing football feed:', err?.message || err);
+      }
+    }
+    if (!match) return res.status(404).json({ success: false, message: 'Partido no disponible en el feed actual.' });
+
+    let enriched = match;
+    try {
+      enriched = await enrichMatchWithRealData(match, { forceRefresh: false });
+    } catch (err) {
+      console.warn('[matchRoutes] Error enriching match data:', err?.message || err);
+    }
     const model = req.body?.model || req.query?.model || undefined;
     const aiConfig = req.body?.aiConfig;
     const report = await generateAiMatchReport(enriched, { forceRefresh, model, aiConfig });
+    if (report?.topPick && report.aiAvailable) {
+      enriched.aiPick = {
+        ...enriched.aiPick,
+        selection: report.topPick.selection,
+        market: report.topPick.market || enriched.aiPick?.market,
+        probability: report.topPick.probability || enriched.aiPick?.probability,
+        confidence: `${report.topPick.probability || enriched.aiPick?.probability}%`,
+        odds: report.topPick.odds ?? enriched.aiPick?.odds,
+        summaryRationale: report.topPick.rationale || report.analysisSections?.verdict || enriched.aiPick?.summaryRationale
+      };
+      if (enriched.probabilities) {
+        enriched.probabilities.confidence = report.topPick.probability;
+      }
+    }
+    enriched.isAiAnalyzed = Boolean(report?.aiAvailable);
+    enriched.aiReport = report;
     res.json({ success: true, match: enriched, report });
   } catch (error) {
     console.error('[matchRoutes] Error in ai-analysis:', error.message);

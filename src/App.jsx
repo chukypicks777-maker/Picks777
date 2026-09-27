@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Navbar from './components/Navbar';
 import LiveTicker from './components/LiveTicker';
 import AuthGateModal from './components/AuthGateModal';
@@ -8,6 +8,7 @@ import DateFilterTabs from './components/DateFilterTabs';
 import HeroFeaturedMatch from './components/HeroFeaturedMatch';
 import MatchCard from './components/MatchCard';
 import MatchDetailModal from './components/MatchDetailModal';
+import AutonomousAiBar from './components/AutonomousAiBar';
 import ParlayBuilderDrawer from './components/ParlayBuilderDrawer';
 import AdminDashboardModal from './components/AdminDashboardModal';
 import StatsCenterModal from './components/StatsCenterModal';
@@ -16,16 +17,13 @@ import { sounds } from './utils/audioEffects';
 import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
 import { getMatchSafetyScore, getBestBankerPick, getEffectiveOdds, getContextualPick } from './utils/mathProbabilities';
 
+import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnalyzedModelName } from './utils/analysisCache';
+import { useSession } from './auth/useSession';
+import { sessionRequest } from './auth/sessionClient';
+import { identityProvider } from './auth/providers';
+
 export default function App() {
-  // Auth state
-  const [auth, setAuth] = useState(() => {
-    try {
-      const saved = localStorage.getItem('deportepicks_auth');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const { auth, setAuth, checking, error: sessionError, retry } = useSession();
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
@@ -96,37 +94,48 @@ export default function App() {
   const [parlayLegs, setParlayLegs] = useState([]);
   const [toastMessage, setToastMessage] = useState('');
   const [currentEpoch, setCurrentEpoch] = useState(() => Date.now());
+  const [analyzedMatchesMap, setAnalyzedMatchesMap] = useState({});
+  const [currentAnalyzingMatchId, setCurrentAnalyzingMatchId] = useState(null);
+
+  const handleMatchAnalyzed = useCallback((matchId, enrichedMatch, aiReport) => {
+    const isAiSuccess = Boolean(aiReport?.aiAvailable);
+    setAnalyzedMatchesMap(prev => ({
+      ...prev,
+      [matchId]: {
+        isAnalyzed: isAiSuccess,
+        modelUsed: aiReport?.modelUsed || null,
+        report: aiReport
+      }
+    }));
+    setMatches(prev => prev.map(m => m.id === matchId ? { ...m, ...(enrichedMatch || {}), isAiAnalyzed: isAiSuccess, aiReport } : m));
+    setSelectedMatch(prev => prev?.id === matchId ? { ...prev, ...(enrichedMatch || {}), isAiAnalyzed: isAiSuccess, aiReport } : prev);
+  }, []);
+
+  useEffect(() => {
+    const handleAnalysisEvent = (e) => {
+      if (e.detail?.matchId) {
+        handleMatchAnalyzed(e.detail.matchId, e.detail.match, e.detail.report);
+      }
+    };
+    const handleAnalyzingEvent = (e) => {
+      setCurrentAnalyzingMatchId(e.detail?.matchId || null);
+    };
+    window.addEventListener('ai-analysis-updated', handleAnalysisEvent);
+    window.addEventListener('ai-analyzing-match', handleAnalyzingEvent);
+    return () => {
+      window.removeEventListener('ai-analysis-updated', handleAnalysisEvent);
+      window.removeEventListener('ai-analyzing-match', handleAnalyzingEvent);
+    };
+  }, [handleMatchAnalyzed]);
+
+  const analyzedStatusFromBatch = useMemo(() => {
+    if (!Array.isArray(matches) || matches.length === 0) return {};
+    return getBatchAnalyzedStatus(matches).analyzedMap || {};
+  }, [matches]);
 
   // Auto-polling interval reference
   const pollingRef = useRef(null);
   const feedRequest = useRef(null);
-
-  // Check session on mount
-  useEffect(() => {
-    let active = true;
-    async function verifySession() {
-      try {
-        const res = await fetch('/api/auth/check-session', {
-          method: 'POST',
-          credentials: 'same-origin'
-        });
-        const data = await res.json();
-        if (!active) return;
-        if (data.success && data.user) {
-          setAuth(data);
-          localStorage.setItem('deportepicks_auth', JSON.stringify(data));
-          if (data.trialExpired) {
-            setShowUpgradeModal(true);
-          }
-        } else if (!data.valid) {
-          setAuth(null);
-          localStorage.removeItem('deportepicks_auth');
-        }
-      } catch {}
-    }
-    verifySession();
-    return () => { active = false; };
-  }, []);
 
   // Global listeners for trial/session expiry events
   useEffect(() => {
@@ -136,7 +145,12 @@ export default function App() {
     };
     const handleSessionExpired = () => {
       setAuth(null);
-      localStorage.removeItem('deportepicks_auth');
+      clearAllAnalysisCache();
+      feedRequest.current?.abort();
+      setSelectedMatch(null);
+      setShowAdminModal(false);
+      setShowStatsModal(false);
+      setShowParlayDrawer(false);
     };
 
     window.addEventListener('picks-trial-expired', handleTrialExpired);
@@ -145,7 +159,7 @@ export default function App() {
       window.removeEventListener('picks-trial-expired', handleTrialExpired);
       window.removeEventListener('picks-session-expired', handleSessionExpired);
     };
-  }, []);
+  }, [setAuth]);
 
   const fetchMatches = useCallback(async () => {
     feedRequest.current?.abort();
@@ -168,12 +182,13 @@ export default function App() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
+        if (controller.signal.aborted) return;
         if (res.status === 403 && errData.trialExpired) {
           setAuth(prev => ({ ...(prev || {}), valid: false, trialExpired: true }));
           setShowUpgradeModal(true);
         } else if (res.status === 401) {
           setAuth(null);
-          localStorage.removeItem('deportepicks_auth');
+
         } else {
           setMatchError(errData.message || 'Error al consultar los partidos en el servidor.');
         }
@@ -196,7 +211,7 @@ export default function App() {
     } finally {
       if (feedRequest.current === controller) setLoadingMatches(false);
     }
-  }, [selectedLeague, timeframe, matchStatusFilter, searchQuery]);
+  }, [selectedLeague, timeframe, matchStatusFilter, searchQuery, setAuth]);
 
   const syncLiveMatchesSilent = useCallback(async () => {
     try {
@@ -277,7 +292,7 @@ export default function App() {
 
   const handleAuthenticated = (authData) => {
     setAuth(authData);
-    localStorage.setItem('deportepicks_auth', JSON.stringify(authData));
+
     const name = authData.user?.name || authData.user?.username || (authData.isAdmin ? 'Administrador' : 'Usuario');
     if (authData.trialExpired) {
       showToast('⚠️ Tu período de prueba de 3 días ha vencido.');
@@ -291,18 +306,23 @@ export default function App() {
         showToast(`🎉 ¡Bienvenido, ${name}! Tu prueba de 3 días está activa`);
       }
       setShowUpgradeModal(false);
-      // Immediately load matches now that session is active!
-      fetchMatches();
+
     }
   };
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    } catch {}
-    setAuth(null);
-    localStorage.removeItem('deportepicks_auth');
-    showToast('Sesión finalizada.');
+      await sessionRequest('logout');
+      await identityProvider().signOut().catch(() => {});
+      feedRequest.current?.abort();
+      setAuth(null);
+      setMatches([]);
+      clearAllAnalysisCache();
+      setSelectedMatch(null);
+      setShowAdminModal(false);
+      setParlayLegs([]);
+      showToast('Sesión finalizada.');
+    } catch { showToast('No se pudo cerrar la sesión. Comprueba la conexión e inténtalo otra vez.'); }
   };
 
   const handleAddToParlay = (legOrLegs) => {
@@ -499,9 +519,14 @@ export default function App() {
     leagues_cup: matches.filter(m => m?.leagueId === 'leagues_cup').length,
   };
 
+  if (checking || sessionError) return <main className="min-h-dvh grid place-items-center p-6 text-center" role="status">
+    <div><p>{checking ? 'Comprobando tu sesión…' : sessionError}</p>
+    {!checking && <button className="control mt-4" onClick={retry}>Reintentar conexión</button>}</div>
+  </main>;
+
   return (
     <div className="min-h-screen bg-[#080b11] text-slate-100 flex flex-col font-sans w-full overflow-x-hidden relative">
-      
+
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-4 z-[80] bg-[#111827]/95 backdrop-blur-md border border-sky-400/40 text-slate-100 px-4 py-2.5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] font-mono text-xs flex items-center space-x-2 animate-bounce-short">
@@ -524,6 +549,10 @@ export default function App() {
         />
       )}
 
+      <div className="flex justify-end gap-4 px-4 py-2 text-xs text-slate-400">
+        <a href="/privacidad.html" className="underline">Privacidad</a>
+        <a href="/eliminar-cuenta" className="underline">Mi cuenta / eliminar</a>
+      </div>
       {/* Navbar */}
       <Navbar
         auth={auth}
@@ -548,7 +577,7 @@ export default function App() {
 
       {/* Main Container */}
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
-        
+
         {/* Community VIP Channels (Telegram, WhatsApp, Instagram) */}
         <CommunityBanner />
 
@@ -695,6 +724,16 @@ export default function App() {
             </div>
           )}
 
+          {/* Autonomous AI Match Analysis Bar */}
+          {!loadingMatches && filteredMatches.length > 0 && (
+            <AutonomousAiBar
+              matches={filteredMatches}
+              onMatchAnalyzed={handleMatchAnalyzed}
+              onToast={showToast}
+              isOwner={isOwner}
+            />
+          )}
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-bold text-sm sm:text-base text-white">
@@ -771,6 +810,9 @@ export default function App() {
                   isLocked={marketFilter === 'safe' && !isVipUser && idx >= 3}
                   onUnlockVip={() => setShowUpgradeModal(true)}
                   marketFilter={marketFilter}
+                  isAiAnalyzed={analyzedMatchesMap[m.id]?.isAnalyzed ?? analyzedStatusFromBatch[m.id]?.isAnalyzed ?? isMatchAnalyzed(m.id, m)}
+                  isAnalyzing={currentAnalyzingMatchId === m.id}
+                  aiModelUsed={analyzedMatchesMap[m.id]?.modelUsed || analyzedStatusFromBatch[m.id]?.modelUsed || getAnalyzedModelName(m.id, m)}
                 />
               ))}
             </div>
@@ -805,6 +847,7 @@ export default function App() {
           isOwner={isOwner}
           isVip={isVipUser}
           onUnlockVip={() => setShowUpgradeModal(true)}
+          onToast={showToast}
         />
       )}
 
@@ -832,7 +875,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-slate-300">DEPORTEPICKS AI VIP</span>
-            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.0.3</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.0.5</span>
             <span>•</span>
             <span>Plataforma de Análisis Cuantitativo para Apuestas</span>
           </div>

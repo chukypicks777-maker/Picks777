@@ -10,7 +10,7 @@ export default function StatsCenterModal({ onClose }) {
   },[league]);
   const rows=result?.league===league?result.standings:[];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div className="mobile-dialog-overlay fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
       <section role="dialog" aria-label="Clasificación" className="w-full max-w-4xl bg-[#0c1017] border border-white/10 rounded-2xl p-3.5 sm:p-5 space-y-3.5 text-slate-200 overflow-x-hidden my-2 sm:my-8 shadow-2xl">
         <header className="flex justify-between items-center pb-2 border-b border-white/5">
           <h3 className="font-bold text-sm sm:text-base text-white">Clasificación del proveedor</h3>

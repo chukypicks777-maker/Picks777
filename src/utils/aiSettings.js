@@ -24,6 +24,7 @@ export function getStoredAiConfig() {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object') {
         let changed = false;
+        if (Object.hasOwn(parsed, 'apiKey')) { delete parsed.apiKey; changed = true; }
         if (parsed.provider === 'openrouter') {
           parsed.provider = 'custom';
           parsed.baseUrl = 'https://vyceai.com/v1';
@@ -66,10 +67,7 @@ export function saveStoredAiConfig(config) {
       cleanConfig.selectedModel = 'deepseek-v4.1';
       cleanConfig.modelName = 'DeepSeek V4.1 Flash';
     }
-    // Preserve existing key if new key was not provided or is empty
-    if (!cleanConfig.apiKey && prev.apiKey && cleanConfig.clearApiKey !== true) {
-      cleanConfig.apiKey = prev.apiKey;
-    }
+    delete cleanConfig.apiKey;
     const merged = { ...prev, ...cleanConfig, updatedAt: new Date().toISOString() };
     delete merged.clearApiKey;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));

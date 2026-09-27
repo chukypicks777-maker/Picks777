@@ -112,10 +112,19 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
     return null;
   }
 
-  // Verificar si el partido cambió (estado, goles o probabilidades principales)
+  // Verificar si el partido cambió deportivamente (cambio de estado o cambio en marcador de partido en vivo)
   if (currentFingerprint && entry.fingerprint && entry.fingerprint !== currentFingerprint) {
-    removeCachedAnalysis(matchId);
-    return null;
+    const curStatus = currentMatch?.status || entry.matchStatus;
+    const isLive = curStatus === 'LIVE' || entry.matchStatus === 'LIVE';
+    const statusChanged = entry.matchStatus && currentMatch?.status && entry.matchStatus !== currentMatch.status;
+    const scoreChanged = isLive && (
+      (currentMatch?.liveScore?.home !== entry.liveScore?.home) ||
+      (currentMatch?.liveScore?.away !== entry.liveScore?.away)
+    );
+    if (statusChanged || scoreChanged) {
+      removeCachedAnalysis(matchId);
+      return null;
+    }
   }
 
   // Si se solicita un modelo específico y el análisis en caché fue generado con otro modelo, invalidar
@@ -216,4 +225,56 @@ export function clearAllAnalysisCache() {
     }
   } catch {}
 }
+
+/**
+ * Comprueba de forma sincrónica y rápida si un partido ya cuenta con análisis IA completo en caché.
+ */
+export function isMatchAnalyzed(matchId, currentMatch) {
+  if (!matchId) return false;
+  if (currentMatch?.isAiAnalyzed === true && currentMatch?.aiReport?.aiAvailable === true) {
+    return true;
+  }
+  const cached = getCachedAnalysis(matchId, currentMatch);
+  return Boolean(cached?.aiReport && cached.aiReport.aiAvailable === true);
+}
+
+/**
+ * Retorna el nombre del modelo de IA con el que se generó el análisis en caché.
+ */
+export function getAnalyzedModelName(matchId, currentMatch) {
+  if (!matchId) return null;
+  if (currentMatch?.aiReport?.modelUsed) {
+    return currentMatch.aiReport.modelUsed;
+  }
+  const cached = getCachedAnalysis(matchId, currentMatch);
+  return cached?.aiReport?.modelUsed || cached?.model || null;
+}
+
+/**
+ * Procesa una lista de partidos y resume el estado del análisis autónomo.
+ */
+export function getBatchAnalyzedStatus(matches = []) {
+  if (!Array.isArray(matches) || matches.length === 0) {
+    return { analyzedCount: 0, totalCount: 0, pendingCount: 0, isAllAnalyzed: false, analyzedMap: {} };
+  }
+  const analyzedMap = {};
+  let analyzedCount = 0;
+  for (const m of matches) {
+    if (!m?.id) continue;
+    const isAnalyzed = isMatchAnalyzed(m.id, m);
+    analyzedMap[m.id] = {
+      isAnalyzed,
+      modelUsed: isAnalyzed ? getAnalyzedModelName(m.id, m) : null
+    };
+    if (isAnalyzed) analyzedCount++;
+  }
+  return {
+    analyzedCount,
+    totalCount: matches.length,
+    pendingCount: matches.length - analyzedCount,
+    isAllAnalyzed: matches.length > 0 && analyzedCount === matches.length,
+    analyzedMap
+  };
+}
+
 

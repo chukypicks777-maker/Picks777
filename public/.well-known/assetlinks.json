@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.picks777.mobile",
+      "sha256_cert_fingerprints": [
+        "D3:F9:C0:34:23:49:A4:D7:DF:8E:6C:E7:8C:42:85:10:89:99:CD:9E:88:AA:53:88:1D:73:41:D0:33:81:89:90"
+      ]
+    }
+  }
+]

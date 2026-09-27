@@ -1,0 +1,18 @@
+/* Shared layout for browsers, Android, cutouts and landscape keyboards. */
+html { scroll-padding-top: calc(5rem + env(safe-area-inset-top)); }
+body { min-width: 280px; }
+#root { min-height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
+.auth-overlay { padding-top: max(.75rem, env(safe-area-inset-top)); padding-bottom: max(.75rem, env(safe-area-inset-bottom)); }
+.auth-overlay > div { overscroll-behavior: contain; }
+.mobile-dialog-overlay { padding-top: max(0.5rem, env(safe-area-inset-top)); padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
+.mobile-dialog-overlay > div { max-height: calc(100dvh - max(1rem, env(safe-area-inset-top) + env(safe-area-inset-bottom))); display: flex; flex-direction: column; margin-top: 0; margin-bottom: auto; overscroll-behavior: contain; }
+@media (pointer: coarse) {
+  button, select { min-height: 44px; }
+  input, select, textarea { font-size: 16px !important; }
+}
+@media (max-height: 600px) { .auth-overlay, .mobile-dialog-overlay { align-items: flex-start; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

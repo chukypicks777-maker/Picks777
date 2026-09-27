@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { KeyRound, ArrowRight, AlertCircle, CheckCircle2, Crown, ExternalLink, X, Clock, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { KeyRound, ArrowRight, AlertCircle, CheckCircle2, ExternalLink, X, Clock, ShieldCheck } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
 import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
-import { loginWithRealGoogle } from '../utils/firebase';
+import { identityProvider } from '../auth/providers';
+import { confirmedSession, sessionRequest } from '../auth/sessionClient';
 
 function GoogleIcon({ className = "w-5 h-5" }) {
   return (
@@ -39,45 +40,6 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Google credential submission handler
-  const handleGoogleCredential = useCallback(async (credential) => {
-    setLoading(true);
-    setError('');
-    sounds.playRadarScan();
-
-    try {
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ credential })
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        sounds.playSuccess();
-        setCurrentUser(data.user);
-        setPendingAuth(data);
-        if (data.trialExpired) {
-          setStep('code');
-          setError('Tu período de prueba de 3 días ha vencido. Ingresa un código o clave VIP para reactivar tu acceso.');
-          onAuthenticated?.(data);
-        } else {
-          setSuccessMsg(`¡Bienvenido, ${data.user?.name || 'Usuario'}! Cuenta de Google vinculada con éxito.`);
-          confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
-          setStep('code'); // Move to Step 2: user can enter code or continue with 3-day trial
-        }
-      } else {
-        sounds.playGlitchSound();
-        setError(data.message || 'Error al autenticar con Google.');
-      }
-    } catch {
-      setError('Error de conexión con el servidor.');
-    } finally {
-      setLoading(false);
-    }
-  }, [onAuthenticated]);
-
   // Real Google Sign-In via Firebase Popup (accounts.google.com)
   const handleRealGoogleLogin = async () => {
     setLoading(true);
@@ -85,17 +47,8 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
     sounds.playRadarScan();
 
     try {
-      const googleAuth = await loginWithRealGoogle();
-      const res = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          credential: googleAuth.token,
-          googleProfile: googleAuth.user
-        })
-      });
-      const data = await res.json();
+      const googleAuth = await identityProvider().signIn();
+      const data = await sessionRequest('google', { credential: googleAuth.token });
 
       if (data.success) {
         sounds.playSuccess();
@@ -132,44 +85,6 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
       setLoading(false);
     }
   };
-
-  // Initialize Google Identity Services (GIS)
-  useEffect(() => {
-    let isMounted = true;
-
-    async function initGIS() {
-      try {
-        const res = await fetch('/api/auth/google-config');
-        const data = await res.json();
-        const clientId = data.clientId || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_CLIENT_ID);
-
-        if (clientId && window.google?.accounts?.id && isMounted) {
-          window.google.accounts.id.initialize({
-            client_id: clientId,
-            callback: async (response) => {
-              if (response?.credential && isMounted) {
-                await handleGoogleCredential(response.credential);
-              }
-            }
-          });
-
-          const container = document.getElementById('google-btn-rendered');
-          if (container && isMounted) {
-            window.google.accounts.id.renderButton(container, {
-              theme: 'filled_black',
-              size: 'large',
-              text: 'continue_with',
-              shape: 'pill',
-              width: 300
-            });
-          }
-        }
-      } catch {}
-    }
-
-    initGIS();
-    return () => { isMounted = false; };
-  }, [step, handleGoogleCredential]);
 
   const handleCodeSubmit = async (e) => {
     e?.preventDefault();
@@ -212,44 +127,46 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
     }
   };
 
-  const handleUseDemoCode = (demoCode) => {
-    setCode(demoCode);
-    sounds.playClick();
-  };
-
-  const handleContinueWithTrial = () => {
-    sounds.playClick();
-    const finalAuth = pendingAuth || auth;
-    if (finalAuth) {
-      onAuthenticated?.(finalAuth);
-    }
-    onClose?.();
+  const handleContinueWithTrial = async () => {
+    if (loading) return;
+    setLoading(true);
+    setError('');
+    try {
+      // Confirm the HttpOnly cookie reached the server before dismissing the gate.
+      const session = await confirmedSession();
+      setPendingAuth(session);
+      onAuthenticated?.(session);
+      if (session.valid && !session.trialExpired) onClose?.();
+    } catch (cause) { setError(cause.message); }
+    finally { setLoading(false); }
   };
 
   const handleLogoutAndSwitch = async () => {
-    sounds.playClick();
-    try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    } catch {}
-    setCurrentUser(null);
-    setPendingAuth(null);
-    setStep('google');
+    setLoading(true);
     setError('');
-    setSuccessMsg('');
-    window.dispatchEvent(new Event('picks-session-expired'));
+    try {
+      await sessionRequest('logout');
+      await identityProvider().signOut().catch(() => {});
+      setCurrentUser(null);
+      setPendingAuth(null);
+      setStep('google');
+      setSuccessMsg('');
+      window.dispatchEvent(new Event('picks-session-expired'));
+    } catch (cause) { setError(cause.message); }
+    finally { setLoading(false); }
   };
 
   const canCloseModal = Boolean(onClose && (auth?.valid || pendingAuth?.valid) && !isTrialExpired);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-lg bg-[#0d1117] border border-white/10 rounded-2xl p-6 sm:p-8 text-center shadow-2xl overflow-hidden my-4">
+    <div role="dialog" aria-modal="true" aria-label="Acceso a 777 Picks" className="auth-overlay fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-lg bg-[#0d1117] border border-white/10 rounded-2xl p-6 sm:p-8 text-center shadow-2xl overflow-y-auto my-auto max-h-[calc(100dvh-2rem)]">
         
         {/* Close button (only when access is valid and modal is dismissible) */}
         {canCloseModal && (
           <button
             type="button"
-            onClick={() => { sounds.playClick(); onClose(); }}
+            onClick={handleContinueWithTrial}
             className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer z-10"
             title="Cerrar"
           >
@@ -439,6 +356,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
               <button
                 type="button"
                 onClick={handleContinueWithTrial}
+                disabled={loading}
                 className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-mono text-slate-300 hover:text-white transition flex items-center justify-center space-x-2 cursor-pointer"
               >
                 <span>Continuar con mi Prueba Gratuita (3 Días)</span>
@@ -446,24 +364,12 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
               </button>
             )}
 
-            {/* Quick test code buttons */}
-            <div className="pt-2 border-t border-white/5 flex items-center justify-center space-x-2">
-              <span className="text-[11px] text-slate-500 font-sans">Accesos rápidos:</span>
-              <button
-                type="button"
-                onClick={() => handleUseDemoCode('DeportePicks')}
-                className="text-[11px] font-mono text-amber-400 hover:text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded cursor-pointer transition flex items-center space-x-1"
-              >
-                <Crown className="w-3 h-3" />
-                <span>Owner</span>
-              </button>
-            </div>
-
             {/* Option to switch Google account */}
             <div className="pt-2 text-center">
               <button
                 type="button"
                 onClick={handleLogoutAndSwitch}
+                disabled={loading}
                 className="text-[11px] font-mono text-slate-400 hover:text-slate-200 transition cursor-pointer underline"
               >
                 {isTrialExpired ? '← Cerrar sesión o cambiar de cuenta Google' : '← Cambiar de cuenta Google'}
@@ -474,6 +380,10 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
         )}
 
         {/* SOCIAL NETWORKS SECTION - REQUIRED EXACT TEXT */}
+        <div className="mt-5 flex flex-wrap justify-center gap-4 text-xs text-slate-400">
+          <a href="/privacidad.html" className="underline">Privacidad</a>
+          <a href="/eliminar-cuenta" className="underline">Eliminar mi cuenta</a>
+        </div>
         <div className="mt-6 pt-5 border-t border-white/10 text-left">
           <div className="mb-3">
             <p className="text-xs sm:text-sm font-bold text-white font-sans leading-snug">
