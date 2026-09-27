@@ -13,7 +13,7 @@ async function setup(page, { initial = null, loseCookie = false } = {}) {
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
     let body = { success: true };
-    if (path === '/api/auth/check-session') body = session || { success: false, valid: false };
+    if (path === '/api/auth/check-session' || path === '/api/auth/session') body = session || { success: false, valid: false };
     if (path === '/api/auth/google') { body = trial; if (!loseCookie) session = trial; }
     if (path === '/api/auth/logout') session = null;
     if (path.startsWith('/api/matches')) body = { success: true, matches: sampleMatches.slice(0, 3) };
