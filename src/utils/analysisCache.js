@@ -8,7 +8,7 @@
  */
 
 const memoryCache = new Map();
-const STORAGE_PREFIX = 'picks777_ai_cache_v3';
+const STORAGE_PREFIX = 'picks777_ai_cache_v4';
 const SESSION_STORAGE_KEY = 'picks777_analysis_cache_v2';
 
 function getStorage() {
@@ -135,6 +135,12 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
 
   // Si la IA está activa pero el reporte en caché es un baseline no-IA, invalidar para consultar la IA
   if (isAiConfigured && entry.aiReport && entry.aiReport.aiAvailable === false) {
+    removeCachedAnalysis(matchId);
+    return null;
+  }
+
+  // Si el reporte en caché tiene un marcador inválido/nulo, invalidar para regenerar
+  if (entry.aiReport && (entry.aiReport.predictedScore === 'N/D' || entry.aiReport.predictedScore === null)) {
     removeCachedAnalysis(matchId);
     return null;
   }

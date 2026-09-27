@@ -408,9 +408,10 @@ export default function MatchDetailModal({
   const avgH2HYellowCards = hasCardsData ? (h2hList.reduce((acc, h) => acc + (h.yellowCards || 0), 0) / h2hList.filter(h => h.yellowCards != null).length).toFixed(1) : '-';
   const _avgH2HFouls = hasFoulsData ? (h2hList.reduce((acc, h) => acc + (h.totalFouls || 0), 0) / h2hList.filter(h => h.totalFouls != null).length).toFixed(1) : '-';
 
-  const homeDetailed = calculateTeamDetailedStats(m.homeTeam, true, m);
-  const awayDetailed = calculateTeamDetailedStats(m.awayTeam, false, m);
-  const diff = calculateDifferential(homeDetailed, awayDetailed, m);
+  const combinedMatch = aiReport ? { ...m, aiReport } : m;
+  const homeDetailed = calculateTeamDetailedStats(m.homeTeam, true, combinedMatch);
+  const awayDetailed = calculateTeamDetailedStats(m.awayTeam, false, combinedMatch);
+  const diff = calculateDifferential(homeDetailed, awayDetailed, combinedMatch);
 
   const renderMetricBar = (hRaw, aRaw) => {
     const hasHome = typeof hRaw === 'number' && Number.isFinite(hRaw);
@@ -537,7 +538,7 @@ export default function MatchDetailModal({
                     ? `${m.liveScore?.home ?? m.finalScore?.home ?? 0} - ${m.liveScore?.away ?? m.finalScore?.away ?? 0}`
                     : m.status === 'FINISHED'
                     ? `${m.finalScore?.home ?? m.liveScore?.home ?? 0} - ${m.finalScore?.away ?? m.liveScore?.away ?? 0}`
-                    : getCoherentPredictedScore(m, aiReport?.predictedScore || m.model?.predictedScore || m.aiPick?.predictedScore)}
+                    : getCoherentPredictedScore(combinedMatch, aiReport?.predictedScore || m.model?.predictedScore || m.aiPick?.predictedScore)}
                 </span>
               </div>
             </div>
@@ -1044,14 +1045,14 @@ export default function MatchDetailModal({
               </div>
 
               <HalfGoalsSection
-                match={m}
+                match={combinedMatch}
                 isVip={effectiveIsVip}
                 onUnlockVip={onUnlockVip}
               />
 
               {/* 3. AGRUPACIÓN SIMÉTRICA: LADO OVERS (+) VS LADO UNDERS (-) */}
               <OverUnderGroupedSection
-                match={m}
+                match={combinedMatch}
                 homeStats={homeDetailed}
                 awayStats={awayDetailed}
                 diff={diff}

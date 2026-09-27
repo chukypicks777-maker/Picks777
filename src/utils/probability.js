@@ -1,7 +1,23 @@
 export const validNumber = n => typeof n === 'number' && Number.isFinite(n) && n >= 0;
-export const percent = n => validNumber(n) && n <= 100 ? Math.round(n) : null;
+export const parseNumeric = n => {
+  if (typeof n === 'number') return Number.isFinite(n) ? n : null;
+  if (typeof n === 'string') {
+    const cleaned = n.replace('%', '').replace(',', '.').trim();
+    if (!cleaned) return null;
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+export const percent = n => {
+  const v = parseNumeric(n);
+  return v !== null && v >= 0 && v <= 100 ? Math.round(v) : null;
+};
 export const complement = n => percent(n) === null ? null : 100 - percent(n);
-export const displayNumber = (n, digits = 1) => validNumber(n) ? Number(n.toFixed(digits)).toString() : 'N/D';
+export const displayNumber = (n, digits = 1) => {
+  const v = parseNumeric(n);
+  return v !== null && v >= 0 ? Number(v.toFixed(digits)).toString() : 'N/D';
+};
 
 export function poissonProbability(lambda, k) {
   if (!validNumber(lambda) || !Number.isInteger(k) || k < 0) return 0;

@@ -2,12 +2,18 @@ import { verifyGoogleToken } from '../auth/googleVerifier.js';
 export { verifyGoogleToken } from '../auth/googleVerifier.js';
 import express from 'express';
 import { randomUUID } from 'node:crypto';
-import { CONFIG } from '../config.js';
+import { CONFIG, isProduction, secureConfiguration } from '../config.js';
 import { storage } from '../storage.js';
 import { currentSession, readSession, setSession, ownerVersion, sessionIdentifier } from '../session.js';
 import { rateLimit } from '../rateLimit.js';
 
 const router = express.Router();
+router.use((req, res, next) => {
+  if (isProduction() && !secureConfiguration()) {
+    return res.status(503).json({ success: false, message: 'Configuración segura requerida.' });
+  }
+  next();
+});
 router.use('/verify-code', rateLimit('auth'));
 router.use('/redeem-code', rateLimit('auth'));
 router.use('/google', rateLimit('auth'));

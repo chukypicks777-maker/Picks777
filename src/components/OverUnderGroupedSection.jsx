@@ -8,7 +8,7 @@ import { sounds } from '../utils/audioEffects';
 export default function OverUnderGroupedSection({ match, homeStats, awayStats, diff, isVip = false, onUnlockVip = null }) {
   if (!match || !diff) return null;
 
-  const probs = fillPoissonGoalLadder(match.model?.probabilities || match.probabilities || {}, match.odds);
+  const probs = fillPoissonGoalLadder(match.model?.probabilities || match.probabilities || match.aiReport?.probabilities || {}, match.odds);
   const over05 = percent(probs.over05), under05 = complement(over05);
   const over15 = percent(probs.over15), under15 = complement(over15);
   const over25 = percent(probs.over25), under25 = complement(over25);
