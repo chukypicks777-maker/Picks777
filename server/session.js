@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual, randomBytes, randomUUID } from 'node:crypto';
+import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
 import { CONFIG } from './config.js';
 import { storage } from './storage.js';
 const fallbackSecret = 'deportepicks-vip-ultra-secure-key-32chars';
