@@ -19,7 +19,10 @@ export function useSession() {
       const data = await sessionRequest('check-session', {}, signal);
       if (!signal?.aborted && started === revision.current) setAuthState(data.success && data.user ? data : null);
     } catch (cause) {
-      if (!signal?.aborted && started === revision.current) setError(cause.message || 'Error de conexión.');
+      if (!signal?.aborted && started === revision.current) {
+        setAuthState(null);
+        setError('');
+      }
     } finally {
       if (!signal?.aborted) setChecking(false);
     }

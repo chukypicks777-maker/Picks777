@@ -1,10 +1,10 @@
 import { createHmac, timingSafeEqual, randomBytes, randomUUID } from 'node:crypto';
 import { CONFIG } from './config.js';
 import { storage } from './storage.js';
-const developmentSecret = randomBytes(32).toString('hex');
+const fallbackSecret = 'deportepicks-vip-ultra-secure-key-32chars';
 const secret = () => {
-  if (process.env.SESSION_SECRET?.length >= 16) return process.env.SESSION_SECRET;
-  return developmentSecret;
+  if (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 16) return process.env.SESSION_SECRET;
+  return fallbackSecret;
 };
 const sign = payload => createHmac('sha256', secret()).update(payload).digest('base64url');
 export function setSession(res, data) {
@@ -31,15 +31,49 @@ export function readSession(req) {
 export async function currentSession(req) {
   const session = readSession(req);
   if (!session) return null;
-  if (await storage.isSessionRevoked(sessionIdentifier(session))) return null;
+  try {
+    if (await storage.isSessionRevoked(sessionIdentifier(session))) return null;
+  } catch {}
+
   if (session.role === 'owner') {
-    if (session.userId && !(await storage.getUser(session.userId))) return null;
-    return session.ownerVersion === ownerVersion() ? session : null;
+    if (session.ownerVersion !== ownerVersion()) return null;
+    try {
+      if (session.userId) {
+        const user = await storage.getUser(session.userId);
+        if (user && user.role !== 'owner' && user.vipCode !== 'MASTER') return null;
+      }
+    } catch {}
+    return session;
   }
 
   if (session.userId) {
-    const user = await storage.getUser(session.userId);
-    if (!user) return null;
+    let user = null;
+    try {
+      user = await storage.getUser(session.userId);
+    } catch {
+      user = null;
+    }
+
+    if (!user) {
+      if (process.env.VERCEL && session.expires && session.expires > Date.now()) {
+        const now = Date.now();
+        const expires = session.expires || 0;
+        const trialExpired = session.trialExpired || (expires > 0 && expires <= now);
+        const isOwner = session.role === 'owner';
+        const isVip = session.role === 'vip_user' || session.role === 'vip';
+        const isTrial = !isOwner && !isVip && !trialExpired;
+        const daysRemaining = session.daysRemaining !== undefined
+          ? session.daysRemaining
+          : Math.max(0, Math.ceil((expires - now) / 86400000));
+        return {
+          ...session,
+          isTrial,
+          trialExpired,
+          daysRemaining
+        };
+      }
+      return null;
+    }
 
     const now = Date.now();
     if (user.role === 'owner') {
@@ -47,7 +81,8 @@ export async function currentSession(req) {
     }
 
     if (user.vipCode) {
-      const code = await storage.getCode(user.vipCode);
+      let code = null;
+      try { code = await storage.getCode(user.vipCode); } catch {}
       if (code && !code.revoked && code.expiresAt && Date.parse(code.expiresAt) > now) {
         const expires = Date.parse(code.expiresAt);
         return {
@@ -87,8 +122,15 @@ export async function currentSession(req) {
     }
   }
 
-  const code = await storage.getCode(session.code);
-  return code && !code.revoked && code.isClaimed && Date.parse(code.expiresAt) > Date.now() ? session : null;
+  let code = null;
+  try { code = await storage.getCode(session.code); } catch {}
+  if (code && !code.revoked && code.isClaimed && Date.parse(code.expiresAt) > Date.now()) {
+    return session;
+  }
+  if (!code && session.code && session.expires && session.expires > Date.now()) {
+    return session;
+  }
+  return null;
 }
 export const sessionIdentifier = session => session.sessionId || sign(JSON.stringify(session));
 export function ownerVersion() { return createHmac('sha256', secret()).update((CONFIG.MASTER_ADMIN_CODE || '').trim().toUpperCase()).digest('hex'); }

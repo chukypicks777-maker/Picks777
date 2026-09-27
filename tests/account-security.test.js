@@ -77,3 +77,37 @@ test('production API fails closed when security configuration is missing', async
     await new Promise(resolve => server.close(resolve));
   }
 });
+
+test('Vercel serverless mode gracefully permits session checking without 503 blocking screen', async () => {
+  const previousEnv = process.env.NODE_ENV;
+  const previousVercel = process.env.VERCEL;
+  const server = app.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  try {
+    process.env.NODE_ENV = 'production';
+    process.env.VERCEL = '1';
+    const base = `http://127.0.0.1:${server.address().port}`;
+    const checkPost = await realFetch(`${base}/api/auth/check-session`, { method: 'POST' });
+    assert.equal(checkPost.status, 200);
+    const dataCheck = await checkPost.json();
+    assert.equal(dataCheck.valid, false);
+
+    const sessionGet = await realFetch(`${base}/api/auth/session`, { method: 'GET' });
+    assert.equal(sessionGet.status, 200);
+    const dataSessionGet = await sessionGet.json();
+    assert.equal(dataSessionGet.valid, false);
+
+    const sessionPost = await realFetch(`${base}/api/auth/session`, { method: 'POST' });
+    assert.equal(sessionPost.status, 200);
+    const dataSessionPost = await sessionPost.json();
+    assert.equal(dataSessionPost.valid, false);
+
+    const googleConfig = await realFetch(`${base}/api/auth/google-config`, { method: 'GET' });
+    assert.equal(googleConfig.status, 200);
+  } finally {
+    process.env.NODE_ENV = previousEnv;
+    if (previousVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = previousVercel;
+    await new Promise(resolve => server.close(resolve));
+  }
+});
