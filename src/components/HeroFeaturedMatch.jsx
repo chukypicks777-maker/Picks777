@@ -204,9 +204,18 @@ export default function HeroFeaturedMatch({
                 {/* Segmented Probabilities Bar with Counters */}
                 <div className="mt-3 sm:mt-4 space-y-1.5">
                   <div className="flex justify-between text-[11px] sm:text-xs font-mono text-slate-300">
-                    <span>Local: <strong><NumberCounter value={homeProb} suffix="%" /></strong></span>
-                    <span>Empate: <strong><NumberCounter value={drawProb} suffix="%" /></strong></span>
-                    <span>Visita: <strong><NumberCounter value={awayProb} suffix="%" /></strong></span>
+                    <span>
+                      Local: <strong><NumberCounter value={homeProb} suffix="%" /></strong>
+                      {match.odds?.homeWin ? <span className="text-slate-500 ml-1">(@{formatOdds(match.odds.homeWin, oddsFormat)})</span> : null}
+                    </span>
+                    <span>
+                      Empate: <strong><NumberCounter value={drawProb} suffix="%" /></strong>
+                      {match.odds?.draw ? <span className="text-slate-500 ml-1">(@{formatOdds(match.odds.draw, oddsFormat)})</span> : null}
+                    </span>
+                    <span>
+                      Visita: <strong><NumberCounter value={awayProb} suffix="%" /></strong>
+                      {match.odds?.awayWin ? <span className="text-slate-500 ml-1">(@{formatOdds(match.odds.awayWin, oddsFormat)})</span> : null}
+                    </span>
                   </div>
                   <div className="h-2 sm:h-2.5 w-full bg-[#161c28] rounded-full overflow-hidden flex gap-0.5 p-0.5 border border-white/5">
                     <div style={{ width: `${homeProb}%` }} className="bg-sky-500 h-full rounded-l-full transition-all duration-700 shadow-[0_0_8px_rgba(56,189,248,0.5)]" />

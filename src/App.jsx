@@ -237,9 +237,16 @@ export default function App() {
           return prev.map(m => {
             const updated = data.matches.find(u => u.id === m.id);
             if (!updated) return m;
+            const cached = getCachedAnalysis(m.id, m);
+            const isAnalyzed = m.isAiAnalyzed || Boolean(cached?.aiReport && cached.aiReport.aiAvailable === true);
+            const report = m.aiReport || cached?.aiReport || null;
+            const enriched = cached?.enrichedMatch || {};
             return {
               ...updated,
+              ...enriched,
               ...m,
+              isAiAnalyzed: isAnalyzed,
+              aiReport: report,
               status: updated.status,
               minute: updated.minute || updated.liveMinute || m.minute,
               liveMinute: updated.liveMinute || updated.minute || m.liveMinute,
@@ -253,9 +260,16 @@ export default function App() {
           if (!prev) return null;
           const updated = data.matches.find(u => u.id === prev.id);
           if (!updated) return prev;
+          const cached = getCachedAnalysis(prev.id, prev);
+          const isAnalyzed = prev.isAiAnalyzed || Boolean(cached?.aiReport && cached.aiReport.aiAvailable === true);
+          const report = prev.aiReport || cached?.aiReport || null;
+          const enriched = cached?.enrichedMatch || {};
           return {
             ...updated,
+            ...enriched,
             ...prev,
+            isAiAnalyzed: isAnalyzed,
+            aiReport: report,
             status: updated.status,
             minute: updated.minute || updated.liveMinute || prev.minute,
             liveMinute: updated.liveMinute || updated.minute || prev.liveMinute,

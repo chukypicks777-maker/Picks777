@@ -225,3 +225,111 @@ test('MatchDetailModal and mobile.css enforce mobile close button, sticky header
     'mobile.css must account for safe-area-inset-top on mobile notch devices'
   );
 });
+
+test('AutonomousAiBar and App enforce strict Owner-only visibility and session loop locks', () => {
+  const barPath = path.resolve('src/components/AutonomousAiBar.jsx');
+  const barContent = readFileSync(barPath, 'utf8');
+
+  // Must define module-level session set to persist across component remounts
+  assert.ok(
+    barContent.includes('const sessionAttemptedMatchIds = new Set();'),
+    'AutonomousAiBar must maintain sessionAttemptedMatchIds at module scope'
+  );
+
+  // Must guard render for isOwner
+  assert.ok(
+    barContent.includes('if (!isOwner || !matches || matches.length === 0) return null;'),
+    'AutonomousAiBar must return null for non-owners'
+  );
+
+  // Must guard executeAnalysisQueue for isOwner
+  assert.ok(
+    barContent.includes('if (!isOwner || runningRef.current) return;'),
+    'AutonomousAiBar queue execution must abort immediately if not owner'
+  );
+
+  // Must guard auto-trigger effect for isOwner
+  assert.ok(
+    barContent.includes('if (!isOwner || !autoRunOnLoad || runningRef.current) return;'),
+    'AutonomousAiBar auto-run effect must abort immediately if not owner'
+  );
+
+  // App.jsx must only render AutonomousAiBar for isOwner
+  const appPath = path.resolve('src/App.jsx');
+  const appContent = readFileSync(appPath, 'utf8');
+  assert.ok(
+    appContent.includes('{isOwner && !loadingMatches && filteredMatches.length > 0 && ('),
+    'App.jsx must restrict AutonomousAiBar rendering exclusively to isOwner'
+  );
+});
+
+test('MatchDetailModal restricts retry and regeneration buttons exclusively to Owner', () => {
+  const modalPath = path.resolve('src/components/MatchDetailModal.jsx');
+  const modalContent = readFileSync(modalPath, 'utf8');
+
+  // The retry / regenerate button must be enclosed inside {effectiveIsOwner && (...)}
+  assert.ok(
+    modalContent.includes('{effectiveIsOwner && (') &&
+    modalContent.includes('Regenerar con IA') &&
+    modalContent.includes('Reintentar con IA'),
+    'Retry and regenerate AI buttons must be strictly conditional on effectiveIsOwner'
+  );
+});
+
+test('MatchCard preserves quantitative statistics, banker picks, and defines modelName and verifiedAiPick', () => {
+  const cardPath = path.resolve('src/components/MatchCard.jsx');
+  const cardContent = readFileSync(cardPath, 'utf8');
+
+  // Must properly declare modelName and verifiedAiPick without reference errors
+  assert.ok(
+    cardContent.includes('const modelName = aiModelUsed ?? (analyzed ? getAnalyzedModelName(match?.id, match) : null);'),
+    'MatchCard must declare modelName to prevent runtime ReferenceError'
+  );
+  assert.ok(
+    cardContent.includes('const verifiedAiPick = (analyzed && match.aiPick?.selection)'),
+    'MatchCard must declare verifiedAiPick to prevent runtime ReferenceError'
+  );
+
+  // Banker mode must prioritize bankerPick
+  assert.ok(
+    cardContent.includes('isBankerMode') &&
+    cardContent.includes('(bankerPick || verifiedAiPick)'),
+    'MatchCard must prioritize bankerPick over verifiedAiPick in banker mode'
+  );
+
+  // 1X2 Probabilities bar must format market odds next to win rates
+  assert.ok(
+    cardContent.includes('(@{formatOdds(match.odds.homeWin, oddsFormat)})'),
+    'MatchCard must display home win market odds alongside probability'
+  );
+  assert.ok(
+    cardContent.includes('(@{formatOdds(match.odds.draw, oddsFormat)})'),
+    'MatchCard must display draw market odds alongside probability'
+  );
+  assert.ok(
+    cardContent.includes('(@{formatOdds(match.odds.awayWin, oddsFormat)})'),
+    'MatchCard must display away win market odds alongside probability'
+  );
+
+  // Quick stats pills (+1.5, +2.5, BTTS) must be rendered
+  assert.ok(cardContent.includes('+1.5 Over'), 'MatchCard must display +1.5 Over pill');
+  assert.ok(cardContent.includes('+2.5 Over'), 'MatchCard must display +2.5 Over pill');
+  assert.ok(cardContent.includes('Ambos Anotan'), 'MatchCard must display Ambos Anotan pill');
+
+  // Team standing position and form dots must be rendered
+  assert.ok(cardContent.includes('#{match.homeTeam.position}'), 'MatchCard must display home team league position');
+  assert.ok(cardContent.includes('#{match.awayTeam.position}'), 'MatchCard must display away team league position');
+  assert.ok(cardContent.includes('match.homeTeam.form.slice(-5)'), 'MatchCard must display 5-match form history for home');
+  assert.ok(cardContent.includes('match.awayTeam.form.slice(-5)'), 'MatchCard must display 5-match form history for away');
+
+  // Banker Poisson base must be displayed when complementary to AI verdict
+  assert.ok(
+    cardContent.includes('Base Poisson:'),
+    'MatchCard must display Base Poisson comparison when bankerPick differs from AI pick'
+  );
+  assert.ok(
+    cardContent.includes('Base estadística:'),
+    'MatchCard must display statistical base rationale alongside AI verdict'
+  );
+});
+

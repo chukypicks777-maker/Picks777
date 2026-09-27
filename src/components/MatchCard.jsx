@@ -25,9 +25,21 @@ export default function MatchCard({
 }) {
   const analyzed = isAiAnalyzed ?? isMatchAnalyzed(match?.id, match);
   const modelName = aiModelUsed ?? (analyzed ? getAnalyzedModelName(match?.id, match) : null);
-  const base = match.model?.probabilities || match.probabilities || {};
+  const base = match.model?.probabilities || match.probabilities || match.aiReport?.probabilities || {};
   const p = { ...base, ...roundDistribution({ homeWin: base.homeWin, draw: base.draw, awayWin: base.awayWin }) };
-  const homeProb = percent(p.homeWin), drawProb = percent(p.draw), awayProb = percent(p.awayWin);
+  let homeProb = percent(p.homeWin), drawProb = percent(p.draw), awayProb = percent(p.awayWin);
+  if ((homeProb === null || drawProb === null || awayProb === null) && match.odds?.homeWin && match.odds?.draw && match.odds?.awayWin) {
+    const oH = Number(match.odds.homeWin), oD = Number(match.odds.draw), oA = Number(match.odds.awayWin);
+    if (oH > 1 && oD > 1 && oA > 1) {
+      const invH = 1 / oH, invD = 1 / oD, invA = 1 / oA;
+      const invSum = invH + invD + invA;
+      if (invSum > 0) {
+        homeProb = Math.round((invH / invSum) * 100);
+        drawProb = Math.round((invD / invSum) * 100);
+        awayProb = 100 - homeProb - drawProb;
+      }
+    }
+  }
   const getGP = t => {
     if (!t) return null;
     if (Number.isFinite(t.gamesPlayed)) return t.gamesPlayed;
@@ -79,7 +91,11 @@ export default function MatchCard({
   const verifiedAiPick = (analyzed && match.aiPick?.selection)
     ? match.aiPick
     : (analyzed ? getCachedAnalysis(match?.id, match)?.aiReport?.topPick : null);
-  const activePick = isSpecificMarket ? contextualPick : (verifiedAiPick || contextualPick || bankerPick);
+  const activePick = isSpecificMarket
+    ? contextualPick
+    : isBankerMode
+    ? (bankerPick || verifiedAiPick)
+    : (verifiedAiPick || contextualPick || bankerPick);
   const displayPick = activePick?.selection || (isSpecificMarket ? 'Sin pronóstico para este mercado' : (bankerPick?.selection || 'Sin datos suficientes'));
   const displayOdds = activePick?.odds ?? getEffectiveOdds(activePick);
   const displayProb = activePick?.probability;
@@ -366,6 +382,11 @@ export default function MatchCard({
                 <span className="text-[9.5px] font-mono text-emerald-300 font-bold flex items-center space-x-1 bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">
                   <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
                   <span>IA {displayProb}% Conf.</span>
+                  {bankerPick?.probability != null && (
+                    <span className="text-slate-400 font-normal ml-0.5" title="Probabilidad matemática Poisson">
+                      ({bankerPick.probability}% Poisson)
+                    </span>
+                  )}
                 </span>
               ) : (
                 <span className="text-[9.5px] font-mono text-slate-400">

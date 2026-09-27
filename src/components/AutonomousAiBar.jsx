@@ -5,6 +5,8 @@ import { isMatchAnalyzed, getBatchAnalyzedStatus, setCachedAnalysis, removeCache
 import { getStoredAiConfig } from '../utils/aiSettings';
 import { PROVIDER_PRESETS } from '../constants/aiProviders';
 
+const sessionAttemptedMatchIds = new Set();
+
 export default function AutonomousAiBar({
   matches = [],
   onMatchAnalyzed,
@@ -30,7 +32,7 @@ export default function AutonomousAiBar({
   useEffect(() => {
     matchesRef.current = matches;
   }, [matches]);
-  const attemptedMatchIdsRef = useRef(new Set());
+  const attemptedMatchIdsRef = useRef(sessionAttemptedMatchIds);
 
   // Derive counts using getBatchAnalyzedStatus without synchronous setState inside effects
   const { analyzedCount, totalCount, pendingCount, isAllAnalyzed } = useMemo(() => {

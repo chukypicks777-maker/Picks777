@@ -175,3 +175,54 @@ test('analysis cache invalidates when requestedModel differs or AI is configured
   assert.equal(getCachedAnalysis('match-505', match, 'deepseek-v4.1', true), null, 'Baseline cache must invalidate once AI is configured');
 });
 
+test('analysis cache preserves reports when predictedScore is null or N/D without infinite loops', () => {
+  clearAllAnalysisCache();
+
+  const match = { id: 'match-606', status: 'SCHEDULED' };
+  setCachedAnalysis('match-606', match, {
+    aiReport: { aiAvailable: true, modelUsed: 'deepseek-v4.1', predictedScore: null }
+  });
+
+  const entry = getCachedAnalysis('match-606', match);
+  assert.ok(entry, 'Report with predictedScore: null must remain in cache');
+  assert.equal(entry.aiReport.predictedScore, null);
+
+  const matchND = { id: 'match-607', status: 'SCHEDULED' };
+  setCachedAnalysis('match-607', matchND, {
+    aiReport: { aiAvailable: true, modelUsed: 'deepseek-v4.1', predictedScore: 'N/D' }
+  });
+
+  const entryND = getCachedAnalysis('match-607', matchND);
+  assert.ok(entryND, 'Report with predictedScore: "N/D" must remain in cache');
+});
+
+test('analysis cache preserves live matches during routine background polling when score is unchanged', () => {
+  clearAllAnalysisCache();
+
+  const liveInitial = {
+    id: 'match-live-poll',
+    status: 'LIVE',
+    liveMinute: "33'",
+    liveScore: { home: 1, away: 1 },
+    probabilities: { homeWin: 45, awayWin: 30 }
+  };
+
+  setCachedAnalysis('match-live-poll', liveInitial, {
+    aiReport: { aiAvailable: true, modelUsed: 'deepseek-v4.1', topPick: { selection: 'Más de 2.5' } }
+  });
+
+  // Background poll 25 seconds later with clock progression and minor feed probability shift, but identical score
+  const livePolled = {
+    ...liveInitial,
+    liveMinute: "34'",
+    liveScore: { home: 1, away: 1 },
+    probabilities: { homeWin: 46, awayWin: 29 },
+    fetchedAt: '2026-09-27T19:00:25.000Z'
+  };
+
+  const cached = getCachedAnalysis('match-live-poll', livePolled);
+  assert.ok(cached, 'Cache must not be evicted during live polling when score remains 1-1');
+  assert.equal(cached.aiReport.topPick.selection, 'Más de 2.5');
+});
+
+

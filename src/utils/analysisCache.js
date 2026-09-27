@@ -117,9 +117,11 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
     const curStatus = currentMatch?.status || entry.matchStatus;
     const isLive = curStatus === 'LIVE' || entry.matchStatus === 'LIVE';
     const statusChanged = entry.matchStatus && currentMatch?.status && entry.matchStatus !== currentMatch.status;
-    const scoreChanged = isLive && (
-      (currentMatch?.liveScore?.home !== entry.liveScore?.home) ||
-      (currentMatch?.liveScore?.away !== entry.liveScore?.away)
+    const curLive = currentMatch?.liveScore || currentMatch?.finalScore;
+    const entryLive = entry.liveScore || entry.finalScore;
+    const scoreChanged = isLive && curLive && entryLive && (
+      (Number.isFinite(curLive.home) && Number.isFinite(entryLive.home) && Number(curLive.home) !== Number(entryLive.home)) ||
+      (Number.isFinite(curLive.away) && Number.isFinite(entryLive.away) && Number(curLive.away) !== Number(entryLive.away))
     );
     if (statusChanged || scoreChanged) {
       removeCachedAnalysis(matchId);
@@ -139,12 +141,6 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
     return null;
   }
 
-  // Si el reporte en caché tiene un marcador inválido/nulo, invalidar para regenerar
-  if (entry.aiReport && (entry.aiReport.predictedScore === 'N/D' || entry.aiReport.predictedScore === null)) {
-    removeCachedAnalysis(matchId);
-    return null;
-  }
-
   return entry;
 }
 
@@ -156,9 +152,13 @@ export function setCachedAnalysis(matchId, currentMatch, { aiReport, enrichedMat
   if (!matchId) return;
   const existing = getCachedAnalysis(matchId, currentMatch);
   const fingerprint = computeMatchFingerprint(currentMatch);
+  const curLiveScore = currentMatch?.liveScore || enrichedMatch?.liveScore || existing?.liveScore || null;
+  const curFinalScore = currentMatch?.finalScore || enrichedMatch?.finalScore || existing?.finalScore || null;
   const entry = {
     matchId,
     matchStatus: currentMatch?.status || existing?.matchStatus || 'SCHEDULED',
+    liveScore: curLiveScore ? { home: Number(curLiveScore.home), away: Number(curLiveScore.away) } : null,
+    finalScore: curFinalScore ? { home: Number(curFinalScore.home), away: Number(curFinalScore.away) } : null,
     fingerprint,
     aiReport: aiReport !== undefined ? aiReport : (existing?.aiReport || null),
     enrichedMatch: enrichedMatch !== undefined ? enrichedMatch : (existing?.enrichedMatch || null),
