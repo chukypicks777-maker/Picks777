@@ -656,24 +656,24 @@ export default function MatchDetailModal({
                     </div>
                   </div>
 
-                  {/* Botón de reintento/regeneración: disponible para actualizar datos y análisis */}
-                  <div className="flex items-center space-x-2 shrink-0 sm:self-center self-end">
-                    {effectiveIsOwner && (
+                  {/* Botón de reintento/regeneración: disponible exclusivamente para el Owner */}
+                  {effectiveIsOwner && (
+                    <div className="flex items-center space-x-2 shrink-0 sm:self-center self-end">
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 font-bold hidden sm:inline-flex items-center space-x-1">
                         <span>👑</span>
                         <span>Owner</span>
                       </span>
-                    )}
-                    <button
-                      onClick={() => fetchAiAnalysis(true)}
-                      disabled={loadingAi}
-                      className="px-3 py-1.5 bg-gradient-to-r from-sky-500/20 to-emerald-500/20 hover:from-sky-500/30 hover:to-emerald-500/30 active:scale-95 text-sky-200 border border-sky-400/40 rounded-lg text-xs font-mono font-semibold transition-all shadow-[0_0_12px_rgba(56,189,248,0.15)] flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
-                      title={effectiveIsOwner ? "👑 Modo Owner: Reanalizar y recalcular datos con IA sin restricciones de cuota" : "Reanalizar y recalcular datos con IA"}
-                    >
-                      <RotateCw className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin text-sky-400' : ''}`} />
-                      <span>{loadingAi ? 'Actualizando datos...' : (aiReport?.aiAvailable ? 'Regenerar con IA' : 'Reintentar con IA')}</span>
-                    </button>
-                  </div>
+                      <button
+                        onClick={() => fetchAiAnalysis(true)}
+                        disabled={loadingAi}
+                        className="px-3 py-1.5 bg-gradient-to-r from-sky-500/20 to-emerald-500/20 hover:from-sky-500/30 hover:to-emerald-500/30 active:scale-95 text-sky-200 border border-sky-400/40 rounded-lg text-xs font-mono font-semibold transition-all shadow-[0_0_12px_rgba(56,189,248,0.15)] flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+                        title="👑 Modo Owner: Reanalizar y recalcular datos con IA sin restricciones de cuota"
+                      >
+                        <RotateCw className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin text-sky-400' : ''}`} />
+                        <span>{loadingAi ? 'Actualizando datos...' : (aiReport?.aiAvailable ? 'Regenerar con IA' : 'Reintentar con IA')}</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -683,6 +683,14 @@ export default function MatchDetailModal({
                 onToggleParlay={onToggleParlay}
                 parlayLegs={parlayLegs}
                 oddsFormat={oddsFormat} 
+              />
+              <OverUnderGroupedSection
+                match={combinedMatch}
+                homeStats={homeDetailed}
+                awayStats={awayDetailed}
+                diff={diff}
+                isVip={effectiveIsVip}
+                onUnlockVip={onUnlockVip}
               />
               {/* Narrative Analysis & AI Breakdown */}
               <div className="bg-[#111723] rounded-xl p-5 border border-white/5 space-y-4">

@@ -17,7 +17,7 @@ import { sounds } from './utils/audioEffects';
 import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
 import { getMatchSafetyScore, getBestBankerPick, getEffectiveOdds, getContextualPick } from './utils/mathProbabilities';
 
-import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnalyzedModelName } from './utils/analysisCache';
+import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnalyzedModelName, getCachedAnalysis } from './utils/analysisCache';
 import { useSession } from './auth/useSession';
 import { sessionRequest } from './auth/sessionClient';
 import { identityProvider } from './auth/providers';
@@ -198,7 +198,19 @@ export default function App() {
       const data = await res.json();
       if (controller.signal.aborted) return;
       if (data.success && Array.isArray(data.matches)) {
-        setMatches(data.matches);
+        const hydratedMatches = data.matches.map(m => {
+          const cached = getCachedAnalysis(m?.id, m);
+          if (cached?.aiReport && cached.aiReport.aiAvailable === true) {
+            return {
+              ...m,
+              ...(cached.enrichedMatch || {}),
+              isAiAnalyzed: true,
+              aiReport: cached.aiReport
+            };
+          }
+          return m;
+        });
+        setMatches(hydratedMatches);
         setCurrentEpoch(Date.now());
         setMatchError('');
       } else {
@@ -224,13 +236,33 @@ export default function App() {
         setMatches(prev => {
           return prev.map(m => {
             const updated = data.matches.find(u => u.id === m.id);
-            return updated ? { ...m, ...updated } : m;
+            if (!updated) return m;
+            return {
+              ...updated,
+              ...m,
+              status: updated.status,
+              minute: updated.minute || updated.liveMinute || m.minute,
+              liveMinute: updated.liveMinute || updated.minute || m.liveMinute,
+              liveScore: updated.liveScore || m.liveScore,
+              finalScore: updated.finalScore || m.finalScore,
+              odds: updated.odds || m.odds
+            };
           });
         });
         setSelectedMatch(prev => {
           if (!prev) return null;
           const updated = data.matches.find(u => u.id === prev.id);
-          return updated ? { ...prev, ...updated } : prev;
+          if (!updated) return prev;
+          return {
+            ...updated,
+            ...prev,
+            status: updated.status,
+            minute: updated.minute || updated.liveMinute || prev.minute,
+            liveMinute: updated.liveMinute || updated.minute || prev.liveMinute,
+            liveScore: updated.liveScore || prev.liveScore,
+            finalScore: updated.finalScore || prev.finalScore,
+            odds: updated.odds || prev.odds
+          };
         });
       }
     } catch {}
@@ -724,8 +756,8 @@ export default function App() {
             </div>
           )}
 
-          {/* Autonomous AI Match Analysis Bar */}
-          {!loadingMatches && filteredMatches.length > 0 && (
+          {/* Autonomous AI Match Analysis Bar - Exclusivo para Owner */}
+          {isOwner && !loadingMatches && filteredMatches.length > 0 && (
             <AutonomousAiBar
               matches={filteredMatches}
               onMatchAnalyzed={handleMatchAnalyzed}

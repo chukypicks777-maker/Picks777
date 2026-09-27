@@ -26,12 +26,23 @@ export default function AutonomousAiBar({
 
   const stopRequested = useRef(false);
   const runningRef = useRef(false);
+  const matchesRef = useRef(matches);
+  useEffect(() => {
+    matchesRef.current = matches;
+  }, [matches]);
+  const attemptedMatchIdsRef = useRef(new Set());
 
   // Derive counts using getBatchAnalyzedStatus without synchronous setState inside effects
   const { analyzedCount, totalCount, pendingCount, isAllAnalyzed } = useMemo(() => {
     void analysisVersion;
     return getBatchAnalyzedStatus(matches);
   }, [matches, analysisVersion]);
+
+  // Stable match IDs key to prevent unnecessary effect triggers on background feed polling
+  const matchIdsKey = useMemo(() => {
+    if (!Array.isArray(matches) || matches.length === 0) return '';
+    return matches.map(m => m?.id).filter(Boolean).join(',');
+  }, [matches]);
 
   const progressPercent = totalCount > 0 ? Math.round((analyzedCount / totalCount) * 100) : 0;
 
@@ -44,7 +55,13 @@ export default function AutonomousAiBar({
   };
 
   const executeAnalysisQueue = useCallback(async (forceAll = false) => {
-    if (runningRef.current || !Array.isArray(matches) || matches.length === 0) return;
+    if (!isOwner || runningRef.current) return;
+    const currentMatches = matchesRef.current;
+    if (!Array.isArray(currentMatches) || currentMatches.length === 0) return;
+
+    if (forceAll) {
+      attemptedMatchIdsRef.current.clear();
+    }
 
     runningRef.current = true;
     stopRequested.current = false;
@@ -52,8 +69,8 @@ export default function AutonomousAiBar({
     sounds.playRadarScan();
 
     const targets = forceAll
-      ? [...matches]
-      : matches.filter(m => m?.id && !isMatchAnalyzed(m.id, m));
+      ? [...currentMatches]
+      : currentMatches.filter(m => m?.id && !isMatchAnalyzed(m.id, m) && !attemptedMatchIdsRef.current.has(m.id));
 
     if (targets.length === 0) {
       setIsRunning(false);
@@ -84,6 +101,7 @@ export default function AutonomousAiBar({
       if (stopRequested.current) break;
 
       const curMatch = targets[i];
+      attemptedMatchIdsRef.current.add(curMatch.id);
       const matchTitle = `${curMatch.homeTeam?.name || 'Local'} vs ${curMatch.awayTeam?.name || 'Visitante'}`;
       setCurrentMatchTitle(matchTitle);
       window.dispatchEvent(new CustomEvent('ai-analyzing-match', { detail: { matchId: curMatch.id } }));
@@ -156,7 +174,7 @@ export default function AutonomousAiBar({
       sounds.playSuccess();
       onToast?.(`✅ Análisis autónomo completado: ${processed} ${processed === 1 ? 'partido analizado' : 'partidos analizados'} a profundidad.`);
     }
-  }, [matches, activeModelInfo, onMatchAnalyzed, onToast]);
+  }, [isOwner, activeModelInfo, onMatchAnalyzed, onToast]);
 
   const handleStop = () => {
     stopRequested.current = true;
@@ -164,22 +182,27 @@ export default function AutonomousAiBar({
     onToast?.('Pausando análisis autónomo...');
   };
 
-  // Autonomous trigger on load if preference is true and matches are available
+  // Autonomous trigger on load: ONLY for Owner, using stable ID key and attempted match lock to prevent loops
   useEffect(() => {
-    if (!autoRunOnLoad || runningRef.current || !matches || matches.length === 0) return;
-    const pending = matches.filter(m => m?.id && !isMatchAnalyzed(m.id, m));
+    if (!isOwner || !autoRunOnLoad || runningRef.current) return;
+    const currentMatches = matchesRef.current;
+    if (!Array.isArray(currentMatches) || currentMatches.length === 0) return;
+
+    const pending = currentMatches.filter(
+      m => m?.id && !isMatchAnalyzed(m.id, m) && !attemptedMatchIdsRef.current.has(m.id)
+    );
     if (pending.length === 0) return;
 
     const timer = setTimeout(() => {
-      if (!runningRef.current && autoRunOnLoad) {
+      if (!runningRef.current && autoRunOnLoad && isOwner) {
         executeAnalysisQueue(false);
       }
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [matches, autoRunOnLoad, executeAnalysisQueue]);
+  }, [matchIdsKey, isOwner, autoRunOnLoad, executeAnalysisQueue]);
 
-  if (!matches || matches.length === 0) return null;
+  if (!isOwner || !matches || matches.length === 0) return null;
 
   return (
     <div className="mb-5 rounded-2xl bg-gradient-to-r from-[#0c1424] via-[#0d1829] to-[#09101d] border border-sky-500/25 p-3.5 sm:p-4 shadow-[0_0_30px_rgba(14,165,233,0.08)]">

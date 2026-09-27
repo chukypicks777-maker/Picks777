@@ -5,8 +5,8 @@ import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
-import { getBestBankerPick, getEffectiveOdds, getContextualPick } from '../utils/mathProbabilities';
-import { isMatchAnalyzed, getAnalyzedModelName } from '../utils/analysisCache';
+import { getBestBankerPick, getEffectiveOdds, getContextualPick, fillPoissonGoalLadder, getCoherentPredictedScore } from '../utils/mathProbabilities';
+import { isMatchAnalyzed, getAnalyzedModelName, getCachedAnalysis } from '../utils/analysisCache';
 
 export default function MatchCard({ 
   match, 
@@ -66,10 +66,13 @@ export default function MatchCard({
     return null;
   })();
 
-  const over15Prob = percent(p.over15) ?? percent(match.model?.probabilities?.over15) ?? percent(match.probabilities?.over15) ?? seasonPoisson?.over15 ?? null;
-  const over25Prob = percent(p.over25) ?? percent(match.model?.probabilities?.over25) ?? percent(match.probabilities?.over25) ?? seasonPoisson?.over25 ?? null;
-  const bttsProb = percent(p.bttsYes) ?? percent(match.model?.probabilities?.bttsYes) ?? percent(match.probabilities?.bttsYes) ?? seasonPoisson?.bttsYes ?? null;
+  const ladder = fillPoissonGoalLadder(base, match.odds);
+  const over15Prob = percent(p.over15) ?? percent(match.model?.probabilities?.over15) ?? percent(match.probabilities?.over15) ?? percent(ladder?.over15) ?? seasonPoisson?.over15 ?? null;
+  const over25Prob = percent(p.over25) ?? percent(match.model?.probabilities?.over25) ?? percent(match.probabilities?.over25) ?? percent(ladder?.over25) ?? seasonPoisson?.over25 ?? null;
+  const bttsProb = percent(p.bttsYes) ?? percent(match.model?.probabilities?.bttsYes) ?? percent(match.probabilities?.bttsYes) ?? percent(ladder?.bttsYes) ?? seasonPoisson?.bttsYes ?? null;
   const bankerPick = getBestBankerPick(match);
+  const bankerOdds = bankerPick?.odds ?? getEffectiveOdds(bankerPick);
+  const predictedScore = getCoherentPredictedScore(match);
   const isBankerMode = bankerRank != null || marketFilter === 'safe';
   const isSpecificMarket = ['over', 'over25', 'btts', 'under', 'under25'].includes(marketFilter);
   const contextualPick = getContextualPick(match, marketFilter);
@@ -129,7 +132,13 @@ export default function MatchCard({
               </span>
             </div>
 
-            <div className="flex items-center space-x-1 font-mono text-[11px] shrink-0">
+            <div className="flex items-center space-x-1.5 font-mono text-[11px] shrink-0">
+              {predictedScore && predictedScore !== 'N/D' && match.status !== 'LIVE' && match.status !== 'FINISHED' && (
+                <span className="hidden xs:inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/25 text-[10px] font-bold" title="Marcador más probable estimado según modelo Poisson">
+                  <span className="text-[9px] text-slate-400 font-sans">IA:</span>
+                  <span>{predictedScore}</span>
+                </span>
+              )}
               {match.status === 'LIVE' ? (
                 <span className="flex items-center space-x-1 text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
@@ -173,8 +182,8 @@ export default function MatchCard({
             </div>
           ) : null}
 
-          {/* Teams and Logos */}
-          <div className="space-y-2 mb-3">
+          {/* Teams and Logos with Standings and Form */}
+          <div className="space-y-2.5 mb-3">
             {/* Home Team */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center space-x-2 min-w-0">
@@ -183,9 +192,33 @@ export default function MatchCard({
                   alt={match.homeTeam?.name}
                   className="w-5 h-5 object-contain shrink-0"
                 />
-                <span className="font-semibold text-xs text-white truncate">
-                  {match.homeTeam?.name}
-                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="font-semibold text-xs text-white truncate">
+                      {match.homeTeam?.name}
+                    </span>
+                    {match.homeTeam?.position && (
+                      <span className="text-[10px] font-mono text-slate-400 shrink-0 font-medium">
+                        #{match.homeTeam.position}
+                      </span>
+                    )}
+                  </div>
+                  {Array.isArray(match.homeTeam?.form) && match.homeTeam.form.length > 0 && (
+                    <div className="flex items-center space-x-0.5 mt-0.5">
+                      {match.homeTeam.form.slice(-5).map((f, i) => (
+                        <span
+                          key={i}
+                          className={`w-3 h-3 text-[7.5px] font-bold font-mono rounded flex items-center justify-center shrink-0 ${
+                            f === 'W' ? 'bg-emerald-600 text-white' : f === 'D' ? 'bg-amber-600 text-white' : 'bg-rose-600 text-white'
+                          }`}
+                          title={`Forma: ${f}`}
+                        >
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex items-center space-x-2 font-mono text-xs shrink-0">
                 {match.status === 'LIVE' || match.status === 'FINISHED' ? (
@@ -208,9 +241,33 @@ export default function MatchCard({
                   alt={match.awayTeam?.name}
                   className="w-5 h-5 object-contain shrink-0"
                 />
-                <span className="font-semibold text-xs text-white truncate">
-                  {match.awayTeam?.name}
-                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="font-semibold text-xs text-white truncate">
+                      {match.awayTeam?.name}
+                    </span>
+                    {match.awayTeam?.position && (
+                      <span className="text-[10px] font-mono text-slate-400 shrink-0 font-medium">
+                        #{match.awayTeam.position}
+                      </span>
+                    )}
+                  </div>
+                  {Array.isArray(match.awayTeam?.form) && match.awayTeam.form.length > 0 && (
+                    <div className="flex items-center space-x-0.5 mt-0.5">
+                      {match.awayTeam.form.slice(-5).map((f, i) => (
+                        <span
+                          key={i}
+                          className={`w-3 h-3 text-[7.5px] font-bold font-mono rounded flex items-center justify-center shrink-0 ${
+                            f === 'W' ? 'bg-emerald-600 text-white' : f === 'D' ? 'bg-amber-600 text-white' : 'bg-rose-600 text-white'
+                          }`}
+                          title={`Forma: ${f}`}
+                        >
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex items-center space-x-2 font-mono text-xs shrink-0">
                 {match.status === 'LIVE' || match.status === 'FINISHED' ? (
@@ -226,12 +283,21 @@ export default function MatchCard({
             </div>
           </div>
 
-          {/* Win Probabilities Bar (1 X 2) */}
+          {/* Win Probabilities Bar (1 X 2) con Cuotas de Mercado */}
           <div className="mb-3">
             <div className="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
-              <span>1: <strong><NumberCounter value={homeProb} suffix="%" /></strong></span>
-              <span>X: <strong><NumberCounter value={drawProb} suffix="%" /></strong></span>
-              <span>2: <strong><NumberCounter value={awayProb} suffix="%" /></strong></span>
+              <span>
+                1: <strong><NumberCounter value={homeProb} suffix="%" /></strong>
+                {match.odds?.homeWin ? <span className="text-slate-500 ml-1">(@{formatOdds(match.odds.homeWin, oddsFormat)})</span> : null}
+              </span>
+              <span>
+                X: <strong><NumberCounter value={drawProb} suffix="%" /></strong>
+                {match.odds?.draw ? <span className="text-slate-500 ml-1">(@{formatOdds(match.odds.draw, oddsFormat)})</span> : null}
+              </span>
+              <span>
+                2: <strong><NumberCounter value={awayProb} suffix="%" /></strong>
+                {match.odds?.awayWin ? <span className="text-slate-500 ml-1">(@{formatOdds(match.odds.awayWin, oddsFormat)})</span> : null}
+              </span>
             </div>
             <div className="h-1.5 w-full bg-[#161c28] rounded-full overflow-hidden flex gap-0.5">
               <div style={{ width: `${homeProb}%` }} className="bg-sky-500 h-full rounded-l-full transition-all duration-500 shadow-[0_0_6px_rgba(56,189,248,0.4)]" />
@@ -316,15 +382,41 @@ export default function MatchCard({
               </span>
             </div>
 
-            {/* Justificación por IA de por qué es el seguro (tendencias de goles y datos de temporada) */}
+            {/* If analyzed and bankerPick exists with a different selection or complementary math info, show Banker Math Base */}
+            {analyzed && bankerPick && bankerPick.selection && bankerPick.selection !== displayPick && (
+              <div className="mt-1.5 pt-1.5 border-t border-white/5 flex items-center justify-between text-[10px] font-mono">
+                <span className="text-slate-400 flex items-center space-x-1 truncate">
+                  <span className="text-sky-400 font-bold">Base Poisson:</span>
+                  <span className="text-slate-300 truncate">{bankerPick.selection}</span>
+                </span>
+                <span className="text-sky-300 font-bold shrink-0 ml-1">
+                  @{formatOdds(bankerOdds, oddsFormat)} ({bankerPick.probability}%)
+                </span>
+              </div>
+            )}
+
+            {/* Justificación por IA y Base del cálculo estadístico */}
             <div className="mt-2 pt-2 border-t border-white/10 flex items-start space-x-1.5 text-[10px] text-emerald-300/90 font-mono leading-snug">
               <Sparkles className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
-              <p className="line-clamp-2">
-                <strong className="text-emerald-400 font-sans">
-                  {analyzed ? 'Análisis IA Verificado: ' : 'Base del cálculo: '}
-                </strong>
-                {activePick?.rationale || bankerPick?.rationale || match.aiPick?.summaryRationale || 'Sin datos suficientes para justificar una selección.'}
-              </p>
+              <div className="space-y-1 w-full">
+                {analyzed && (activePick?.rationale || match.aiPick?.summaryRationale) && (
+                  <p className="line-clamp-2">
+                    <strong className="text-emerald-400 font-sans">Veredicto IA: </strong>
+                    {activePick?.rationale || match.aiPick?.summaryRationale}
+                  </p>
+                )}
+                {bankerPick?.rationale && (!analyzed || bankerPick.rationale !== (activePick?.rationale || match.aiPick?.summaryRationale)) && (
+                  <p className="line-clamp-1 text-slate-400">
+                    <strong className="text-sky-400 font-sans">Base estadística: </strong>
+                    {bankerPick.rationale}
+                  </p>
+                )}
+                {!analyzed && !bankerPick?.rationale && (
+                  <p className="line-clamp-2 text-slate-500">
+                    Sin datos suficientes para justificar una selección.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
