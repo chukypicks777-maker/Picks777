@@ -9,46 +9,17 @@ const subtract = (a, b) => Number.isFinite(a) && Number.isFinite(b) ? Number((a 
 const sum = (a, b) => validNumber(a) && validNumber(b) ? a + b : null;
 export function calculateTeamDetailedStats(team = {}, isHome = true, match = {}) {
   const hasIdentity = Boolean((team.name && team.name !== 'Local' && team.name !== 'Visitante') || team.id || team.shortName);
-  const hasSignal = Boolean(match.id || match.model || match.odds || match.probabilities || match.aiReport);
-
-  let avgGF = meanGoals(team, 'goalsFor', 'avgGoalsScored');
-  let avgGC = meanGoals(team, 'goalsAgainst', 'avgGoalsConceded');
-  if (avgGF === null && validNumber(match.model?.expectedGoals?.[isHome ? 'home' : 'away'])) {
-    avgGF = match.model.expectedGoals[isHome ? 'home' : 'away'];
-  }
-  if (avgGC === null && validNumber(match.model?.expectedGoals?.[isHome ? 'away' : 'home'])) {
-    avgGC = match.model.expectedGoals[isHome ? 'away' : 'home'];
-  }
-  if (hasIdentity && hasSignal && (avgGF === null || avgGC === null)) {
-    const p = match.model?.probabilities || match.probabilities || match.aiReport?.probabilities || {};
-    let prob25 = percent(p.over25);
-    if (prob25 === null && match.odds?.over25 && match.odds?.under25) {
-      const invO = 1 / Number(match.odds.over25), invU = 1 / Number(match.odds.under25);
-      if (invO + invU > 0) prob25 = (invO / (invO + invU)) * 100;
-    }
-    const totLam = (prob25 !== null && prob25 > 1 && prob25 < 99)
-      ? solvePoissonLambdaFromUnder25((100 - prob25) / 100)
-      : 2.70;
-    let pH = percent(p.homeWin) ?? (match.odds?.homeWin ? 100 / Number(match.odds.homeWin) : null);
-    let pA = percent(p.awayWin) ?? (match.odds?.awayWin ? 100 / Number(match.odds.awayWin) : null);
-    let wH = 0.52;
-    if (pH !== null && pA !== null && (pH + pA) > 0) {
-      wH = Math.max(0.2, Math.min(0.8, Math.sqrt(pH) / (Math.sqrt(pH) + Math.sqrt(pA))));
-    }
-    const derivedHomeXG = Number((totLam * wH).toFixed(2));
-    const derivedAwayXG = Number((totLam * (1 - wH)).toFixed(2));
-    if (avgGF === null) avgGF = isHome ? derivedHomeXG : derivedAwayXG;
-    if (avgGC === null) avgGC = isHome ? derivedAwayXG : derivedHomeXG;
-  }
-  const expGoals = match.model?.expectedGoals?.[isHome ? 'home' : 'away'] ?? (validNumber(avgGF) ? avgGF : (hasIdentity && hasSignal ? (isHome ? 1.45 : 1.25) : null));
+  const avgGF = meanGoals(team, 'goalsFor', 'avgGoalsScored');
+  const avgGC = meanGoals(team, 'goalsAgainst', 'avgGoalsConceded');
+  const expGoals = match.model?.expectedGoals?.[isHome ? 'home' : 'away'] ?? avgGF;
   const goals = totalLines(expGoals);
 
   const cards = validNumber(team.avgYellowCards)
     ? team.avgYellowCards
-    : (hasIdentity && hasSignal ? (isHome ? 1.8 : 2.0) : null);
+    : null;
   const avgCorners = validNumber(team.avgCorners)
     ? team.avgCorners
-    : (hasIdentity && hasSignal ? (isHome ? 5.2 : 4.4) : null);
+    : null;
   const corners = calculateCornerProbabilities(avgCorners);
 
   let cleanSheetRate = percent(team.cleanSheetRate);
@@ -82,22 +53,22 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, match = {})
   if (bttsRate === null && validNumber(avgGF) && validNumber(avgGC) && hasIdentity) {
     bttsRate = Math.round((1 - Math.exp(-avgGF)) * (1 - Math.exp(-avgGC)) * 100);
   }
-  const gamesPlayed = team.gamesPlayed ?? (team.form?.length > 0 ? team.form.length : (hasIdentity && hasSignal ? 5 : null));
+  const gamesPlayed = team.gamesPlayed ?? null;
 
   return {
     name: team.name || (isHome ? 'Local' : 'Visitante'), shortName: team.shortName || (isHome ? 'LOC' : 'VIS'), logo: team.logo,
     position: team.position ?? null, points: team.points ?? null, gamesPlayed,
-    form: Array.isArray(team.form) ? team.form : [], goalsFor: team.goalsFor ?? (validNumber(avgGF) && gamesPlayed ? Math.round(avgGF * gamesPlayed) : null),
-    goalsAgainst: team.goalsAgainst ?? (validNumber(avgGC) && gamesPlayed ? Math.round(avgGC * gamesPlayed) : null),
-    avgGF, avgGC, goalDiff: subtract(team.goalsFor, team.goalsAgainst) ?? (validNumber(avgGF) && validNumber(avgGC) ? Number((avgGF - avgGC).toFixed(2)) : null),
+    form: Array.isArray(team.form) ? team.form : [], goalsFor: team.goalsFor ?? null,
+    goalsAgainst: team.goalsAgainst ?? null,
+    avgGF, avgGC, goalDiff: subtract(team.goalsFor, team.goalsAgainst),
     ...Object.fromEntries(Object.entries(goals).map(([k, v]) => [`${k}Rate`, v])),
     bttsRate, cleanSheetRate,
     avgCorners: corners.lambda, avgCornersConceded: team.avgCornersConceded ?? null,
     ...Object.fromEntries(Object.entries(corners).filter(([k]) => k !== 'lambda').map(([k, v]) => [`corner${k[0].toUpperCase()}${k.slice(1)}`, v])),
     ...Object.fromEntries(Object.entries(totalLines(cards)).map(([k, v]) => [`cards${k[0].toUpperCase()}${k.slice(1)}`, v])),
-    fouls: validNumber(team.avgFouls) ? team.avgFouls : (cards != null ? Number((cards * 5.6).toFixed(1)) : null),
-    cards, sampleSizes: team.sampleSizes || (hasIdentity && hasSignal ? { corners: 5, cards: 5, halves: 5 } : undefined),
-    statsSource: team.statsSource || (hasIdentity && hasSignal ? 'Estimación oficial calibrada' : undefined),
+    fouls: validNumber(team.avgFouls) ? team.avgFouls : null,
+    cards, sampleSizes: team.sampleSizes,
+    statsSource: team.statsSource,
     statsFetchedAt: team.statsFetchedAt
   };
 }
@@ -394,12 +365,9 @@ export function fillPoissonGoalLadder(probabilities = {}, odds = {}) {
   if (prob25 === null && odds?.over25 && odds?.under25) {
     const invO = 1 / Number(odds.over25), invU = 1 / Number(odds.under25);
     if (invO + invU > 0) prob25 = Math.round((invO / (invO + invU)) * 100);
-  } else if (prob25 === null && odds?.over25) {
-    const dec = Number(odds.over25);
-    if (Number.isFinite(dec) && dec > 1) prob25 = Math.round((1 / dec) * 100);
+
   }
-  const hasSignal = (prob25 !== null && prob25 > 1 && prob25 < 99) || p.homeWin || odds?.homeWin;
-  if (hasSignal || prob25 !== null) {
+  if (prob25 !== null && prob25 > 1 && prob25 < 99) {
     const lambda = (prob25 !== null && prob25 > 1 && prob25 < 99)
       ? solvePoissonLambdaFromUnder25((100 - prob25) / 100)
       : 2.70;
@@ -445,16 +413,14 @@ export function derivePoissonScoreFromMatch(match) {
   if (prob25 === null && match.odds?.over25 && match.odds?.under25) {
     const invO = 1 / Number(match.odds.over25), invU = 1 / Number(match.odds.under25);
     if (invO + invU > 0) prob25 = (invO / (invO + invU)) * 100;
-  } else if (prob25 === null && match.odds?.over25) {
-    const dec = Number(match.odds.over25);
-    if (Number.isFinite(dec) && dec > 1) prob25 = (1 / dec) * 100;
+
   }
 
   const home = match.homeTeam || {};
   const away = match.awayTeam || {};
   const homeGP = Number(home.gamesPlayed);
   const awayGP = Number(away.gamesPlayed);
-  const hasStandings = Number.isFinite(homeGP) && homeGP > 0 && Number.isFinite(awayGP) && awayGP > 0 &&
+  const hasStandings = Number.isFinite(homeGP) && homeGP >= 5 && Number.isFinite(awayGP) && awayGP >= 5 &&
     Number.isFinite(Number(home.goalsFor)) && Number.isFinite(Number(away.goalsFor));
 
   let pH = percent(p.homeWin);
@@ -477,7 +443,7 @@ export function derivePoissonScoreFromMatch(match) {
   } else if (hasStandings) {
     totalLambda = Math.max(1.2, Math.min(6.5, (Number(home.goalsFor) / homeGP) + (Number(away.goalsFor) / awayGP)));
   } else {
-    totalLambda = 2.70;
+    return null;
   }
 
   let wH;

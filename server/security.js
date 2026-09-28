@@ -72,7 +72,13 @@ export function validateAiConfig(input = {}) {
   }
 
   if (provider === 'custom') {
-    // Para proveedor personalizado se permite cualquier dominio público HTTPS de internet
+    // Custom endpoints require an operator-controlled allowlist, not arbitrary browser input.
+    const allowedHosts = new Set([
+      ...Object.values(PROVIDER_PRESETS).map(p => new URL(p.defaultBaseUrl).hostname),
+      'co.agentrouter.org',
+      ...(process.env.AI_ALLOWED_HOSTS || '').split(',').map(host => host.trim().toLowerCase()).filter(Boolean)
+    ]);
+    if (!allowedHosts.has(h)) throw new Error('Dominio de IA no autorizado. Añádelo a AI_ALLOWED_HOSTS en el servidor después de verificar el proveedor.');
   } else if (provider === 'agentrouter') {
     if (h !== 'agentrouter.org' && h !== 'co.agentrouter.org') {
       throw new Error('URL de IA no permitida para Agent Router.');

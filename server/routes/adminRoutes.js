@@ -1,8 +1,15 @@
 import express from 'express';
 import { storage } from '../storage.js';
 import { requireAdmin } from '../session.js';
+import { mobileRelease, apkPath } from '../mobileRelease.js';
 const router = express.Router();
 router.use(requireAdmin);
+router.get('/mobile', async (req, res) => res.json({ success: true, ...await mobileRelease() }));
+router.get('/mobile/apk', async (req, res) => {
+  const release = await mobileRelease();
+  if (!release.available) return res.status(404).json({ success: false, message: release.message });
+  res.download(apkPath, `picks777-${release.versionName}.apk`);
+});
 router.get('/codes', async (req, res) => {
   const codes = (await storage.getCodes()).map(({ devices = [], ...c }) => {
     const isExpired = Boolean(c.revoked || c.expiresAt && Date.parse(c.expiresAt) <= Date.now());

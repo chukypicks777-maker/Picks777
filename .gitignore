@@ -45,5 +45,6 @@ android/local.properties
 playwright-report/
 test-results/
 artifacts/android/*.apk
+!artifacts/android/picks777-preview.apk
 artifacts/android/*.aab
 artifacts/mobile/

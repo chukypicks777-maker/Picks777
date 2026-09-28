@@ -151,7 +151,7 @@ test('Project version is consistently 1.0.5 across all configuration and client 
   assert.ok(appJsx.includes('v1.0.5'), 'src/App.jsx footer must be v1.0.5');
   assert.ok(swJs.includes('picks-offline-v1.0.5'), 'public/sw.js must specify CACHE picks-offline-v1.0.5');
   assert.equal(mobileConfig.versionName, '1.0.5', 'mobile.config.json versionName must be 1.0.5');
-  assert.equal(mobileConfig.versionCode, 3, 'mobile.config.json versionCode must be 3');
+  assert.equal(mobileConfig.versionCode, 4, 'mobile.config.json versionCode must be 4');
 });
 
 test('Poisson pipeline rejects missing data: getCoherentPredictedScore returns N/D and sample sizes are null without inventing 1 - 1 or 5 games', () => {
@@ -165,7 +165,7 @@ test('Poisson pipeline rejects missing data: getCoherentPredictedScore returns N
   assert.equal(modelFromOverOnly.probabilities.homeWin, null, 'homeWin probability must be null when no 1X2 odds or standings exist');
 });
 
-test('Villarreal vs Napoli UCL match derives full team stats, corners, cards and coherent non-empty ladder', () => {
+test('Villarreal vs Napoli UCL match derives goal projections but never invents unobserved corners or cards', () => {
   const vMatch = {
     id: 'espn-401915410',
     leagueName: 'UEFA Champions League',
@@ -184,17 +184,17 @@ test('Villarreal vs Napoli UCL match derives full team stats, corners, cards and
 
   assert.ok(homeStats.over05Rate > 0, 'home over05Rate must be > 0');
   assert.ok(homeStats.over15Rate > 0, 'home over15Rate must be > 0');
-  assert.ok(homeStats.cardsOver05 > 0, 'home cardsOver05 must be > 0');
-  assert.ok(homeStats.cornerOver15 > 0, 'home cornerOver15 must be > 0');
-  assert.notEqual(homeStats.cards, null, 'home cards must not be null');
-  assert.notEqual(homeStats.avgCorners, null, 'home avgCorners must not be null');
+  assert.equal(homeStats.cardsOver05, null);
+  assert.equal(homeStats.cornerOver15, null);
+  assert.equal(homeStats.cards, null);
+  assert.equal(homeStats.avgCorners, null);
 
   assert.ok(awayStats.over05Rate > 0, 'away over05Rate must be > 0');
   assert.ok(awayStats.over15Rate > 0, 'away over15Rate must be > 0');
-  assert.ok(awayStats.cardsOver05 > 0, 'away cardsOver05 must be > 0');
-  assert.ok(awayStats.cornerOver15 > 0, 'away cornerOver15 must be > 0');
-  assert.notEqual(awayStats.cards, null, 'away cards must not be null');
-  assert.notEqual(awayStats.avgCorners, null, 'away avgCorners must not be null');
+  assert.equal(awayStats.cardsOver05, null);
+  assert.equal(awayStats.cornerOver15, null);
+  assert.equal(awayStats.cards, null);
+  assert.equal(awayStats.avgCorners, null);
 
   const score = getCoherentPredictedScore(vMatch);
   assert.notEqual(score, 'N/D');

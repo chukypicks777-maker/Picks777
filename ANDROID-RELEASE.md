@@ -72,3 +72,9 @@ Para otro proveedor, añade un adaptador en `src/auth/providers.js` y su verific
 - [Política de apuestas y juegos con dinero real](https://support.google.com/googleplay/android-developer/answer/9877032)
 - [Eliminación de cuentas](https://support.google.com/googleplay/android-developer/answer/13327111)
 - [Pruebas para nuevas cuentas personales](https://support.google.com/googleplay/android-developer/answer/14151465)
+
+## Actualización de auditoría 28-09-2026
+
+Compilación Android 4, versión 1.0.5. El comando npm run android:preview genera un APK release firmado instalable y prepara artifacts/android/picks777-preview.apk junto a release.json para Owner → Aplicación Android. La descarga requiere sesión owner y no se publica en public/. Compilar antes de desplegar; un despliegue desde Git debe incorporar el APK desde su proceso de entrega, ya que se ignora en Git. npm run android:bundle produce el AAB; copia de entrega en artifacts/android/picks777-release.aab.
+
+Redis y secretos seguros ahora son obligatorios en toda producción. La web publicada sigue pendiente de esta configuración y del despliegue corregido. No subir a Google Play antes de resolver los puntos del informe AUDITORIA-2026-09-28.md. El responsable es una persona independiente y todavía no ha proporcionado un correo de contacto.

@@ -3,7 +3,7 @@ import { securityHeaders } from './httpHeaders.js';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CONFIG } from './config.js';
+import { CONFIG, secureConfiguration } from './config.js';
 import { readiness } from './health.js';
 import { requireSession } from './session.js';
 import authRoutes from './routes/authRoutes.js';
@@ -19,6 +19,10 @@ app.use(securityHeaders);
 app.use('/api', protectMutations);
 app.use(express.json({ limit: '32kb' }));
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
+app.use('/api', (req, res, next) => {
+  if (!secureConfiguration()) return res.status(503).json({ success: false, message: 'Configuración segura requerida.' });
+  next();
+});
 app.get('/api/health', readiness);
 app.use('/api/auth', authRoutes);
 app.get('/api/community', async (req, res) => {

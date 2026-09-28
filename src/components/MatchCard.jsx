@@ -185,7 +185,7 @@ export default function MatchCard({
               </span>
               <span className="text-emerald-400 font-bold flex items-center space-x-1">
                 <CheckCircle2 className="w-3 h-3" />
-                <span>{modelName ? `${modelName.slice(0, 12)} • 100%` : 'CONFIRMADO 100%'}</span>
+                <span>{modelName ? `${modelName.slice(0, 12)} • IA` : 'ANÁLISIS DISPONIBLE'}</span>
               </span>
             </div>
           ) : isAnalyzing ? (
@@ -526,7 +526,7 @@ export default function MatchCard({
             Pick Banquero Exclusivo
           </h5>
           <p className="text-[10px] text-slate-300 max-w-[210px] mb-3 leading-tight font-sans">
-            Desbloquea este pick y el TOP 10 completo de máxima seguridad con tu Pase VIP.
+            Desbloquea este pick y el TOP 10 completo con estimaciones del modelo con tu Pase VIP.
           </p>
 
           <button

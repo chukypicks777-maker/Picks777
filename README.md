@@ -1,155 +1,31 @@
-> Android: proyecto, compilación, firma y pendientes de Play Store en [ANDROID-RELEASE.md](ANDROID-RELEASE.md). Evidencias de esta entrega en [VALIDATION-ANDROID.md](VALIDATION-ANDROID.md).
+# Picks777
 
-# ⚽ DEPORTEPICKS AI VIP — Plataforma de Inteligencia Predictiva para Apuestas de Fútbol
+Aplicación web de información deportiva con cliente React/Vite, API Express y aplicación Android TWA. Revisión actual: [AUDITORIA-2026-09-28.md](AUDITORIA-2026-09-28.md).
 
-> Plataforma web de análisis deportivo impulsada por Inteligencia Artificial de última generación (**VyceAI / DeepSeek V4.1 / AgentRouter**) y modelos predictivos cuantitativos. Diseñada con una interfaz ultra-premium (estilo terminal de \$300,000 inspirada en **MasterCuota**, **Jarvis Bet** y **Picks777**).
+## Datos y probabilidades
 
----
+El backend consulta ESPN y conserva fuente y fecha de consulta. Las métricas ausentes se muestran como N/D. El modelo usa Poisson independiente sobre goles observados; como alternativa usa cuotas de mercados completos para aproximar una distribución. No implementa xG observado, Dixon-Coles ni una calibración histórica validada. La IA redacta comentarios; no puede reemplazar los números ni las cuotas calculadas.
 
-## 🌟 Características Principales
+No se garantiza una tasa de aciertos del 90 % ni ganancias. Las cuotas teóricas derivadas del modelo se distinguen de las publicadas. Las combinadas son simulaciones bajo independencia, no apuestas colocadas. Deben confirmarse las cuotas y condiciones con el proveedor correspondiente.
 
-### 1. ⚽ Cobertura de las 8 Ligas de Fútbol Principales
-* 🇲🇽 **Liga MX** (México)
-* 🇺🇸 **MLS** (EEUU Major League Soccer)
-* 🇫🇷 **Ligue 1** (Francia)
-* 🏴󠁧󠁢󠁥󠁮󠁧󠁿 **Premier League** (Inglaterra)
-* 🇪🇸 **LaLiga EA Sports** (España)
-* 🇮🇹 **Serie A TIM** (Italia)
-* 🏆 **UEFA Champions League**
-* 🌎 **Leagues Cup & Copas Internacionales**
+## Desarrollo y comprobaciones
 
----
+Node 22. Instalar con npm ci. Ejecutar npm run dev para frontend y backend; npm run build y npm start para servir la compilación. Comprobaciones: npm test, npm run lint, npm run test:browser y npm run test:offline.
 
-### 2. 🤖 Motor de Inteligencia Artificial (DeepSeek V4.1 / VyceAI / 3ros)
-* **Modelo Principal**: `deepseek-v4.1` (VyceAI / API de terceros con saldo)
-* **Compatibilidad Multi-Proveedor**: AgentRouter, DeepSeek oficial, Groq, Gemini y APIs compatibles con OpenAI.
-* **Motor Algorítmico Cuantitativo**: Modelo de Poisson, xG (Goles Esperados) y Dixon-Coles integrado para análisis sin fallas.
-* **Pronósticos Detallados**:
-  * 🎯 **Marcador Exacto Predicho** (ej: `2 - 1`)
-  * 💎 **Pick Principal Estrella / Banquero** con cuota y unidades recomendadas (Stake 1 a 5).
-  * ⚡ **Pick de Valor (Value Bet)**.
-  * 🚩 **Pronóstico Especializado de Córners (Tiros de Esquina)**.
-  * 📝 **Informe Táctico Profundo en Español** con claves estadísticas.
+## Producción
 
----
+Configurar exclusivamente en servidor OWNER_GOOGLE_EMAIL con la cuenta Google verificada del propietario, SESSION_SECRET aleatorio de 32 caracteres o más, UPSTASH_REDIS_REST_URL HTTPS y UPSTASH_REDIS_REST_TOKEN. Redis es obligatorio en producción. La API rechaza acceso si falta configuración segura o no puede verificar la sesión. No usar secretos VITE_* ni subir .env, claves Android o bases de usuarios.
 
-### 3. ⚔️ Cara a Cara (H2H - Últimos 10 Partidos)
-* Historial completo de los últimos 10 enfrentamientos directos entre ambos equipos con:
-  * Fecha oficial y torneo.
-  * Marcadores exactos.
-  * Registro de **Ambos Anotan (BTTS)** (SÍ / NO).
-  * Conteo total de **Tiros de Esquina (Corners)**.
-  * Tarjetas amarillas y faltas.
+La integración Upstash de Vercel con prefijo KV también está soportada mediante KV_REST_API_URL y KV_REST_API_TOKEN. No se usa el token de solo lectura; usuarios y revocaciones necesitan escritura. Si se especifica cualquier variable UPSTASH_REDIS_REST_*, completar ambas: no se mezclan credenciales entre bases. Mantener bases separadas para producción y previews.
 
----
+IA opcional: CUSTOM_AI_API_KEY, CUSTOM_AI_BASE_URL y DEFAULT_AI_MODEL. Para un dominio distinto a los predefinidos, autorizar su hostname exacto con AI_ALLOWED_HOSTS tras verificar al proveedor. Las claves no se exponen en el frontend.
 
-### 4. 📊 Estadísticas y Métricas Avanzadas
-* **Tiros de Esquina (Corners)**: Promedio local, promedio visita, probabilidad de líneas Over 8.5 / 9.5 / 10.5.
-* **Ambos Anotan (BTTS)**: Probabilidad porcentual y rachas históricas.
-* **Over / Under Goles**: Probabilidades de +1.5, +2.5, +3.5 y -2.5 goles.
-* **Faltas y Tarjetas**: Promedios de disciplina y rigor arbitral.
-* **Simulador Monte Carlo**: 10,000 iteraciones en tiempo real para proyectar distribución de marcadores.
+## Android
 
----
+El owner dispone del apartado Aplicación Android dentro del panel administrativo. npm run android:preview prepara un APK firmado y su manifiesto para descarga autenticada. npm run android:bundle genera el AAB. Incrementar versionCode en mobile.config.json al actualizar Android; conservar la clave de firma. Las actualizaciones web requieren desplegar la web, y se reciben al recargar.
 
-### 5. ⚡ Creador de Parlays / Combinadas Interactivo
-* Añade selecciones de cualquier partido con un solo clic (**"+ Al Parlay"**).
-* **Calculadora de Cuota Total Multiplicadora** en tiempo real.
-* **Conversor de Formato de Cuotas**:
-  * **Decimal** (ej: `2.66`)
-  * **Americano** (ej: `+166` o `-110`)
-  * **Fraccionario** (ej: `83/50`)
-* **Selector Multidivisa**: **USD (\$)**, **MXN (\$)**, **EUR (€)**, **COP (\$)**, **ARS (\$)**.
-* Cálculo automático de **Ganancia Neta** y **Retorno Potencial** según el monto apostado.
-* **Botón de 1 Clic**: *"Cargar Parlay Banquero del Día de la IA"*.
-* **Compartir / Copiar Ticket**: Formato optimizado para WhatsApp y Telegram.
-* ⚠️ **Advertencia Educativa**: Recordatorio claro de que si 1 evento falla, se pierde el parlay.
+El APK abre https://picks777.vercel.app. La publicación en Play Store tiene pendientes de contacto, privacidad y pruebas físicas; véanse [ANDROID-RELEASE.md](ANDROID-RELEASE.md) y el informe de auditoría.
 
----
+## Membresías vinculadas a cuentas
 
-### 6. 👑 Sistema de Acceso VIP y Panel de Administración (Owner)
-
-#### Acceso del propietario
-Configura `MASTER_ADMIN_CODE` en las variables de entorno (sin valor predeterminado; usa una clave aleatoria privada). Al ingresar este código en la pantalla de login, el sistema inicia sesión con rol `Owner` y da acceso completo al panel de administración para generar códigos por lote, consultar activaciones y revocar accesos.
-
-#### Funcionalidades del Panel Owner:
-1. **Generador Masivo de Códigos Aleatorios**:
-   * Genera de 1 a 200 códigos no repetibles en un solo clic (ej: **30 o 100 códigos**).
-   * Asigna la duración deseada (**7, 15, 30, 60, 90, 365 días**).
-   * Prefijo personalizado (`VIP-`, `PRO-`, etc.).
-2. **Duración y Vencimiento**:
-   * Los días de vigencia comienzan a descontarse **en el instante exacto en que el usuario activa el código**.
-3. **Gestión y Monitoreo**:
-   * Tabla con código, estado (**Disponible / Activo / Expirado**), fecha de creación, fecha de reclamo, fecha de vencimiento y días restantes.
-   * Botón de **"Copiar Disponibles"** (ideal para enviar a clientes o compradores).
-   * **Exportar a CSV / Excel**.
-   * Opciones para **Revocar** o **Eliminar** códigos.
-4. **Configuración de IA**:
-   * Selector de modelo y proveedor en vivo (VyceAI, AgentRouter, DeepSeek, Groq, Gemini).
-   * Actualización de API Key.
-   * Limpieza de caché de pronósticos.
-
----
-
-## 🚀 Cómo Iniciar la Plataforma
-
-### 1. Iniciar en Modo Desarrollo (Backend + Frontend)
-```bash
-npm run dev
-```
-* **Frontend Vite**: `http://localhost:5173` (con proxy automático al backend)
-* **Backend Express**: `http://localhost:5000`
-
-### 2. Iniciar Solo el Servidor Backend (Producción)
-```bash
-npm start
-```
-* Servirá automáticamente el frontend compilado y la API en `http://localhost:5000`.
-
-### 3. Compilar para Producción
-```bash
-npm run build
-```
-
----
-
-## 🌐 Despliegue en Servidor en la Nube (100% Gratis / Escalable)
-
-La plataforma está configurada y lista para desplegarse en cualquier nube moderna:
-
-### Opción 1: Render.com (Recomendado — 100% Gratuito)
-* **Costo**: \$0 / Mes (Incluye 750 horas de cómputo gratis mensuales).
-* **Pasos**:
-  1. Crea una cuenta gratuita en [render.com](https://render.com).
-  2. Haz clic en **"New +"** -> **"Web Service"** -> **"Connect GitHub"**.
-  3. Selecciona tu repositorio `Prugames/deportepicks-ai-vip`.
-  4. Render detectará automáticamente el archivo [`render.yaml`](file:///c:/Users/rober/OneDrive/Escritorio/Proyecto%20Picks%20Apuesta/render.yaml) del proyecto.
-  5. Haz clic en **"Apply"** o **"Deploy Web Service"**.
-  6. ¡Listo! En 2 minutos tendrás tu enlace HTTPS público oficial: `https://deportepicks-ai-vip.onrender.com`.
-
-### Opción 2: Railway.app (Créditos Gratis)
-* **Costo**: \$5 USD de crédito mensual en prueba.
-* **Pasos**:
-  1. Conéctate a [railway.app](https://railway.app) con tu GitHub.
-  2. Haz clic en **"New Project"** -> **"Deploy from GitHub repo"**.
-  3. El archivo [`railway.json`](file:///c:/Users/rober/OneDrive/Escritorio/Proyecto%20Picks%20Apuesta/railway.json) configurará el comando de inicio `npm start`.
-
-### Opción 3: Docker / Google Cloud Run / AWS / VPS
-* El proyecto cuenta con un [`Dockerfile`](file:///c:/Users/rober/OneDrive/Escritorio/Proyecto%20Picks%20Apuesta/Dockerfile) optimizado basado en `node:22-alpine`:
-```bash
-docker build -t deportepicks-ai .
-docker run -p 5000:5000 deportepicks-ai
-```
-
-### Opción 4: Servidor Público Instantáneo con Cloudflare
-* Si deseas que tu máquina o servidor local sirva la web globalmente sin abrir puertos:
-  * Ejecuta el script incluido: `iniciar-compartir-web.bat`.
-  * Generará un enlace HTTPS seguro en la red de Cloudflare para compartir con usuarios de inmediato.
-
----
-
-## Configuración Vercel y producción
-
-Variables solo del servidor (nunca `VITE_*`): `MASTER_ADMIN_CODE` aleatorio de 32–128 caracteres, `SESSION_SECRET` independiente de al menos 32 caracteres, `UPSTASH_REDIS_REST_URL` HTTPS y `UPSTASH_REDIS_REST_TOKEN`. Redis es obligatorio en toda producción. IA de terceros opcional: `CUSTOM_AI_API_KEY`, `CUSTOM_AI_BASE_URL` y `DEFAULT_AI_MODEL`.
-
-Configura valores separados para Preview y Production. No compartas Redis ni credenciales productivas con pruebas. Usa HTTPS para cookies Secure. Confirma rotación de credenciales, conectividad, pruebas y aprobación del responsable antes de promover una preview. Véase `VALIDATION.md`.
+El primer canje exige una sesión Google verificada y vincula el código a un único ID de usuario mediante una transacción atómica. El vencimiento es primer canje + duración × 24 horas, sin renovarse al volver a entrar. Otra cuenta no puede usarlo; eliminarlo conserva una marca para impedir recrear el mismo código. Después de vencer no se recupera la prueba gratuita. Google restaura automáticamente el VIP mientras siga vigente. OWNER_GOOGLE_EMAIL desactiva el acceso Owner mediante código maestro.

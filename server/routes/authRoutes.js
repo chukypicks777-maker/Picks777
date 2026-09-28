@@ -2,15 +2,14 @@ import { verifyGoogleToken } from '../auth/googleVerifier.js';
 export { verifyGoogleToken } from '../auth/googleVerifier.js';
 import express from 'express';
 import { randomUUID } from 'node:crypto';
-import { CONFIG, isProduction, secureConfiguration } from '../config.js';
+import { CONFIG, isProduction, secureConfiguration, ownerGoogleEmail } from '../config.js';
 import { storage } from '../storage.js';
 import { currentSession, readSession, setSession, ownerVersion, sessionIdentifier } from '../session.js';
 import { rateLimit } from '../rateLimit.js';
 
 const router = express.Router();
 router.use((req, res, next) => {
-  // In serverless mode (e.g. Vercel), gracefully permit session checks and fallback authentication without blocking
-  if (!process.env.VERCEL && isProduction() && !secureConfiguration()) {
+  if (isProduction() && !secureConfiguration()) {
     return res.status(503).json({ success: false, message: 'Configuración segura requerida.' });
   }
   next();
@@ -66,39 +65,16 @@ router.post('/google', async (req, res) => {
     }
 
     const deviceId = readSession(req)?.deviceId || randomUUID();
-    let user;
-    try {
-      user = await storage.upsertGoogleUser({
-        googleId: googleProfile.sub,
-        email: googleProfile.email,
-        name: googleProfile.name,
-        picture: googleProfile.picture,
-        deviceId
-      });
-    } catch {
-      const now = Date.now();
-      const trialDays = 3;
-      user = {
-        id: randomUUID(),
-        googleId: googleProfile.sub,
-        email: googleProfile.email.toLowerCase(),
-        name: googleProfile.name || googleProfile.email.split('@')[0],
-        picture: googleProfile.picture,
-        role: 'trial',
-        isTrial: true,
-        trialExpired: false,
-        daysRemaining: trialDays,
-        trialExpiresAt: new Date(now + trialDays * 86400000).toISOString()
-      };
-    }
+    const user = await storage.upsertGoogleUser({
+      googleId: googleProfile.sub, email: googleProfile.email,
+      name: googleProfile.name, picture: googleProfile.picture, deviceId
+    });
 
     const now = Date.now();
     const isOwner = user.role === 'owner';
-    const isVip = user.isVip || Boolean(user.vipCode);
+    const isVip = user.isVip === true;
     const trialExpired = user.trialExpired;
-    const trialEnd = Date.parse(user.trialExpiresAt);
-    const vipExpires = user.vipExpiresAt ? Date.parse(user.vipExpiresAt) : 0;
-    const expires = isOwner ? now + 8 * 3600000 : (isVip ? vipExpires : trialEnd);
+    const expires = isOwner ? now + 8 * 3600000 : user.expires;
 
     const session = {
       role: isOwner ? 'owner' : (isVip ? 'vip_user' : (trialExpired ? 'expired_user' : 'trial_user')),
@@ -117,7 +93,7 @@ router.post('/google', async (req, res) => {
     };
 
     setSession(res, session);
-    const welcomeMsg = trialExpired
+    const welcomeMsg = isOwner ? 'Bienvenido, Owner.' : trialExpired
       ? 'Tu período de prueba de 3 días ha vencido. Ingresa tu clave VIP para continuar.'
       : (isVip ? `¡Bienvenido, ${user.name}! Membresía VIP activa.` : `¡Bienvenido, ${user.name}! Tienes 3 días de prueba completa.`);
 
@@ -169,12 +145,10 @@ router.post('/redeem-code', async (req, res) => {
 
     const masterCode = (CONFIG.MASTER_ADMIN_CODE || '').trim();
     let newSession;
-    if (masterCode && code.trim().toUpperCase() === masterCode.toUpperCase()) {
+    if (!ownerGoogleEmail() && masterCode && code.trim().toUpperCase() === masterCode.toUpperCase()) {
       newSession = { role: 'owner', name: 'Dueño', deviceId, expires: Date.now() + 8 * 3600000, ownerVersion: ownerVersion() };
     } else {
-      const result = await storage.claimCode(code, 'Usuario VIP', deviceId);
-      if (!result.success) return res.status(401).json(result);
-      newSession = { role: 'vip_user', code: result.code, name: 'Usuario VIP', deviceId, expires: Date.parse(result.expiresAt) };
+      return res.status(401).json({ success: false, message: 'Inicia sesión con Google para vincular el código a tu cuenta.' });
     }
     setSession(res, newSession);
     res.json({ ...publicSession(newSession), message: 'Acceso concedido.' });
@@ -225,12 +199,10 @@ router.post('/verify-code', async (req, res) => {
     const name = String(username || 'Usuario VIP').trim().slice(0, 80);
     let session;
     const masterCode = (CONFIG.MASTER_ADMIN_CODE || '').trim();
-    if (masterCode && code.trim().toUpperCase() === masterCode.toUpperCase()) {
+    if (!ownerGoogleEmail() && masterCode && code.trim().toUpperCase() === masterCode.toUpperCase()) {
       session = { role: 'owner', name, deviceId, expires: Date.now() + 8 * 3600000, ownerVersion: ownerVersion() };
     } else {
-      const result = await storage.claimCode(code, name, deviceId);
-      if (!result.success) return res.status(401).json(result);
-      session = { role: 'vip_user', code: result.code, name, deviceId, expires: Date.parse(result.expiresAt) };
+      return res.status(401).json({ success: false, message: 'Inicia sesión con Google para vincular el código a tu cuenta.' });
     }
     setSession(res, session);
     res.json({ ...publicSession(session), message: 'Acceso concedido.' });

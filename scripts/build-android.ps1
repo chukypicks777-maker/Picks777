@@ -1,4 +1,4 @@
-param([ValidateSet('Debug', 'Release')][string]$Variant = 'Debug')
+param([ValidateSet('Debug', 'Release', 'Preview')][string]$Variant = 'Debug')
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $projectRoot
@@ -8,7 +8,7 @@ if (-not $env:JAVA_HOME) {
     if ($portableJdk) { $env:JAVA_HOME = $portableJdk.FullName }
 }
 if (-not $env:JAVA_HOME) { throw 'Configura JAVA_HOME con JDK 17 y Android SDK 36 en android/local.properties.' }
-if ($Variant -eq 'Release') {
+if ($Variant -ne 'Debug') {
     $privateDirectory = Join-Path $env:LOCALAPPDATA 'Picks777/signing'
     $credentialsFile = Join-Path $privateDirectory 'upload-credentials.json'
     if (-not (Test-Path -LiteralPath $credentialsFile)) { throw 'No hay una clave de subida preparada. Consulta ANDROID-RELEASE.md.' }
@@ -21,11 +21,15 @@ if ($Variant -eq 'Release') {
 try {
     & node scripts/mobile-config.mjs
     if ($LASTEXITCODE -ne 0) { throw 'Configuración móvil inválida.' }
-    $task = if ($Variant -eq 'Release') { 'bundleRelease' } else { 'assembleDebug' }
+    $task = if ($Variant -eq 'Release') { 'bundleRelease' } elseif ($Variant -eq 'Preview') { 'assembleRelease' } else { 'assembleDebug' }
     & ./android/gradlew.bat -p android $task --max-workers=2 --console=plain
     if ($LASTEXITCODE -ne 0) { throw 'Falló la compilación Android.' }
+    if ($Variant -eq 'Preview') {
+        & node scripts/package-android-preview.mjs
+        if ($LASTEXITCODE -ne 0) { throw 'Falló el empaquetado del APK.' }
+    }
 } finally {
-    if ($Variant -eq 'Release') {
+    if ($Variant -ne 'Debug') {
         Remove-Item Env:PICKS_KEYSTORE,Env:PICKS_STORE_PASSWORD,Env:PICKS_KEY_ALIAS,Env:PICKS_KEY_PASSWORD -ErrorAction SilentlyContinue
     }
 }

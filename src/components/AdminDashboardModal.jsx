@@ -1,4 +1,5 @@
 import AdminGroups from './AdminGroups';
+import AdminMobile from './AdminMobile';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   X, 
@@ -463,6 +464,7 @@ export default function AdminDashboardModal({ onClose }) {
             >
               Grupos y Comunidad
             </button>
+            <button onClick={() => setActiveTab('mobile')} className={`px-3 py-3 text-xs font-semibold whitespace-nowrap shrink-0 border-b-2 ${activeTab === 'mobile' ? 'border-emerald-400 text-emerald-300' : 'border-transparent text-slate-400'}`}>Aplicación Android</button>
             <div className="w-3 shrink-0 pointer-events-none" aria-hidden="true" />
           </div>
           <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-[#0a0d14] via-[#0a0d14]/70 to-transparent pointer-events-none sm:hidden" aria-hidden="true" />
@@ -472,6 +474,7 @@ export default function AdminDashboardModal({ onClose }) {
         <div className="p-3.5 sm:p-6 max-h-[70vh] sm:max-h-[55vh] overflow-y-auto overflow-x-hidden">
           
           {activeTab === 'groups' && <AdminGroups />}
+          {activeTab === 'mobile' && <AdminMobile />}
           {/* TAB 1: GENERATOR */}
           {activeTab === 'generator' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -521,6 +524,8 @@ export default function AdminDashboardModal({ onClose }) {
                       onChange={(e) => setDurationDays(e.target.value)}
                       className="w-full px-3 py-2 bg-[#090d15] border border-white/10 rounded-lg text-amber-300 font-bold"
                     >
+                      <option value="1">1 Día (24 horas)</option>
+                      <option value="2">2 Días (48 horas)</option>
                       <option value="7">7 Días</option>
                       <option value="15">15 Días</option>
                       <option value="30">30 Días (1 Mes)</option>
@@ -680,7 +685,7 @@ export default function AdminDashboardModal({ onClose }) {
                           </span>
                         </td>
                         <td className="py-2.5 px-3.5 text-slate-400">
-                          {c.claimedAt ? new Date(c.claimedAt).toLocaleDateString('es-ES') : '—'}
+                            {c.claimedAt ? new Date(c.claimedAt).toLocaleString('es-ES') : '—'}
                         </td>
                         <td className="py-2.5 px-3.5 text-slate-400">
                           {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString('es-ES') : '—'}

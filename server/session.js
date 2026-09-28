@@ -1,9 +1,11 @@
-import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
-import { CONFIG } from './config.js';
+import { createHmac, timingSafeEqual, randomUUID, randomBytes } from 'node:crypto';
+import { CONFIG, isProduction, ownerGoogleEmail, isOwnerUser } from './config.js';
+import { entitlement } from './entitlements.js';
 import { storage } from './storage.js';
-const fallbackSecret = 'deportepicks-vip-ultra-secure-key-32chars';
+const fallbackSecret = randomBytes(32).toString('hex');
 const secret = () => {
-  if (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 16) return process.env.SESSION_SECRET;
+  if (process.env.SESSION_SECRET?.length >= 32 && process.env.SESSION_SECRET !== 'deportepicks-vip-ultra-secure-key-32chars') return process.env.SESSION_SECRET;
+  if (isProduction()) throw new Error('Configura SESSION_SECRET con al menos 32 caracteres.');
   return fallbackSecret;
 };
 const sign = payload => createHmac('sha256', secret()).update(payload).digest('base64url');
@@ -31,112 +33,23 @@ export function readSession(req) {
 export async function currentSession(req) {
   const session = readSession(req);
   if (!session) return null;
-  try {
-    if (await storage.isSessionRevoked(sessionIdentifier(session))) return null;
-  } catch {}
+  if (await storage.isSessionRevoked(sessionIdentifier(session))) return null;
 
-  if (session.role === 'owner') {
-    if (session.ownerVersion !== ownerVersion()) return null;
-    try {
-      if (session.userId) {
-        const user = await storage.getUser(session.userId);
-        if (user && user.role !== 'owner' && user.vipCode !== 'MASTER') return null;
-      }
-    } catch {}
-    return session;
-  }
-
+  if (session.role === 'owner' && session.ownerVersion !== ownerVersion()) return null;
   if (session.userId) {
-    let user = null;
-    try {
-      user = await storage.getUser(session.userId);
-    } catch {
-      user = null;
-    }
-
-    if (!user) {
-      const now = Date.now();
-      const cookieAgeLimit = (session.issuedAt || 0) + 30 * 86400000;
-      if (cookieAgeLimit > now) {
-        const expires = session.expires || 0;
-        const trialExpired = Boolean(session.trialExpired || (expires > 0 && expires <= now));
-        const isOwner = session.role === 'owner';
-        const isVip = session.role === 'vip_user' || session.role === 'vip';
-        const isTrial = !isOwner && !isVip && !trialExpired;
-        const daysRemaining = isOwner
-          ? 365
-          : (isVip ? Math.max(0, Math.ceil((expires - now) / 86400000)) : (isTrial ? Math.max(1, Math.ceil((expires - now) / 86400000)) : 0));
-        return {
-          ...session,
-          role: isOwner ? 'owner' : (isVip ? 'vip_user' : (trialExpired ? 'expired_user' : 'trial_user')),
-          plan: isOwner ? 'Owner' : (isVip ? 'VIP' : (trialExpired ? 'Prueba Vencida' : 'Prueba 3 Días')),
-          isTrial,
-          trialExpired,
-          daysRemaining
-        };
-      }
-      return null;
-    }
-
-    const now = Date.now();
-    if (user.role === 'owner') {
-      return { ...session, role: 'owner', plan: 'Owner', isAdmin: true, ownerVersion: ownerVersion() };
-    }
-
-    if (user.vipCode) {
-      let code = null;
-      try { code = await storage.getCode(user.vipCode); } catch {}
-      if (code && !code.revoked && code.expiresAt && Date.parse(code.expiresAt) > now) {
-        const expires = Date.parse(code.expiresAt);
-        return {
-          ...session,
-          role: 'vip_user',
-          plan: 'VIP',
-          code: user.vipCode,
-          expires,
-          daysRemaining: Math.ceil((expires - now) / 86400000),
-          isTrial: false,
-          trialExpired: false
-        };
-      }
-    }
-
-    const trialEnd = Date.parse(user.trialExpiresAt);
-    if (trialEnd > now) {
-      return {
-        ...session,
-        role: 'trial_user',
-        plan: 'Prueba 3 Días',
-        expires: trialEnd,
-        daysRemaining: Math.max(1, Math.ceil((trialEnd - now) / 86400000)),
-        isTrial: true,
-        trialExpired: false
-      };
-    } else {
-      return {
-        ...session,
-        role: 'expired_user',
-        plan: 'Prueba Vencida',
-        expires: trialEnd,
-        daysRemaining: 0,
-        isTrial: false,
-        trialExpired: true
-      };
-    }
+    const user = await storage.getUser(session.userId);
+    if (!user) return null;
+    if (session.role === 'owner' && !isOwnerUser(user)) return null;
+    const code = user.vipCode ? await storage.getCode(user.vipCode) : null;
+    return { ...session, ...entitlement(user, code), ownerVersion: isOwnerUser(user) ? ownerVersion() : undefined };
   }
-
-  let code = null;
-  try { code = await storage.getCode(session.code); } catch {}
-  if (code && !code.revoked && code.isClaimed && Date.parse(code.expiresAt) > Date.now()) {
-    return session;
-  }
-  if (!code && session.code && session.expires && session.expires > Date.now()) {
-    return session;
-  }
+  // Legacy code-only VIP cookies never grant account-bound access.
+  if (!ownerGoogleEmail() && session.role === 'owner') return session;
   return null;
 }
+
 export const sessionIdentifier = session => session.sessionId || sign(JSON.stringify(session));
-export function ownerVersion() { return createHmac('sha256', secret()).update((CONFIG.MASTER_ADMIN_CODE || '').trim().toUpperCase()).digest('hex'); }
+export function ownerVersion() { return createHmac('sha256', secret()).update(ownerGoogleEmail() || (CONFIG.MASTER_ADMIN_CODE || '').trim().toUpperCase()).digest('hex'); }
 export async function requireSession(req, res, next) {
   try {
     req.session = await currentSession(req);

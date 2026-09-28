@@ -3,6 +3,8 @@ import fs from 'node:fs/promises';
 process.env.NODE_ENV = 'test';
 process.env.UPSTASH_REDIS_REST_URL = '';
 process.env.UPSTASH_REDIS_REST_TOKEN = '';
+process.env.KV_REST_API_URL = '';
+process.env.KV_REST_API_TOKEN = '';
 const { getFootballFeed, enrichMatchWithRealData } = await import('../server/services/footballDataService.js');
 const { readHistoricalSummary } = await import('../server/services/verifiedStats.js');
 const feed = await getFootballFeed();

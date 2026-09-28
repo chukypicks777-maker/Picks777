@@ -535,9 +535,9 @@ export default function MatchDetailModal({
                 </span>
                 <span className="text-base sm:text-2xl font-black font-mono text-white tracking-wider">
                   {m.status === 'LIVE' 
-                    ? `${m.liveScore?.home ?? m.finalScore?.home ?? 0} - ${m.liveScore?.away ?? m.finalScore?.away ?? 0}`
+                    ? `${m.liveScore?.home ?? m.finalScore?.home ?? 'N/D'} - ${m.liveScore?.away ?? m.finalScore?.away ?? 'N/D'}`
                     : m.status === 'FINISHED'
-                    ? `${m.finalScore?.home ?? m.liveScore?.home ?? 0} - ${m.finalScore?.away ?? m.liveScore?.away ?? 0}`
+                    ? `${m.finalScore?.home ?? m.liveScore?.home ?? 'N/D'} - ${m.finalScore?.away ?? m.liveScore?.away ?? 'N/D'}`
                     : getCoherentPredictedScore(combinedMatch, aiReport?.predictedScore || m.model?.predictedScore || m.aiPick?.predictedScore)}
                 </span>
               </div>
@@ -701,7 +701,7 @@ export default function MatchDetailModal({
                   </h5>
                   {aiReport?.aiAvailable && (
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                      VERIFICADO 100%
+                      ANÁLISIS DISPONIBLE
                     </span>
                   )}
                 </div>

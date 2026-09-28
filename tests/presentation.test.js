@@ -89,7 +89,7 @@ test('OverUnderGroupedSection locks LADO OVERS with VIP overlay when isVip=false
   assert.doesNotMatch(unlockedHtml, /blur-\[5px\]/);
 });
 
-test('OverUnderGroupedSection reconstructs full goal ladder and cards without N/D when feed only has over25', () => {
+test('OverUnderGroupedSection reconstructs goal ladder while preserving missing card data when feed only has over25', () => {
   const sparseMatch = {
     status: 'SCHEDULED',
     probabilities: { over25: 59, under25: 41 },
@@ -110,7 +110,7 @@ test('OverUnderGroupedSection reconstructs full goal ladder and cards without N/
   assert.match(html, /\+1\.5 Goles[\s\S]*?(\d+)%/);
   assert.match(html, /\+2\.5 Goles[\s\S]*?59%/);
   assert.match(html, /\+3\.5 Goles[\s\S]*?(\d+)%/);
-  assert.match(html, /\+3\.5 Tarjetas[\s\S]*?(\d+)%/);
+  assert.match(html, /Sin muestra verificada suficiente/);
 
   // Extract percentages to verify monotonicity
   const p05 = Number(html.match(/\+0\.5 Goles[\s\S]*?(\d+)%/)[1]);

@@ -1,11 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { positiveInteger } from '../config.js';
+import { positiveInteger, redisConfiguration } from '../config.js';
 
 // Shared REST Redis cache; never used as an authorization cache.
 const memory = new Map();
 const pending = new Map();
-export const redisConfigured = () => Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+export const redisConfigured = () => redisConfiguration().configured;
 
 const defaultAiCacheFile = () => (process.env.VERCEL ? path.join('/tmp', 'ai-cache.json') : path.resolve('server/data/ai-cache.json'));
 
@@ -52,10 +52,12 @@ async function saveAiFileCache(key, envelope) {
 }
 
 export async function redisCommand(...command) {
-  if (!redisConfigured()) throw new Error('Configura UPSTASH_REDIS_REST_URL y UPSTASH_REDIS_REST_TOKEN para almacenamiento persistente.');
-  const response = await fetch(process.env.UPSTASH_REDIS_REST_URL, {
+  const redis = redisConfiguration();
+  if (!redis.configured) throw new Error('Configura Redis REST con las variables UPSTASH_REDIS_REST_* o KV_REST_API_*.');
+  const response = await fetch(redis.url, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${redis.token}`, 'Content-Type': 'application/json' },
+    redirect: 'error',
     body: JSON.stringify(command),
     signal: AbortSignal.timeout(positiveInteger('REDIS_TIMEOUT_MS', 2000, 3000))
   });

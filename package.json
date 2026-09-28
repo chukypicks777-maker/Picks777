@@ -17,7 +17,8 @@
     "android:debug": "powershell -ExecutionPolicy Bypass -File scripts/build-android.ps1 -Variant Debug",
     "android:bundle": "powershell -ExecutionPolicy Bypass -File scripts/build-android.ps1 -Variant Release",
     "test:browser": "playwright test",
-    "test:offline": "node scripts/test-offline.mjs"
+    "test:offline": "node scripts/test-offline.mjs",
+    "android:preview": "powershell -ExecutionPolicy Bypass -File scripts/build-android.ps1 -Variant Preview"
   },
   "dependencies": {
     "axios": "^1.20.0",

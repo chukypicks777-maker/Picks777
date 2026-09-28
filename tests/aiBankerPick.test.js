@@ -16,6 +16,9 @@ test('AI cannot inject made-up probabilities, scores, tactics, odds, HTML or una
   let response={factIds:['goals','score'],topPick:{probability:500},predictedScore:'99 - 99',tacticalAnalysis:'<script>bad</script>'};
   globalThis.fetch=async()=>new Response(JSON.stringify({choices:[{message:{content:JSON.stringify(response)}}]}));
   const good=await generateAiMatchReport(match,{forceRefresh:true});assert.equal(good.aiAvailable,true);assert.equal(good.predictedScore,model.predictedScore);assert.equal(good.topPick.odds,null);assert.ok(good.topPick.probability<=100);assert.ok(!JSON.stringify(good).includes('<script>'));
+  response={factIds:['goals','score'],topPick:{selection:'Invented winner',probability:101,odds:999}};
+  const injected=await generateAiMatchReport(match,{forceRefresh:true});
+  assert.deepEqual(injected.topPick,good.topPick,'Valid fact IDs must not authorize invented markets, probabilities or odds');
   response={factIds:['made-up']};const bad=await generateAiMatchReport(match,{forceRefresh:true});assert.equal(bad.aiAvailable,false);assert.deepEqual(bad.probabilities,model.probabilities);
   response={factIds:[{text:'injected'}]};assert.equal((await generateAiMatchReport(match,{forceRefresh:true})).aiAvailable,false);
  }finally{globalThis.fetch=oldFetch;storage.file=oldFile;await rm(dir,{recursive:true,force:true});}

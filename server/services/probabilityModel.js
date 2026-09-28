@@ -79,10 +79,24 @@ export function solvePoissonLambdaFromUnder25(probUnder25Decimal) {
 }
 
 export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}, odds = {}) {
-  const parseNum = val => {
-    const n = typeof val === 'number' ? val : parseFloat(val);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  };
+  // All probabilities in this contract are percentages, including values below 1.
+  const parseNum = val => typeof val === 'number' && Number.isFinite(val) && val >= 0 ? val : null;
+  rawProbs = Object.fromEntries(Object.entries(rawProbs).map(([key, value]) => [key, parseNum(value) !== null && value <= 100 ? value : null]));
+  odds = Object.fromEntries(Object.entries(odds).map(([key, value]) => [key, typeof value === 'number' && Number.isFinite(value) && value > 1 ? value : null]));
+  for (const [yes, no] of [['over25', 'under25'], ['bttsYes', 'bttsNo']]) {
+    if (rawProbs[yes] != null) rawProbs[no] = 100 - rawProbs[yes];
+    else if (rawProbs[no] != null) rawProbs[yes] = 100 - rawProbs[no];
+  }
+  const winKeys = ['homeWin', 'draw', 'awayWin'];
+  if (winKeys.every(key => rawProbs[key] != null)) {
+    const total = winKeys.reduce((sum, key) => sum + rawProbs[key], 0);
+    for (const key of winKeys) rawProbs[key] = total > 0 ? rawProbs[key] / total * 100 : null;
+  } else if (winKeys.every(key => odds[key])) {
+    const total = winKeys.reduce((sum, key) => sum + 1 / odds[key], 0);
+    for (const key of winKeys) rawProbs[key] = 100 / odds[key] / total;
+  } else {
+    for (const key of winKeys) rawProbs[key] = null;
+  }
 
   let probOver25 = parseNum(rawProbs?.over25);
   if (probOver25 === null && odds?.over25 && odds?.under25) {
@@ -98,14 +112,12 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
   if (pA === null && odds?.awayWin) {
     pA = (1 / odds.awayWin) * 100;
   }
-  if (pH !== null && pH <= 1) pH *= 100;
-  if (pA !== null && pA <= 1) pA *= 100;
 
   const homeGP = parseNum(home?.gamesPlayed);
   const awayGP = parseNum(away?.gamesPlayed);
   const homeGF = parseNum(home?.goalsFor);
   const awayGF = parseNum(away?.goalsFor);
-  const hasStandings = homeGP !== null && homeGP > 0 && awayGP !== null && awayGP > 0 && homeGF !== null && awayGF !== null;
+  const hasStandings = homeGP !== null && homeGP >= 5 && awayGP !== null && awayGP >= 5 && homeGF !== null && awayGF !== null;
 
   // If there are no probabilities, no odds, and no match sample, return null
   if (probOver25 === null && pH === null && pA === null && !hasStandings) {
@@ -118,7 +130,7 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
   } else if (hasStandings) {
     totalLambda = Math.max(1.2, Math.min(6.5, (homeGF / homeGP) + (awayGF / awayGP)));
   } else {
-    totalLambda = 2.70;
+    return null;
   }
 
   let weightHome;
@@ -180,7 +192,7 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
     bttsYes: rawProbs.bttsYes ?? ((sums.bttsYes / mass) * 100),
     bttsNo: rawProbs.bttsNo ?? (100 - (rawProbs.bttsYes ?? ((sums.bttsYes / mass) * 100))),
     cornerOver95: rawProbs.cornerOver95 ?? null,
-    confidence: rawProbs.confidence ?? null
+    confidence: null
   };
 
   scores.sort((a, b) => b.probability - a.probability);
@@ -190,10 +202,10 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
     probabilities,
     predictedScore: topScore.score,
     scoreDistribution: scores.slice(0, 9).map(s => ({ ...s, probability: (s.probability / mass) * 100 })),
-    method: 'Poisson calibrado sobre probabilidades implícitas y dinámica de goles',
+    method: 'Poisson aproximado a partir de cuotas o goles observados',
     sampleSize: { home: homeGP ?? home?.gamesPlayed ?? null, away: awayGP ?? away?.gamesPlayed ?? null },
     expectedGoals: { home: Number(lambda.toFixed(2)), away: Number(mu.toFixed(2)) },
-    limitations: 'Proyección matemática basada en la distribución de Poisson y cuotas oficiales verificadas.'
+    limitations: 'Modelo sin calibración histórica de aciertos. Las cuotas reflejan el mercado; el reparto de goles supone independencia. No garantiza resultados.'
   };
 }
 
@@ -210,12 +222,13 @@ export function buildPick(match) {
   return {
     market: banker.market || 'Doble Oportunidad',
     selection: banker.selection,
-    odds,
+    odds: banker.odds ?? null,
+    estimatedOdds: banker.odds == null ? odds : null,
     probability: Math.round(banker.probability),
     type: '💎 Pick Banquero Principal',
     confidence: `${Math.round(banker.probability)}%`,
     settlement: match.status === 'LIVE' ? 'IN_PLAY' : match.status === 'FINISHED' ? 'SETTLED' : 'PENDING',
     predictedScore: match.model?.predictedScore || match.probabilities?.predictedScore || null,
-    summaryRationale: banker.rationale || `Selección cuantitativa de máxima seguridad con ${Math.round(banker.probability)}% de probabilidad estadística.`
+    summaryRationale: banker.rationale || `Estimación del modelo, sin garantía, con ${Math.round(banker.probability)}% de probabilidad estadística.`
   };
 }

@@ -5,7 +5,8 @@
   "outputDirectory": "dist",
   "functions": {
     "api/index.js": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "artifacts/android/{picks777-preview.apk,release.json}"
     }
   },
   "rewrites": [

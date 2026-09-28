@@ -2,7 +2,7 @@
   "name": "777 Picks",
   "applicationId": "app.picks777.mobile",
   "origin": "https://picks777.vercel.app",
-  "versionCode": 3,
+  "versionCode": 4,
   "versionName": "1.0.5",
   "sha256CertFingerprints": [
     "D3:F9:C0:34:23:49:A4:D7:DF:8E:6C:E7:8C:42:85:10:89:99:CD:9E:88:AA:53:88:1D:73:41:D0:33:81:89:90"

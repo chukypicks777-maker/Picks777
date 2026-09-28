@@ -78,101 +78,41 @@ test('production API fails closed when security configuration is missing', async
   }
 });
 
-test('Vercel serverless mode gracefully permits session checking without 503 blocking screen', async () => {
-  const previousEnv = process.env.NODE_ENV;
-  const previousVercel = process.env.VERCEL;
-  const server = app.listen(0, '127.0.0.1');
-  await once(server, 'listening');
+test('Vercel refuses authentication and protected APIs without durable storage', async () => {
+  const previous = process.env.VERCEL;
+  process.env.VERCEL = '1';
+  const server = app.listen(0, '127.0.0.1'); await once(server, 'listening');
   try {
-    process.env.NODE_ENV = 'production';
-    process.env.VERCEL = '1';
-    const base = `http://127.0.0.1:${server.address().port}`;
-    const checkPost = await realFetch(`${base}/api/auth/check-session`, { method: 'POST' });
-    assert.equal(checkPost.status, 200);
-    const dataCheck = await checkPost.json();
-    assert.equal(dataCheck.valid, false);
-
-    const sessionGet = await realFetch(`${base}/api/auth/session`, { method: 'GET' });
-    assert.equal(sessionGet.status, 200);
-    const dataSessionGet = await sessionGet.json();
-    assert.equal(dataSessionGet.valid, false);
-
-    const sessionPost = await realFetch(`${base}/api/auth/session`, { method: 'POST' });
-    assert.equal(sessionPost.status, 200);
-    const dataSessionPost = await sessionPost.json();
-    assert.equal(dataSessionPost.valid, false);
-
-    const googleConfig = await realFetch(`${base}/api/auth/google-config`, { method: 'GET' });
-    assert.equal(googleConfig.status, 200);
+    const base = 'http://127.0.0.1:' + server.address().port;
+    for (const path of ['/api/auth/session', '/api/auth/google-config', '/api/admin/codes', '/api/health']) {
+      const response = await realFetch(base + path);
+      assert.equal(response.status, 503);
+      assert.equal(response.headers.get('set-cookie'), null);
+    }
   } finally {
-    process.env.NODE_ENV = previousEnv;
-    if (previousVercel === undefined) delete process.env.VERCEL;
-    else process.env.VERCEL = previousVercel;
+    if (previous === undefined) delete process.env.VERCEL; else process.env.VERCEL = previous;
     await new Promise(resolve => server.close(resolve));
   }
 });
 
-test('Vercel serverless mode preserves expired trial state and supports cold-start code redemption', async () => {
-  const previousEnv = process.env.NODE_ENV;
-  const previousVercel = process.env.VERCEL;
-  const dir = await mkdtemp(path.join(os.tmpdir(), 'picks-serverless-'));
+test('deleted identities and VIP codes cannot be resurrected from signed cookies; storage outages fail closed', async () => {
+  const { setSession, currentSession } = await import('../server/session.js');
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'picks-revoked-'));
   const originalFile = storage.file;
-  storage.file = path.join(dir, 'serverless.json');
-  const server = app.listen(0, '127.0.0.1');
-  await once(server, 'listening');
+  const originalLoad = storage.load;
+  storage.file = path.join(dir, 'accounts.json');
+  const cookie = data => { let value; setSession({ cookie: (name, token) => { value = name + '=' + token; } }, data); return { headers: { cookie: value } }; };
   try {
-    process.env.NODE_ENV = 'production';
-    process.env.VERCEL = '1';
-    const base = `http://127.0.0.1:${server.address().port}`;
-
-    // 1. Simulate an expired trial cookie
-    const { setSession } = await import('../server/session.js');
-    let simulatedCookie = '';
-    const mockRes = {
-      cookie(name, val) {
-        simulatedCookie = `${name}=${val}`;
-      }
-    };
-    setSession(mockRes, {
-      userId: 'test-expired-user-id',
-      email: 'expired@example.com',
-      name: 'Expired User',
-      role: 'trial_user',
-      expires: Date.now() - 10000,
-      trialExpired: true,
-      issuedAt: Date.now() - 86400000
-    });
-
-    // Storage does NOT contain test-expired-user-id (simulating a cold start)
-    const checkRes = await realFetch(`${base}/api/auth/session`, {
-      method: 'POST',
-      headers: { cookie: simulatedCookie }
-    });
-    assert.equal(checkRes.status, 200);
-    const checkData = await checkRes.json();
-    assert.equal(checkData.success, true);
-    assert.equal(checkData.trialExpired, true);
-    assert.equal(checkData.valid, false);
-    assert.equal(checkData.role, 'expired_user');
-
-    // 2. User can redeem master code on cold-start even when missing from storage
-    const redeemRes = await realFetch(`${base}/api/auth/redeem-code`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', cookie: simulatedCookie },
-      body: JSON.stringify({ code: process.env.MASTER_ADMIN_CODE })
-    });
-    assert.equal(redeemRes.status, 200);
-    const redeemData = await redeemRes.json();
-    assert.equal(redeemData.success, true);
-    assert.equal(redeemData.role, 'owner');
-    assert.equal(redeemData.isAdmin, true);
+    for (const data of [
+      { userId: 'deleted-user', role: 'vip_user' },
+      { code: 'DELETED-CODE', role: 'vip_user' },
+      { userId: 'deleted-owner', role: 'owner', ownerVersion: (await import('../server/session.js')).ownerVersion() }
+    ]) assert.equal(await currentSession(cookie({ ...data, expires: Date.now() + 3600000 })), null);
+    const request = cookie({ role: 'owner', expires: Date.now() + 3600000 });
+    storage.load = async () => { throw new Error('Storage offline'); };
+    await assert.rejects(currentSession(request), /Storage offline/);
   } finally {
-    process.env.NODE_ENV = previousEnv;
-    if (previousVercel === undefined) delete process.env.VERCEL;
-    else process.env.VERCEL = previousVercel;
-    await new Promise(resolve => server.close(resolve));
-    storage.file = originalFile;
+    storage.load = originalLoad; storage.file = originalFile;
     await rm(dir, { recursive: true, force: true });
   }
 });
-

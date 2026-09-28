@@ -108,8 +108,8 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
     const invH = odds.homeWin ? 1 / odds.homeWin : 0;
     const invD = odds.draw ? 1 / odds.draw : 0;
     const invA = odds.awayWin ? 1 / odds.awayWin : 0;
-    const tot = invH + invD + invA;
-    const over25P = odds.over25 && odds.under25 ? ((1 / odds.over25) / (1 / odds.over25 + 1 / odds.under25)) * 100 : (odds.over25 ? (100 / odds.over25) : null);
+    const tot = invH > 0 && invD > 0 && invA > 0 ? invH + invD + invA : 0;
+    const over25P = odds.over25 && odds.under25 ? ((1 / odds.over25) / (1 / odds.over25 + 1 / odds.under25)) * 100 : null;
     const rawProbs = {
       homeWin: tot > 0 ? (invH / tot) * 100 : null,
       draw: tot > 0 ? (invD / tot) * 100 : null,

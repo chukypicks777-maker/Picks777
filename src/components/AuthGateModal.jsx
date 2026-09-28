@@ -54,6 +54,13 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
         sounds.playSuccess();
         setCurrentUser(data.user);
         setPendingAuth(data);
+        if (data.valid && (data.isAdmin || data.role === 'vip_user' || data.role === 'vip')) {
+          const saved = await confirmedSession();
+          if (!saved.valid) throw new Error('El acceso venció. Comprueba tu membresía.');
+          onAuthenticated?.(saved);
+          onClose?.();
+          return;
+        }
         if (data.trialExpired) {
           setStep('code');
           setError('Tu período de prueba de 3 días ha vencido. Ingresa un código o clave VIP para reactivar tu acceso.');

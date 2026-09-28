@@ -16,7 +16,7 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
     <div className="grid grid-cols-3 gap-2 text-slate-300 text-center">
       <p>Goles a favor<br/><strong>{stats.avgGF != null ? `${displayNumber(stats.avgGF)} / p` : (stats.goalsFor != null && stats.gamesPlayed ? `${displayNumber(stats.goalsFor / stats.gamesPlayed)} / p` : 'N/D')}</strong></p>
       <p>Goles en contra<br/><strong>{stats.avgGC != null ? `${displayNumber(stats.avgGC)} / p` : (stats.goalsAgainst != null && stats.gamesPlayed ? `${displayNumber(stats.goalsAgainst / stats.gamesPlayed)} / p` : 'N/D')}</strong></p>
-      <p>Partidos<br/><strong>{stats.gamesPlayed ?? (stats.form?.length > 0 ? stats.form.length : 'N/D')}</strong></p>
+      <p>Partidos<br/><strong>{stats.gamesPlayed ?? 'N/D'}</strong></p>
     </div>
     {sections.map(section => <section key={section.title} className="bg-[#121926] border border-white/10 rounded-xl p-3 space-y-2">
       <h5 className="text-sky-300 font-bold">{section.title}</h5>
@@ -31,8 +31,8 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
     </section>)}
     <footer className="text-slate-400 space-y-2">
       <p>Córners: {stats.avgCorners != null ? `${displayNumber(stats.avgCorners)} / p` : 'N/D'} · Amarillas: {stats.cards != null ? `${displayNumber(stats.cards)} / p` : 'N/D'} · Faltas: {stats.fouls != null ? `${displayNumber(stats.fouls)} / p` : 'N/D'}</p>
-      <p>{stats.statsSource || 'Estadísticas de detalle verificadas'} · Muestra córners: {stats.sampleSizes?.corners ?? (stats.avgCorners != null ? 5 : 0)}; tarjetas: {stats.sampleSizes?.cards ?? (stats.cards != null ? 5 : 0)}.</p>
-      <p>Las probabilidades son estimaciones Poisson sobre métricas oficiales verificadas.</p>
+      <p>{stats.statsSource || 'Estadísticas de detalle verificadas'} · Muestra córners: {stats.sampleSizes?.corners ?? 'N/D'}; tarjetas: {stats.sampleSizes?.cards ?? 'N/D'}.</p>
+      <p>Las probabilidades son estimaciones Poisson; su precisión no está calibrada con resultados futuros.</p>
     </footer>
   </article>;
 }

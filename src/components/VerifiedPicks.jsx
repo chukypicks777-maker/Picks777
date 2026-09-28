@@ -24,8 +24,8 @@ export default function VerifiedPicks({
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-xs text-slate-400 font-sans">
           {isClosed
-            ? 'Selecciones previas al partido calculadas antes del inicio (mercado cerrado para apuestas previas).'
-            : 'Probabilidades estimadas por modelo cuantitativo. Puedes añadir las selecciones directamente a tu parlay.'}
+            ? 'Proyecciones informativas; no constituyen un registro de pronósticos guardados antes del inicio ni un modelo en vivo.'
+            : 'Probabilidades estimadas, sin tasa de aciertos validada ni garantía. Las cuotas teóricas no son ofertas de una casa de apuestas.'}
         </p>
         {parlayLegs?.length > 0 && (
           <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center space-x-1 shrink-0">

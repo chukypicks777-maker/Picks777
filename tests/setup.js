@@ -1,5 +1,9 @@
 process.env.NODE_ENV = 'test';
+process.env.OWNER_GOOGLE_EMAIL = '';
 process.env.CUSTOM_AI_API_KEY = '';
 process.env.GEMINI_API_KEY = '';
 process.env.UPSTASH_REDIS_REST_URL = '';
 process.env.UPSTASH_REDIS_REST_TOKEN = '';
+process.env.KV_REST_API_URL = '';
+process.env.KV_REST_API_TOKEN = '';
+process.env.AI_ALLOWED_HOSTS = 'other.example,one.example,two.example,agentrouter.other.example,vendor.example,my-custom-proxy.com';

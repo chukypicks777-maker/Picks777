@@ -26,7 +26,7 @@ test('Version numbers are consistent across package.json, package-lock.json, App
   assert.ok(swJs.includes('picks-offline-v1.0.5'), 'public/sw.js must specify CACHE picks-offline-v1.0.5');
   assert.ok(swJs.includes('self.skipWaiting()'), 'public/sw.js must include skipWaiting for instant client updates');
   assert.equal(mobileConfig.versionName, '1.0.5', 'mobile.config.json versionName must be 1.0.5');
-  assert.equal(mobileConfig.versionCode, 3, 'mobile.config.json versionCode must be incremented to 3');
+  assert.equal(mobileConfig.versionCode, 4, 'mobile.config.json versionCode must be incremented to 4');
 });
 
 test('Owner retry and re-analysis bypasses rate limits, prevents 429, and handles forceRefresh without crashing', async t => {

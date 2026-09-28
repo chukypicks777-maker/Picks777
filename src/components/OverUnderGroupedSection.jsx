@@ -2,7 +2,7 @@ import React from 'react';
 import { TrendingUp, ArrowUpRight, ArrowDownRight, Lock, Crown, Sparkles } from 'lucide-react';
 import NumberCounter from './NumberCounter';
 import { percent, complement } from '../utils/probability';
-import { fillPoissonGoalLadder, calculateCornerProbabilities } from '../utils/mathProbabilities';
+import { fillPoissonGoalLadder } from '../utils/mathProbabilities';
 import { sounds } from '../utils/audioEffects';
 
 export default function OverUnderGroupedSection({ match, homeStats, awayStats, diff, isVip = false, onUnlockVip = null }) {
@@ -14,20 +14,15 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
   const over25 = percent(probs.over25), under25 = complement(over25);
   const over35 = percent(probs.over35), under35 = complement(over35);
   const over45 = percent(probs.over45), under45 = complement(over45);
-  const homeCornersOver5 = homeStats?.cornerOver55 ?? 48;
+  const homeCornersOver5 = homeStats?.cornerOver55 ?? null;
   const homeCornersUnder5 = complement(homeCornersOver5);
-  const awayCornersOver5 = awayStats?.cornerOver55 ?? 40;
+  const awayCornersOver5 = awayStats?.cornerOver55 ?? null;
   const awayCornersUnder5 = complement(awayCornersOver5);
-  const matchCornersOver5 = diff.matchCornersProbs?.over55 ?? (homeCornersOver5 != null && awayCornersOver5 != null ? Math.round(Math.min(95, (homeCornersOver5 + awayCornersOver5) * 0.95)) : 82);
+  const matchCornersOver5 = diff.matchCornersProbs?.over55 ?? null;
   const matchCornersUnder5 = complement(matchCornersOver5);
-  const matchCornersOver85 = diff.matchCornersProbs?.over85 ?? (homeCornersOver5 != null && awayCornersOver5 != null ? Math.round((homeCornersOver5 + awayCornersOver5) * 0.62) : 54);
+  const matchCornersOver85 = diff.matchCornersProbs?.over85 ?? null;
   const matchCornersUnder85 = complement(matchCornersOver85);
-
-  const overCards = diff.matchCardsProbs?.over35 ?? (
-    (homeStats?.cards != null || awayStats?.cards != null)
-      ? calculateCornerProbabilities((homeStats?.cards ?? 1.8) + (awayStats?.cards ?? 2.0)).over35
-      : 50
-  );
+  const overCards = diff.matchCardsProbs?.over35 ?? null;
   const underCards = complement(overCards);
 
   const lines = [
@@ -37,7 +32,7 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
       underLabel: '-3.5 Tarjetas',
       overProb: overCards,
       underProb: underCards,
-      note: diff.matchCardsProbs?.over35 ? 'Amarillas registradas; no puntos por tarjetas' : 'Estimación de disciplina oficial'
+      note: diff.matchCardsProbs?.over35 ? 'Amarillas registradas; no puntos por tarjetas' : 'Sin muestra verificada suficiente'
     },
     {
       market: 'Línea de 0.5 Goles',

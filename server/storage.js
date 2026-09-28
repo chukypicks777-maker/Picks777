@@ -2,7 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { redisConfigured, redisCommand } from './services/dataCache.js';
-import { CONFIG } from './config.js';
+import { CONFIG, ownerGoogleEmail } from './config.js';
+import { entitlement } from './entitlements.js';
 import { SOCIAL_LINKS } from '../src/constants/socials.js';
 import { validateSocialLinks } from './socialSettings.js';
 const KEY = 'picks:v2:access';
@@ -51,7 +52,7 @@ export class StorageManager {
     this.queue = operation.catch(() => {});
     return operation;
   }
-  async getCodes() { return (await this.load()).codes; }
+  async getCodes() { return (await this.load()).codes.filter(c => !c.deletedAt); }
   async getCode(code) { return (await this.getCodes()).find(c => c.code === clean(code)); }
   entry(code, durationDays, label) {
     if (!/^[A-Z0-9-]{6,64}$/.test(clean(code))) throw new Error('Usa de 6 a 64 letras, números o guiones.');
@@ -82,28 +83,16 @@ export class StorageManager {
       db.codes.unshift(...created); return created;
     });
   }
-  async claimCode(code, username = '', deviceId = '') {
+  async claimCode() {
+    return { success: false, message: 'Inicia sesión con Google para vincular el código a tu cuenta.' };
+  }
+  async deleteCode(code) {
     return this.transaction(db => {
       const item = db.codes.find(c => c.code === clean(code));
-      if (!item) return { success: false, message: 'Código inválido.' };
-      const now = Date.now();
-      if (item.revoked || (item.expiresAt && Date.parse(item.expiresAt) <= now)) return { success: false, expired: true, message: 'Código vencido o revocado.' };
-      const alreadyClaimed = item.isClaimed;
-      if (!alreadyClaimed) {
-        item.isClaimed = true;
-        item.claimedAt = new Date(now).toISOString();
-        item.expiresAt = new Date(now + item.durationDays * 86400000).toISOString();
-        item.claimedBy = String(username).trim().slice(0, 80) || 'Usuario VIP';
-      }
-      item.devices ||= [];
-      if (deviceId && !item.devices.includes(deviceId)) {
-        if (item.devices.length >= 100) return { success: false, message: 'Límite de dispositivos alcanzado para este código.' };
-        item.devices.push(deviceId);
-      }
-      return { ...item, devices: undefined, deviceCount: item.devices.length, success: true, alreadyClaimed, daysRemaining: Math.ceil((Date.parse(item.expiresAt) - now) / 86400000) };
+      if (item) { item.revoked = true; item.deletedAt = new Date().toISOString(); }
+      return true;
     });
   }
-  async deleteCode(code) { return this.transaction(db => { db.codes = db.codes.filter(c => c.code !== clean(code)); return true; }); }
   async revokeCode(code) { return this.transaction(db => { const c = db.codes.find(c => c.code === clean(code)); if (c) { c.revoked = true; c.expiresAt = new Date().toISOString(); } return Boolean(c); }); }
   async getUsers() { return (await this.load()).users || []; }
   async deleteUserData(userId) {
@@ -113,6 +102,7 @@ export class StorageManager {
       db.users = db.users.filter(item => item.id !== userId);
       for (const code of db.codes || []) {
         if ([user.email, user.name].includes(code.claimedBy)) delete code.claimedBy;
+        if (code.claimedUserId === userId) { delete code.claimedUserId; code.revoked = true; }
         code.devices = (code.devices || []).filter(id => !(user.devices || []).includes(id));
       }
     });
@@ -169,119 +159,48 @@ export class StorageManager {
         db.users.unshift(user);
       }
 
-      let isVip = false;
-      const isOwner = user.role === 'owner' || user.vipCode === 'MASTER';
-      if (isOwner) {
-        user.role = 'owner';
-        user.vipCode = 'MASTER';
-        user.vipExpiresAt = new Date(now + 365 * 86400000).toISOString();
-      } else if (user.vipCode) {
-        const codeItem = db.codes.find(c => c.code === clean(user.vipCode));
-        if (codeItem && !codeItem.revoked && codeItem.expiresAt && Date.parse(codeItem.expiresAt) > now) {
-          isVip = true;
-          user.vipExpiresAt = codeItem.expiresAt;
-        } else {
-          user.vipCode = null;
-        }
-      }
-
-      const trialEnd = Date.parse(user.trialExpiresAt);
-      const isTrial = !isOwner && !isVip && trialEnd > now;
-      const trialExpired = !isOwner && !isVip && trialEnd <= now;
-      const daysRemaining = isOwner
-        ? 365
-        : (isVip
-          ? Math.ceil((Date.parse(user.vipExpiresAt) - now) / 86400000)
-          : (isTrial ? Math.max(1, Math.ceil((trialEnd - now) / 86400000)) : 0));
-
-      const effectiveRole = isOwner ? 'owner' : (isVip ? 'vip' : (trialExpired ? 'expired' : 'trial'));
-      user.role = effectiveRole;
-
-      return {
-        ...user,
-        isVip,
-        isTrial,
-        trialExpired,
-        daysRemaining,
-        expiresAt: isOwner
-          ? user.vipExpiresAt
-          : (isVip ? user.vipExpiresAt : user.trialExpiresAt)
-      };
+      const codeItem = db.codes.find(c => c.code === clean(user.vipCode));
+      // Bind only legacy records already tied to this verified account by exact email.
+      if (codeItem?.isClaimed && !codeItem.claimedUserId && codeItem.claimedBy?.toLowerCase() === cleanEmail &&
+          db.users.filter(u => u.vipCode === codeItem.code).length === 1) codeItem.claimedUserId = user.id;
+      if (codeItem?.claimedUserId === user.id) user.hasRedeemedVip = true;
+      const access = entitlement(user, codeItem, now);
+      user.role = access.role;
+      user.vipExpiresAt = access.isVip ? codeItem.expiresAt : user.vipExpiresAt;
+      return { ...user, ...access, expiresAt: new Date(access.expires).toISOString() };
     });
   }
-  async redeemUserCode({ userId, code, deviceId, userFallback }) {
+  async redeemUserCode({ userId, code, deviceId }) {
     const cleanCode = clean(code);
     if (!cleanCode) return { success: false, message: 'Ingresa una clave válida.' };
     return this.transaction(db => {
-      db.users ||= [];
-      let user = db.users.find(u => u.id === userId || (u.email && u.email.toLowerCase() === String(userId).toLowerCase()));
-      if (!user && userFallback) {
-        user = {
-          id: userFallback.id || userId,
-          googleId: userFallback.googleId,
-          email: (userFallback.email || '').toLowerCase(),
-          name: userFallback.name || 'Usuario',
-          picture: userFallback.picture,
-          role: 'trial',
-          isTrial: true,
-          trialExpired: false,
-          trialExpiresAt: new Date(Date.now() + 3 * 86400000).toISOString(),
-          devices: deviceId ? [deviceId] : []
-        };
-        db.users.push(user);
-      }
-      if (!user) return { success: false, message: 'Usuario no encontrado.' };
-
+      const user = (db.users || []).find(u => u.id === userId);
+      if (!user?.googleId) return { success: false, message: 'Inicia sesión con Google para activar el código.' };
       const now = Date.now();
-      const masterCode = (CONFIG.MASTER_ADMIN_CODE || process.env.MASTER_ADMIN_CODE || 'DeportePicks').trim().toUpperCase();
-      if (masterCode && cleanCode === masterCode) {
-        user.role = 'owner';
-        user.vipCode = 'MASTER';
-        user.vipExpiresAt = new Date(now + 365 * 86400000).toISOString();
-        return {
-          success: true,
-          isAdmin: true,
-          role: 'owner',
-          plan: 'Owner',
-          expiresAt: user.vipExpiresAt,
-          daysRemaining: 365,
-          message: '👑 Acceso Master Owner activado con éxito.'
-        };
+      const master = (CONFIG.MASTER_ADMIN_CODE || '').trim().toUpperCase();
+      if (!ownerGoogleEmail() && master && cleanCode === master) {
+        user.role = 'owner'; user.vipCode = 'MASTER';
+        return { success: true, isAdmin: true, role: 'owner', plan: 'Owner', expiresAt: new Date(now + 8 * 3600000).toISOString(), daysRemaining: 365, message: 'Acceso Owner activado.' };
       }
-
-      let item = db.codes.find(c => c.code === cleanCode);
-      if (!item) return { success: false, message: 'Código o clave VIP inválida.' };
-      if (item.revoked || (item.expiresAt && Date.parse(item.expiresAt) <= now)) {
-        return { success: false, expired: true, message: 'Este código ha vencido o ha sido revocado.' };
-      }
-
+      const item = db.codes.find(c => c.code === cleanCode);
+      if (!item || item.deletedAt) return { success: false, message: 'Código inválido.' };
+      if (item.isClaimed && item.claimedUserId !== user.id) return { success: false, message: 'Este código ya fue utilizado y no se puede activar en otra cuenta.' };
+      if (item.revoked || (item.expiresAt && Date.parse(item.expiresAt) <= now)) return { success: false, expired: true, message: 'Este código ha vencido o ha sido revocado.' };
+      const current = db.codes.find(c => c.code === user.vipCode);
+      if (current && current.code !== item.code && entitlement(user, current, now).isVip) return { success: false, message: 'Tu cuenta ya tiene un código VIP activo. Espera a su vencimiento para activar otro.' };
       if (!item.isClaimed) {
         item.isClaimed = true;
+        item.claimedUserId = user.id;
+        item.claimedBy = user.email;
         item.claimedAt = new Date(now).toISOString();
         item.expiresAt = new Date(now + item.durationDays * 86400000).toISOString();
-        item.claimedBy = user.email || user.name || 'Usuario VIP';
       }
       item.devices ||= [];
-      if (deviceId && !item.devices.includes(deviceId)) {
-        if (item.devices.length >= 100) return { success: false, message: 'Límite de dispositivos alcanzado para este código.' };
-        item.devices.push(deviceId);
-      }
-
-      user.vipCode = item.code;
-      user.vipExpiresAt = item.expiresAt;
-      user.role = 'vip';
-
-      const daysRemaining = Math.ceil((Date.parse(item.expiresAt) - now) / 86400000);
-      return {
-        success: true,
-        isAdmin: false,
-        role: 'vip',
-        plan: 'VIP',
-        code: item.code,
-        expiresAt: item.expiresAt,
-        daysRemaining,
-        message: `✅ ¡Membresía VIP activada por ${item.durationDays} días!`
-      };
+      if (deviceId && !item.devices.includes(deviceId) && item.devices.length < 100) item.devices.push(deviceId);
+      user.vipCode = item.code; user.vipExpiresAt = item.expiresAt;
+      user.hasRedeemedVip = true; user.role = 'vip_user';
+      return { success: true, isAdmin: false, role: 'vip_user', plan: 'VIP', code: item.code, expiresAt: item.expiresAt,
+        daysRemaining: Math.ceil((Date.parse(item.expiresAt) - now) / 86400000), message: 'VIP vinculado a tu cuenta hasta ' + item.expiresAt + '.' };
     });
   }
   async getAiConfig() {

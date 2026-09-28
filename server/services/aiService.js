@@ -215,7 +215,7 @@ export async function generateAiMatchReport(match, options = {}) {
   if (match.status === 'LIVE') {
     facts.push({
       id: 'liveState',
-      text: `Marcador en directo: ${homeName} ${match.liveScore?.home ?? 0} - ${match.liveScore?.away ?? 0} ${awayName}. Minuto: ${match.liveMinute || match.minute || 'En juego'}.`
+      text: `Marcador en directo: ${homeName} ${match.liveScore?.home ?? 'N/D'} - ${match.liveScore?.away ?? 'N/D'} ${awayName}. Minuto: ${match.liveMinute || match.minute || 'En juego'}.`
     });
   }
   for (const [side, team, pos, pts] of [['home', match.homeTeam, homePos, homePoints], ['away', match.awayTeam, awayPos, awayPoints]]) {
@@ -233,7 +233,7 @@ export async function generateAiMatchReport(match, options = {}) {
   }
   if (match.model) {
     facts.push({ id: 'result', text: `Estimación Poisson: ${homeName} ${fmt(p.homeWin)}%, Empate ${fmt(p.draw)}%, ${awayName} ${fmt(p.awayWin)}%.` });
-    facts.push({ id: 'expectedGoals', text: `xG Poisson proyectado: ${homeName} ${fmt(match.model.expectedGoals?.home)} xG vs ${awayName} ${fmt(match.model.expectedGoals?.away)} xG.` });
+    facts.push({ id: 'expectedGoals', text: `Media de goles Poisson (no xG observado): ${homeName} ${fmt(match.model.expectedGoals?.home)} goles vs ${awayName} ${fmt(match.model.expectedGoals?.away)} goles.` });
     facts.push({ id: 'goals', text: `Goles totales: Más de 1.5 ${fmt(p.over15)}%, Menos de 1.5 ${fmt(p.under15)}%; Más de 2.5 ${fmt(p.over25)}%, Menos de 2.5 ${fmt(p.under25)}%; Más de 3.5 ${fmt(p.over35)}%, Menos de 3.5 ${fmt(p.under35)}%. Ambos anotan: Sí ${fmt(p.bttsYes)}%, No ${fmt(p.bttsNo)}%.` });
     facts.push({ id: 'score', text: `Marcador individual más probable: ${match.model.predictedScore} (${fmt(match.model.scoreDistribution?.[0]?.probability)}%). Escenario de máxima probabilidad del modelo Poisson.` });
     facts.push({ id: 'sample', text: `Muestra de temporada: ${match.model.sampleSize?.home ?? 'N/D'} partidos (local) y ${match.model.sampleSize?.away ?? 'N/D'} partidos (visitante).` });
@@ -294,7 +294,7 @@ export async function generateAiMatchReport(match, options = {}) {
   const formText = (hForm || aForm) ? ` Rachas recientes: ${homeName} [${hForm || 'N/D'}] vs ${awayName} [${aForm || 'N/D'}].` : '';
   const xGHome = match.model?.expectedGoals?.home != null ? fmt(match.model.expectedGoals.home) : null;
   const xGAway = match.model?.expectedGoals?.away != null ? fmt(match.model.expectedGoals.away) : null;
-  const xGText = (xGHome && xGAway) ? ` xG proyectado: ${homeName} ${xGHome} xG vs ${awayName} ${xGAway} xG.` : '';
+  const xGText = (xGHome && xGAway) ? ` Media de goles Poisson: ${homeName} ${xGHome} goles vs ${awayName} ${xGAway} goles.` : '';
 
   const narrative = facts.map(f => f.text).join('\n\n');
   const baselineSections = {
@@ -304,7 +304,7 @@ export async function generateAiMatchReport(match, options = {}) {
       ? `Modelo Poisson proyecta Over 2.5 en ${fmt(p.over25)}% y Under 2.5 en ${fmt(p.under25)}%. Ambos Anotan (BTTS) en ${fmt(p.bttsYes)}% (Over 1.5 en ${fmt(p.over15)}%). Dinámica prevista: ${Number(p.over25) >= 50 ? `Partido de ritmo alto con ${homeName} y ${awayName} buscando el arco rival.` : `Encuentro cerrado y de rigor táctico donde el control defensivo predominará entre ${homeName} y ${awayName}.`}`
       : `Dinámica de goles en procesamiento según el calendario oficial de ${match.leagueName || 'la liga'}.`,
     positiveFactors: [
-      match.homeTeam?.gamesPlayed ? `${homeName}: ${match.homeTeam.goalsFor ?? 0} goles a favor en ${match.homeTeam.gamesPlayed} partidos disputados (${homePoints}).` : `Ventaja de localía para ${homeName}.`,
+      match.homeTeam?.gamesPlayed ? `${homeName}: ${match.homeTeam.goalsFor ?? 'N/D'} goles a favor en ${match.homeTeam.gamesPlayed} partidos disputados (${homePoints}).` : `Ventaja de localía para ${homeName}.`,
       (match.model || p.homeWin != null) ? `Probabilidad matemática principal: ${Number(p.homeWin) >= Number(p.awayWin) ? `${homeName} (${fmt(p.homeWin)}%)` : `${awayName} (${fmt(p.awayWin)}%)`} bajo distribución Poisson.` : 'Registro de partidos oficiales disponible.',
       picks[0] ? `Selección destacada: ${picks[0].selection} con ${picks[0].probability}% de probabilidad estadística.` : 'Equilibrio táctico en las métricas de temporada.'
     ],
@@ -313,7 +313,7 @@ export async function generateAiMatchReport(match, options = {}) {
       (match.awayTeam?.goalsFor != null && match.awayTeam.goalsFor > 0) ? `${awayName} promedia capacidad goleadora con ${match.awayTeam.goalsFor} tantos anotados (${awayPoints}).` : `Varianza intrínseca en 90 minutos para ${homeName} vs ${awayName}.`
     ],
     verdict: (match.model?.predictedScore || match.probabilities?.predictedScore)
-      ? `Marcador individual más probable: ${match.model?.predictedScore || match.probabilities?.predictedScore} (${fmt(match.model?.scoreDistribution?.[0]?.probability || 12)}%). Selección recomendada por modelo: ${picks[0]?.market || 'Doble Oportunidad'} (${picks[0]?.selection || homeName}) con ${picks[0]?.probability ? fmt(picks[0].probability) + '%' : 'respaldo probabilístico'}.`
+      ? `Marcador individual más probable: ${match.model?.predictedScore || match.probabilities?.predictedScore} (${fmt(match.model?.scoreDistribution?.[0]?.probability)}%). Selección recomendada por modelo: ${picks[0]?.market || 'Doble Oportunidad'} (${picks[0]?.selection || homeName}) con ${picks[0]?.probability ? fmt(picks[0].probability) + '%' : 'respaldo probabilístico'}.`
       : 'Evaluación prudente; se recomienda verificar alineaciones previas al pitido inicial.'
   };
 
@@ -367,7 +367,7 @@ export async function generateAiMatchReport(match, options = {}) {
     config.selectedModel = PROVIDER_PRESETS.groq?.defaultModel || 'llama-3.3-70b-versatile';
   }
   if (!config.isConfigured) return baseline;
-  const cacheKey = 'ai:grounded-v3:' + createHash('sha256').update(JSON.stringify([facts, p, config.updatedAt, config.provider, config.selectedModel])).digest('hex');
+  const cacheKey = 'ai:grounded-v4:' + createHash('sha256').update(JSON.stringify([facts, p, config.updatedAt, config.provider, config.selectedModel])).digest('hex');
   const generate = async () => {
     try {
       const promptCatalog = facts.map(f => ({ id: f.id, summary: f.text }));
@@ -412,7 +412,7 @@ Responde ÚNICAMENTE con un objeto JSON válido con la siguiente estructura exac
   },
   "analysis": {
     "dataVerification": "Párrafo detallado en español verificando las fuentes oficiales (ESPN), posiciones, tamaño de muestra de ${homeName} y ${awayName} y solidez estadística.",
-    "goalsAnalysis": "Párrafo analítico profundo en español examinando la dinámica goleadora: xG Poisson de cada equipo, probabilidades de Más/Menos 1.5, 2.5 goles y Ambos Anotan (BTTS).",
+    "goalsAnalysis": "Párrafo analítico profundo en español examinando la dinámica goleadora: medias de goles Poisson de cada equipo (no son xG observados), probabilidades de Más/Menos 1.5, 2.5 goles y Ambos Anotan (BTTS).",
     "positiveFactors": [
       "Factor positivo 1: detalle táctico y cuantitativo concreto a favor de ${homeName} o del pronóstico principal.",
       "Factor positivo 2: rendimiento, regularidad o ventaja de localía.",
@@ -428,7 +428,7 @@ Responde ÚNICAMENTE con un objeto JSON válido con la siguiente estructura exac
 
 Reglas estrictas:
 - factIds DEBE ser una lista con entre 1 y 6 IDs válidos seleccionados de esta lista: ${JSON.stringify(validIdsList)}.
-- 'topPick' DEBE sintetizar las estadísticas oficiales, el modelo Poisson y las cuotas para seleccionar el pronóstico más sólido con probabilidad entre 50 y 95.
+- No inventes probabilidades, cuotas, xG, lesiones, tácticas ni muestras. Reproduce únicamente las cifras proporcionadas. Una probabilidad no es una tasa de aciertos comprobada. El servidor conserva la selección matemática: no propongas porcentajes nuevos.
 - Todos los campos de 'analysis' deben estar en español, redactados con profundidad, rigor estadístico y profesionalismo.
 - No incluyas preámbulos fuera del JSON. Si realizas un bloque de razonamiento previo <think>...</think>, desarróllalo rigurosamente y concluye con el objeto JSON final.`;
 
@@ -507,7 +507,7 @@ Instrucciones analíticas estrictas:
         return {
           ...baseline,
           aiAvailable: false,
-          aiStatus: 'Análisis cuantitativo institucional verificado (Poisson oficial).'
+          aiStatus: 'Estimación Poisson sin calibración histórica de aciertos.'
         };
       }
 
@@ -541,7 +541,7 @@ Instrucciones analíticas estrictas:
         };
 
         finalNarrative = [
-          `📊 DATOS COMPROBADOS & VERIFICACIÓN:\n${analysisSections.dataVerification}`,
+          `📊 COMENTARIO GENERADO POR IA SOBRE LAS FUENTES:\n${analysisSections.dataVerification}`,
           `⚽ ANÁLISIS DE GOLES & TENDENCIA:\n${analysisSections.goalsAnalysis}`,
           `🟢 FACTORES POSITIVOS (A FAVOR):\n${analysisSections.positiveFactors.map(f => `• ${f}`).join('\n')}`,
           `🔴 FACTORES DE RIESGO (EN CONTRA):\n${analysisSections.negativeFactors.map(f => `• ${f}`).join('\n')}`,
@@ -549,23 +549,8 @@ Instrucciones analíticas estrictas:
         ].join('\n\n');
       }
 
-      let finalTopPick = baseline.topPick;
-      if (parsed.topPick && typeof parsed.topPick === 'object') {
-        const rawP = Number(parsed.topPick.probability);
-        const safeProb = Number.isFinite(rawP) ? Math.min(100, Math.max(1, Math.round(rawP))) : (baseline.topPick?.probability || 50);
-        const cleanSel = cleanString(parsed.topPick.selection);
-        if (cleanSel) {
-          finalTopPick = {
-            ...(baseline.topPick || {}),
-            selection: cleanSel,
-            market: cleanString(parsed.topPick.market || baseline.topPick?.market || 'Pronóstico IA'),
-            probability: safeProb,
-            safetyScore: safeProb,
-            odds: match.odds ? (Number(parsed.topPick.odds) || baseline.topPick?.odds || null) : null,
-            rationale: cleanString(parsed.topPick.reasoning || parsed.topPick.rationale || baseline.topPick?.rationale)
-          };
-        }
-      }
+      // Language models never set numerical probabilities, selections or bookmaker odds.
+      const finalTopPick = baseline.topPick;
 
       return {
         ...baseline,
@@ -575,6 +560,7 @@ Instrucciones analíticas estrictas:
         analyzedAt: new Date().toISOString(),
         isDeepAnalysis: true,
         dataGrounded: true,
+        narrativeVerified: false,
         verifiedStatsCount: facts.length,
         tacticalKeypoints: keypoints.length ? keypoints : [facts[0].text],
         analysisSections,

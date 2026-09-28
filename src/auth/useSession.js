@@ -34,5 +34,20 @@ export function useSession() {
     void Promise.resolve().then(() => { if (!controller.signal.aborted) refresh(controller.signal); });
     return () => controller.abort();
   }, [refresh]);
+  useEffect(() => {
+    if (!auth?.valid || auth.isAdmin || !auth.user?.expiresAt) return;
+    const end = Date.parse(auth.user.expiresAt);
+    if (!Number.isFinite(end)) return;
+    let timer;
+    const check = () => {
+      clearTimeout(timer);
+      const remaining = end - Date.now();
+      if (remaining <= 0) void refresh();
+      else timer = setTimeout(check, Math.min(remaining, 2147483647));
+    };
+    check();
+    document.addEventListener('visibilitychange', check);
+    return () => { clearTimeout(timer); document.removeEventListener('visibilitychange', check); };
+  }, [auth, refresh]);
   return { auth, setAuth, checking, error, retry: () => refresh() };
 }

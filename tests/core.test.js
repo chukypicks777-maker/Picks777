@@ -1,3 +1,4 @@
+import { vipFixture } from './vipFixture.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -147,7 +148,8 @@ test('codes persist, activate once, track sessions and revoke', async () => {
     const db = new StorageManager(path.join(directory, 'access.json'));
     const codes = await db.generateBatchCodes({ count: 100, durationDays: 30, prefix: 'TEST' });
     assert.equal(new Set(codes.map(c => c.code)).size, 100);
-    const claims = await Promise.all([db.claimCode(codes[0].code, 'One', 'device-1'), db.claimCode(codes[0].code, 'Two', 'device-2')]);
+    const user = await db.upsertGoogleUser({googleId: 'one', email: 'one@example.invalid'});
+    const claims = await Promise.all([db.redeemUserCode({userId:user.id,code:codes[0].code,deviceId:'device-1'}), db.redeemUserCode({userId:user.id,code:codes[0].code,deviceId:'device-2'})]);
     assert.equal(claims[0].expiresAt, claims[1].expiresAt);
     assert.equal((await db.getCode(codes[0].code)).devices.length, 2);
     assert.equal((await new StorageManager(db.file).getCodes()).length, 100);
@@ -207,12 +209,11 @@ test('HTTP session and owner flow, access persistence and revocation', async () 
     const batch = await request('/api/admin/codes/batch', { count: 2, durationDays: 30, prefix: 'VIP' }, owner);
     const generated = await batch.json();
     assert.equal(generated.codes.length, 2);
-    const vipLogin = await request('/api/auth/verify-code', { code: generated.codes[0].code, username: 'User' });
-    const vip = vipLogin.headers.get('set-cookie').split(';')[0];
+    const vip = await vipFixture(storage, generated.codes[0].code);
     assert.equal((await request('/api/admin/codes', null, vip)).status, 403);
     assert.equal((await request('/api/auth/check-session', {}, vip)).status, 200);
     await request(`/api/admin/codes/${generated.codes[0].code}/revoke`, {}, owner);
-    assert.equal((await request('/api/matches', null, vip)).status, 401);
+    assert.equal((await request('/api/matches', null, vip)).status, 403);
     assert.equal((await request('/api/admin/codes', null, `${owner}tampered`)).status, 401);
 
     const boostRes = await request('/api/matches/boost', null, owner);

@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-25T01:44:08.752Z",
+  "checkedAt": "2026-09-28T03:35:16.074Z",
   "source": "ESPN",
   "coverage": [
     {
@@ -7,7 +7,7 @@
       "name": "Premier League",
       "status": "available",
       "count": 0,
-      "fetchedAt": "2026-09-25T01:43:46.806Z",
+      "fetchedAt": "2026-09-28T03:34:55.589Z",
       "standingsAvailable": true
     },
     {
@@ -15,23 +15,23 @@
       "name": "LaLiga",
       "status": "available",
       "count": 0,
-      "fetchedAt": "2026-09-25T01:43:46.892Z",
+      "fetchedAt": "2026-09-28T03:34:56.071Z",
       "standingsAvailable": true
     },
     {
       "leagueId": "mexico",
       "name": "Liga MX",
       "status": "available",
-      "count": 9,
-      "fetchedAt": "2026-09-25T01:43:47.003Z",
+      "count": 7,
+      "fetchedAt": "2026-09-28T03:34:55.869Z",
       "standingsAvailable": true
     },
     {
       "leagueId": "mls",
       "name": "MLS",
       "status": "available",
-      "count": 17,
-      "fetchedAt": "2026-09-25T01:43:47.209Z",
+      "count": 16,
+      "fetchedAt": "2026-09-28T03:34:55.818Z",
       "standingsAvailable": true
     },
     {
@@ -39,7 +39,7 @@
       "name": "Serie A",
       "status": "available",
       "count": 0,
-      "fetchedAt": "2026-09-25T01:43:46.980Z",
+      "fetchedAt": "2026-09-28T03:34:55.573Z",
       "standingsAvailable": true
     },
     {
@@ -47,15 +47,15 @@
       "name": "Ligue 1",
       "status": "available",
       "count": 0,
-      "fetchedAt": "2026-09-25T01:43:47.428Z",
+      "fetchedAt": "2026-09-28T03:34:55.514Z",
       "standingsAvailable": true
     },
     {
       "leagueId": "champions",
       "name": "UEFA Champions League",
       "status": "available",
-      "count": 0,
-      "fetchedAt": "2026-09-25T01:43:47.423Z",
+      "count": 9,
+      "fetchedAt": "2026-09-28T03:34:55.612Z",
       "standingsAvailable": true
     },
     {
@@ -63,139 +63,139 @@
       "name": "Leagues Cup",
       "status": "available",
       "count": 0,
-      "fetchedAt": "2026-09-25T01:43:47.117Z",
+      "fetchedAt": "2026-09-28T03:34:55.856Z",
       "standingsAvailable": true
     }
   ],
-  "feedMatches": 26,
-  "scheduledMatches": 25,
+  "feedMatches": 32,
+  "scheduledMatches": 11,
   "checked": [
     {
-      "id": "espn-401876964",
-      "title": "Atlante vs Monterrey",
-      "kickoff": "2026-09-26T01:00Z",
-      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401876964",
+      "id": "espn-761833",
+      "title": "Red Bull New York vs St. Louis CITY SC",
+      "kickoff": "2026-09-30T23:30Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/761833",
       "modelSample": {
-        "home": 9,
-        "away": 8
+        "home": 26,
+        "away": 26
       },
       "halvesAvailable": true,
       "halfSample": {
-        "home": 9,
-        "away": 8
+        "home": 10,
+        "away": 10
       },
       "checks": [
         {
-          "team": "Atlante",
+          "team": "Red Bull New York",
           "metric": "avgCorners",
-          "count": 9,
-          "reported": 4.555555555555555,
-          "recomputed": 4.555555555555555,
+          "count": 10,
+          "reported": 5.2,
+          "recomputed": 5.2,
           "pass": true
         },
         {
-          "team": "Atlante",
+          "team": "Red Bull New York",
           "metric": "avgYellowCards",
-          "count": 9,
-          "reported": 1.5555555555555556,
-          "recomputed": 1.5555555555555556,
+          "count": 10,
+          "reported": 2,
+          "recomputed": 2,
           "pass": true
         },
         {
-          "team": "Atlante",
+          "team": "Red Bull New York",
           "metric": "avgFouls",
-          "count": 9,
-          "reported": 13.555555555555555,
-          "recomputed": 13.555555555555555,
+          "count": 10,
+          "reported": 12.3,
+          "recomputed": 12.3,
           "pass": true
         },
         {
-          "team": "Monterrey",
+          "team": "St. Louis CITY SC",
           "metric": "avgCorners",
-          "count": 8,
-          "reported": 6.75,
-          "recomputed": 6.75,
+          "count": 10,
+          "reported": 5.1,
+          "recomputed": 5.1,
           "pass": true
         },
         {
-          "team": "Monterrey",
+          "team": "St. Louis CITY SC",
           "metric": "avgYellowCards",
-          "count": 8,
-          "reported": 1.375,
-          "recomputed": 1.375,
+          "count": 10,
+          "reported": 2.2,
+          "recomputed": 2.2,
           "pass": true
         },
         {
-          "team": "Monterrey",
+          "team": "St. Louis CITY SC",
           "metric": "avgFouls",
-          "count": 8,
-          "reported": 13.25,
-          "recomputed": 13.25,
+          "count": 10,
+          "reported": 15.7,
+          "recomputed": 15.7,
           "pass": true
         }
       ]
     },
     {
-      "id": "espn-401876963",
-      "title": "Tijuana vs Atlas",
-      "kickoff": "2026-09-26T03:00Z",
-      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401876963",
+      "id": "espn-761798",
+      "title": "Seattle Sounders FC vs Sporting Kansas City",
+      "kickoff": "2026-10-02T01:30Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/761798",
       "modelSample": {
-        "home": 8,
-        "away": 9
+        "home": 26,
+        "away": 26
       },
       "halvesAvailable": true,
       "halfSample": {
-        "home": 8,
-        "away": 9
+        "home": 10,
+        "away": 10
       },
       "checks": [
         {
-          "team": "Tijuana",
+          "team": "Seattle Sounders FC",
           "metric": "avgCorners",
-          "count": 8,
-          "reported": 3.75,
-          "recomputed": 3.75,
+          "count": 10,
+          "reported": 5.1,
+          "recomputed": 5.1,
           "pass": true
         },
         {
-          "team": "Tijuana",
+          "team": "Seattle Sounders FC",
           "metric": "avgYellowCards",
-          "count": 8,
-          "reported": 1.375,
-          "recomputed": 1.375,
+          "count": 10,
+          "reported": 1.8,
+          "recomputed": 1.8,
           "pass": true
         },
         {
-          "team": "Tijuana",
+          "team": "Seattle Sounders FC",
           "metric": "avgFouls",
-          "count": 8,
-          "reported": 10.25,
-          "recomputed": 10.25,
+          "count": 10,
+          "reported": 12.3,
+          "recomputed": 12.3,
           "pass": true
         },
         {
-          "team": "Atlas",
+          "team": "Sporting Kansas City",
           "metric": "avgCorners",
-          "count": 9,
-          "reported": 4.888888888888889,
-          "recomputed": 4.888888888888889,
+          "count": 10,
+          "reported": 4,
+          "recomputed": 4,
           "pass": true
         },
         {
-          "team": "Atlas",
+          "team": "Sporting Kansas City",
           "metric": "avgYellowCards",
-          "count": 9,
-          "reported": 1.6666666666666667,
-          "recomputed": 1.6666666666666667,
+          "count": 10,
+          "reported": 2.2,
+          "recomputed": 2.2,
           "pass": true
         },
         {
-          "team": "Atlas",
+          "team": "Sporting Kansas City",
           "metric": "avgFouls",
-          "count": 9,
-          "reported": 11.88888888888889,
-          "recomputed": 11.88888888888889,
+          "count": 10,
+          "reported": 11.1,
+          "recomputed": 11.1,
           "pass": true
         }
       ]

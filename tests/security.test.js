@@ -1,3 +1,4 @@
+import { vipFixture } from './vipFixture.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -73,8 +74,8 @@ test('HTTP groups: anonymous/VIP/header forgery/CSRF denied; Owner succeeds; pub
     assert.equal((await fetch(base + '/api/auth/check-session', { method: 'POST', headers: { Cookie: owner } })).status, 200);
     assert.equal((await request('/api/settings/groups', input, owner, { 'Sec-Fetch-Site': 'cross-site' })).status, 403);
     await storage.createCode({ code: 'TEST-VIP-123', durationDays: 30 });
-    const vipLogin = await request('/api/auth/verify-code', { code: 'TEST-VIP-123' });
-    const vip = vipLogin.headers.get('set-cookie').split(';')[0];
+    assert.equal((await request('/api/auth/verify-code', { code: 'TEST-VIP-123' })).status, 401);
+    const vip = await vipFixture(storage, 'TEST-VIP-123');
     assert.equal((await request('/api/settings/groups', input, vip, { 'x-admin-key': process.env.MASTER_ADMIN_CODE })).status, 403);
     assert.equal((await request('/api/settings/groups', input, owner, { Origin: 'https://evil.example' })).status, 403);
     assert.equal((await request('/api/settings/groups', input, owner + 'tampered')).status, 401);
@@ -93,7 +94,7 @@ test('production refuses default secrets and Vercel without persistent storage',
     process.env.NODE_ENV = 'production'; process.env.VERCEL = '1';
     process.env.MASTER_ADMIN_CODE = 'DeportePicks';
     assert.equal(secureConfiguration(), false);
-    process.env.MASTER_ADMIN_CODE = 'test-owner-secret-long-enough';
+    process.env.MASTER_ADMIN_CODE = 'test-owner-secret-long-enough-32-plus';
     process.env.UPSTASH_REDIS_REST_URL = ''; process.env.UPSTASH_REDIS_REST_TOKEN = '';
     assert.equal(secureConfiguration(), false);
     process.env.UPSTASH_REDIS_REST_URL = 'https://example.upstash.io'; process.env.UPSTASH_REDIS_REST_TOKEN = 'test-only';
