@@ -1,6 +1,7 @@
 /* Shared layout for browsers, Android, cutouts and landscape keyboards. */
 html { scroll-padding-top: calc(5rem + env(safe-area-inset-top)); }
 body { min-width: 280px; }
+#root { min-height: 100vh; }
 #root { min-height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
 button, a, input, select { -webkit-tap-highlight-color: transparent; }
 :focus-visible { outline: 2px solid #38bdf8; outline-offset: 3px; }
@@ -11,6 +12,10 @@ button, a, input, select { -webkit-tap-highlight-color: transparent; }
 @media (pointer: coarse) {
   button, select { min-height: 44px; }
   input, select, textarea { font-size: 16px !important; }
+}
+@supports not (height: 100dvh) {
+  .min-h-dvh { min-height: 100vh; }
+  .auth-overlay > div, .mobile-dialog-overlay > div { max-height: calc(100vh - 2rem); }
 }
 @media (max-height: 600px) { .auth-overlay, .mobile-dialog-overlay { align-items: flex-start; } }
 @media (prefers-reduced-motion: reduce) {

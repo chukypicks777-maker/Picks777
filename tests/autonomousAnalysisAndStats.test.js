@@ -250,7 +250,7 @@ test('AutonomousAiBar and App enforce strict Owner-only visibility and session l
 
   // Must guard auto-trigger effect for isOwner
   assert.ok(
-    barContent.includes('if (!isOwner || !autoRunOnLoad || runningRef.current) return;'),
+    barContent.includes('if (!isOwner || activeModelInfo?.isConfigured !== true || !autoRunOnLoad || runningRef.current) return;'),
     'AutonomousAiBar auto-run effect must abort immediately if not owner'
   );
 

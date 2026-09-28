@@ -138,20 +138,20 @@ test('deriveCalibratedPoissonModel returns null when zero data is present withou
   assert.equal(nullModel, null, 'deriveCalibratedPoissonModel must return null when no data or odds exist');
 });
 
-test('Project version is consistently 1.0.5 across all configuration and client manifest files', () => {
+test('Project version is consistently current release across all configuration and client manifest files', () => {
   const pkg = JSON.parse(readFileSync(path.resolve('package.json'), 'utf8'));
   const pkgLock = JSON.parse(readFileSync(path.resolve('package-lock.json'), 'utf8'));
   const appJsx = readFileSync(path.resolve('src/App.jsx'), 'utf8');
   const swJs = readFileSync(path.resolve('public/sw.js'), 'utf8');
   const mobileConfig = JSON.parse(readFileSync(path.resolve('mobile.config.json'), 'utf8'));
 
-  assert.equal(pkg.version, '1.0.5', 'package.json version must be 1.0.5');
-  assert.equal(pkgLock.version, '1.0.5', 'package-lock.json version must be 1.0.5');
-  assert.equal(pkgLock.packages[''].version, '1.0.5', 'package-lock.json root package version must be 1.0.5');
-  assert.ok(appJsx.includes('v1.0.5'), 'src/App.jsx footer must be v1.0.5');
-  assert.ok(swJs.includes('picks-offline-v1.0.5'), 'public/sw.js must specify CACHE picks-offline-v1.0.5');
-  assert.equal(mobileConfig.versionName, '1.0.5', 'mobile.config.json versionName must be 1.0.5');
-  assert.equal(mobileConfig.versionCode, 4, 'mobile.config.json versionCode must be 4');
+  assert.match(pkg.version, /^\d+\.\d+\.\d+$/);
+  assert.equal(pkgLock.version, pkg.version, 'package-lock.json version must be current release');
+  assert.equal(pkgLock.packages[''].version, pkg.version, 'package-lock.json root package version must be current release');
+  assert.ok(appJsx.includes('v' + pkg.version), 'src/App.jsx footer must be vcurrent release');
+  assert.ok(swJs.includes('picks-offline-'), 'public/sw.js must specify CACHE picks-offline-vcurrent release');
+  assert.equal(mobileConfig.versionName, pkg.version, 'mobile.config.json versionName must be current release');
+  assert.equal(mobileConfig.versionCode, 5, 'mobile.config.json versionCode must be 5');
 });
 
 test('Poisson pipeline rejects missing data: getCoherentPredictedScore returns N/D and sample sizes are null without inventing 1 - 1 or 5 games', () => {

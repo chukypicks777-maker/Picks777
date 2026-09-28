@@ -22,6 +22,8 @@ IA opcional: CUSTOM_AI_API_KEY, CUSTOM_AI_BASE_URL y DEFAULT_AI_MODEL. Para un d
 
 ## Android
 
+Para iPhone, iPad y navegadores Android: abrir `/instalar`. La app web se instala desde Safari/Chrome y recibe las actualizaciones web. El APK no sirve para iOS. Resultados y límites de las pruebas: [COMPATIBILIDAD-Y-DATOS-2026-09-28.md](COMPATIBILIDAD-Y-DATOS-2026-09-28.md).
+
 El owner dispone del apartado Aplicación Android dentro del panel administrativo. npm run android:preview prepara un APK firmado y su manifiesto para descarga autenticada. npm run android:bundle genera el AAB. Incrementar versionCode en mobile.config.json al actualizar Android; conservar la clave de firma. Las actualizaciones web requieren desplegar la web, y se reciben al recargar.
 
 El APK abre https://picks777.vercel.app. La publicación en Play Store tiene pendientes de contacto, privacidad y pruebas físicas; véanse [ANDROID-RELEASE.md](ANDROID-RELEASE.md) y el informe de auditoría.

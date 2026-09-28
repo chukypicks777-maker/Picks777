@@ -12,6 +12,7 @@ export default function AdminMobile() {
   }, []);
   return <section className="space-y-4 text-sm text-slate-300" aria-label="Aplicación Android">
     <h3 className="text-xl font-bold text-white">Instalar aplicación Android</h3>
+    <a href="/instalar" className="inline-block py-2 text-sky-300 underline">Instalar en iPhone, iPad u otro dispositivo</a>
     <p>Abre este panel con tu cuenta owner desde Chrome en tu teléfono y descarga el APK firmado de prueba.</p>
     {error && <p role="alert" className="text-rose-300">{error}</p>}
     {!release && !error && <p role="status">Comprobando versión disponible…</p>}

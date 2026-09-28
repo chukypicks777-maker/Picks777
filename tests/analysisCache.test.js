@@ -8,6 +8,14 @@ import {
   clearAllAnalysisCache
 } from '../src/utils/analysisCache.js';
 
+test('a published odds change or small probability change invalidates a cached report', () => {
+  const match = { id: 'fresh-odds', status: 'SCHEDULED', probabilities: { homeWin: 52.1 }, odds: { homeWin: 1.8 } };
+  setCachedAnalysis(match.id, match, { aiReport: { aiAvailable: true } });
+  assert.equal(getCachedAnalysis(match.id, { ...match, odds: { homeWin: 2.1 } }), null);
+  setCachedAnalysis(match.id, match, { aiReport: { aiAvailable: true } });
+  assert.equal(getCachedAnalysis(match.id, { ...match, probabilities: { homeWin: 52.2 } }), null);
+});
+
 test('computeMatchFingerprint is immune to background polling timestamps', () => {
   const match1 = {
     id: 'match-101',
@@ -196,7 +204,7 @@ test('analysis cache preserves reports when predictedScore is null or N/D withou
   assert.ok(entryND, 'Report with predictedScore: "N/D" must remain in cache');
 });
 
-test('analysis cache preserves live matches during routine background polling when score is unchanged', () => {
+test('analysis cache invalidates changed live probabilities even when the score is unchanged', () => {
   clearAllAnalysisCache();
 
   const liveInitial = {
@@ -221,8 +229,5 @@ test('analysis cache preserves live matches during routine background polling wh
   };
 
   const cached = getCachedAnalysis('match-live-poll', livePolled);
-  assert.ok(cached, 'Cache must not be evicted during live polling when score remains 1-1');
-  assert.equal(cached.aiReport.topPick.selection, 'Más de 2.5');
+  assert.equal(cached, null, 'Changed probabilities must not retain the previous report');
 });
-
-

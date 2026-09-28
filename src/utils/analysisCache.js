@@ -8,8 +8,8 @@
  */
 
 const memoryCache = new Map();
-const STORAGE_PREFIX = 'picks777_ai_cache_v5';
-const SESSION_STORAGE_KEY = 'picks777_analysis_cache_v3';
+const STORAGE_PREFIX = 'picks777_ai_cache_v6';
+const SESSION_STORAGE_KEY = 'picks777_analysis_cache_v4';
 
 function getStorage() {
   try {
@@ -66,11 +66,9 @@ export function computeMatchFingerprint(m) {
     m.liveScore?.away ?? '',
     m.finalScore?.home ?? '',
     m.finalScore?.away ?? '',
-    p.homeWin != null ? Math.round(Number(p.homeWin)) : '',
-    p.draw != null ? Math.round(Number(p.draw)) : '',
-    p.awayWin != null ? Math.round(Number(p.awayWin)) : '',
-    p.over25 != null ? Math.round(Number(p.over25)) : '',
-    p.bttsYes != null ? Math.round(Number(p.bttsYes)) : '',
+    JSON.stringify(Object.entries(p).filter(([, v]) => typeof v === 'number' || v === null).sort(([a], [b]) => a.localeCompare(b))),
+    JSON.stringify(Object.entries(m.odds || {}).sort(([a], [b]) => a.localeCompare(b))),
+    m.oddsProvider || '',
     m.homeTeam?.id || m.homeTeam?.name || '',
     m.awayTeam?.id || m.awayTeam?.name || ''
   ].join('|');
@@ -114,19 +112,8 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
 
   // Verificar si el partido cambió deportivamente (cambio de estado o cambio en marcador de partido en vivo)
   if (currentFingerprint && entry.fingerprint && entry.fingerprint !== currentFingerprint) {
-    const curStatus = currentMatch?.status || entry.matchStatus;
-    const isLive = curStatus === 'LIVE' || entry.matchStatus === 'LIVE';
-    const statusChanged = entry.matchStatus && currentMatch?.status && entry.matchStatus !== currentMatch.status;
-    const curLive = currentMatch?.liveScore || currentMatch?.finalScore;
-    const entryLive = entry.liveScore || entry.finalScore;
-    const scoreChanged = isLive && curLive && entryLive && (
-      (Number.isFinite(curLive.home) && Number.isFinite(entryLive.home) && Number(curLive.home) !== Number(entryLive.home)) ||
-      (Number.isFinite(curLive.away) && Number.isFinite(entryLive.away) && Number(curLive.away) !== Number(entryLive.away))
-    );
-    if (statusChanged || scoreChanged) {
-      removeCachedAnalysis(matchId);
-      return null;
-    }
+    removeCachedAnalysis(matchId);
+    return null;
   }
 
   // Si se solicita un modelo específico y el análisis en caché fue generado con otro modelo, invalidar

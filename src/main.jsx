@@ -4,12 +4,13 @@ import './index.css'
 import './mobile.css'
 import App from './App.jsx'
 import AccountPage from './components/AccountPage.jsx'
+import InstallPage from './components/InstallPage.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      {window.location.pathname === '/eliminar-cuenta' ? <AccountPage /> : <App />}
+      {window.location.pathname === '/instalar' ? <InstallPage /> : window.location.pathname === '/eliminar-cuenta' ? <AccountPage /> : <App />}
     </ErrorBoundary>
   </StrictMode>,
 )

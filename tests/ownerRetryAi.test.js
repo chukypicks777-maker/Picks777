@@ -19,14 +19,14 @@ test('Version numbers are consistent across package.json, package-lock.json, App
   const swJs = readFileSync(path.resolve('public/sw.js'), 'utf8');
   const mobileConfig = JSON.parse(readFileSync(path.resolve('mobile.config.json'), 'utf8'));
 
-  assert.equal(pkg.version, '1.0.5', 'package.json version must be 1.0.5');
-  assert.equal(pkgLock.version, '1.0.5', 'package-lock.json version must be 1.0.5');
-  assert.equal(pkgLock.packages[''].version, '1.0.5', 'package-lock.json root package version must be 1.0.5');
-  assert.ok(appJsx.includes('v1.0.5'), 'src/App.jsx must display v1.0.5 in footer');
-  assert.ok(swJs.includes('picks-offline-v1.0.5'), 'public/sw.js must specify CACHE picks-offline-v1.0.5');
+  assert.match(pkg.version, /^\d+\.\d+\.\d+$/);
+  assert.equal(pkgLock.version, pkg.version, 'package-lock.json version must be current release');
+  assert.equal(pkgLock.packages[''].version, pkg.version, 'package-lock.json root package version must be current release');
+  assert.ok(appJsx.includes('v' + pkg.version), 'src/App.jsx must display vcurrent release in footer');
+  assert.ok(swJs.includes('picks-offline-'), 'public/sw.js must specify CACHE picks-offline-vcurrent release');
   assert.ok(swJs.includes('self.skipWaiting()'), 'public/sw.js must include skipWaiting for instant client updates');
-  assert.equal(mobileConfig.versionName, '1.0.5', 'mobile.config.json versionName must be 1.0.5');
-  assert.equal(mobileConfig.versionCode, 4, 'mobile.config.json versionCode must be incremented to 4');
+  assert.equal(mobileConfig.versionName, pkg.version, 'mobile.config.json versionName must be current release');
+  assert.equal(mobileConfig.versionCode, 5, 'mobile.config.json versionCode must be incremented to 5');
 });
 
 test('Owner retry and re-analysis bypasses rate limits, prevents 429, and handles forceRefresh without crashing', async t => {

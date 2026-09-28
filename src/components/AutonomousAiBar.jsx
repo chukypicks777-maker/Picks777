@@ -82,6 +82,8 @@ export default function AutonomousAiBar({
     }
 
     let processed = 0;
+    let aiCompleted = 0;
+    let statisticalCompleted = 0;
 
     const storedAi = getStoredAiConfig();
     let resolvedProvider = storedAi?.provider || 'custom';
@@ -136,7 +138,8 @@ export default function AutonomousAiBar({
         }
 
         const data = await res.json().catch(() => null);
-        if (data?.success && data.report) {
+        if (res.ok && data?.success && data.report) {
+          if (data.report.aiAvailable) aiCompleted++; else statisticalCompleted++;
           const finalMatch = {
             ...(data.match || curMatch),
             isAiAnalyzed: Boolean(data.report.aiAvailable),
@@ -174,7 +177,7 @@ export default function AutonomousAiBar({
 
     if (!stopRequested.current) {
       sounds.playSuccess();
-      onToast?.(`✅ Análisis autónomo completado: ${processed} ${processed === 1 ? 'partido analizado' : 'partidos analizados'} a profundidad.`);
+      onToast?.(`Revisión terminada: ${aiCompleted} informes con IA, ${statisticalCompleted} cálculos estadísticos y ${processed - aiCompleted - statisticalCompleted} solicitudes sin resultado.`);
     }
   }, [isOwner, activeModelInfo, onMatchAnalyzed, onToast]);
 
@@ -186,7 +189,7 @@ export default function AutonomousAiBar({
 
   // Autonomous trigger on load: ONLY for Owner, using stable ID key and attempted match lock to prevent loops
   useEffect(() => {
-    if (!isOwner || !autoRunOnLoad || runningRef.current) return;
+    if (!isOwner || activeModelInfo?.isConfigured !== true || !autoRunOnLoad || runningRef.current) return;
     const currentMatches = matchesRef.current;
     if (!Array.isArray(currentMatches) || currentMatches.length === 0) return;
 
@@ -202,7 +205,7 @@ export default function AutonomousAiBar({
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [matchIdsKey, isOwner, autoRunOnLoad, executeAnalysisQueue]);
+  }, [matchIdsKey, isOwner, autoRunOnLoad, activeModelInfo?.isConfigured, executeAnalysisQueue]);
 
   if (!isOwner || !matches || matches.length === 0) return null;
 
@@ -225,7 +228,7 @@ export default function AutonomousAiBar({
               </h4>
               <span className="text-[11px] font-mono text-emerald-400 font-bold flex items-center space-x-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Datos Oficiales Verificados</span>
+                <span>Datos del proveedor deportivo</span>
               </span>
               {isOwner && (
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 font-bold flex items-center space-x-1">
@@ -235,7 +238,7 @@ export default function AutonomousAiBar({
               )}
             </div>
             <p className="text-[11px] sm:text-xs text-slate-300 font-sans mt-0.5 leading-snug">
-              La IA analiza autónomamente cada partido en profundidad sin tener que abrirlo manualmente.
+              Los cálculos estadísticos están disponibles. La redacción con IA requiere un proveedor configurado; no valida ni garantiza los pronósticos.
             </p>
           </div>
         </div>
@@ -262,13 +265,13 @@ export default function AutonomousAiBar({
               <>
                 <RotateCw className="w-3.5 h-3.5 text-sky-400 animate-spin shrink-0" />
                 <span className="text-sky-300 font-bold truncate">
-                  Analizando a profundidad: {currentMatchTitle}
+                  Consultando informe: {currentMatchTitle}
                 </span>
               </>
             ) : isAllAnalyzed ? (
               <span className="text-emerald-300 font-bold flex items-center space-x-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Todos los partidos han sido analizados y confirmados a profundidad con IA.</span>
+                <span>Todos los partidos tienen un informe de IA disponible.</span>
               </span>
             ) : (
               <span className="text-slate-400">

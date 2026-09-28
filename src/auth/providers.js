@@ -1,12 +1,11 @@
-// Provider SDKs are loaded on demand; components only depend on this contract.
+import { loginWithRealGoogle, logoutIdentity } from '../utils/firebase.js';
+// Keep popup creation within the tap event; Safari may block it after an async import.
 const providers = {
   google: {
-    async signIn() {
-      const { loginWithRealGoogle } = await import('../utils/firebase.js');
+    signIn() {
       return loginWithRealGoogle();
     },
-    async signOut() {
-      const { logoutIdentity } = await import('../utils/firebase.js');
+    signOut() {
       return logoutIdentity();
     }
   }

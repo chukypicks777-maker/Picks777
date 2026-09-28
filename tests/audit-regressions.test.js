@@ -40,6 +40,19 @@ test('one published outcome cannot become a 100 percent favorite', () => {
   assert.equal(match.aiPick, null);
 });
 
+test('extreme but finite goal markets stay monotonic and impossible BTTS inputs are rejected', () => {
+  const team = { gamesPlayed: 12, goalsFor: 18, goalsAgainst: 15 };
+  for (const over25 of [0.1, 0.5, 1, 50, 99, 99.9]) {
+    const model = deriveCalibratedPoissonModel({ over25, homeWin: 60, draw: 25, awayWin: 15 }, team, team);
+    assert.ok(model);
+    const p = model.probabilities;
+    assert.equal(p.over25, over25);
+    assert.ok(p.over15 >= p.over25 && p.over25 >= p.over35);
+    assert.ok(p.bttsYes <= p.over15);
+  }
+  assert.equal(deriveCalibratedPoissonModel({ over25: 0.1, bttsYes: 99 }, team, team), null);
+});
+
 test('custom AI hosts cannot send requests to arbitrary domains', () => {
   assert.throws(() => validateAiConfig({ provider: 'custom', baseUrl: 'https://unapproved.example/v1' }), /no autorizado/);
   assert.throws(() => validateAiConfig({ provider: 'custom', baseUrl: 'https://vyceai.com.evil.example/v1' }), /no autorizado/);

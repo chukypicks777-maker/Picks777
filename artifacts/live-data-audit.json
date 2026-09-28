@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-28T03:35:16.074Z",
+  "checkedAt": "2026-09-28T17:38:01.531Z",
   "source": "ESPN",
   "coverage": [
     {
@@ -7,7 +7,7 @@
       "name": "Premier League",
       "status": "available",
       "count": 0,
-      "fetchedAt": "2026-09-28T03:34:55.589Z",
+      "fetchedAt": "2026-09-28T17:37:33.905Z",
       "standingsAvailable": true
     },
     {
@@ -15,7 +15,7 @@
       "name": "LaLiga",
       "status": "available",
       "count": 0,
-      "fetchedAt": "2026-09-28T03:34:56.071Z",
+      "fetchedAt": "2026-09-28T17:37:34.323Z",
       "standingsAvailable": true
     },
     {
@@ -23,7 +23,7 @@
       "name": "Liga MX",
       "status": "available",
       "count": 7,
-      "fetchedAt": "2026-09-28T03:34:55.869Z",
+      "fetchedAt": "2026-09-28T17:37:34.217Z",
       "standingsAvailable": true
     },
     {
@@ -31,7 +31,7 @@
       "name": "MLS",
       "status": "available",
       "count": 16,
-      "fetchedAt": "2026-09-28T03:34:55.818Z",
+      "fetchedAt": "2026-09-28T17:37:34.049Z",
       "standingsAvailable": true
     },
     {
@@ -39,7 +39,7 @@
       "name": "Serie A",
       "status": "available",
       "count": 0,
-      "fetchedAt": "2026-09-28T03:34:55.573Z",
+      "fetchedAt": "2026-09-28T17:37:34.262Z",
       "standingsAvailable": true
     },
     {
@@ -47,7 +47,7 @@
       "name": "Ligue 1",
       "status": "available",
       "count": 0,
-      "fetchedAt": "2026-09-28T03:34:55.514Z",
+      "fetchedAt": "2026-09-28T17:37:33.736Z",
       "standingsAvailable": true
     },
     {
@@ -55,7 +55,7 @@
       "name": "UEFA Champions League",
       "status": "available",
       "count": 9,
-      "fetchedAt": "2026-09-28T03:34:55.612Z",
+      "fetchedAt": "2026-09-28T17:37:34.001Z",
       "standingsAvailable": true
     },
     {
@@ -63,12 +63,142 @@
       "name": "Leagues Cup",
       "status": "available",
       "count": 0,
-      "fetchedAt": "2026-09-28T03:34:55.856Z",
+      "fetchedAt": "2026-09-28T17:37:34.086Z",
       "standingsAvailable": true
     }
   ],
   "feedMatches": 32,
   "scheduledMatches": 11,
+  "consistency": [
+    {
+      "id": "espn-761833",
+      "errors": []
+    },
+    {
+      "id": "espn-761798",
+      "errors": []
+    },
+    {
+      "id": "espn-401915418",
+      "errors": []
+    },
+    {
+      "id": "espn-401915436",
+      "errors": []
+    },
+    {
+      "id": "espn-401915417",
+      "errors": []
+    },
+    {
+      "id": "espn-401915412",
+      "errors": []
+    },
+    {
+      "id": "espn-401915435",
+      "errors": []
+    },
+    {
+      "id": "espn-401915413",
+      "errors": []
+    },
+    {
+      "id": "espn-401915434",
+      "errors": []
+    },
+    {
+      "id": "espn-401915411",
+      "errors": []
+    },
+    {
+      "id": "espn-401915410",
+      "errors": []
+    },
+    {
+      "id": "espn-401876959",
+      "errors": []
+    },
+    {
+      "id": "espn-401876962",
+      "errors": []
+    },
+    {
+      "id": "espn-761830",
+      "errors": []
+    },
+    {
+      "id": "espn-761831",
+      "errors": []
+    },
+    {
+      "id": "espn-761832",
+      "errors": []
+    },
+    {
+      "id": "espn-761834",
+      "errors": []
+    },
+    {
+      "id": "espn-761839",
+      "errors": []
+    },
+    {
+      "id": "espn-761835",
+      "errors": []
+    },
+    {
+      "id": "espn-761836",
+      "errors": []
+    },
+    {
+      "id": "espn-761838",
+      "errors": []
+    },
+    {
+      "id": "espn-761837",
+      "errors": []
+    },
+    {
+      "id": "espn-761840",
+      "errors": []
+    },
+    {
+      "id": "espn-761841",
+      "errors": []
+    },
+    {
+      "id": "espn-761843",
+      "errors": []
+    },
+    {
+      "id": "espn-761842",
+      "errors": []
+    },
+    {
+      "id": "espn-401876961",
+      "errors": []
+    },
+    {
+      "id": "espn-401876960",
+      "errors": []
+    },
+    {
+      "id": "espn-401876958",
+      "errors": []
+    },
+    {
+      "id": "espn-761844",
+      "errors": []
+    },
+    {
+      "id": "espn-401876957",
+      "errors": []
+    },
+    {
+      "id": "espn-401876956",
+      "errors": []
+    }
+  ],
   "checked": [
     {
       "id": "espn-761833",
@@ -196,6 +326,65 @@
           "count": 10,
           "reported": 11.1,
           "recomputed": 11.1,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401915412",
+      "title": "Atlético Madrid vs Manchester United",
+      "kickoff": "2026-10-13T19:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401915412",
+      "modelSample": null,
+      "halvesAvailable": false,
+      "halfSample": null,
+      "checks": [
+        {
+          "team": "Atlético Madrid",
+          "metric": "avgCorners",
+          "count": 7,
+          "reported": 5,
+          "recomputed": 5,
+          "pass": true
+        },
+        {
+          "team": "Atlético Madrid",
+          "metric": "avgYellowCards",
+          "count": 7,
+          "reported": 1.7142857142857142,
+          "recomputed": 1.7142857142857142,
+          "pass": true
+        },
+        {
+          "team": "Atlético Madrid",
+          "metric": "avgFouls",
+          "count": 7,
+          "reported": 12.285714285714286,
+          "recomputed": 12.285714285714286,
+          "pass": true
+        },
+        {
+          "team": "Manchester United",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 7.2,
+          "recomputed": 7.2,
+          "pass": true
+        },
+        {
+          "team": "Manchester United",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.2,
+          "recomputed": 1.2,
+          "pass": true
+        },
+        {
+          "team": "Manchester United",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 9.8,
+          "recomputed": 9.8,
           "pass": true
         }
       ]

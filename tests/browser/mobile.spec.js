@@ -18,7 +18,7 @@ async function setup(page, { initial = null, loseCookie = false, googleResult = 
     if (path === '/api/auth/logout') session = null;
     if (path.startsWith('/api/matches')) body = { success: true, matches: sampleMatches.slice(0, 3) };
     if (path === `/api/matches/${sampleMatches[0].id}`) body = { success: true, match: sampleMatches[0] };
-    if (path.endsWith('/ai-analysis')) body = { success: true, match: sampleMatches[0], report: { aiAvailable: false, summary: 'Fixture de prueba de interfaz' } };
+    if (path.endsWith('/ai-analysis')) body = { success: true, match: sampleMatches.find(match => path.includes('/' + match.id + '/')), report: { aiAvailable: false, summary: 'Fixture de prueba de interfaz' } };
     if (path === '/api/community') body = { success: true, settings: { links: [] } };
     if (path === '/api/admin/codes') body = { success: true, codes: [], stats: { total: 0, active: 0, available: 0, expired: 0 } };
     if (path === '/api/admin/mobile') body = { success: true, available: true, versionName: '1.0.5', versionCode: 4, bytes: 724735, sha256: 'a'.repeat(64), origin: 'https://picks777.vercel.app' };
@@ -41,6 +41,14 @@ test('owner puede abrir instalación Android en una pantalla de 360 px', async (
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.x + bounds.width).toBeLessThanOrEqual(360);
   await page.screenshot({ path: 'artifacts/mobile/admin-android-360.png' });
+});
+
+test('un informe estadístico no se anuncia como análisis IA exitoso', async ({ page }) => {
+  await setup(page, { initial: { ...trial, isAdmin: true, isTrial: false, role: 'owner' } });
+  await page.goto('/');
+  await page.getByRole('button', { name: /Analizar Partidos con IA/ }).click();
+  await expect(page.getByText(/0 informes con IA, 3 cálculos estadísticos y 0 solicitudes sin resultado/)).toBeVisible({ timeout: 20000 });
+  await expect(page.getByText(/89% de efectividad/)).toHaveCount(0);
 });
 
 for (const [width, height] of [[320,568], [844,390]]) {

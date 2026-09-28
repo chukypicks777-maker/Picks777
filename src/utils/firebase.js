@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, setPersistence, inMemoryPersistence } from 'firebase/auth';
+import { initializeAuth, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, signOut, inMemoryPersistence } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8",
@@ -11,12 +11,11 @@ const firebaseConfig = {
 };
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+export const auth = initializeAuth(app, { persistence: inMemoryPersistence, popupRedirectResolver: browserPopupRedirectResolver });
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export async function loginWithRealGoogle() {
-  await setPersistence(auth, inMemoryPersistence);
   const result = await signInWithPopup(auth, googleProvider);
   const user = result.user;
   const token = await user.getIdToken();

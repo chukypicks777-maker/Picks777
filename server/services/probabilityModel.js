@@ -68,9 +68,9 @@ export function poissonModel(home, away, minGames = 5) {
 
 export function solvePoissonLambdaFromUnder25(probUnder25Decimal) {
   const decimal = probUnder25Decimal > 1 ? probUnder25Decimal / 100 : probUnder25Decimal;
-  const p = Math.max(0.01, Math.min(0.99, decimal));
-  let low = 0.05, high = 15.0;
-  for (let i = 0; i < 25; i++) {
+  const p = Math.max(1e-8, Math.min(1 - 1e-8, decimal));
+  let low = 0, high = 60;
+  for (let i = 0; i < 45; i++) {
     const mid = (low + high) / 2;
     const pUnder = Math.exp(-mid) * (1 + mid + (mid * mid) / 2);
     if (pUnder > p) low = mid; else high = mid;
@@ -125,7 +125,8 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
   }
 
   let totalLambda;
-  if (probOver25 !== null && probOver25 > 1 && probOver25 < 99) {
+  if (probOver25 === 0 || probOver25 === 100) return null;
+  if (probOver25 !== null && probOver25 > 0 && probOver25 < 100) {
     totalLambda = solvePoissonLambdaFromUnder25((100 - probOver25) / 100);
   } else if (hasStandings) {
     totalLambda = Math.max(1.2, Math.min(6.5, (homeGF / homeGP) + (awayGF / awayGP)));
@@ -194,6 +195,11 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
     cornerOver95: rawProbs.cornerOver95 ?? null,
     confidence: null
   };
+
+  // Do not combine incompatible market inputs into a seemingly coherent forecast.
+  if (probabilities.bttsYes > probabilities.over15 + 1e-6) return null;
+  const goalLadder = ['over05', 'over15', 'over25', 'over35', 'over45'].map(key => probabilities[key]);
+  if (goalLadder.some((value, index) => index > 0 && value > goalLadder[index - 1] + 1e-6)) return null;
 
   scores.sort((a, b) => b.probability - a.probability);
   const topScore = scores[0];

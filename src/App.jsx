@@ -597,6 +597,7 @@ export default function App() {
 
       <div className="flex justify-end gap-4 px-4 py-2 text-xs text-slate-400">
         <a href="/privacidad.html" className="underline">Privacidad</a>
+        <a href="/instalar" className="underline">Instalar en mi celular</a>
         <a href="/eliminar-cuenta" className="underline">Mi cuenta / eliminar</a>
       </div>
       {/* Navbar */}

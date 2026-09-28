@@ -389,6 +389,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
         {/* SOCIAL NETWORKS SECTION - REQUIRED EXACT TEXT */}
         <div className="mt-5 flex flex-wrap justify-center gap-4 text-xs text-slate-400">
           <a href="/privacidad.html" className="underline">Privacidad</a>
+          <a href="/instalar" className="underline">Instalar en mi celular</a>
           <a href="/eliminar-cuenta" className="underline">Eliminar mi cuenta</a>
         </div>
         <div className="mt-6 pt-5 border-t border-white/10 text-left">
