@@ -78,3 +78,7 @@ Para otro proveedor, añade un adaptador en `src/auth/providers.js` y su verific
 Compilación Android 4, versión 1.0.5. El comando npm run android:preview genera un APK release firmado instalable y prepara artifacts/android/picks777-preview.apk junto a release.json para Owner → Aplicación Android. La descarga requiere sesión owner y no se publica en public/. Compilar antes de desplegar; un despliegue desde Git debe incorporar el APK desde su proceso de entrega, ya que se ignora en Git. npm run android:bundle produce el AAB; copia de entrega en artifacts/android/picks777-release.aab.
 
 Redis y secretos seguros ahora son obligatorios en toda producción. La web publicada sigue pendiente de esta configuración y del despliegue corregido. No subir a Google Play antes de resolver los puntos del informe AUDITORIA-2026-09-28.md. El responsable es una persona independiente y todavía no ha proporcionado un correo de contacto.
+
+## Corrección 1.0.6 (compilación 5)
+
+Se declara ManageDataLauncherActivity y su URL HTTPS. Android Browser Helper 2.7.3 intenta habilitar o deshabilitar este componente al arrancar; la versión anterior no lo declaraba. La prueba nativa detectó NameNotFoundException antes del cambio y dos pruebas Robolectric/API 28 pasan después (componente y ciclo de arranque sin navegador instalado). Se mantiene la misma firma para actualizar encima de 1.0.5. No hay dispositivo físico conectado para confirmar el cierre reportado con su logcat.

@@ -921,7 +921,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-slate-300">DEPORTEPICKS AI VIP</span>
-            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.0.5</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.0.6</span>
             <span>•</span>
             <span>Plataforma de Análisis Cuantitativo para Apuestas</span>
           </div>

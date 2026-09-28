@@ -80,3 +80,9 @@ Referencias oficiales consultadas:
 - Owner se obtiene desde el correo Google verificado configurado; el código maestro deja de concederlo cuando ese correo está configurado.
 - 111 pruebas Node y 14 Playwright correctas; build y lint correctos. Las pruebas de Google usan respuestas del proveedor simuladas.
 - Los datos antiguos que existieran solo en memoria de Vercel no constituyen una base persistente exportable; no se ha confirmado una migración de membresías históricas.
+
+## Verificación posterior al despliegue
+
+El commit b35c1da se publicó en Vercel Production. /api/health responde 200 ready con storage redis; web 200; endpoints Owner sin sesión 401. El panel Owner real abre y ofrece el APK. La cuenta Owner quedó configurada mediante OWNER_GOOGLE_EMAIL. La IA generativa aparece en modo estadístico/no configurada y no se verificó conexión con el proveedor de texto.
+
+Corrección Android 1.0.6/5: componente ManageDataLauncherActivity ausente, detectado por prueba nativa. Después de declararlo pasan dos pruebas Robolectric. El usuario debe instalar el APK nuevo desde Owner y comprobar su teléfono; el cambio web no sustituye el binario instalado.

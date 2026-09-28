@@ -688,7 +688,7 @@ export default function AdminDashboardModal({ onClose }) {
                             {c.claimedAt ? new Date(c.claimedAt).toLocaleString('es-ES') : '—'}
                         </td>
                         <td className="py-2.5 px-3.5 text-slate-400">
-                          {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString('es-ES') : '—'}
+                          {c.expiresAt ? new Date(c.expiresAt).toLocaleString('es-ES') : '—'}
                         </td>
                         <td className="py-2.5 px-3.5 text-center font-bold">
                           {c.daysRemaining !== null ? `${c.daysRemaining}d` : `${c.durationDays}d`}
