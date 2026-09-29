@@ -1,11 +1,12 @@
 import React from 'react';
 import { ExternalLink, Flame, Sparkles } from 'lucide-react';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
-import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
+import { useSocialLinks, getSocialLink, usePromoImageVisible } from '../utils/socialSettings';
 import { sounds } from '../utils/audioEffects';
 
 export default function FooterCommunityShowcase() {
   const SOCIAL_LINKS = useSocialLinks();
+  const promoImageVisible = usePromoImageVisible();
   const telegramLink = getSocialLink(SOCIAL_LINKS, 'telegram');
   const whatsappLink = getSocialLink(SOCIAL_LINKS, 'whatsapp');
   const instagramLink = getSocialLink(SOCIAL_LINKS, 'instagram');
@@ -42,7 +43,7 @@ export default function FooterCommunityShowcase() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           
           {/* Left: The Reference Image with WhatsApp QR */}
-          <div className="lg:col-span-5 flex justify-center">
+          {promoImageVisible && <div className="lg:col-span-5 flex justify-center">
             <a 
               href={whatsappLink.url}
               target="_blank"
@@ -57,10 +58,10 @@ export default function FooterCommunityShowcase() {
                 className="w-full h-auto object-cover rounded-2xl transition duration-300 group-hover:scale-[1.02]"
               />
             </a>
-          </div>
+          </div>}
 
           {/* Right: Persuasive Copy & Social Networks */}
-          <div className="lg:col-span-7 space-y-4 text-left">
+          <div className={`${promoImageVisible ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4 text-left`}>
             
             {/* Alert Box Required by User */}
             <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-200">

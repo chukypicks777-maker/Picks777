@@ -41,6 +41,13 @@ router.post('/groups', async (req, res) => {
   } catch (error) { res.status(400).json({ success: false, message: error.message }); }
 });
 
+router.post('/groups/promo-image', async (req, res) => {
+  try {
+    const settings = await storage.updatePromoImageVisibility(req.body?.visible, req.body?.revision);
+    res.json({ success: true, settings });
+  } catch (error) { res.status(400).json({ success: false, message: error.message }); }
+});
+
 // GET /api/settings - Retorna la configuración activa
 router.get('/', async (req, res) => {
   try {

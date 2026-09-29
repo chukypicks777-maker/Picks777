@@ -235,14 +235,23 @@ export class StorageManager {
   }
   async getSocialSettings() {
     const data = await this.load();
-    return data.socialSettings || { links: SOCIAL_LINKS, revision: 0, updatedAt: null };
+    return { promoImageVisible: true, ...(data.socialSettings || { links: SOCIAL_LINKS, revision: 0, updatedAt: null }) };
   }
   async updateSocialSettings(links, revision) {
     const validated = validateSocialLinks(links);
     return this.transaction(db => {
       const current = db.socialSettings?.revision || 0;
       if (!Number.isInteger(revision) || revision !== current) throw new Error('Los enlaces cambiaron. Recarga antes de guardar.');
-      db.socialSettings = { links: validated, revision: current + 1, updatedAt: new Date().toISOString() };
+      db.socialSettings = { promoImageVisible: db.socialSettings?.promoImageVisible !== false, links: validated, revision: current + 1, updatedAt: new Date().toISOString() };
+      return db.socialSettings;
+    });
+  }
+  async updatePromoImageVisibility(visible, revision) {
+    if (typeof visible !== 'boolean') throw new Error('La visibilidad debe ser verdadera o falsa.');
+    return this.transaction(db => {
+      const current = db.socialSettings || { links: SOCIAL_LINKS, revision: 0 };
+      if (!Number.isInteger(revision) || revision !== current.revision) throw new Error('La configuración cambió. Recarga antes de guardar.');
+      db.socialSettings = { ...current, promoImageVisible: visible, revision: current.revision + 1, updatedAt: new Date().toISOString() };
       return db.socialSettings;
     });
   }

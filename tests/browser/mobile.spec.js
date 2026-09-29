@@ -31,7 +31,7 @@ test('owner puede abrir instalación Android en una pantalla de 360 px', async (
   await setup(page, { initial: { ...trial, isAdmin: true, isTrial: false, role: 'owner' } });
   await page.goto('/');
   const owner = page.getByRole('button', { name: /Owner/ });
-  for (const button of await owner.all()) if (await button.isVisible()) { await button.click(); break; }
+  await owner.filter({ visible: true }).first().click();
   await page.getByRole('button', { name: 'Aplicación Android', exact: true }).click();
   const download = page.getByRole('link', { name: 'Descargar APK para instalar' });
   await expect(download).toBeVisible();
@@ -65,7 +65,7 @@ for (const [width, height] of [[320,568], [844,390]]) {
     await page.screenshot({ path: `artifacts/mobile/detail-${width}x${height}.png` });
     await close.click();
     const parlay = page.getByRole('button', { name: /^Parlay/ });
-    for (const button of await parlay.all()) if (await button.isVisible()) { await button.click(); break; }
+    await parlay.filter({ visible: true }).first().click();
     const closeParlay = page.getByRole('button', { name: 'Cerrar parlay' });
     await expect(closeParlay).toBeVisible();
     await closeParlay.click();

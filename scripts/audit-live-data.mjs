@@ -30,14 +30,37 @@ for (const match of feed.matches) {
   failures.push(...errors.map(error => match.id + ':' + error));
 }
 const scheduled = feed.matches.filter(m => m.status === 'SCHEDULED');
-for (const match of [...scheduled.filter(m => m.model).slice(0, 2), ...scheduled.filter(m => !m.model).slice(0, 1)]) {
+const summaries = new Map();
+async function summary(code, id) {
+  const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${code}/summary?event=${id}`;
+  if (!summaries.has(url)) summaries.set(url, (async () => {
+    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error('Provider HTTP ' + response.status);
+    return response.json();
+  })());
+  return summaries.get(url);
+}
+for (const match of feed.matches) {
+  try {
   const detail = await enrichMatchWithRealData(match);
   const checks = [];
+  const current = await summary(match.espnCode, match.espnEventId);
+  const competition = current.header?.competitions?.[0];
+  const score = competition?.status?.type?.completed ? detail.finalScore : detail.liveScore;
+  if (competition?.status?.type?.completed || competition?.status?.type?.state === 'in') {
+    for (const side of ['home', 'away']) {
+      const competitor = competition.competitors?.find(c => c.homeAway === side);
+      const expected = competitor?.score == null ? null : Number(competitor.score);
+      const pass = Number.isFinite(expected) && score?.[side] === expected;
+      checks.push({ metric: side + 'Score', reported: score?.[side], recomputed: expected, pass });
+      if (!pass) failures.push(match.id + ':score:' + side);
+    }
+  }
+  if (!detail.detailsAvailable) failures.push(match.id + ':details-unavailable');
   for (const team of [detail.homeTeam, detail.awayTeam]) {
     const observed = [];
     for (const record of team.statsRecords || []) {
-      const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${match.espnCode}/summary?event=${record.id}`;
-      const data = await (await fetch(url)).json();
+      const data = await summary(match.espnCode, record.id);
       const parsed = readHistoricalSummary(data, team.id, Math.min(Date.now(), Date.parse(match.kickoff)));
       if (parsed) observed.push(parsed);
     }
@@ -49,8 +72,12 @@ for (const match of [...scheduled.filter(m => m.model).slice(0, 2), ...scheduled
       if (!pass) failures.push(`${match.id}:${team.id}:${field}`);
     }
   }
-  checked.push({ id: match.id, title: `${match.homeTeam.name} vs ${match.awayTeam.name}`, kickoff: match.kickoff, sourceUrl: match.sourceUrl,
+  checked.push({ id: match.id, title: `${match.homeTeam.name} vs ${match.awayTeam.name}`, status: detail.status, kickoff: match.kickoff, sourceUrl: match.sourceUrl,
     modelSample: match.model?.sampleSize ?? null, halvesAvailable: Boolean(detail.halfGoals), halfSample: detail.halfGoals?.sampleSize ?? null, checks });
+  } catch (error) { failures.push(match.id + ':' + error.message); }
+  console.log(JSON.stringify({ completed: checked.length, total: feed.matches.length, id: match.id, failures: failures.length }));
+  await fs.mkdir('artifacts', { recursive: true });
+  await fs.writeFile('artifacts/live-data-audit-progress.json', JSON.stringify({ total: feed.matches.length, checked, failures }, null, 2));
 }
 const report = { checkedAt: new Date().toISOString(), source: feed.source, coverage: feed.coverage,
   feedMatches: feed.matches.length, scheduledMatches: scheduled.length, consistency, checked, failures,

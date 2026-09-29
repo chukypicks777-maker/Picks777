@@ -104,14 +104,8 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
     if (invO + invU > 0) probOver25 = (invO / (invO + invU)) * 100;
   }
 
-  let pH = parseNum(rawProbs?.homeWin);
-  let pA = parseNum(rawProbs?.awayWin);
-  if (pH === null && odds?.homeWin) {
-    pH = (1 / odds.homeWin) * 100;
-  }
-  if (pA === null && odds?.awayWin) {
-    pA = (1 / odds.awayWin) * 100;
-  }
+  const pH = parseNum(rawProbs?.homeWin);
+  const pA = parseNum(rawProbs?.awayWin);
 
   const homeGP = parseNum(home?.gamesPlayed);
   const awayGP = parseNum(away?.gamesPlayed);
@@ -143,10 +137,6 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
     weightHome = (homeAttack + awayAttack > 0)
       ? Math.max(0.18, Math.min(0.82, homeAttack / (homeAttack + awayAttack)))
       : 0.5;
-  } else if (pH !== null || pA !== null) {
-    const effH = pH ?? 45;
-    const effA = pA ?? 30;
-    weightHome = Math.max(0.18, Math.min(0.82, Math.sqrt(effH) / (Math.sqrt(effH) + Math.sqrt(effA))));
   } else {
     weightHome = 0.5;
   }
@@ -175,11 +165,11 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
     scores.push({ score: `${h} - ${a}`, probability });
   }));
 
-  const hasWinSignal = rawProbs.homeWin != null || odds?.homeWin || hasStandings;
+  const hasWinSignal = rawProbs.homeWin != null || hasStandings;
   const probabilities = {
-    homeWin: rawProbs.homeWin ?? (hasWinSignal ? (sums.homeWin / mass * 100) : null),
-    draw: rawProbs.draw ?? (hasWinSignal ? (sums.draw / mass * 100) : null),
-    awayWin: rawProbs.awayWin ?? (hasWinSignal ? (sums.awayWin / mass * 100) : null),
+    homeWin: hasWinSignal ? (sums.homeWin / mass * 100) : null,
+    draw: hasWinSignal ? (sums.draw / mass * 100) : null,
+    awayWin: hasWinSignal ? (sums.awayWin / mass * 100) : null,
     over05: (sums.over05 / mass) * 100,
     under05: 100 - (sums.over05 / mass) * 100,
     over15: (sums.over15 / mass) * 100,
@@ -190,14 +180,14 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
     under35: 100 - (sums.over35 / mass) * 100,
     over45: (sums.over45 / mass) * 100,
     under45: 100 - (sums.over45 / mass) * 100,
-    bttsYes: rawProbs.bttsYes ?? ((sums.bttsYes / mass) * 100),
-    bttsNo: rawProbs.bttsNo ?? (100 - (rawProbs.bttsYes ?? ((sums.bttsYes / mass) * 100))),
+    bttsYes: (sums.bttsYes / mass) * 100,
+    bttsNo: 100 - (sums.bttsYes / mass) * 100,
     cornerOver95: rawProbs.cornerOver95 ?? null,
     confidence: null
   };
 
   // Do not combine incompatible market inputs into a seemingly coherent forecast.
-  if (probabilities.bttsYes > probabilities.over15 + 1e-6) return null;
+  if (rawProbs.bttsYes > probabilities.over15 + 1e-6 || probabilities.bttsYes > probabilities.over15 + 1e-6) return null;
   const goalLadder = ['over05', 'over15', 'over25', 'over35', 'over45'].map(key => probabilities[key]);
   if (goalLadder.some((value, index) => index > 0 && value > goalLadder[index - 1] + 1e-6)) return null;
 
@@ -209,14 +199,15 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
     predictedScore: topScore.score,
     scoreDistribution: scores.slice(0, 9).map(s => ({ ...s, probability: (s.probability / mass) * 100 })),
     method: 'Poisson aproximado a partir de cuotas o goles observados',
+    marketProbabilities: rawProbs,
     sampleSize: { home: homeGP ?? home?.gamesPlayed ?? null, away: awayGP ?? away?.gamesPlayed ?? null },
-    expectedGoals: { home: Number(lambda.toFixed(2)), away: Number(mu.toFixed(2)) },
+    expectedGoals: { home: lambda, away: mu },
     limitations: 'Modelo sin calibración histórica de aciertos. Las cuotas reflejan el mercado; el reparto de goles supone independencia. No garantiza resultados.'
   };
 }
 
 export function buildPick(match) {
-  if (!match || match.status === 'POSTPONED' || match.status === 'CANCELLED') return null;
+  if (!match || ['POSTPONED', 'CANCELLED', 'SUSPENDED', 'ABANDONED', 'DELAYED', 'UNKNOWN'].includes(match.status)) return null;
   const probs = match.model?.probabilities || match.probabilities;
   if (!probs || !Object.keys(probs).length || (probs.homeWin == null && probs.awayWin == null)) return null;
 
@@ -233,7 +224,7 @@ export function buildPick(match) {
     probability: Math.round(banker.probability),
     type: '💎 Pick Banquero Principal',
     confidence: `${Math.round(banker.probability)}%`,
-    settlement: match.status === 'LIVE' ? 'IN_PLAY' : match.status === 'FINISHED' ? 'SETTLED' : 'PENDING',
+    settlement: match.status === 'LIVE' ? 'IN_PLAY' : match.status === 'FINISHED' ? 'RETROSPECTIVE' : 'PENDING',
     predictedScore: match.model?.predictedScore || match.probabilities?.predictedScore || null,
     summaryRationale: banker.rationale || `Estimación del modelo, sin garantía, con ${Math.round(banker.probability)}% de probabilidad estadística.`
   };

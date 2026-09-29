@@ -1,1 +1,1 @@
-# Android Browser Helper supplies its consumer rules. No JavaScript bridge is exposed.
+# The app uses platform WebView without a JavaScript-to-native bridge.

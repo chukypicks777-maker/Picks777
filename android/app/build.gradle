@@ -15,15 +15,13 @@ android {
     compileSdk 36
     defaultConfig {
         applicationId mobile.applicationId
-        minSdk 23
+        minSdk 24
         targetSdk 36
         versionCode mobile.versionCode
         versionName mobile.versionName
         manifestPlaceholders = [launchUrl: mobile.origin + '/', appHost: origin.host]
         resValue 'string', 'app_name', mobile.name
-        resValue 'string', 'asset_statements', groovy.json.JsonOutput.toJson([
-            [relation: ['delegate_permission/common.handle_all_urls'], target: [namespace: 'web', site: mobile.origin]]
-        ])
+        resValue 'string', 'app_origin', mobile.origin
     }
     signingConfigs {
         release {
@@ -50,7 +48,8 @@ android {
     testOptions { unitTests.includeAndroidResources = true }
 }
 dependencies {
-    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.3'
+
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.robolectric:robolectric:4.14.1'
 }
+

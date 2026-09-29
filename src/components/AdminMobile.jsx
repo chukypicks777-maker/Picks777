@@ -20,7 +20,7 @@ export default function AdminMobile() {
       <p>Versión {release.versionName} · compilación {release.versionCode} · {(release.bytes / 1048576).toFixed(1)} MB</p>
       <a className="inline-block rounded-lg bg-emerald-600 px-4 py-3 font-bold text-white" href="/api/admin/mobile/apk">Descargar APK para instalar</a>
       <p className="text-xs break-all">SHA-256: {release.sha256}</p>
-      <p>La aplicación abre {release.origin}. Los cambios web aparecen al recargar después de desplegarlos.</p>
+      <p>La aplicación muestra {release.origin} dentro de su propia ventana. Los cambios de contenido llegan al recargar después del despliegue; los cambios Android requieren actualizar el APK.</p>
     </div> : release && <p role="status" className="text-amber-300">{release.message}</p>}
     <ol className="list-decimal pl-5 space-y-2">
       <li>Descarga y abre el archivo. Si Android lo solicita, permite temporalmente instalar desde tu navegador.</li>

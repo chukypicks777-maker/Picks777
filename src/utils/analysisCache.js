@@ -8,8 +8,8 @@
  */
 
 const memoryCache = new Map();
-const STORAGE_PREFIX = 'picks777_ai_cache_v6';
-const SESSION_STORAGE_KEY = 'picks777_analysis_cache_v4';
+const STORAGE_PREFIX = 'picks777_ai_cache_v7';
+const SESSION_STORAGE_KEY = 'picks777_analysis_cache_v5';
 
 function getStorage() {
   try {

@@ -335,7 +335,8 @@ export default function MatchDetailModal({
 
 
   // Compute 10-match H2H historical statistics
-  const h2hList = m.h2h || [];
+  // Missing results are not draws and must not enter win/goal percentages.
+  const h2hList = (m.h2h || []).filter(h => /^\d+\s*-\s*\d+$/.test(h.score || ''));
   const normalize = str => (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
   const homeNorm = normalize(m.homeTeam?.name);
   const homeShortNorm = normalize(m.homeTeam?.shortName);
@@ -395,9 +396,9 @@ export default function MatchDetailModal({
   }).length;
   const over25H2HPct = h2hList.length > 0 ? Math.round((over25H2HCount / h2hList.length) * 100) : 0;
 
-  const bttsH2HCount = h2hList.filter(h => h.btts).length;
+  const bttsH2HCount = h2hList.filter(h => h.score.split('-').every(s => Number(s.trim()) > 0)).length;
   const bttsH2HPct = h2hList.length > 0 ? Math.round((bttsH2HCount / h2hList.length) * 100) : 0;
-  const totalH2HGoals = h2hList.reduce((acc, h) => acc + (h.totalGoals || 0), 0);
+  const totalH2HGoals = h2hList.reduce((acc, h) => acc + h.score.split('-').reduce((sum, s) => sum + Number(s.trim()), 0), 0);
   const avgH2HGoals = h2hList.length > 0 ? (totalH2HGoals / h2hList.length).toFixed(1) : '0.0';
 
   const hasCornersData = h2hList.some(h => h.totalCorners != null);

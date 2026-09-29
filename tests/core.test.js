@@ -182,7 +182,11 @@ test('provider outage yields unavailable coverage and no example matches', async
   } finally { globalThis.fetch = original; }
 });
 
-test('HTTP session and owner flow, access persistence and revocation', async () => {
+test('HTTP session and owner flow, access persistence and revocation', async t => {
+  const realFetch = globalThis.fetch;
+  t.mock.method(globalThis, 'fetch', (url, options) => String(url).includes('espn.com')
+    ? Promise.resolve(new Response(JSON.stringify({ events: [] }), { status: 200 }))
+    : realFetch(url, options));
   const directory = await mkdtemp(path.join(os.tmpdir(), 'picks-http-'));
   const originalFile = storage.file;
   storage.file = path.join(directory, 'access.json');

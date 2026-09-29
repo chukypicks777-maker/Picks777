@@ -82,6 +82,21 @@ test('HTTP groups: anonymous/VIP/header forgery/CSRF denied; Owner succeeds; pub
     const saved = await request('/api/settings/groups', input, owner); assert.equal(saved.status, 200);
     assert.equal((await request('/api/settings/groups', input, owner)).status, 400);
     const publicData = await (await request('/api/community')).json(); assert.equal(publicData.settings.revision, 1); assert.equal(publicData.settings.apiKey, undefined);
+    const promoPath = '/api/settings/groups/promo-image';
+    const toggle = { visible: false, revision: 1 };
+    assert.equal((await request(promoPath, toggle)).status, 401);
+    assert.equal((await request(promoPath, toggle, vip)).status, 403);
+    assert.equal((await request(promoPath, toggle, owner, { Origin: 'https://evil.example' })).status, 403);
+    assert.equal((await request(promoPath, { ...toggle, visible: 'false' }, owner)).status, 400);
+    assert.equal((await request(promoPath, toggle, owner)).status, 200);
+    assert.equal((await request(promoPath, toggle, owner)).status, 400);
+    const afterToggle = await (await request('/api/community')).json();
+    assert.equal(afterToggle.settings.promoImageVisible, false);
+    assert.equal((await new StorageManager(storage.file).getSocialSettings()).promoImageVisible, false);
+    // Editing community URLs must not silently turn a hidden advertisement back on.
+    assert.equal((await request('/api/settings/groups', { ...input, revision: 2 }, owner)).status, 200);
+    assert.equal((await (await request('/api/community')).json()).settings.promoImageVisible, false);
+    assert.equal((await request(promoPath, { visible: true, revision: 3 }, owner)).status, 200);
     const settings = await request('/api/settings/update', { provider: 'custom', apiKey: {}, baseUrl: 'https://localhost' }, owner); assert.equal(settings.status, 400);
   } finally { await new Promise(resolve => server.close(resolve)); storage.file = original; await rm(dir, { recursive: true, force: true }); }
 });

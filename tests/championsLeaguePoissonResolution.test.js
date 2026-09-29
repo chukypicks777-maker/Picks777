@@ -151,7 +151,7 @@ test('Project version is consistently current release across all configuration a
   assert.ok(appJsx.includes('v' + pkg.version), 'src/App.jsx footer must be vcurrent release');
   assert.ok(swJs.includes('picks-offline-'), 'public/sw.js must specify CACHE picks-offline-vcurrent release');
   assert.equal(mobileConfig.versionName, pkg.version, 'mobile.config.json versionName must be current release');
-  assert.equal(mobileConfig.versionCode, 5, 'mobile.config.json versionCode must be 5');
+  assert.ok(Number.isInteger(mobileConfig.versionCode) && mobileConfig.versionCode >= 6);
 });
 
 test('Poisson pipeline rejects missing data: getCoherentPredictedScore returns N/D and sample sizes are null without inventing 1 - 1 or 5 games', () => {
@@ -200,3 +200,4 @@ test('Villarreal vs Napoli UCL match derives goal projections but never invents 
   assert.notEqual(score, 'N/D');
   assert.match(score, /^\d+\s*-\s*\d+$/);
 });
+

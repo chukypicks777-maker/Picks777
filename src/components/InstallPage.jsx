@@ -32,6 +32,7 @@ export default function InstallPage() {
       <h2 className="text-xl font-bold">Android y otros dispositivos</h2>
       <p>Abre el menú de Chrome o de tu navegador y selecciona Instalar aplicación o Añadir a pantalla de inicio, si está disponible. También puedes usar la web directamente.</p>
       <p>El propietario puede descargar el APK firmado desde Owner → Aplicación Android.</p>
+      <p>El APK Android abre los partidos dentro de su propia ventana. Requiere Android 7 o posterior y Android System WebView 111 o posterior. La identificación con Google y los enlaces de comunidades se abren externamente al solicitarlos.</p>
     </section>
     <section className="space-y-2"><h2 className="text-xl font-bold">Acceso y actualizaciones</h2><p>Si Google no abre desde el navegador interno de una red social, abre esta dirección en Safari o Chrome y vuelve a pulsar Continuar con Google. Permite la ventana de acceso cuando el navegador lo solicite.</p><p>Las mejoras web llegan al abrir o recargar la aplicación con conexión. Las actualizaciones del APK se instalan desde el panel Owner.</p></section>
   </main>;

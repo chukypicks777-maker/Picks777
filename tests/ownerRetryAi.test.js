@@ -26,7 +26,7 @@ test('Version numbers are consistent across package.json, package-lock.json, App
   assert.ok(swJs.includes('picks-offline-'), 'public/sw.js must specify CACHE picks-offline-vcurrent release');
   assert.ok(swJs.includes('self.skipWaiting()'), 'public/sw.js must include skipWaiting for instant client updates');
   assert.equal(mobileConfig.versionName, pkg.version, 'mobile.config.json versionName must be current release');
-  assert.equal(mobileConfig.versionCode, 5, 'mobile.config.json versionCode must be incremented to 5');
+  assert.ok(Number.isInteger(mobileConfig.versionCode) && mobileConfig.versionCode >= 6);
 });
 
 test('Owner retry and re-analysis bypasses rate limits, prevents 429, and handles forceRefresh without crashing', async t => {
@@ -177,4 +177,5 @@ test('isMatchAnalyzed and MatchDetailModal distinguish between verified AI analy
   };
   assert.equal(isMatchAnalyzed('m-full-ai', matchFullAi), true, 'Full AI report with aiAvailable=true must be counted as analyzed');
 });
+
 

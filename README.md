@@ -1,10 +1,10 @@
 # Picks777
 
-Aplicación web de información deportiva con cliente React/Vite, API Express y aplicación Android TWA. Revisión actual: [AUDITORIA-2026-09-28.md](AUDITORIA-2026-09-28.md).
+Aplicación web de información deportiva con cliente React/Vite, API Express y aplicación Android híbrida con ventana propia (WebView). Revisión actual: [AUDITORIA-2026-09-28.md](AUDITORIA-2026-09-28.md).
 
 ## Datos y probabilidades
 
-El backend consulta ESPN y conserva fuente y fecha de consulta. Las métricas ausentes se muestran como N/D. El modelo usa Poisson independiente sobre goles observados; como alternativa usa cuotas de mercados completos para aproximar una distribución. No implementa xG observado, Dixon-Coles ni una calibración histórica validada. La IA redacta comentarios; no puede reemplazar los números ni las cuotas calculadas.
+El backend consulta ESPN y conserva fuente y fecha de consulta. Las métricas ausentes se muestran como N/D. El modelo usa Poisson independiente sobre goles observados; como alternativa usa cuotas de mercados completos para aproximar una distribución. No implementa xG observado, Dixon-Coles ni una calibración histórica validada. La IA prioriza hechos del catálogo; su texto libre se descarta y no puede reemplazar números, cuotas ni selecciones calculadas.
 
 No se garantiza una tasa de aciertos del 90 % ni ganancias. Las cuotas teóricas derivadas del modelo se distinguen de las publicadas. Las combinadas son simulaciones bajo independencia, no apuestas colocadas. Deben confirmarse las cuotas y condiciones con el proveedor correspondiente.
 
@@ -26,7 +26,7 @@ Para iPhone, iPad y navegadores Android: abrir `/instalar`. La app web se instal
 
 El owner dispone del apartado Aplicación Android dentro del panel administrativo. npm run android:preview prepara un APK firmado y su manifiesto para descarga autenticada. npm run android:bundle genera el AAB. Incrementar versionCode en mobile.config.json al actualizar Android; conservar la clave de firma. Las actualizaciones web requieren desplegar la web, y se reciben al recargar.
 
-El APK abre https://picks777.vercel.app. La publicación en Play Store tiene pendientes de contacto, privacidad y pruebas físicas; véanse [ANDROID-RELEASE.md](ANDROID-RELEASE.md) y el informe de auditoría.
+El APK 1.1.0 muestra https://picks777.vercel.app dentro de su propia ventana. Requiere Android 7+ y WebView 111+. Solo Google y enlaces externos solicitados por el usuario abren otro programa. Hay que desplegar frontend y backend antes de distribuir este APK, porque incluye un flujo de acceso nuevo. La publicación en Play Store tiene pendientes de contacto, privacidad y pruebas físicas; véanse [ANDROID-RELEASE.md](ANDROID-RELEASE.md) y el informe de auditoría.
 
 ## Membresías vinculadas a cuentas
 

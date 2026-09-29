@@ -165,7 +165,10 @@ test('generateAiMatchReport grounds report on real match stats, odds, and return
     assert.equal(report.dataGrounded, true, 'Report must be grounded in facts');
     assert.ok(report.verifiedStatsCount > 0, 'Facts catalog must be populated');
     assert.ok(report.analysisSections, 'Deep analysis structured sections must be present');
-    assert.equal(report.analysisSections.verdict, 'Victoria contundente pronosticada.');
+    assert.notEqual(report.analysisSections.verdict, 'Victoria contundente pronosticada.');
+    assert.equal(report.analysisMode, 'fact-selection');
+    assert.equal(report.narrativeVerified, true);
+    assert.ok(!report.narrativeAnalysis.includes('Ataque potente'));
   } finally {
     globalThis.fetch = oldFetch;
   }
@@ -332,4 +335,3 @@ test('MatchCard preserves quantitative statistics, banker picks, and defines mod
     'MatchCard must display statistical base rationale alongside AI verdict'
   );
 });
-

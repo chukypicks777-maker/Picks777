@@ -5,6 +5,7 @@ import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
 import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
 import { identityProvider } from '../auth/providers';
+import { isAndroidApp, cancelMobileSignIn } from '../auth/mobileSignIn';
 import { confirmedSession, sessionRequest } from '../auth/sessionClient';
 
 function GoogleIcon({ className = "w-5 h-5" }) {
@@ -267,6 +268,10 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
             </div>
 
             {/* Google Identity Services container if active */}
+            {loading && isAndroidApp() && <div className="text-center text-sm space-y-2">
+              <p>Confirma tu cuenta en la pantalla de Google y vuelve a esta aplicación.</p>
+              <button type="button" className="p-3 underline" onClick={cancelMobileSignIn}>Cancelar acceso con Google</button>
+            </div>}
             <div id="google-btn-rendered" className="flex justify-center" />
 
             <div className="flex items-center justify-center space-x-2 text-[11px] text-slate-400 font-sans pt-1">

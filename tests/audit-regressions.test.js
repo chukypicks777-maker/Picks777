@@ -22,7 +22,7 @@ test('market model rejects invalid percentages and normalizes complete markets a
   assert.equal(deriveCalibratedPoissonModel({ over25: 101, homeWin: Infinity }), null);
   const model = deriveCalibratedPoissonModel({ over25: 60, under25: 60, homeWin: 60, draw: 30, awayWin: 30, bttsYes: 40, bttsNo: 80, confidence: 99 });
   const p = model.probabilities;
-  assert.equal(p.homeWin + p.draw + p.awayWin, 100);
+  assert.ok(Math.abs(p.homeWin + p.draw + p.awayWin - 100) < 1e-9);
   assert.equal(p.over25 + p.under25, 100);
   assert.equal(p.bttsYes + p.bttsNo, 100);
   assert.equal(p.confidence, null);

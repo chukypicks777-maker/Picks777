@@ -12,4 +12,4 @@ const statements = fingerprints.length ? [{ relation: ['delegate_permission/comm
 const directory = new URL('../public/.well-known/', import.meta.url);
 await mkdir(directory, { recursive: true });
 await writeFile(new URL('assetlinks.json', directory), JSON.stringify(statements, null, 2) + '\n');
-if (!fingerprints.length) console.warn('Pendiente: añade la huella del certificado de firma de Play en mobile.config.json para verificar la TWA.');
+if (!fingerprints.length) console.warn('Pendiente: añade la huella del certificado de firma de Play en mobile.config.json para verificar Android App Links.');

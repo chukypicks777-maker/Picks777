@@ -41,7 +41,7 @@ test('scheduled match analysis remains valid in cache well beyond 10 minutes (up
   const match = {
     id: 'match-scheduled-long',
     status: 'SCHEDULED',
-    kickoff: '2026-09-28T18:00:00Z',
+    kickoff: new Date(Date.now() + 72 * 3600000).toISOString(),
     probabilities: { homeWin: 55, awayWin: 20 }
   };
 

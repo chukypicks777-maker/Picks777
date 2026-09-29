@@ -1,8 +1,8 @@
 {
-  "versionName": "1.0.6",
-  "versionCode": 5,
+  "versionName": "1.1.0",
+  "versionCode": 6,
   "origin": "https://picks777.vercel.app",
-  "sha256": "77f14199c55c2736bde3dbec95e38078189132a5ae9e20a6591cf9e3940cfd13",
-  "bytes": 740387,
-  "builtAt": "2026-09-28T10:06:00.662Z"
+  "sha256": "664b8b7074d9c344c326608aa00b089ef2f70ea860884dc3d9f91003379f4abf",
+  "bytes": 164228,
+  "builtAt": "2026-09-29T00:55:44.583Z"
 }

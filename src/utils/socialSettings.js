@@ -10,7 +10,7 @@ const loadInitialState = () => {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed?.links) && parsed.links.length === 3) {
-        return { links: parsed.links, revision: Number.isInteger(parsed.revision) ? parsed.revision : 0 };
+        return { links: parsed.links, promoImageVisible: parsed.promoImageVisible !== false, revision: Number.isInteger(parsed.revision) ? parsed.revision : 0 };
       }
     }
   } catch {}
@@ -19,6 +19,7 @@ const loadInitialState = () => {
 
 const initialState = loadInitialState();
 let links = initialState.links;
+let promoImageVisible = initialState.promoImageVisible !== false;
 let pending;
 let revision = initialState.revision;
 const listeners = new Set();
@@ -38,9 +39,11 @@ export function updateSocialLinks(settings) {
   if (Number.isInteger(settings.revision) && settings.revision < revision) return;
   revision = targetRevision;
   links = settings.links;
+  promoImageVisible = settings.promoImageVisible !== false;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       links,
+      promoImageVisible,
       revision,
       updatedAt: settings.updatedAt || new Date().toISOString()
     }));
@@ -73,4 +76,6 @@ export function useSocialLinks() {
   }, []);
   return value;
 }
-
+export function usePromoImageVisible() {
+  return useSyncExternalStore(subscribe, () => promoImageVisible, () => true);
+}

@@ -596,7 +596,7 @@ export default function App() {
       )}
 
       <div className="flex justify-end gap-4 px-4 py-2 text-xs text-slate-400">
-        <a href="/privacidad.html" className="underline">Privacidad</a>
+        <a href="/contacto" className="hover:text-white underline">Contacto</a> · <a href="/privacidad.html" className="underline">Privacidad</a>
         <a href="/instalar" className="underline">Instalar en mi celular</a>
         <a href="/eliminar-cuenta" className="underline">Mi cuenta / eliminar</a>
       </div>
@@ -922,7 +922,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-slate-300">DEPORTEPICKS AI VIP</span>
-            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.0.6</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.1.0</span>
             <span>•</span>
             <span>Plataforma de Análisis Cuantitativo para Apuestas</span>
           </div>
@@ -935,3 +935,4 @@ export default function App() {
     </div>
   );
 }
+

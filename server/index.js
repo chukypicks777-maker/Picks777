@@ -7,6 +7,7 @@ import { CONFIG, secureConfiguration } from './config.js';
 import { readiness } from './health.js';
 import { requireSession } from './session.js';
 import authRoutes from './routes/authRoutes.js';
+import mobileAuthRoutes from './routes/mobileAuthRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import matchRoutes from './routes/matchRoutes.js';
 import parlayRoutes from './routes/parlayRoutes.js';
@@ -25,6 +26,7 @@ app.use('/api', (req, res, next) => {
 });
 app.get('/api/health', readiness);
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/mobile', mobileAuthRoutes);
 app.get('/api/community', async (req, res) => {
   res.json({ success: true, settings: await storage.getSocialSettings() });
 });

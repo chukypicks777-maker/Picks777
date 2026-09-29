@@ -1,5 +1,6 @@
-import { validNumber, percent, complement, totalLines, poissonProbability, poissonCumulative } from './probability.js';
+import { validNumber, parseNumeric, percent, complement, totalLines, poissonProbability, poissonCumulative } from './probability.js';
 export { poissonProbability, poissonCumulative };
+const probabilityValue = value => { const n = parseNumeric(value); return n !== null && n >= 0 && n <= 100 ? n : null; };
 export function calculateCornerProbabilities(avgCorners) {
   const lines = totalLines(avgCorners, [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 8.5, 9.5]);
   return { lambda: validNumber(avgCorners) ? avgCorners : null, ...lines, over5: lines.over55, under5: lines.under55 };
@@ -90,7 +91,7 @@ export function calculateDifferential(home, away, match = {}) {
   };
 }
 export function getTop3Opportunities(match) {
-  if (!match || match.status === 'POSTPONED' || match.status === 'CANCELLED') return [];
+  if (!match || ['POSTPONED', 'CANCELLED', 'SUSPENDED', 'ABANDONED', 'DELAYED', 'UNKNOWN'].includes(match.status)) return [];
   const p = { ...(match.model?.probabilities || match.probabilities || {}) };
 
   const parseOddsNum = val => {
@@ -235,7 +236,7 @@ export function deriveSeasonPoisson(match) {
 }
 
 export function getContextualPick(match, marketFilter = 'all') {
-  if (!match || match.status === 'POSTPONED' || match.status === 'CANCELLED') return null;
+  if (!match || ['POSTPONED', 'CANCELLED', 'SUSPENDED', 'ABANDONED', 'DELAYED', 'UNKNOWN'].includes(match.status)) return null;
 
   const parseOddsNum = val => {
     const n = typeof val === 'number' ? val : parseFloat(val);
@@ -349,9 +350,9 @@ export function getEffectiveOdds(pick) {
 export function getMatchSafetyScore(match) { return percent(match?.probabilities?.confidence) ?? getBestBankerPick(match)?.probability ?? 0; }
 export function solvePoissonLambdaFromUnder25(probUnder25Decimal) {
   const decimal = probUnder25Decimal > 1 ? probUnder25Decimal / 100 : probUnder25Decimal;
-  const p = Math.max(0.01, Math.min(0.99, decimal));
-  let low = 0.05, high = 15.0;
-  for (let i = 0; i < 25; i++) {
+  const p = Math.max(1e-8, Math.min(1 - 1e-8, decimal));
+  let low = 0, high = 60;
+  for (let i = 0; i < 45; i++) {
     const mid = (low + high) / 2;
     const pUnder = Math.exp(-mid) * (1 + mid + (mid * mid) / 2);
     if (pUnder > p) low = mid; else high = mid;
@@ -361,16 +362,14 @@ export function solvePoissonLambdaFromUnder25(probUnder25Decimal) {
 
 export function fillPoissonGoalLadder(probabilities = {}, odds = {}) {
   const p = { ...probabilities };
-  let prob25 = percent(p.over25);
+  let prob25 = probabilityValue(p.over25);
   if (prob25 === null && odds?.over25 && odds?.under25) {
     const invO = 1 / Number(odds.over25), invU = 1 / Number(odds.under25);
-    if (invO + invU > 0) prob25 = Math.round((invO / (invO + invU)) * 100);
+    if (invO + invU > 0) prob25 = (invO / (invO + invU)) * 100;
 
   }
-  if (prob25 !== null && prob25 > 1 && prob25 < 99) {
-    const lambda = (prob25 !== null && prob25 > 1 && prob25 < 99)
-      ? solvePoissonLambdaFromUnder25((100 - prob25) / 100)
-      : 2.70;
+  if (prob25 !== null && prob25 > 0 && prob25 < 100) {
+    const lambda = solvePoissonLambdaFromUnder25((100 - prob25) / 100);
     const p0 = Math.exp(-lambda);
     const p1 = lambda * p0;
     const p2 = (lambda * lambda / 2) * p0;
@@ -409,7 +408,7 @@ export function fillPoissonGoalLadder(probabilities = {}, odds = {}) {
 export function derivePoissonScoreFromMatch(match) {
   if (!match) return null;
   const p = match.model?.probabilities || match.probabilities || match.aiReport?.probabilities || {};
-  let prob25 = percent(p.over25);
+  let prob25 = probabilityValue(p.over25);
   if (prob25 === null && match.odds?.over25 && match.odds?.under25) {
     const invO = 1 / Number(match.odds.over25), invU = 1 / Number(match.odds.under25);
     if (invO + invU > 0) prob25 = (invO / (invO + invU)) * 100;
@@ -421,7 +420,7 @@ export function derivePoissonScoreFromMatch(match) {
   const homeGP = Number(home.gamesPlayed);
   const awayGP = Number(away.gamesPlayed);
   const hasStandings = Number.isFinite(homeGP) && homeGP >= 5 && Number.isFinite(awayGP) && awayGP >= 5 &&
-    Number.isFinite(Number(home.goalsFor)) && Number.isFinite(Number(away.goalsFor));
+    validNumber(home.goalsFor) && validNumber(away.goalsFor);
 
   let pH = percent(p.homeWin);
   let pA = percent(p.awayWin);
@@ -438,7 +437,7 @@ export function derivePoissonScoreFromMatch(match) {
   }
 
   let totalLambda;
-  if (prob25 !== null && prob25 > 1 && prob25 < 99) {
+  if (prob25 !== null && prob25 > 0 && prob25 < 100) {
     totalLambda = solvePoissonLambdaFromUnder25((100 - prob25) / 100);
   } else if (hasStandings) {
     totalLambda = Math.max(1.2, Math.min(6.5, (Number(home.goalsFor) / homeGP) + (Number(away.goalsFor) / awayGP)));
@@ -455,10 +454,6 @@ export function derivePoissonScoreFromMatch(match) {
     wH = (homeAttack + awayAttack > 0)
       ? Math.max(0.18, Math.min(0.82, homeAttack / (homeAttack + awayAttack)))
       : 0.5;
-  } else if (pH !== null || pA !== null) {
-    const effH = pH ?? 45;
-    const effA = pA ?? 30;
-    wH = Math.max(0.18, Math.min(0.82, Math.sqrt(effH) / (Math.sqrt(effH) + Math.sqrt(effA))));
   } else {
     wH = 0.5;
   }
