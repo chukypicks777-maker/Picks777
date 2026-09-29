@@ -19,7 +19,9 @@ const loadInitialState = () => {
 
 const initialState = loadInitialState();
 let links = initialState.links;
-let promoImageVisible = initialState.promoImageVisible !== false;
+// Wait for the server before showing the promotion; a cached "on" must not
+// briefly reveal an image the Owner has since disabled.
+let promoImageVisible = false;
 let pending;
 let revision = initialState.revision;
 const listeners = new Set();
@@ -77,5 +79,5 @@ export function useSocialLinks() {
   return value;
 }
 export function usePromoImageVisible() {
-  return useSyncExternalStore(subscribe, () => promoImageVisible, () => true);
+  return useSyncExternalStore(subscribe, () => promoImageVisible, () => false);
 }

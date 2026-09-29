@@ -28,7 +28,7 @@ Los enlaces voluntarios a WhatsApp, Telegram y otras comunidades abren la aplica
 - `artifacts/android/release.json`: versión, tamaño y SHA-256 del APK.
 - `artifacts/android/SHA256.json`: integridad de los archivos de entrega.
 
-Antes de distribuir el APK nuevo hay que desplegar también el frontend y el backend de esta versión. El APK consulta el dominio publicado: compilarlo no despliega `/mobile-auth` ni `/api/auth/mobile/*`. La versión productiva anterior no sabe completar el acceso nuevo.
+Frontend y backend 1.1.0 fueron desplegados en picks777.vercel.app el 29-09-2026. Se comprobó que el intercambio móvil inicia y consulta su estado usando Redis en producción. Queda pendiente verificar el acceso completo de Google en el teléfono físico.
 
 ## Compilar
 
@@ -61,6 +61,7 @@ Prueba Android nativa: `android/gradlew.bat -p android testDebugUnitTest lintDeb
 - No hay prueba física Samsung/Huawei ni confirmación del flujo real de Google en la nueva WebView. Robolectric y Playwright no sustituyen esas pruebas.
 - La política de conservación de logs y backups necesita ajustarse a la configuración real del alojamiento; no se inventó un plazo.
 - Falta comprobar en Play Console identidad, países, acceso de revisores, certificado de firma, ficha y pruebas requeridas. No se ha subido el AAB.
+- La IA funcionó con la configuración local durante la auditoría, pero producción aún informa `aiConfigured: false`. Se debe guardar una configuración válida desde Owner antes de anunciar IA generativa disponible en el servicio publicado. El cálculo estadístico de respaldo se identifica como tal.
 - Los picks, cuotas, simulaciones y comunidades relacionadas con apuestas requieren revisar elegibilidad y destinos reales según las políticas de juegos con dinero real y publicidad. Si se venden accesos digitales, también aplica la política de pagos correspondiente: este proyecto no integra Play Billing. No se declara aprobación automática por elegir la categoría Deportes.
 
 ## Datos e IA
@@ -70,6 +71,21 @@ Los cálculos son estimaciones Poisson, no resultados garantizados ni un modelo 
 La IA selecciona hechos existentes del catálogo. Se descarta su texto libre y cualquier número o selección que intente inventar. El informe distingue IA disponible de un informe puramente estadístico. No hay historial prospectivo validado suficiente para publicar una tasa de aciertos real, Brier score o rentabilidad. Un análisis de un partido terminado no se contabiliza como pronóstico acertado previo.
 
 La auditoría del 28-09-2026 revisó los 15 encuentros que devolvió el listado: 98 comparaciones, 86 con valores y 12 sin muestra suficiente, cero discrepancias. La fuente es ESPN; contrastar otra respuesta del mismo proveedor no es una verificación independiente. Las ligas sin encuentros en esa respuesta no se rellenan con partidos ficticios. El informe por partido está en `artifacts/live-data-audit.json`.
+
+La auditoría local de IA terminó el 29-09-2026 UTC: 15 informes con IA disponible, sin diferencias en probabilidades, marcador, pick ni hechos frente al cálculo. Nueve respuestas usaron Gemini 2.5 Flash y seis el modelo alternativo Gemini 3.5 Flash Lite por cuota o disponibilidad del proveedor. El informe original conserva `fallback-model` en su lista de incidencias; es un cambio de modelo identificado, no una discrepancia numérica. No se extrapola esta muestra a todos los partidos futuros.
+
+## Control de la imagen promocional
+
+Owner → Grupos y Comunidad → Imagen del anuncio. El interruptor guarda inmediatamente la visibilidad en el servidor. Solo Owner puede modificarla; los visitantes con la página abierta actualizan la configuración cada minuto. Oculta únicamente la imagen solicitada, conserva los enlaces de comunidad y no anuncia éxito si falla el guardado. La imagen espera la configuración del servidor antes de mostrarse, para evitar un destello con un estado antiguo de la caché.
+
+## Validación de esta entrega
+
+- 119 pruebas de servidor y cálculo aprobadas.
+- 12 pruebas nativas Robolectric aprobadas y Android lint sin errores.
+- 19 escenarios Android Chromium aprobados; 19 Firefox aprobados; 18 WebKit aprobados en la corrida y el restante aprobado al corregir una espera de la prueba. El interruptor y el panel se volvieron a probar en Android Chromium y WebKit: 4/4.
+- Compilación web y comprobación offline aprobadas; aviso de tamaño del paquete JavaScript pendiente de optimización, sin error de compilación.
+- APK firmado, AAB validado con bundletool y firmas verificadas. Huellas de entrega en `artifacts/android/SHA256.json`.
+- La simulación de interfaz y Robolectric no sustituyen la instalación real en Samsung/Huawei ni la revisión de Google Play.
 
 ## Referencias oficiales revisadas
 
