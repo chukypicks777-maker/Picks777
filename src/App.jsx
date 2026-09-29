@@ -120,7 +120,7 @@ export default function App() {
     const target = (filterId === 'safe' || filterId === 'boost') ? 'safe' : filterId;
     setMarketFilter(target);
     if (target === 'safe') {
-      window.history.pushState({ market: 'safe' }, '', '/boost');
+      window.history.pushState({ market: 'safe' }, '', '/banqueros');
     } else if (target === 'btts') {
       window.history.pushState({ market: 'btts' }, '', '/btts');
     } else if (target === 'over') {
@@ -742,9 +742,8 @@ export default function App() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
-                    <span className="text-xl">⚡</span>
                     <h4 className="font-black text-sm md:text-base text-white uppercase tracking-wider font-sans">
-                      Picks Boost / Banqueros Oficiales — {bankerSubFilter === 'highest_safety' ? 'Más Asegurados (Máxima Probabilidad)' : bankerSubFilter === 'recent' ? 'Recientes / Próximos' : bankerSubFilter === 'live' ? 'En Vivo' : 'Mayor Ganancia (Sin Filtro de Fecha)'}
+                      Picks Banqueros Oficiales — {bankerSubFilter === 'highest_safety' ? 'Más Asegurados (Máxima Probabilidad)' : bankerSubFilter === 'recent' ? 'Recientes / Próximos' : bankerSubFilter === 'live' ? 'En Vivo' : 'Mayor Ganancia (Sin Filtro de Fecha)'}
                     </h4>
                   </div>
                   <p className="text-xs text-emerald-300/90 font-mono">
@@ -755,7 +754,7 @@ export default function App() {
                   </p>
                 </div>
                 <span className="px-3 py-1.5 rounded-xl bg-emerald-500/30 text-emerald-200 border border-emerald-500/50 font-mono text-xs font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                  {filteredMatches.length} PICKS BOOST
+                  {filteredMatches.length} PICKS BANQUEROS
                 </span>
               </div>
 
@@ -858,7 +857,7 @@ export default function App() {
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-bold text-sm sm:text-base text-white">
                 {(marketFilter === 'safe' || marketFilter === 'boost')
-                  ? '⚡ Ranking de Picks Boost / Banqueros'
+                  ? 'Ranking de Picks Banqueros'
                   : marketFilter === 'btts'
                   ? '🤝 Partidos Ambos Equipos Anotan (BTTS)'
                   : marketFilter === 'over'
@@ -995,7 +994,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-slate-300">DEPORTEPICKS AI VIP</span>
-            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.1.1</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.1.2</span>
             <span>•</span>
             <span>Plataforma de Análisis Cuantitativo para Apuestas</span>
           </div>

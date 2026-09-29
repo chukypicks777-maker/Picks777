@@ -42,17 +42,16 @@ async function setup(page, { initial = trialUser } = {}) {
 
 test.describe('Boost, Audio and VIP Unlock Modal Verification', () => {
 
-  test('Direct visit to /boost activates Boost / Banqueros filter and renders banner', async ({ page }) => {
+  test('Direct visit to /banqueros activates Banqueros filter and renders banner', async ({ page }) => {
     await setup(page);
-    await page.goto('/boost');
+    await page.goto('/banqueros');
 
-    // Verify ⚡ Boost / Banqueros is selected
-    const boostTab = page.getByRole('button', { name: /⚡ Boost \/ Banqueros/ });
-    await expect(boostTab).toBeVisible();
-    await expect(boostTab).toHaveClass(/bg-emerald-500/);
+    // Verify Banqueros is selected
+    const bankerTab = page.getByRole('button', { name: /^Banqueros$/ });
+    await expect(bankerTab).toBeVisible();
 
     // Verify banker banner is displayed
-    const bannerTitle = page.getByText(/Picks (Boost \/ )?Banqueros Oficiales/);
+    const bannerTitle = page.getByText(/Picks Banqueros Oficiales/);
     await expect(bannerTitle).toBeVisible();
 
     // Verify header starts at y=0 (no floating links above navbar)
@@ -69,29 +68,16 @@ test.describe('Boost, Audio and VIP Unlock Modal Verification', () => {
     await expect(footer.getByRole('link', { name: 'Eliminar cuenta' })).toBeVisible();
   });
 
-  test('Navbar ⚡ Boost button navigates to /boost and highlights in desktop and mobile', async ({ page }) => {
+  test('Category Banqueros button navigates to /banqueros and highlights', async ({ page }) => {
     await setup(page);
-
-    // Desktop Boost button in navbar (needs desktop width >= 768px)
-    await page.setViewportSize({ width: 1024, height: 768 });
     await page.goto('/');
 
-    const desktopBoostBtn = page.locator('nav.hidden.md\\:flex button', { hasText: /Boost/ });
-    await expect(desktopBoostBtn).toBeVisible();
-    await desktopBoostBtn.click();
+    const bankerBtn = page.getByRole('button', { name: /^Banqueros$/ });
+    await expect(bankerBtn).toBeVisible();
+    await bankerBtn.click();
 
-    expect(page.url()).toContain('/boost');
-    await expect(desktopBoostBtn).toHaveClass(/bg-emerald-500/);
-
-    // Mobile view (< 768px)
-    await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/');
-    const mobileBoostBtn = page.locator('nav[aria-label="Navegación móvil"] button', { hasText: '⚡ Boost' });
-    await expect(mobileBoostBtn).toBeVisible();
-    await mobileBoostBtn.click();
-
-    expect(page.url()).toContain('/boost');
-    await expect(mobileBoostBtn).toHaveClass(/bg-emerald-500/);
+    expect(page.url()).toContain('/banqueros');
+    await expect(bankerBtn).toHaveClass(/border-emerald-500/);
   });
 
   test('Desbloquear con VIP opens upgrade modal and back navigation closes modal without expelling user', async ({ page }) => {

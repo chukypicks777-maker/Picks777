@@ -7,8 +7,7 @@ import {
   Flame, 
   RefreshCw,
   User,
-  Share2,
-  Zap
+  Share2
 } from 'lucide-react';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
@@ -89,18 +88,6 @@ export default function Navbar({
             >
               <Flame className="w-3.5 h-3.5 text-amber-400" />
               <span>Partidos</span>
-            </button>
-
-            <button
-              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); }}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
-                marketFilter === 'safe' || marketFilter === 'boost'
-                  ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <Zap className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
-              <span>Boost</span>
             </button>
 
             <button
@@ -316,16 +303,6 @@ export default function Navbar({
             }`}
           >
             <span className="truncate">Partidos</span>
-          </button>
-          <button
-            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); }}
-            className={`flex-1 min-w-0 py-2 px-1 rounded-lg font-medium transition text-center whitespace-nowrap text-[10.5px] sm:text-xs flex items-center justify-center active:scale-95 cursor-pointer ${
-              marketFilter === 'safe' || marketFilter === 'boost'
-                ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
-                : 'bg-slate-800/80 text-slate-300'
-            }`}
-          >
-            <span className="truncate">⚡ Boost</span>
           </button>
           <button 
             onClick={() => { sounds.playClick(); onOpenStats(); }} 
