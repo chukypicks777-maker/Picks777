@@ -1,6 +1,6 @@
 # Android 1.1.0 — entrega y publicación
 
-Esta guía sustituye las instrucciones antiguas de TWA para la versión 1.1.0, compilación 6. Estado: candidato local; no constituye una aprobación de Google Play ni una certificación en teléfonos físicos.
+Esta guía sustituye las instrucciones antiguas de TWA para la versión 1.1.0, compilación 6. APK y AAB firmados; servicio web desplegado. No constituye una aprobación de Google Play ni una certificación en teléfonos físicos.
 
 ## Qué aplicación se entrega
 
@@ -57,11 +57,11 @@ Prueba Android nativa: `android/gradlew.bat -p android testDebugUnitTest lintDeb
 
 ## Impedimentos que no se pueden resolver inventando datos
 
-- El propietario decidió mantener solo grupos como contacto. Se respetó dentro de la app y la privacidad enlaza esos canales. **Google Play exige un correo público de contacto en la ficha incluso para una cuenta personal**. Sin proporcionarlo no se puede completar la publicación.
+- Contacto confirmado por el propietario: **chukypicks777@gmail.com**. Está incluido en contacto y privacidad; usarlo también en la ficha de Play Console. Se mantienen los grupos de comunidad.
 - No hay prueba física Samsung/Huawei ni confirmación del flujo real de Google en la nueva WebView. Robolectric y Playwright no sustituyen esas pruebas.
 - La política de conservación de logs y backups necesita ajustarse a la configuración real del alojamiento; no se inventó un plazo.
 - Falta comprobar en Play Console identidad, países, acceso de revisores, certificado de firma, ficha y pruebas requeridas. No se ha subido el AAB.
-- La IA funcionó con la configuración local durante la auditoría, pero producción aún informa `aiConfigured: false`. Se debe guardar una configuración válida desde Owner antes de anunciar IA generativa disponible en el servicio publicado. El cálculo estadístico de respaldo se identifica como tal.
+- IA de producción configurada desde Owner en Redis: API Terceros / VyceAI, `https://vyceai.com/v1`, modelo `deepseek-v4.1`. Prueba de conexión correcta e informe real completado en la web. La clave no está en Git ni en el AAB. El servidor prioriza esta configuración guardada sobre las variables de entorno; no hace falta añadir variables para cambiar la IA desde Owner.
 - Los picks, cuotas, simulaciones y comunidades relacionadas con apuestas requieren revisar elegibilidad y destinos reales según las políticas de juegos con dinero real y publicidad. Si se venden accesos digitales, también aplica la política de pagos correspondiente: este proyecto no integra Play Billing. No se declara aprobación automática por elegir la categoría Deportes.
 
 ## Datos e IA
@@ -72,7 +72,9 @@ La IA selecciona hechos existentes del catálogo. Se descarta su texto libre y c
 
 La auditoría del 28-09-2026 revisó los 15 encuentros que devolvió el listado: 98 comparaciones, 86 con valores y 12 sin muestra suficiente, cero discrepancias. La fuente es ESPN; contrastar otra respuesta del mismo proveedor no es una verificación independiente. Las ligas sin encuentros en esa respuesta no se rellenan con partidos ficticios. El informe por partido está en `artifacts/live-data-audit.json`.
 
-La auditoría local de IA terminó el 29-09-2026 UTC: 15 informes con IA disponible, sin diferencias en probabilidades, marcador, pick ni hechos frente al cálculo. Nueve respuestas usaron Gemini 2.5 Flash y seis el modelo alternativo Gemini 3.5 Flash Lite por cuota o disponibilidad del proveedor. El informe original conserva `fallback-model` en su lista de incidencias; es un cambio de modelo identificado, no una discrepancia numérica. No se extrapola esta muestra a todos los partidos futuros.
+La auditoría repetida el 29-09-2026 con el proveedor indicado por el propietario completó 15/15 informes usando `deepseek-v4.1` a través de VyceAI, sin diferencias en probabilidades, marcador, pick ni hechos frente al cálculo, y sin usar modelos alternativos. Sustituye como comprobación del proveedor a la prueba anterior con Gemini; Gemini no está configurado como proveedor activo. No se extrapola esta muestra a todos los partidos futuros. Evidencia: `artifacts/real-ai-reports.json` y `artifacts/deepseek-live-audit.txt`.
+
+La configuración anterior aparecía sin clave en la base productiva. No hay un historial de auditoría suficiente para afirmar cuándo o por qué dejó de estar disponible. La configuración guardada ahora usa Redis persistente y escrituras atómicas sin fecha de caducidad; no depende del almacenamiento temporal de una función Vercel.
 
 ## Control de la imagen promocional
 
