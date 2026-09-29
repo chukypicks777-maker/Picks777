@@ -7,7 +7,8 @@ import {
   Flame, 
   RefreshCw,
   User,
-  Share2
+  Share2,
+  Zap
 } from 'lucide-react';
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
@@ -46,7 +47,7 @@ export default function Navbar({
           
           {/* Brand Wordmark & Identity */}
           <div 
-            className="flex items-center space-x-1.5 sm:space-x-2.5 cursor-pointer select-none shrink min-w-0" 
+            className="flex items-center space-x-1.5 sm:space-x-2.5 cursor-pointer select-none shrink-0" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
             {/* Official 777 Picks Circular Logo */}
@@ -79,7 +80,7 @@ export default function Navbar({
           {/* Center Navigation Links */}
           <nav className="hidden md:flex items-center space-x-1 bg-[#161b22] p-1 rounded-lg border border-white/5">
             <button
-              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
+              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); }}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
                 marketFilter === 'all'
                   ? 'bg-white/10 text-white font-semibold'
@@ -88,6 +89,18 @@ export default function Navbar({
             >
               <Flame className="w-3.5 h-3.5 text-amber-400" />
               <span>Partidos</span>
+            </button>
+
+            <button
+              onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); }}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center space-x-1.5 cursor-pointer ${
+                marketFilter === 'safe' || marketFilter === 'boost'
+                  ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-400 fill-emerald-400" />
+              <span>Boost</span>
             </button>
 
             <button
@@ -212,13 +225,14 @@ export default function Navbar({
             <select
               value={currency}
               onChange={(e) => { sounds.playClick(); setCurrency(e.target.value); }}
-              className="bg-[#161b22] text-[10px] sm:text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-1 sm:px-2 py-1 sm:py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shrink-0"
+              className="hidden sm:block bg-[#161b22] text-[10px] sm:text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-2 py-1 sm:py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shrink-0"
+              style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
             >
-              <option value="USD">USD</option>
-              <option value="MXN">MXN</option>
-              <option value="EUR">EUR</option>
-              <option value="COP">COP</option>
-              <option value="ARS">ARS</option>
+              <option value="USD" className="bg-[#161b22] text-slate-200">USD</option>
+              <option value="MXN" className="bg-[#161b22] text-slate-200">MXN</option>
+              <option value="EUR" className="bg-[#161b22] text-slate-200">EUR</option>
+              <option value="COP" className="bg-[#161b22] text-slate-200">COP</option>
+              <option value="ARS" className="bg-[#161b22] text-slate-200">ARS</option>
             </select>
 
             {/* Odds Format Selector (Americano, Decimal, Fraccionario) */}
@@ -227,11 +241,12 @@ export default function Navbar({
               title="Formato de Momios / Cuotas"
               value={oddsFormat}
               onChange={(e) => { sounds.playClick(); setOddsFormat(e.target.value); }}
-              className="bg-[#161b22] text-[10px] sm:text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-1 sm:px-2 py-1 sm:py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shrink-0"
+              className="bg-[#161b22] text-[10px] sm:text-[11px] font-mono text-slate-200 border border-white/10 rounded-lg px-2 py-1 sm:py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shrink-0"
+              style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
             >
-              <option value="american">Americano</option>
-              <option value="decimal">Decimal</option>
-              <option value="fractional">Fraccionario</option>
+              <option value="american" className="bg-[#161b22] text-slate-200">Americano</option>
+              <option value="decimal" className="bg-[#161b22] text-slate-200">Decimal</option>
+              <option value="fractional" className="bg-[#161b22] text-slate-200">Fraccionario</option>
             </select>
 
             {/* Upgrade to VIP Button (for users on trial) */}
@@ -295,12 +310,22 @@ export default function Navbar({
         </div>
         <nav aria-label="Navegación móvil" className="flex md:hidden items-center justify-between gap-1 sm:gap-1.5 pb-2 pt-1 border-t border-white/5 overflow-x-auto scrollbar-none no-scrollbar">
           <button
-            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); window.scrollTo({ top: 320, behavior: 'smooth' }); }}
+            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('all'); }}
             className={`flex-1 min-w-0 py-2 px-1 rounded-lg font-medium transition text-center whitespace-nowrap text-[10.5px] sm:text-xs flex items-center justify-center active:scale-95 cursor-pointer ${
               marketFilter === 'all' ? 'bg-white/10 text-white font-bold border border-white/10' : 'bg-slate-800/80 text-slate-300'
             }`}
           >
             <span className="truncate">Partidos</span>
+          </button>
+          <button
+            onClick={() => { sounds.playClick(); if (onNavigate) onNavigate('safe'); }}
+            className={`flex-1 min-w-0 py-2 px-1 rounded-lg font-medium transition text-center whitespace-nowrap text-[10.5px] sm:text-xs flex items-center justify-center active:scale-95 cursor-pointer ${
+              marketFilter === 'safe' || marketFilter === 'boost'
+                ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]'
+                : 'bg-slate-800/80 text-slate-300'
+            }`}
+          >
+            <span className="truncate">⚡ Boost</span>
           </button>
           <button 
             onClick={() => { sounds.playClick(); onOpenStats(); }} 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { KeyRound, ArrowRight, AlertCircle, CheckCircle2, ExternalLink, X, Clock, ShieldCheck } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../utils/audioEffects';
@@ -59,7 +59,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
           const saved = await confirmedSession();
           if (!saved.valid) throw new Error('El acceso venció. Comprueba tu membresía.');
           onAuthenticated?.(saved);
-          onClose?.();
+          if (!onAuthenticated) onClose?.();
           return;
         }
         if (data.trialExpired) {
@@ -122,7 +122,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
         setSuccessMsg(data.message || '¡Clave VIP activada con éxito!');
         setTimeout(() => {
           onAuthenticated?.(data);
-          onClose?.();
+          if (!onAuthenticated) onClose?.();
         }, 800);
       } else {
         sounds.playGlitchSound();
@@ -144,7 +144,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
       const session = await confirmedSession();
       setPendingAuth(session);
       onAuthenticated?.(session);
-      if (session.valid && !session.trialExpired) onClose?.();
+      if (!onAuthenticated && session.valid && !session.trialExpired) onClose?.();
     } catch (cause) { setError(cause.message); }
     finally { setLoading(false); }
   };
@@ -164,17 +164,42 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
     finally { setLoading(false); }
   };
 
-  const canCloseModal = Boolean(onClose && (auth?.valid || pendingAuth?.valid) && !isTrialExpired);
+  const canCloseModal = Boolean(onClose);
+
+  const handleSafeClose = useCallback(() => {
+    sounds.playClick();
+    onClose?.();
+  }, [onClose]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && canCloseModal) {
+        handleSafeClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canCloseModal, handleSafeClose]);
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Acceso a 777 Picks" className="auth-overlay fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Acceso a 777 Picks"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && canCloseModal) {
+          handleSafeClose();
+        }
+      }}
+      className="auth-overlay fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto"
+    >
       <div className="relative w-full max-w-lg bg-[#0d1117] border border-white/10 rounded-2xl p-6 sm:p-8 text-center shadow-2xl overflow-y-auto my-auto max-h-[calc(100dvh-2rem)]">
         
         {/* Close button (only when access is valid and modal is dismissible) */}
         {canCloseModal && (
           <button
             type="button"
-            onClick={handleContinueWithTrial}
+            onClick={handleSafeClose}
             className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer z-10"
             title="Cerrar"
           >
@@ -216,7 +241,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
         ) : (
           <div className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider mb-5">
             <KeyRound className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>Paso 2: Canjear Clave VIP (Opcional)</span>
+            <span>{onClose ? '💎 Desbloquear Acceso VIP' : 'Paso 2: Canjear Clave VIP (Opcional)'}</span>
           </div>
         )}
 
@@ -367,7 +392,11 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
             {!isTrialExpired && (
               <button
                 type="button"
-                onClick={handleContinueWithTrial}
+                onClick={() => {
+                  sounds.playClick();
+                  if (onClose) onClose();
+                  else handleContinueWithTrial();
+                }}
                 disabled={loading}
                 className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-mono text-slate-300 hover:text-white transition flex items-center justify-center space-x-2 cursor-pointer"
               >

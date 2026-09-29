@@ -48,39 +48,13 @@ export default function App() {
   const [marketFilter, setMarketFilter] = useState(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.toLowerCase();
-      if (path.includes('banquero') || path.includes('safe')) return 'safe';
+      if (path.includes('boost') || path.includes('banquero') || path.includes('safe')) return 'safe';
       if (path.includes('btts')) return 'btts';
       if (path.includes('over')) return 'over';
     }
     return 'all';
   });
   const [bankerSubFilter, setBankerSubFilter] = useState('highest_safety'); // 'highest_safety' | 'recent' | 'live' | 'all_profit'
-
-  const handleNavigate = (filterId) => {
-    sounds.playClick();
-    setMarketFilter(filterId);
-    if (filterId === 'safe') {
-      window.history.pushState(null, '', '/banqueros');
-    } else if (filterId === 'btts') {
-      window.history.pushState(null, '', '/btts');
-    } else if (filterId === 'over') {
-      window.history.pushState(null, '', '/over');
-    } else {
-      window.history.pushState(null, '', '/');
-    }
-  };
-
-  useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname.toLowerCase();
-      if (path.includes('banquero') || path.includes('safe')) setMarketFilter('safe');
-      else if (path.includes('btts')) setMarketFilter('btts');
-      else if (path.includes('over')) setMarketFilter('over');
-      else setMarketFilter('all');
-    };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
 
   // Match Data & Modals
   const [matches, setMatches] = useState([]);
@@ -96,6 +70,110 @@ export default function App() {
   const [currentEpoch, setCurrentEpoch] = useState(() => Date.now());
   const [analyzedMatchesMap, setAnalyzedMatchesMap] = useState({});
   const [currentAnalyzingMatchId, setCurrentAnalyzingMatchId] = useState(null);
+
+  const showUpgradeModalRef = useRef(showUpgradeModal);
+  const selectedMatchRef = useRef(selectedMatch);
+
+  useEffect(() => {
+    showUpgradeModalRef.current = showUpgradeModal;
+  }, [showUpgradeModal]);
+
+  useEffect(() => {
+    selectedMatchRef.current = selectedMatch;
+  }, [selectedMatch]);
+
+  const isPoppingModalRef = useRef(false);
+
+  const openUpgradeModal = useCallback(() => {
+    sounds.playClick();
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.pushState({ modal: 'upgrade' }, '', window.location.href);
+    }
+    setShowUpgradeModal(true);
+  }, []);
+
+  const closeUpgradeModal = useCallback(() => {
+    setShowUpgradeModal(false);
+    if (typeof window !== 'undefined' && window.history?.state?.modal === 'upgrade' && !isPoppingModalRef.current) {
+      isPoppingModalRef.current = true;
+      window.history.back();
+    }
+  }, []);
+
+  const handleOpenMatch = useCallback((match) => {
+    if (typeof window !== 'undefined' && window.history) {
+      window.history.pushState({ modal: 'match', matchId: match?.id }, '', window.location.href);
+    }
+    setSelectedMatch(match);
+  }, []);
+
+  const handleCloseMatch = useCallback(() => {
+    setSelectedMatch(null);
+    if (typeof window !== 'undefined' && window.history?.state?.modal === 'match' && !isPoppingModalRef.current) {
+      isPoppingModalRef.current = true;
+      window.history.back();
+    }
+  }, []);
+
+  const handleNavigate = useCallback((filterId) => {
+    sounds.playClick();
+    const target = (filterId === 'safe' || filterId === 'boost') ? 'safe' : filterId;
+    setMarketFilter(target);
+    if (target === 'safe') {
+      window.history.pushState({ market: 'safe' }, '', '/boost');
+    } else if (target === 'btts') {
+      window.history.pushState({ market: 'btts' }, '', '/btts');
+    } else if (target === 'over') {
+      window.history.pushState({ market: 'over' }, '', '/over');
+    } else {
+      window.history.pushState({ market: 'all' }, '', '/');
+    }
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = (e) => {
+      isPoppingModalRef.current = false;
+      const state = e?.state;
+
+      // 1. Popped into upgrade modal state
+      if (state?.modal === 'upgrade') {
+        setShowUpgradeModal(true);
+        return;
+      }
+
+      // 2. Popped out of upgrade modal
+      if (showUpgradeModalRef.current) {
+        setShowUpgradeModal(false);
+        // If returning to a match modal state, ensure match remains open
+        if (state?.modal === 'match') {
+          return;
+        }
+      }
+
+      // 3. Popped into match modal state
+      if (state?.modal === 'match') {
+        setShowUpgradeModal(false);
+        return;
+      }
+
+      // 4. Root/market state: close all open modals
+      setShowUpgradeModal(false);
+      setSelectedMatch(null);
+
+      // 5. Sync market filter
+      if (state?.market) {
+        setMarketFilter(state.market);
+      } else {
+        const path = window.location.pathname.toLowerCase();
+        if (path.includes('boost') || path.includes('banquero') || path.includes('safe')) setMarketFilter('safe');
+        else if (path.includes('btts')) setMarketFilter('btts');
+        else if (path.includes('over')) setMarketFilter('over');
+        else setMarketFilter('all');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const handleMatchAnalyzed = useCallback((matchId, enrichedMatch, aiReport) => {
     const isAiSuccess = Boolean(aiReport?.aiAvailable);
@@ -475,8 +553,8 @@ export default function App() {
     return true;
   });
 
-  // When 'safe' (Picks Banqueros) is active, apply sub-filter sorting and ranking
-  if (marketFilter === 'safe') {
+  // When 'safe' (Picks Banqueros / Boost) is active, apply sub-filter sorting and ranking
+  if (marketFilter === 'safe' || marketFilter === 'boost') {
     if (bankerSubFilter === 'all_profit') {
       // Mayor ganancia: ordenar por cuota (odds) del pick banquero descendente sin importar la fecha
       filteredMatches = [...filteredMatches].sort((a, b) => {
@@ -588,25 +666,20 @@ export default function App() {
           onAuthenticated={(data) => {
             handleAuthenticated(data);
             if (data.valid && !data.trialExpired) {
-              setShowUpgradeModal(false);
+              closeUpgradeModal();
             }
           }}
-          onClose={(auth?.valid && !auth?.trialExpired) ? () => setShowUpgradeModal(false) : null}
+          onClose={(auth?.valid && !auth?.trialExpired) ? closeUpgradeModal : null}
         />
       )}
 
-      <div className="flex justify-end gap-4 px-4 py-2 text-xs text-slate-400">
-        <a href="/contacto" className="hover:text-white underline">Contacto</a> · <a href="/privacidad.html" className="underline">Privacidad</a>
-        <a href="/instalar" className="underline">Instalar en mi celular</a>
-        <a href="/eliminar-cuenta" className="underline">Mi cuenta / eliminar</a>
-      </div>
       {/* Navbar */}
       <Navbar
         auth={auth}
         onOpenAdmin={() => setShowAdminModal(true)}
         onOpenStats={() => setShowStatsModal(true)}
         onOpenParlay={() => setShowParlayDrawer(true)}
-        onOpenUpgrade={() => setShowUpgradeModal(true)}
+        onOpenUpgrade={openUpgradeModal}
         onLogout={handleLogout}
         currency={currency}
         setCurrency={setCurrency}
@@ -626,7 +699,7 @@ export default function App() {
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
 
         {/* Community VIP Channels (Telegram, WhatsApp, Instagram) */}
-        <CommunityBanner />
+        {marketFilter === 'all' && <CommunityBanner />}
 
         {/* League Selector Carousel */}
         <LeagueSelector
@@ -639,7 +712,7 @@ export default function App() {
         {selectedLeague === 'all' && timeframe === 'all' && matchStatusFilter === 'all' && !searchQuery && marketFilter === 'all' && featuredMatch && (
           <HeroFeaturedMatch
             match={featuredMatch}
-            onOpenMatch={setSelectedMatch}
+            onOpenMatch={handleOpenMatch}
             onAddToParlay={handleAddToParlay}
             onToggleParlay={handleToggleParlay}
             parlayLegs={parlayLegs}
@@ -664,14 +737,14 @@ export default function App() {
         {/* Matches Grid */}
         <div className="mb-12">
           {/* Banner Exclusivo de Picks Banqueros cuando el filtro está activo */}
-          {marketFilter === 'safe' && (
+          {(marketFilter === 'safe' || marketFilter === 'boost') && (
             <div className="mb-5 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-[#0d1522] to-sky-500/20 border border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.15)] space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
-                    <span className="text-xl">💎</span>
+                    <span className="text-xl">⚡</span>
                     <h4 className="font-black text-sm md:text-base text-white uppercase tracking-wider font-sans">
-                      Picks Banqueros Oficiales — {bankerSubFilter === 'highest_safety' ? 'Más Asegurados (Máxima Probabilidad)' : bankerSubFilter === 'recent' ? 'Recientes / Próximos' : bankerSubFilter === 'live' ? 'En Vivo' : 'Mayor Ganancia (Sin Filtro de Fecha)'}
+                      Picks Boost / Banqueros Oficiales — {bankerSubFilter === 'highest_safety' ? 'Más Asegurados (Máxima Probabilidad)' : bankerSubFilter === 'recent' ? 'Recientes / Próximos' : bankerSubFilter === 'live' ? 'En Vivo' : 'Mayor Ganancia (Sin Filtro de Fecha)'}
                     </h4>
                   </div>
                   <p className="text-xs text-emerald-300/90 font-mono">
@@ -682,7 +755,7 @@ export default function App() {
                   </p>
                 </div>
                 <span className="px-3 py-1.5 rounded-xl bg-emerald-500/30 text-emerald-200 border border-emerald-500/50 font-mono text-xs font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                  {filteredMatches.length} PICKS BANQUEROS
+                  {filteredMatches.length} PICKS BOOST
                 </span>
               </div>
 
@@ -761,7 +834,7 @@ export default function App() {
                     </span>
                   </div>
                   <button
-                    onClick={() => { sounds.playClick(); setShowUpgradeModal(true); }}
+                    onClick={openUpgradeModal}
                     className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold rounded-lg text-xs font-mono shrink-0 cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.35)] transition"
                   >
                     👑 Desbloquear VIP
@@ -784,8 +857,8 @@ export default function App() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-bold text-sm sm:text-base text-white">
-                {marketFilter === 'safe'
-                  ? '💎 Ranking de Picks Banqueros'
+                {(marketFilter === 'safe' || marketFilter === 'boost')
+                  ? '⚡ Ranking de Picks Boost / Banqueros'
                   : marketFilter === 'btts'
                   ? '🤝 Partidos Ambos Equipos Anotan (BTTS)'
                   : marketFilter === 'over'
@@ -848,14 +921,14 @@ export default function App() {
                 <MatchCard
                   key={m.id}
                   match={m}
-                  onOpenModal={setSelectedMatch}
+                  onOpenModal={handleOpenMatch}
                   onAddToParlay={handleAddToParlay}
                   onToggleParlay={handleToggleParlay}
                   parlayLegs={parlayLegs}
                   oddsFormat={oddsFormat}
-                  bankerRank={marketFilter === 'safe' ? idx + 1 : null}
-                  isLocked={marketFilter === 'safe' && !isVipUser && idx >= 3}
-                  onUnlockVip={() => setShowUpgradeModal(true)}
+                  bankerRank={(marketFilter === 'safe' || marketFilter === 'boost') ? idx + 1 : null}
+                  isLocked={(marketFilter === 'safe' || marketFilter === 'boost') && !isVipUser && idx >= 3}
+                  onUnlockVip={openUpgradeModal}
                   marketFilter={marketFilter}
                   isAiAnalyzed={analyzedMatchesMap[m.id]?.isAnalyzed ?? analyzedStatusFromBatch[m.id]?.isAnalyzed ?? isMatchAnalyzed(m.id, m)}
                   isAnalyzing={currentAnalyzingMatchId === m.id}
@@ -886,14 +959,14 @@ export default function App() {
       {selectedMatch && (
         <MatchDetailModal
           match={selectedMatch}
-          onClose={() => setSelectedMatch(null)}
+          onClose={handleCloseMatch}
           onAddToParlay={handleAddToParlay}
           onToggleParlay={handleToggleParlay}
           parlayLegs={parlayLegs}
           oddsFormat={oddsFormat}
           isOwner={isOwner}
           isVip={isVipUser}
-          onUnlockVip={() => setShowUpgradeModal(true)}
+          onUnlockVip={openUpgradeModal}
           onToast={showToast}
         />
       )}
@@ -922,9 +995,18 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-slate-300">DEPORTEPICKS AI VIP</span>
-            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.1.0</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.1.1</span>
             <span>•</span>
             <span>Plataforma de Análisis Cuantitativo para Apuestas</span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 text-slate-400 text-[11px]">
+            <a href="/contacto" className="hover:text-white underline">Contacto</a>
+            <span>•</span>
+            <a href="/privacidad.html" className="underline hover:text-white">Privacidad</a>
+            <span>•</span>
+            <a href="/instalar" className="underline hover:text-white">Instalar en mi celular</a>
+            <span>•</span>
+            <a href="/eliminar-cuenta" className="underline hover:text-white">Eliminar cuenta</a>
           </div>
           <div className="text-slate-400 text-[11px]">
             Liga MX • MLS • Premier • LaLiga • Serie A • Ligue 1 • Champions League • Leagues Cup
