@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { redisConfigured, redisCommand } from './services/dataCache.js';
 import { CONFIG, ownerGoogleEmail } from './config.js';
 import { entitlement } from './entitlements.js';
@@ -9,6 +9,31 @@ import { validateSocialLinks } from './socialSettings.js';
 const KEY = 'picks:v2:access';
 const clean = code => String(code || '').trim().toUpperCase();
 const initial = () => ({ codes: [], users: [], aiConfig: null });
+// Keep only keyed fingerprints and the original access deadline after deletion.
+// The private key lives in durable storage so rotating session secrets cannot reset trials.
+function trialKeys(db, user) {
+  db.trialHistoryKey ||= randomBytes(32).toString('hex');
+  return [user.email && `email:${user.email.trim().toLowerCase()}`, user.googleId && `identity:${user.googleId}`]
+    .filter(Boolean).map(value => createHmac('sha256', db.trialHistoryKey).update(value).digest('hex'));
+}
+function previousTrial(db, user) {
+  const records = trialKeys(db, user).map(key => db.trialHistory?.[key]).filter(Boolean);
+  if (!records.length) return null;
+  return {
+    trialExpiresAt: new Date(Math.min(...records.map(record => Date.parse(record.trialExpiresAt) || 0))).toISOString(),
+    hasRedeemedVip: records.some(record => record.hasRedeemedVip)
+  };
+}
+function rememberTrial(db, user) {
+  const previous = previousTrial(db, user);
+  const record = {
+    trialExpiresAt: new Date(Math.min(Date.parse(user.trialExpiresAt) || 0,
+      previous ? Date.parse(previous.trialExpiresAt) : Infinity)).toISOString(),
+    hasRedeemedVip: Boolean(previous?.hasRedeemedVip || user.hasRedeemedVip || user.vipCode)
+  };
+  db.trialHistory ||= {};
+  for (const key of trialKeys(db, user)) db.trialHistory[key] = record;
+}
 const defaultStorageFile = () => (process.env.VERCEL ? path.join('/tmp', 'access-v2.json') : path.resolve('server/data/access-v2.json'));
 export class StorageManager {
   constructor(file = defaultStorageFile()) { this.file = file; this.queue = Promise.resolve(); }
@@ -99,6 +124,7 @@ export class StorageManager {
     return this.transaction(db => {
       const user = (db.users || []).find(item => item.id === userId);
       if (!user) return;
+      rememberTrial(db, user);
       db.users = db.users.filter(item => item.id !== userId);
       for (const code of db.codes || []) {
         if ([user.email, user.name].includes(code.claimedBy)) delete code.claimedBy;
@@ -142,7 +168,8 @@ export class StorageManager {
       } else {
         const trialDays = 3;
         const createdAt = new Date(now).toISOString();
-        const trialExpiresAt = new Date(now + trialDays * 86400000).toISOString();
+        const history = previousTrial(db, { email: cleanEmail, googleId: gId });
+        const trialExpiresAt = history?.trialExpiresAt || new Date(now + trialDays * 86400000).toISOString();
         user = {
           id: randomUUID(),
           googleId: gId || randomUUID(),
@@ -151,6 +178,7 @@ export class StorageManager {
           picture: cleanPic,
           createdAt,
           trialExpiresAt,
+          hasRedeemedVip: Boolean(history?.hasRedeemedVip),
           vipCode: null,
           vipExpiresAt: null,
           role: 'trial',
@@ -164,6 +192,7 @@ export class StorageManager {
       if (codeItem?.isClaimed && !codeItem.claimedUserId && codeItem.claimedBy?.toLowerCase() === cleanEmail &&
           db.users.filter(u => u.vipCode === codeItem.code).length === 1) codeItem.claimedUserId = user.id;
       if (codeItem?.claimedUserId === user.id) user.hasRedeemedVip = true;
+      rememberTrial(db, user);
       const access = entitlement(user, codeItem, now);
       user.role = access.role;
       user.vipExpiresAt = access.isVip ? codeItem.expiresAt : user.vipExpiresAt;
@@ -199,6 +228,7 @@ export class StorageManager {
       if (deviceId && !item.devices.includes(deviceId) && item.devices.length < 100) item.devices.push(deviceId);
       user.vipCode = item.code; user.vipExpiresAt = item.expiresAt;
       user.hasRedeemedVip = true; user.role = 'vip_user';
+      rememberTrial(db, user);
       return { success: true, isAdmin: false, role: 'vip_user', plan: 'VIP', code: item.code, expiresAt: item.expiresAt,
         daysRemaining: Math.ceil((Date.parse(item.expiresAt) - now) / 86400000), message: 'VIP vinculado a tu cuenta hasta ' + item.expiresAt + '.' };
     });

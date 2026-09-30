@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Navbar from './components/Navbar';
 import LiveTicker from './components/LiveTicker';
+import SportSelector from './components/SportSelector';
+import { SPORTS, sportFromPath } from './constants/sports.js';
 import AuthGateModal from './components/AuthGateModal';
 import CommunityBanner from './components/CommunityBanner';
 import LeagueSelector from './components/LeagueSelector';
@@ -27,6 +29,9 @@ export default function App() {
   const { auth, setAuth, checking, error: sessionError, retry } = useSession();
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [selectedSport, setSelectedSport] = useState(() => sportFromPath(window.location.pathname));
+  const activeSport = SPORTS.find(sport => sport.id === selectedSport);
+  const isFootball = selectedSport === 'futbol';
 
   // Settings states
   const [currency, setCurrency] = useState(() => localStorage.getItem('deportepicks_curr') || 'USD');
@@ -121,6 +126,7 @@ export default function App() {
 
   const handleNavigate = useCallback((filterId) => {
     sounds.playClick();
+    setSelectedSport('futbol');
     const target = (filterId === 'safe' || filterId === 'boost') ? 'safe' : filterId;
     setMarketFilter(target);
     if (target === 'safe') {
@@ -134,9 +140,22 @@ export default function App() {
     }
   }, []);
 
+  const handleSelectSport = useCallback(sportId => {
+    const sport = SPORTS.find(item => item.id === sportId);
+    if (!sport) return;
+    sounds.playClick();
+    setSelectedSport(sport.id);
+    setSelectedMatch(null);
+    setShowStatsModal(false);
+    setShowParlayDrawer(false);
+    window.history.pushState({ sport: sport.id }, '', sport.path);
+    if (sport.id === 'futbol') setMarketFilter('all');
+  }, []);
+
   useEffect(() => {
     const handlePopState = (e) => {
       isPoppingModalRef.current = false;
+      setSelectedSport(sportFromPath(window.location.pathname));
       const state = e?.state;
 
       // 1. Popped into upgrade modal state
@@ -218,6 +237,23 @@ export default function App() {
   // Auto-polling interval reference
   const pollingRef = useRef(null);
   const feedRequest = useRef(null);
+
+  useEffect(() => {
+    if ((checking && !auth) || (auth?.valid && !auth?.trialExpired)) return;
+    feedRequest.current?.abort();
+    clearAllAnalysisCache();
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      setMatches([]);
+      setSelectedMatch(null);
+      setShowAdminModal(false);
+      setShowStatsModal(false);
+      setShowParlayDrawer(false);
+      setParlayLegs([]);
+    });
+    return () => { active = false; };
+  }, [auth, checking]);
 
   // Global listeners for trial/session expiry events
   useEffect(() => {
@@ -379,7 +415,7 @@ export default function App() {
   // Load matches on filter changes or when auth session becomes valid
   useEffect(() => {
     let active = true;
-    if (auth?.valid && !auth?.trialExpired) {
+    if (isFootball && auth?.valid && !auth?.trialExpired) {
       (async () => {
         if (active) {
           await fetchMatches();
@@ -390,10 +426,11 @@ export default function App() {
       active = false;
       feedRequest.current?.abort();
     };
-  }, [fetchMatches, auth?.valid, auth?.trialExpired, auth?.user?.id]);
+  }, [fetchMatches, isFootball, auth?.valid, auth?.trialExpired, auth?.user?.id]);
 
   // Real-time live polling (every 25 seconds)
   useEffect(() => {
+    if (!isFootball || !auth?.valid || auth?.trialExpired) return;
     pollingRef.current = setInterval(() => {
       syncLiveMatchesSilent();
     }, 25000);
@@ -401,7 +438,7 @@ export default function App() {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [syncLiveMatchesSilent]);
+  }, [syncLiveMatchesSilent, isFootball, auth?.valid, auth?.trialExpired]);
 
   const handleManualSync = async () => {
     setIsSyncing(true);
@@ -697,13 +734,24 @@ export default function App() {
         onManualSync={handleManualSync}
         marketFilter={marketFilter}
         onNavigate={handleNavigate}
+        sportAvailable={isFootball}
       />
 
-      {/* Live Ticker */}
-      <LiveTicker matches={matches} />
+      <SportSelector selectedSport={selectedSport} onSelect={handleSelectSport} />
+      {isFootball && <LiveTicker matches={matches} loading={loadingMatches} error={matchError} />}
 
       {/* Main Container */}
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
+
+        {!isFootball ? (
+          <section role="tabpanel" id={`sport-panel-${selectedSport}`} aria-labelledby={`sport-${selectedSport}`} tabIndex={0}
+            className="terminal-card rounded-2xl border border-white/10 bg-[#0d121c] my-4 min-h-[320px] sm:min-h-[420px] flex flex-col items-center justify-center text-center px-6 py-14">
+            <span aria-hidden="true" className="text-5xl sm:text-6xl mb-5">{activeSport.icon}</span>
+            <h1 className="text-xl sm:text-2xl font-bold text-white mb-3">{activeSport.name}</h1>
+            <p className="text-sm sm:text-base font-semibold tracking-wide text-slate-400">Próximamente</p>
+          </section>
+        ) : (
+        <div role="tabpanel" id="sport-panel-futbol" aria-labelledby="sport-futbol">
 
         {/* Community VIP Channels (Telegram, WhatsApp, Instagram) */}
         {!isStoreApp() && marketFilter === 'all' && <CommunityBanner />}
@@ -948,10 +996,13 @@ export default function App() {
         {/* Community VIP Showcase with Reference Image and Tipsters */}
         {!isStoreApp() && <FooterCommunityShowcase />}
 
+        </div>
+        )}
+
       </main>
 
       {/* Floating Parlay Drawer Launcher */}
-      {!showParlayDrawer && parlayLegs.length > 0 && (
+      {isFootball && !showParlayDrawer && parlayLegs.length > 0 && (
         <button
           onClick={() => { sounds.playClick(); setShowParlayDrawer(true); }}
           className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-6 sm:right-6 z-[65] px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.7)] border border-emerald-400/40 flex items-center space-x-2 cursor-pointer text-xs font-mono transition-all backdrop-blur-md"

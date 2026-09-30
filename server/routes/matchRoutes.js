@@ -56,7 +56,9 @@ router.get('/boost', async (req, res) => {
   let list = feed.matches;
   try {
     if (Object.keys(req.query || {}).length > 0) list = filterMatches(list, req.query);
-  } catch {}
+  } catch {
+    return res.status(400).json({ success: false, message: 'Filtros o zona horaria no válidos.' });
+  }
   const boostMatches = list
     .filter(m => m.status !== 'FINISHED')
     .sort((a, b) => {
@@ -77,7 +79,9 @@ router.get('/goal', async (req, res) => {
   let list = feed.matches;
   try {
     if (Object.keys(req.query || {}).length > 0) list = filterMatches(list, req.query);
-  } catch {}
+  } catch {
+    return res.status(400).json({ success: false, message: 'Filtros o zona horaria no válidos.' });
+  }
   const goalMatches = list
     .filter(m => {
       const p = m.model?.probabilities || m.probabilities;
@@ -98,7 +102,9 @@ router.get('/btts', async (req, res) => {
   let list = feed.matches;
   try {
     if (Object.keys(req.query || {}).length > 0) list = filterMatches(list, req.query);
-  } catch {}
+  } catch {
+    return res.status(400).json({ success: false, message: 'Filtros o zona horaria no válidos.' });
+  }
   const bttsMatches = list
     .filter(m => {
       const p = m.model?.probabilities || m.probabilities;
@@ -151,9 +157,7 @@ router.post('/:id/ai-analysis', rateLimit('ai'), async (req, res) => {
       feed = { matches: [] };
     }
     let match = feed.matches?.find(m => m.id === req.params.id);
-    if (!match && req.body?.match && req.body.match.id === req.params.id) {
-      match = req.body.match;
-    }
+    // Fixture facts must come from the server's provider feed, never the browser.
     if (!match && forceRefresh) {
       try {
         feed = await getFootballFeed({ forceRefresh: true });

@@ -41,17 +41,33 @@ test('Owner retry and re-analysis bypasses rate limits, prevents 429, and handle
   const base = `http://127.0.0.1:${server.address().port}`;
 
   let ownerCookie = '';
+  const providerEvent = {
+    id: '123456', date: new Date(Date.now() + 86400000).toISOString(), season: { year: 2026 },
+    competitions: [{ status: { type: { state: 'pre', name: 'STATUS_SCHEDULED' } }, competitors: [
+      { homeAway: 'home', team: { id: '1', displayName: 'Arsenal' } },
+      { homeAway: 'away', team: { id: '2', displayName: 'Chelsea' } }
+    ] }]
+  };
+  let aiOffline = false;
 
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (String(url).startsWith(base)) return originalFetch(url, options);
     // Mock ESPN and AI external calls
     if (String(url).includes('/scoreboard') || String(url).includes('/summary')) {
       return new Response(JSON.stringify({
-        events: [],
+        events: String(url).includes('/eng.1/scoreboard') ? [providerEvent] : [],
+        leagues: [{ season: { year: 2026 } }],
         header: { competitions: [{ competitors: [{ homeAway: 'home', score: '2' }, { homeAway: 'away', score: '1' }] }] }
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
+    if (String(url).includes('/standings')) return new Response(JSON.stringify({
+      season: { year: 2026 }, standings: { entries: [['1', 22, 8], ['2', 15, 12]].map(([id, goalsFor, goalsAgainst]) => ({
+        team: { id, displayName: id === '1' ? 'Arsenal' : 'Chelsea' },
+        stats: [{ name: 'gamesPlayed', value: 10 }, { name: 'pointsFor', value: goalsFor }, { name: 'pointsAgainst', value: goalsAgainst }]
+      })) }
+    }));
     if (String(url).endsWith('/chat/completions')) {
+      if (aiOffline) return new Response('{}', { status: 500 });
       return new Response(JSON.stringify({
         choices: [{
           message: {
@@ -100,45 +116,30 @@ test('Owner retry and re-analysis bypasses rate limits, prevents 429, and handle
     assert.equal(ownerAuth.data.role, 'owner');
     ownerCookie = ownerAuth.response.headers.get('set-cookie').split(';')[0];
 
-    // 2. Generate sample match payload for test
-    const testMatch = {
-      id: 'test-retry-match-1',
-      espnCode: 'eng.1',
-      espnEventId: '123456',
-      status: 'SCHEDULED',
-      kickoff: new Date(Date.now() + 86400000).toISOString(),
-      homeTeam: { name: 'Arsenal', gamesPlayed: 10, goalsFor: 22, goalsAgainst: 8 },
-      awayTeam: { name: 'Chelsea', gamesPlayed: 10, goalsFor: 15, goalsAgainst: 12 }
-    };
+    // Fixtures are supplied by the mocked provider, never by client request bodies.
+    const testMatch = { id: 'espn-123456' };
+    await storage.updateAiConfig({ provider: 'custom', apiKey: 'test-only-provider-key', selectedModel: 'deepseek-v4.1' });
 
     // 3. Trigger multiple consecutive forceRefresh AI analysis calls as Owner
     // Previously, global or user rate limits would risk 429, or feed refresh would collapse
     for (let i = 0; i < 5; i++) {
       const retryRes = await request(`/api/matches/${testMatch.id}/ai-analysis`, {
-        forceRefresh: true,
-        match: testMatch
+        forceRefresh: true
       }, ownerCookie);
 
       assert.equal(retryRes.response.status, 200, `Call ${i + 1} must return 200 OK`);
       assert.equal(retryRes.data.success, true, `Call ${i + 1} must succeed`);
       assert.ok(retryRes.data.match, 'Enriched match must be returned');
       assert.ok(retryRes.data.report, 'AI report must be returned');
+      assert.equal(retryRes.data.report.aiAvailable, true);
       assert.equal(retryRes.response.status !== 429, true, 'Owner must never be blocked by 429');
     }
 
     // 4. Test external AI provider failure resilience during Owner retry
-    // Mock fetch to simulate external LLM API outage (500 internal error)
-    t.mock.method(globalThis, 'fetch', async (url, options) => {
-      if (String(url).startsWith(base)) return originalFetch(url, options);
-      if (String(url).endsWith('/chat/completions')) {
-        return new Response(JSON.stringify({ error: { message: 'Provider internal error' } }), { status: 500, headers: { 'Content-Type': 'application/json' } });
-      }
-      return originalFetch(url, options);
-    });
+    aiOffline = true;
 
     const fallbackRes = await request(`/api/matches/${testMatch.id}/ai-analysis`, {
-      forceRefresh: true,
-      match: testMatch
+      forceRefresh: true
     }, ownerCookie);
 
     assert.equal(fallbackRes.response.status, 200, 'When external LLM fails, retry must return 200 with baseline without collapsing');

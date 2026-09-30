@@ -29,6 +29,21 @@ async function loadComponent(relativePath, filename, extraReplaces = {}) {
 
 const HalfGoalsSection = await loadComponent('../src/components/HalfGoalsSection.jsx', 'HalfGoalsSection.jsx');
 const OverUnderGroupedSection = await loadComponent('../src/components/OverUnderGroupedSection.jsx', 'OverUnderGroupedSection.jsx');
+const LiveTicker = await loadComponent('../src/components/LiveTicker.jsx', 'LiveTicker.jsx');
+
+test('ticker never invents a 0–0 score or announces an empty feed as live', () => {
+  const missing = { homeTeam: { name: 'Home' }, awayTeam: { name: 'Away' }, liveScore: { home: null, away: null }, finalScore: { home: null, away: null } };
+  for (const status of ['LIVE', 'FINISHED']) {
+    const html = renderToStaticMarkup(React.createElement(LiveTicker, { matches: [{ ...missing, status }] }));
+    assert.match(html, /Home N\/D - N\/D Away/);
+    assert.doesNotMatch(html, /Home 0 - 0 Away/);
+    const genuineZero = renderToStaticMarkup(React.createElement(LiveTicker, { matches: [{ ...missing, status, liveScore: { home: 0, away: 0 }, finalScore: { home: 0, away: 0 } }] }));
+    assert.match(genuineZero, /Home 0 - 0 Away/);
+  }
+  const empty = renderToStaticMarkup(React.createElement(LiveTicker));
+  assert.doesNotMatch(empty, /LIVE ESPN/);
+  assert.match(empty, /Sin partidos disponibles/);
+});
 
 test('probability display never turns unavailable data into 0% or animates false intermediate values', () => {
   for (const value of [null, undefined, NaN, Infinity, '']) {

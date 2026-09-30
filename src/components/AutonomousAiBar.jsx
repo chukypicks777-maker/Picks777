@@ -122,8 +122,7 @@ export default function AutonomousAiBar({
           body: JSON.stringify({
             forceRefresh: forceAll,
             model: resolvedModel,
-            aiConfig: aiConfigPayload,
-            match: curMatch
+            aiConfig: aiConfigPayload
           })
         });
 

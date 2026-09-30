@@ -1,10 +1,10 @@
 import React from 'react';
 
-export default function LiveTicker({ matches = [] }) {
+export default function LiveTicker({ matches = [], loading = false, error = '' }) {
   const dynamicItems = React.useMemo(() => {
     if (!matches || matches.length === 0) {
       return [
-        { type: 'LIVE', minute: "ESPN", match: "Consultando partidos y marcadores oficiales...", pick: "8 Ligas mundiales en directo", corners: "Datos Reales" }
+        { type: 'WAIT', minute: 'ESPN', match: loading ? 'Consultando partidos y marcadores...' : error ? 'Feed no disponible en este momento' : 'Sin partidos disponibles en el feed actual', pick: error ? 'Reintenta la conexión' : 'Información deportiva' }
       ];
     }
 
@@ -16,7 +16,7 @@ export default function LiveTicker({ matches = [] }) {
       items.push({
         type: 'LIVE',
         minute: m.liveMinute || "LIVE",
-        match: `${m.homeTeam?.name || 'Local'} ${m.liveScore?.home ?? 0} - ${m.liveScore?.away ?? 0} ${m.awayTeam?.name || 'Visitante'}`,
+        match: `${m.homeTeam?.name || 'Local'} ${m.liveScore?.home ?? 'N/D'} - ${m.liveScore?.away ?? 'N/D'} ${m.awayTeam?.name || 'Visitante'}`,
         pick: `Pick IA: ${m.aiPick?.selection || 'En Juego'}`,
         corners: `${m.leagueName}`
       });
@@ -50,14 +50,14 @@ export default function LiveTicker({ matches = [] }) {
       items.push({
         type: 'FT',
         minute: 'FT',
-        match: `${m.homeTeam?.name || 'Local'} ${m.finalScore?.home ?? 0} - ${m.finalScore?.away ?? 0} ${m.awayTeam?.name || 'Visitante'}`,
+        match: `${m.homeTeam?.name || 'Local'} ${m.finalScore?.home ?? 'N/D'} - ${m.finalScore?.away ?? 'N/D'} ${m.awayTeam?.name || 'Visitante'}`,
         pick: m.aiPick?.settlement === 'WON' ? '✅ Pronóstico Acertado' : `Pick: ${m.aiPick?.selection || 'Resultado'}`,
         corners: m.leagueName
       });
     });
 
     return items;
-  }, [matches]);
+  }, [matches, loading, error]);
 
   const tickerItems = dynamicItems;
 

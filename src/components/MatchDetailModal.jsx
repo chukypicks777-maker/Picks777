@@ -153,8 +153,7 @@ export default function MatchDetailModal({
         body: JSON.stringify({ 
           forceRefresh,
           model: modelToUse,
-          aiConfig: aiConfigPayload,
-          match: curMatch
+          aiConfig: aiConfigPayload
         })
       });
       const data = await res.json().catch(() => null);

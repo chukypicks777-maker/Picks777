@@ -43,12 +43,19 @@ export function useSession() {
     const check = () => {
       clearTimeout(timer);
       const remaining = end - Date.now();
-      if (remaining <= 0) void refresh();
+      if (remaining <= 0) {
+        // Enforce the server-issued deadline even if the recheck is offline.
+        setAuth(previous => previous === auth ? {
+          ...previous, valid: false, isTrial: false, trialExpired: true, daysRemaining: 0,
+          user: { ...previous.user, daysRemaining: 0, plan: 'Acceso vencido' }
+        } : previous);
+        void refresh();
+      }
       else timer = setTimeout(check, Math.min(remaining, 2147483647));
     };
     check();
     document.addEventListener('visibilitychange', check);
     return () => { clearTimeout(timer); document.removeEventListener('visibilitychange', check); };
-  }, [auth, refresh]);
+  }, [auth, refresh, setAuth]);
   return { auth, setAuth, checking, error, retry: () => refresh() };
 }

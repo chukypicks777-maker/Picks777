@@ -1,0 +1,33 @@
+[WebServer] (node:13036) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:26080) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 12 tests using 2 workers
+
+(node:9760) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:25200) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  1 [android-chromium] › tests\browser\boost-and-vip.spec.js:90:3 › Boost, Audio and VIP Unlock Modal Verification › a session refresh outage preserves identity after expiry but requires reactivation (3.8s)
+  ok  2 [android-chromium] › tests\browser\mobile.spec.js:76:1 › Google → prueba gratuita → recarga conserva acceso sin guardar privilegios en localStorage (4.5s)
+  ok  4 [android-chromium] › tests\browser\mobile.spec.js:156:1 › la prueba se bloquea al vencer aunque falle la comprobación de sesión (2.2s)
+(node:6312) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  3 [android-chromium] › tests\browser\mobile.spec.js:125:1 › los apartados de deportes muestran Próximamente y permiten volver a fútbol (6.4s)
+(node:30688) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  5 [iphone-webkit] › tests\browser\boost-and-vip.spec.js:90:3 › Boost, Audio and VIP Unlock Modal Verification › a session refresh outage preserves identity after expiry but requires reactivation (6.2s)
+  ok  6 [iphone-webkit] › tests\browser\mobile.spec.js:76:1 › Google → prueba gratuita → recarga conserva acceso sin guardar privilegios en localStorage (9.3s)
+  ok  8 [iphone-webkit] › tests\browser\mobile.spec.js:156:1 › la prueba se bloquea al vencer aunque falle la comprobación de sesión (2.5s)
+(node:22580) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  7 [iphone-webkit] › tests\browser\mobile.spec.js:125:1 › los apartados de deportes muestran Próximamente y permiten volver a fútbol (9.9s)
+(node:25552) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok  9 [firefox] › tests\browser\boost-and-vip.spec.js:90:3 › Boost, Audio and VIP Unlock Modal Verification › a session refresh outage preserves identity after expiry but requires reactivation (7.1s)
+  ok 10 [firefox] › tests\browser\mobile.spec.js:76:1 › Google → prueba gratuita → recarga conserva acceso sin guardar privilegios en localStorage (8.1s)
+  ok 12 [firefox] › tests\browser\mobile.spec.js:156:1 › la prueba se bloquea al vencer aunque falle la comprobación de sesión (3.3s)
+  ok 11 [firefox] › tests\browser\mobile.spec.js:125:1 › los apartados de deportes muestran Próximamente y permiten volver a fútbol (9.0s)
+
+  12 passed (47.6s)

@@ -1,0 +1,1901 @@
+{
+  "checkedAt": "2026-09-30T04:53:36.761Z",
+  "source": "ESPN",
+  "coverage": [
+    {
+      "leagueId": "inglaterra",
+      "name": "Premier League",
+      "status": "available",
+      "count": 6,
+      "fetchedAt": "2026-09-30T04:49:55.944Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "espana",
+      "name": "LaLiga",
+      "status": "available",
+      "count": 1,
+      "fetchedAt": "2026-09-30T04:49:55.728Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "mexico",
+      "name": "Liga MX",
+      "status": "available",
+      "count": 3,
+      "fetchedAt": "2026-09-30T04:49:55.969Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "mls",
+      "name": "MLS",
+      "status": "available",
+      "count": 3,
+      "fetchedAt": "2026-09-30T04:49:56.010Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "italia",
+      "name": "Serie A",
+      "status": "available",
+      "count": 3,
+      "fetchedAt": "2026-09-30T04:49:56.035Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "francia",
+      "name": "Ligue 1",
+      "status": "available",
+      "count": 1,
+      "fetchedAt": "2026-09-30T04:49:55.835Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "champions",
+      "name": "UEFA Champions League",
+      "status": "available",
+      "count": 9,
+      "fetchedAt": "2026-09-30T04:49:56.069Z",
+      "standingsAvailable": true
+    },
+    {
+      "leagueId": "leagues_cup",
+      "name": "Leagues Cup",
+      "status": "available",
+      "count": 0,
+      "fetchedAt": "2026-09-30T04:49:55.981Z",
+      "standingsAvailable": true
+    }
+  ],
+  "feedMatches": 26,
+  "scheduledMatches": 23,
+  "consistency": [
+    {
+      "id": "espn-761833",
+      "errors": []
+    },
+    {
+      "id": "espn-761798",
+      "errors": []
+    },
+    {
+      "id": "espn-761660",
+      "errors": []
+    },
+    {
+      "id": "espn-401876447",
+      "errors": []
+    },
+    {
+      "id": "espn-401882851",
+      "errors": []
+    },
+    {
+      "id": "espn-401879268",
+      "errors": []
+    },
+    {
+      "id": "espn-401874947",
+      "errors": []
+    },
+    {
+      "id": "espn-401878776",
+      "errors": []
+    },
+    {
+      "id": "espn-401878775",
+      "errors": []
+    },
+    {
+      "id": "espn-401879265",
+      "errors": []
+    },
+    {
+      "id": "espn-401878772",
+      "errors": []
+    },
+    {
+      "id": "espn-401875021",
+      "errors": []
+    },
+    {
+      "id": "espn-401878773",
+      "errors": []
+    },
+    {
+      "id": "espn-401874754",
+      "errors": []
+    },
+    {
+      "id": "espn-401915418",
+      "errors": []
+    },
+    {
+      "id": "espn-401915436",
+      "errors": []
+    },
+    {
+      "id": "espn-401915417",
+      "errors": []
+    },
+    {
+      "id": "espn-401915412",
+      "errors": []
+    },
+    {
+      "id": "espn-401915435",
+      "errors": []
+    },
+    {
+      "id": "espn-401915413",
+      "errors": []
+    },
+    {
+      "id": "espn-401915434",
+      "errors": []
+    },
+    {
+      "id": "espn-401915411",
+      "errors": []
+    },
+    {
+      "id": "espn-401915410",
+      "errors": []
+    },
+    {
+      "id": "espn-401876958",
+      "errors": []
+    },
+    {
+      "id": "espn-401876957",
+      "errors": []
+    },
+    {
+      "id": "espn-401876956",
+      "errors": []
+    }
+  ],
+  "checked": [
+    {
+      "id": "espn-761833",
+      "title": "Red Bull New York vs St. Louis CITY SC",
+      "status": "SCHEDULED",
+      "kickoff": "2026-09-30T23:30Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/761833",
+      "modelSample": {
+        "home": 26,
+        "away": 26
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 10,
+        "away": 10
+      },
+      "checks": [
+        {
+          "team": "Red Bull New York",
+          "metric": "avgCorners",
+          "count": 10,
+          "reported": 5.2,
+          "recomputed": 5.2,
+          "pass": true
+        },
+        {
+          "team": "Red Bull New York",
+          "metric": "avgYellowCards",
+          "count": 10,
+          "reported": 2,
+          "recomputed": 2,
+          "pass": true
+        },
+        {
+          "team": "Red Bull New York",
+          "metric": "avgFouls",
+          "count": 10,
+          "reported": 12.3,
+          "recomputed": 12.3,
+          "pass": true
+        },
+        {
+          "team": "St. Louis CITY SC",
+          "metric": "avgCorners",
+          "count": 10,
+          "reported": 5.1,
+          "recomputed": 5.1,
+          "pass": true
+        },
+        {
+          "team": "St. Louis CITY SC",
+          "metric": "avgYellowCards",
+          "count": 10,
+          "reported": 2.2,
+          "recomputed": 2.2,
+          "pass": true
+        },
+        {
+          "team": "St. Louis CITY SC",
+          "metric": "avgFouls",
+          "count": 10,
+          "reported": 15.7,
+          "recomputed": 15.7,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-761798",
+      "title": "Seattle Sounders FC vs Sporting Kansas City",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-02T01:30Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/761798",
+      "modelSample": {
+        "home": 26,
+        "away": 26
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 10,
+        "away": 10
+      },
+      "checks": [
+        {
+          "team": "Seattle Sounders FC",
+          "metric": "avgCorners",
+          "count": 10,
+          "reported": 5.1,
+          "recomputed": 5.1,
+          "pass": true
+        },
+        {
+          "team": "Seattle Sounders FC",
+          "metric": "avgYellowCards",
+          "count": 10,
+          "reported": 1.8,
+          "recomputed": 1.8,
+          "pass": true
+        },
+        {
+          "team": "Seattle Sounders FC",
+          "metric": "avgFouls",
+          "count": 10,
+          "reported": 12.3,
+          "recomputed": 12.3,
+          "pass": true
+        },
+        {
+          "team": "Sporting Kansas City",
+          "metric": "avgCorners",
+          "count": 10,
+          "reported": 4,
+          "recomputed": 4,
+          "pass": true
+        },
+        {
+          "team": "Sporting Kansas City",
+          "metric": "avgYellowCards",
+          "count": 10,
+          "reported": 2.2,
+          "recomputed": 2.2,
+          "pass": true
+        },
+        {
+          "team": "Sporting Kansas City",
+          "metric": "avgFouls",
+          "count": 10,
+          "reported": 11.1,
+          "recomputed": 11.1,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-761660",
+      "title": "Chicago Fire FC vs Vancouver Whitecaps",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-07T00:30Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/761660",
+      "modelSample": {
+        "home": 26,
+        "away": 26
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 10,
+        "away": 10
+      },
+      "checks": [
+        {
+          "team": "Chicago Fire FC",
+          "metric": "avgCorners",
+          "count": 10,
+          "reported": 4.6,
+          "recomputed": 4.6,
+          "pass": true
+        },
+        {
+          "team": "Chicago Fire FC",
+          "metric": "avgYellowCards",
+          "count": 10,
+          "reported": 1.8,
+          "recomputed": 1.8,
+          "pass": true
+        },
+        {
+          "team": "Chicago Fire FC",
+          "metric": "avgFouls",
+          "count": 10,
+          "reported": 11.4,
+          "recomputed": 11.4,
+          "pass": true
+        },
+        {
+          "team": "Vancouver Whitecaps",
+          "metric": "avgCorners",
+          "count": 10,
+          "reported": 7.3,
+          "recomputed": 7.3,
+          "pass": true
+        },
+        {
+          "team": "Vancouver Whitecaps",
+          "metric": "avgYellowCards",
+          "count": 10,
+          "reported": 1.7,
+          "recomputed": 1.7,
+          "pass": true
+        },
+        {
+          "team": "Vancouver Whitecaps",
+          "metric": "avgFouls",
+          "count": 10,
+          "reported": 13.9,
+          "recomputed": 13.9,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401876447",
+      "title": "Lens vs Lyon",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-09T18:45Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401876447",
+      "modelSample": {
+        "home": 5,
+        "away": 5
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Lens",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 7,
+          "recomputed": 7,
+          "pass": true
+        },
+        {
+          "team": "Lens",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.8,
+          "recomputed": 1.8,
+          "pass": true
+        },
+        {
+          "team": "Lens",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 11.4,
+          "recomputed": 11.4,
+          "pass": true
+        },
+        {
+          "team": "Lyon",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 5,
+          "recomputed": 5,
+          "pass": true
+        },
+        {
+          "team": "Lyon",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.8,
+          "recomputed": 1.8,
+          "pass": true
+        },
+        {
+          "team": "Lyon",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 11.8,
+          "recomputed": 11.8,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401882851",
+      "title": "Málaga vs Espanyol",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-09T19:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401882851",
+      "modelSample": {
+        "home": 7,
+        "away": 7
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 7,
+        "away": 7
+      },
+      "checks": [
+        {
+          "team": "Málaga",
+          "metric": "avgCorners",
+          "count": 7,
+          "reported": 5.571428571428571,
+          "recomputed": 5.571428571428571,
+          "pass": true
+        },
+        {
+          "team": "Málaga",
+          "metric": "avgYellowCards",
+          "count": 7,
+          "reported": 2.5714285714285716,
+          "recomputed": 2.5714285714285716,
+          "pass": true
+        },
+        {
+          "team": "Málaga",
+          "metric": "avgFouls",
+          "count": 7,
+          "reported": 12.857142857142858,
+          "recomputed": 12.857142857142858,
+          "pass": true
+        },
+        {
+          "team": "Espanyol",
+          "metric": "avgCorners",
+          "count": 7,
+          "reported": 2.2857142857142856,
+          "recomputed": 2.2857142857142856,
+          "pass": true
+        },
+        {
+          "team": "Espanyol",
+          "metric": "avgYellowCards",
+          "count": 7,
+          "reported": 2.857142857142857,
+          "recomputed": 2.857142857142857,
+          "pass": true
+        },
+        {
+          "team": "Espanyol",
+          "metric": "avgFouls",
+          "count": 7,
+          "reported": 17.142857142857142,
+          "recomputed": 17.142857142857142,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401879268",
+      "title": "Arsenal vs Leeds United",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-10T11:30Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401879268",
+      "modelSample": {
+        "home": 5,
+        "away": 5
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Arsenal",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 5.2,
+          "recomputed": 5.2,
+          "pass": true
+        },
+        {
+          "team": "Arsenal",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.4,
+          "recomputed": 1.4,
+          "pass": true
+        },
+        {
+          "team": "Arsenal",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 10.2,
+          "recomputed": 10.2,
+          "pass": true
+        },
+        {
+          "team": "Leeds United",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 4.4,
+          "recomputed": 4.4,
+          "pass": true
+        },
+        {
+          "team": "Leeds United",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.4,
+          "recomputed": 1.4,
+          "pass": true
+        },
+        {
+          "team": "Leeds United",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 10.6,
+          "recomputed": 10.6,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401874947",
+      "title": "Genoa vs Fiorentina",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-10T13:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401874947",
+      "modelSample": {
+        "home": 5,
+        "away": 5
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Genoa",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 5,
+          "recomputed": 5,
+          "pass": true
+        },
+        {
+          "team": "Genoa",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 2,
+          "recomputed": 2,
+          "pass": true
+        },
+        {
+          "team": "Genoa",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 10,
+          "recomputed": 10,
+          "pass": true
+        },
+        {
+          "team": "Fiorentina",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 4.4,
+          "recomputed": 4.4,
+          "pass": true
+        },
+        {
+          "team": "Fiorentina",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.8,
+          "recomputed": 1.8,
+          "pass": true
+        },
+        {
+          "team": "Fiorentina",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 11,
+          "recomputed": 11,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401878776",
+      "title": "Aston Villa vs Brentford",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-10T14:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401878776",
+      "modelSample": {
+        "home": 5,
+        "away": 5
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Aston Villa",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 3,
+          "recomputed": 3,
+          "pass": true
+        },
+        {
+          "team": "Aston Villa",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 2,
+          "recomputed": 2,
+          "pass": true
+        },
+        {
+          "team": "Aston Villa",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 11,
+          "recomputed": 11,
+          "pass": true
+        },
+        {
+          "team": "Brentford",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 4.4,
+          "recomputed": 4.4,
+          "pass": true
+        },
+        {
+          "team": "Brentford",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 2.2,
+          "recomputed": 2.2,
+          "pass": true
+        },
+        {
+          "team": "Brentford",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 14.4,
+          "recomputed": 14.4,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401878775",
+      "title": "Chelsea vs AFC Bournemouth",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-10T14:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401878775",
+      "modelSample": {
+        "home": 5,
+        "away": 5
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Chelsea",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 6.8,
+          "recomputed": 6.8,
+          "pass": true
+        },
+        {
+          "team": "Chelsea",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.8,
+          "recomputed": 1.8,
+          "pass": true
+        },
+        {
+          "team": "Chelsea",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 8.6,
+          "recomputed": 8.6,
+          "pass": true
+        },
+        {
+          "team": "AFC Bournemouth",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 4.2,
+          "recomputed": 4.2,
+          "pass": true
+        },
+        {
+          "team": "AFC Bournemouth",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 2.8,
+          "recomputed": 2.8,
+          "pass": true
+        },
+        {
+          "team": "AFC Bournemouth",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 12,
+          "recomputed": 12,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401879265",
+      "title": "Ipswich Town vs Fulham",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-10T14:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401879265",
+      "modelSample": {
+        "home": 5,
+        "away": 5
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Ipswich Town",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 3.6,
+          "recomputed": 3.6,
+          "pass": true
+        },
+        {
+          "team": "Ipswich Town",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.6,
+          "recomputed": 1.6,
+          "pass": true
+        },
+        {
+          "team": "Ipswich Town",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 11.6,
+          "recomputed": 11.6,
+          "pass": true
+        },
+        {
+          "team": "Fulham",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 5.6,
+          "recomputed": 5.6,
+          "pass": true
+        },
+        {
+          "team": "Fulham",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.6,
+          "recomputed": 1.6,
+          "pass": true
+        },
+        {
+          "team": "Fulham",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 10,
+          "recomputed": 10,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401878772",
+      "title": "Sunderland vs Brighton & Hove Albion",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-10T14:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401878772",
+      "modelSample": {
+        "home": 5,
+        "away": 5
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Sunderland",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 4,
+          "recomputed": 4,
+          "pass": true
+        },
+        {
+          "team": "Sunderland",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 2,
+          "recomputed": 2,
+          "pass": true
+        },
+        {
+          "team": "Sunderland",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 13,
+          "recomputed": 13,
+          "pass": true
+        },
+        {
+          "team": "Brighton & Hove Albion",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 5.4,
+          "recomputed": 5.4,
+          "pass": true
+        },
+        {
+          "team": "Brighton & Hove Albion",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 2.4,
+          "recomputed": 2.4,
+          "pass": true
+        },
+        {
+          "team": "Brighton & Hove Albion",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 13,
+          "recomputed": 13,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401875021",
+      "title": "Internazionale vs Parma",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-10T16:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401875021",
+      "modelSample": {
+        "home": 5,
+        "away": 5
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Internazionale",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 6.2,
+          "recomputed": 6.2,
+          "pass": true
+        },
+        {
+          "team": "Internazionale",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.6,
+          "recomputed": 1.6,
+          "pass": true
+        },
+        {
+          "team": "Internazionale",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 6.6,
+          "recomputed": 6.6,
+          "pass": true
+        },
+        {
+          "team": "Parma",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 3.4,
+          "recomputed": 3.4,
+          "pass": true
+        },
+        {
+          "team": "Parma",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.6,
+          "recomputed": 1.6,
+          "pass": true
+        },
+        {
+          "team": "Parma",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 11,
+          "recomputed": 11,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401878773",
+      "title": "Manchester United vs Tottenham Hotspur",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-10T16:30Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401878773",
+      "modelSample": {
+        "home": 5,
+        "away": 5
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Manchester United",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 7.2,
+          "recomputed": 7.2,
+          "pass": true
+        },
+        {
+          "team": "Manchester United",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.2,
+          "recomputed": 1.2,
+          "pass": true
+        },
+        {
+          "team": "Manchester United",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 9.8,
+          "recomputed": 9.8,
+          "pass": true
+        },
+        {
+          "team": "Tottenham Hotspur",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 7.6,
+          "recomputed": 7.6,
+          "pass": true
+        },
+        {
+          "team": "Tottenham Hotspur",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1,
+          "recomputed": 1,
+          "pass": true
+        },
+        {
+          "team": "Tottenham Hotspur",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 13,
+          "recomputed": 13,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401874754",
+      "title": "Napoli vs Frosinone",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-10T18:45Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401874754",
+      "modelSample": {
+        "home": 5,
+        "away": 5
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Napoli",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 5.4,
+          "recomputed": 5.4,
+          "pass": true
+        },
+        {
+          "team": "Napoli",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 0.8,
+          "recomputed": 0.8,
+          "pass": true
+        },
+        {
+          "team": "Napoli",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 9.6,
+          "recomputed": 9.6,
+          "pass": true
+        },
+        {
+          "team": "Frosinone",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 5.8,
+          "recomputed": 5.8,
+          "pass": true
+        },
+        {
+          "team": "Frosinone",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 2.4,
+          "recomputed": 2.4,
+          "pass": true
+        },
+        {
+          "team": "Frosinone",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 17.4,
+          "recomputed": 17.4,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401915418",
+      "title": "Lens vs Sporting CP",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-13T16:45Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401915418",
+      "modelSample": {
+        "home": 1,
+        "away": 1
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 7
+      },
+      "checks": [
+        {
+          "team": "Lens",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 7,
+          "recomputed": 7,
+          "pass": true
+        },
+        {
+          "team": "Lens",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.8,
+          "recomputed": 1.8,
+          "pass": true
+        },
+        {
+          "team": "Lens",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 11.4,
+          "recomputed": 11.4,
+          "pass": true
+        },
+        {
+          "team": "Sporting CP",
+          "metric": "avgCorners",
+          "count": 7,
+          "reported": 5,
+          "recomputed": 5,
+          "pass": true
+        },
+        {
+          "team": "Sporting CP",
+          "metric": "avgYellowCards",
+          "count": 7,
+          "reported": 2.5714285714285716,
+          "recomputed": 2.5714285714285716,
+          "pass": true
+        },
+        {
+          "team": "Sporting CP",
+          "metric": "avgFouls",
+          "count": 7,
+          "reported": 11.857142857142858,
+          "recomputed": 11.857142857142858,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401915436",
+      "title": "Sabah FK vs Slavia Prague",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-13T16:45Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401915436",
+      "modelSample": {
+        "home": 1,
+        "away": 1
+      },
+      "halvesAvailable": false,
+      "halfSample": null,
+      "checks": [
+        {
+          "team": "Sabah FK",
+          "metric": "avgCorners",
+          "count": 1,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Sabah FK",
+          "metric": "avgYellowCards",
+          "count": 1,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Sabah FK",
+          "metric": "avgFouls",
+          "count": 1,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Slavia Prague",
+          "metric": "avgCorners",
+          "count": 1,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Slavia Prague",
+          "metric": "avgYellowCards",
+          "count": 1,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Slavia Prague",
+          "metric": "avgFouls",
+          "count": 1,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401915417",
+      "title": "Arsenal vs Lille",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-13T19:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401915417",
+      "modelSample": {
+        "home": 1,
+        "away": 1
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 5,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Arsenal",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 5.2,
+          "recomputed": 5.2,
+          "pass": true
+        },
+        {
+          "team": "Arsenal",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.4,
+          "recomputed": 1.4,
+          "pass": true
+        },
+        {
+          "team": "Arsenal",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 10.2,
+          "recomputed": 10.2,
+          "pass": true
+        },
+        {
+          "team": "Lille",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 2.8,
+          "recomputed": 2.8,
+          "pass": true
+        },
+        {
+          "team": "Lille",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.2,
+          "recomputed": 1.2,
+          "pass": true
+        },
+        {
+          "team": "Lille",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 10.6,
+          "recomputed": 10.6,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401915412",
+      "title": "Atlético Madrid vs Manchester United",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-13T19:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401915412",
+      "modelSample": null,
+      "halvesAvailable": false,
+      "halfSample": null,
+      "checks": [
+        {
+          "team": "Atlético Madrid",
+          "metric": "avgCorners",
+          "count": 7,
+          "reported": 5,
+          "recomputed": 5,
+          "pass": true
+        },
+        {
+          "team": "Atlético Madrid",
+          "metric": "avgYellowCards",
+          "count": 7,
+          "reported": 1.7142857142857142,
+          "recomputed": 1.7142857142857142,
+          "pass": true
+        },
+        {
+          "team": "Atlético Madrid",
+          "metric": "avgFouls",
+          "count": 7,
+          "reported": 12.285714285714286,
+          "recomputed": 12.285714285714286,
+          "pass": true
+        },
+        {
+          "team": "Manchester United",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 7.2,
+          "recomputed": 7.2,
+          "pass": true
+        },
+        {
+          "team": "Manchester United",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.2,
+          "recomputed": 1.2,
+          "pass": true
+        },
+        {
+          "team": "Manchester United",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 9.8,
+          "recomputed": 9.8,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401915435",
+      "title": "Galatasaray vs Barcelona",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-13T19:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401915435",
+      "modelSample": null,
+      "halvesAvailable": false,
+      "halfSample": null,
+      "checks": [
+        {
+          "team": "Galatasaray",
+          "metric": "avgCorners",
+          "count": 6,
+          "reported": 7,
+          "recomputed": 7,
+          "pass": true
+        },
+        {
+          "team": "Galatasaray",
+          "metric": "avgYellowCards",
+          "count": 6,
+          "reported": 1.6666666666666667,
+          "recomputed": 1.6666666666666667,
+          "pass": true
+        },
+        {
+          "team": "Galatasaray",
+          "metric": "avgFouls",
+          "count": 6,
+          "reported": 12.333333333333334,
+          "recomputed": 12.333333333333334,
+          "pass": true
+        },
+        {
+          "team": "Barcelona",
+          "metric": "avgCorners",
+          "count": 7,
+          "reported": 7.428571428571429,
+          "recomputed": 7.428571428571429,
+          "pass": true
+        },
+        {
+          "team": "Barcelona",
+          "metric": "avgYellowCards",
+          "count": 7,
+          "reported": 1.1428571428571428,
+          "recomputed": 1.1428571428571428,
+          "pass": true
+        },
+        {
+          "team": "Barcelona",
+          "metric": "avgFouls",
+          "count": 7,
+          "reported": 9.571428571428571,
+          "recomputed": 9.571428571428571,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401915413",
+      "title": "Internazionale vs Club Brugge",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-13T19:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401915413",
+      "modelSample": null,
+      "halvesAvailable": false,
+      "halfSample": null,
+      "checks": [
+        {
+          "team": "Internazionale",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 6.2,
+          "recomputed": 6.2,
+          "pass": true
+        },
+        {
+          "team": "Internazionale",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 1.6,
+          "recomputed": 1.6,
+          "pass": true
+        },
+        {
+          "team": "Internazionale",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 6.6,
+          "recomputed": 6.6,
+          "pass": true
+        },
+        {
+          "team": "Club Brugge",
+          "metric": "avgCorners",
+          "count": 7,
+          "reported": 9.142857142857142,
+          "recomputed": 9.142857142857142,
+          "pass": true
+        },
+        {
+          "team": "Club Brugge",
+          "metric": "avgYellowCards",
+          "count": 7,
+          "reported": 1.4285714285714286,
+          "recomputed": 1.4285714285714286,
+          "pass": true
+        },
+        {
+          "team": "Club Brugge",
+          "metric": "avgFouls",
+          "count": 7,
+          "reported": 7.857142857142857,
+          "recomputed": 7.857142857142857,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401915434",
+      "title": "RB Leipzig vs PSV Eindhoven",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-13T19:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401915434",
+      "modelSample": null,
+      "halvesAvailable": false,
+      "halfSample": null,
+      "checks": [
+        {
+          "team": "RB Leipzig",
+          "metric": "avgCorners",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "RB Leipzig",
+          "metric": "avgYellowCards",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "RB Leipzig",
+          "metric": "avgFouls",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "PSV Eindhoven",
+          "metric": "avgCorners",
+          "count": 7,
+          "reported": 7.714285714285714,
+          "recomputed": 7.714285714285714,
+          "pass": true
+        },
+        {
+          "team": "PSV Eindhoven",
+          "metric": "avgYellowCards",
+          "count": 7,
+          "reported": 1.7142857142857142,
+          "recomputed": 1.7142857142857142,
+          "pass": true
+        },
+        {
+          "team": "PSV Eindhoven",
+          "metric": "avgFouls",
+          "count": 7,
+          "reported": 8.714285714285714,
+          "recomputed": 8.714285714285714,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401915411",
+      "title": "Viking FK vs Bayern Munich",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-13T19:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401915411",
+      "modelSample": null,
+      "halvesAvailable": false,
+      "halfSample": null,
+      "checks": [
+        {
+          "team": "Viking FK",
+          "metric": "avgCorners",
+          "count": 10,
+          "reported": 8,
+          "recomputed": 8,
+          "pass": true
+        },
+        {
+          "team": "Viking FK",
+          "metric": "avgYellowCards",
+          "count": 10,
+          "reported": 1.9,
+          "recomputed": 1.9,
+          "pass": true
+        },
+        {
+          "team": "Viking FK",
+          "metric": "avgFouls",
+          "count": 10,
+          "reported": 12.9,
+          "recomputed": 12.9,
+          "pass": true
+        },
+        {
+          "team": "Bayern Munich",
+          "metric": "avgCorners",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Bayern Munich",
+          "metric": "avgYellowCards",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        },
+        {
+          "team": "Bayern Munich",
+          "metric": "avgFouls",
+          "count": 4,
+          "reported": null,
+          "recomputed": null,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401915410",
+      "title": "Villarreal vs Napoli",
+      "status": "SCHEDULED",
+      "kickoff": "2026-10-13T19:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401915410",
+      "modelSample": {
+        "home": 1,
+        "away": 1
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 7,
+        "away": 5
+      },
+      "checks": [
+        {
+          "team": "Villarreal",
+          "metric": "avgCorners",
+          "count": 7,
+          "reported": 7.285714285714286,
+          "recomputed": 7.285714285714286,
+          "pass": true
+        },
+        {
+          "team": "Villarreal",
+          "metric": "avgYellowCards",
+          "count": 7,
+          "reported": 1.8571428571428572,
+          "recomputed": 1.8571428571428572,
+          "pass": true
+        },
+        {
+          "team": "Villarreal",
+          "metric": "avgFouls",
+          "count": 7,
+          "reported": 10.714285714285714,
+          "recomputed": 10.714285714285714,
+          "pass": true
+        },
+        {
+          "team": "Napoli",
+          "metric": "avgCorners",
+          "count": 5,
+          "reported": 5.4,
+          "recomputed": 5.4,
+          "pass": true
+        },
+        {
+          "team": "Napoli",
+          "metric": "avgYellowCards",
+          "count": 5,
+          "reported": 0.8,
+          "recomputed": 0.8,
+          "pass": true
+        },
+        {
+          "team": "Napoli",
+          "metric": "avgFouls",
+          "count": 5,
+          "reported": 9.6,
+          "recomputed": 9.6,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401876958",
+      "title": "Pumas UNAM vs Atlético de San Luis",
+      "status": "FINISHED",
+      "kickoff": "2026-09-27T18:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401876958",
+      "modelSample": {
+        "home": 10,
+        "away": 10
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 9,
+        "away": 9
+      },
+      "checks": [
+        {
+          "metric": "homeScore",
+          "reported": 2,
+          "recomputed": 2,
+          "pass": true
+        },
+        {
+          "metric": "awayScore",
+          "reported": 3,
+          "recomputed": 3,
+          "pass": true
+        },
+        {
+          "team": "Pumas UNAM",
+          "metric": "avgCorners",
+          "count": 9,
+          "reported": 5.333333333333333,
+          "recomputed": 5.333333333333333,
+          "pass": true
+        },
+        {
+          "team": "Pumas UNAM",
+          "metric": "avgYellowCards",
+          "count": 9,
+          "reported": 1.2222222222222223,
+          "recomputed": 1.2222222222222223,
+          "pass": true
+        },
+        {
+          "team": "Pumas UNAM",
+          "metric": "avgFouls",
+          "count": 9,
+          "reported": 11.444444444444445,
+          "recomputed": 11.444444444444445,
+          "pass": true
+        },
+        {
+          "team": "Atlético de San Luis",
+          "metric": "avgCorners",
+          "count": 9,
+          "reported": 2.888888888888889,
+          "recomputed": 2.888888888888889,
+          "pass": true
+        },
+        {
+          "team": "Atlético de San Luis",
+          "metric": "avgYellowCards",
+          "count": 9,
+          "reported": 1.2222222222222223,
+          "recomputed": 1.2222222222222223,
+          "pass": true
+        },
+        {
+          "team": "Atlético de San Luis",
+          "metric": "avgFouls",
+          "count": 9,
+          "reported": 9.88888888888889,
+          "recomputed": 9.88888888888889,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401876957",
+      "title": "León vs FC Juárez",
+      "status": "FINISHED",
+      "kickoff": "2026-09-28T01:00Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401876957",
+      "modelSample": {
+        "home": 10,
+        "away": 10
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 9,
+        "away": 9
+      },
+      "checks": [
+        {
+          "metric": "homeScore",
+          "reported": 2,
+          "recomputed": 2,
+          "pass": true
+        },
+        {
+          "metric": "awayScore",
+          "reported": 1,
+          "recomputed": 1,
+          "pass": true
+        },
+        {
+          "team": "León",
+          "metric": "avgCorners",
+          "count": 9,
+          "reported": 4.111111111111111,
+          "recomputed": 4.111111111111111,
+          "pass": true
+        },
+        {
+          "team": "León",
+          "metric": "avgYellowCards",
+          "count": 9,
+          "reported": 1.7777777777777777,
+          "recomputed": 1.7777777777777777,
+          "pass": true
+        },
+        {
+          "team": "León",
+          "metric": "avgFouls",
+          "count": 9,
+          "reported": 11,
+          "recomputed": 11,
+          "pass": true
+        },
+        {
+          "team": "FC Juárez",
+          "metric": "avgCorners",
+          "count": 9,
+          "reported": 3,
+          "recomputed": 3,
+          "pass": true
+        },
+        {
+          "team": "FC Juárez",
+          "metric": "avgYellowCards",
+          "count": 9,
+          "reported": 2.4444444444444446,
+          "recomputed": 2.4444444444444446,
+          "pass": true
+        },
+        {
+          "team": "FC Juárez",
+          "metric": "avgFouls",
+          "count": 9,
+          "reported": 11.88888888888889,
+          "recomputed": 11.88888888888889,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "espn-401876956",
+      "title": "Necaxa vs América",
+      "status": "FINISHED",
+      "kickoff": "2026-09-28T03:10Z",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/401876956",
+      "modelSample": {
+        "home": 10,
+        "away": 9
+      },
+      "halvesAvailable": true,
+      "halfSample": {
+        "home": 9,
+        "away": 8
+      },
+      "checks": [
+        {
+          "metric": "homeScore",
+          "reported": 2,
+          "recomputed": 2,
+          "pass": true
+        },
+        {
+          "metric": "awayScore",
+          "reported": 4,
+          "recomputed": 4,
+          "pass": true
+        },
+        {
+          "team": "Necaxa",
+          "metric": "avgCorners",
+          "count": 9,
+          "reported": 5.666666666666667,
+          "recomputed": 5.666666666666667,
+          "pass": true
+        },
+        {
+          "team": "Necaxa",
+          "metric": "avgYellowCards",
+          "count": 9,
+          "reported": 2,
+          "recomputed": 2,
+          "pass": true
+        },
+        {
+          "team": "Necaxa",
+          "metric": "avgFouls",
+          "count": 9,
+          "reported": 12.88888888888889,
+          "recomputed": 12.88888888888889,
+          "pass": true
+        },
+        {
+          "team": "América",
+          "metric": "avgCorners",
+          "count": 8,
+          "reported": 7.25,
+          "recomputed": 7.25,
+          "pass": true
+        },
+        {
+          "team": "América",
+          "metric": "avgYellowCards",
+          "count": 8,
+          "reported": 1.375,
+          "recomputed": 1.375,
+          "pass": true
+        },
+        {
+          "team": "América",
+          "metric": "avgFouls",
+          "count": 8,
+          "reported": 12.375,
+          "recomputed": 12.375,
+          "pass": true
+        }
+      ]
+    }
+  ],
+  "failures": [],
+  "limitation": "Cross-check against fresh responses from the same provider, not independent confirmation or predictive-accuracy calibration."
+}

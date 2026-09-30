@@ -87,17 +87,21 @@ test.describe('Boost, Audio and VIP Unlock Modal Verification', () => {
     await expect(page.getByRole('button', { name: /Desbloquear VIP/ })).toHaveCount(0);
   });
 
-  test('a session refresh outage does not expel an authenticated user or close the VIP panel', async ({ page }) => {
-    await setup(page, { initial: { ...trialUser, user: { ...trialUser.user, expiresAt: new Date(Date.now() + 3000).toISOString() } }, sessionOutage: true });
+  test('a session refresh outage preserves identity after expiry but requires reactivation', async ({ page }) => {
+    const now = Date.now();
+    await page.clock.install({ time: now });
+    await setup(page, { initial: { ...trialUser, user: { ...trialUser.user, expiresAt: new Date(now + 60000).toISOString() } }, sessionOutage: true });
     await page.goto('/banqueros');
     await page.getByRole('button', { name: /Desbloquear VIP/ }).first().click();
+    await page.clock.fastForward(61000);
     await expect(page.getByRole('alert')).toContainText('Almacenamiento temporalmente no disponible.');
     const modal = page.getByRole('dialog', { name: 'Acceso a 777 Picks' });
     await expect(modal.getByText('test@example.invalid', { exact: true })).toBeVisible();
     await expect(modal.getByRole('button', { name: 'Continuar con Google' })).toHaveCount(0);
-    await modal.getByRole('button', { name: 'Cerrar', exact: true }).click();
+    await expect(modal.getByRole('button', { name: 'Reactivar Acceso con Clave' })).toBeVisible();
+    await expect(modal.getByRole('button', { name: 'Cerrar', exact: true })).toHaveCount(0);
     await expect(page.locator('header')).toBeVisible();
-    await expect(modal).not.toBeVisible();
+    await expect(modal).toBeVisible();
   });
 
   test('the iPhone native channel contains no code redemption or external sales communities', async ({ page }) => {

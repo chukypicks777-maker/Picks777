@@ -1,0 +1,47 @@
+[WebServer] (node:13416) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:24028) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:21460) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 [android-chromium] › tests\browser\mobile.spec.js:156:1 › la prueba se bloquea al vencer aunque falle la comprobación de sesión (7.5s)
+
+
+  1) [android-chromium] › tests\browser\mobile.spec.js:156:1 › la prueba se bloquea al vencer aunque falle la comprobación de sesión
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: 'Reactivar Acceso con Clave' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('button', { name: 'Reactivar Acceso con Clave' }) with timeout 5000ms
+      - waiting for getByRole('button', { name: 'Reactivar Acceso con Clave' })
+
+
+      167 |   await expect(page.getByRole('button', { name: 'Ver Informe', exact: true }).first()).toBeVisible();
+      168 |   await page.clock.fastForward(6000);
+    > 169 |   await expect(page.getByRole('button', { name: 'Reactivar Acceso con Clave' })).toBeVisible();
+          |                                                                                  ^
+      170 |   await expect(page.getByRole('button', { name: /Continuar con mi Prueba/ })).toHaveCount(0);
+      171 | });
+      172 |
+        at C:\Users\rober\OneDrive\Escritorio\Proyecto Picks Apuesta\tests\browser\mobile.spec.js:169:82
+
+    Error Context: test-results\mobile-la-prueba-se-bloque-29ad2-e-la-comprobación-de-sesión-android-chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\mobile-la-prueba-se-bloque-29ad2-e-la-comprobación-de-sesión-android-chromium\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\mobile-la-prueba-se-bloque-29ad2-e-la-comprobación-de-sesión-android-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [android-chromium] › tests\browser\mobile.spec.js:156:1 › la prueba se bloquea al vencer aunque falle la comprobación de sesión

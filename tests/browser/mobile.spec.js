@@ -122,6 +122,54 @@ test('prueba vencida no ofrece continuar sin código', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Continuar con mi Prueba/ })).toHaveCount(0);
 });
 
+test('los apartados de deportes muestran Próximamente y permiten volver a fútbol', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 680 });
+  await setup(page, { initial: trial });
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Ver Informe', exact: true }).first()).toBeVisible();
+  const sports = page.getByRole('tablist', { name: 'Deportes' });
+  await expect(sports.getByRole('tab')).toHaveCount(4);
+  for (const [name, path] of [['Béisbol', '/beisbol'], ['Tenis', '/tenis'], ['Básquetbol', '/basquetbol']]) {
+    const tab = sports.getByRole('tab', { name, exact: true });
+    await tab.click();
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL(new RegExp(path + '$'));
+    await expect(page.getByRole('tabpanel').getByText('Próximamente', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Ver Informe', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Stats', exact: true })).toBeDisabled();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.reload();
+    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  }
+  await page.screenshot({ path: 'artifacts/mobile/sports-coming-soon-320.png' });
+  await sports.getByRole('tab', { name: 'Fútbol', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Ver Informe', exact: true }).first()).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Básquetbol', exact: true })).toBeVisible();
+  await sports.getByRole('tab', { name: 'Tenis', exact: true }).focus();
+  await page.keyboard.press('Home');
+  await expect(sports.getByRole('tab', { name: 'Fútbol', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Ver Informe', exact: true }).first()).toBeVisible();
+  await page.screenshot({ path: 'artifacts/mobile/sports-football-320.png' });
+});
+
+test('la prueba se bloquea al vencer aunque falle la comprobación de sesión', async ({ page }) => {
+  const now = Date.now();
+  await page.clock.install({ time: now });
+  await setup(page, { initial: { ...trial, user: { ...trial.user, expiresAt: new Date(now + 5000).toISOString() } } });
+  let requests = 0;
+  await page.route('**/api/auth/session', route => {
+    requests++;
+    return requests === 1 ? route.fulfill({ json: { ...trial, user: { ...trial.user, expiresAt: new Date(now + 5000).toISOString() } } })
+      : route.fulfill({ status: 503, json: { success: false, message: 'No se pudo comprobar la sesión. Reintenta la conexión.' } });
+  });
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Ver Informe', exact: true }).first()).toBeVisible();
+  await page.clock.fastForward(6000);
+  await expect(page.getByRole('button', { name: 'Reactivar Acceso con Clave' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Continuar con mi Prueba/ })).toHaveCount(0);
+});
+
 for (const [width, height] of [[320,568], [360,640], [390,844], [412,915], [600,960], [844,390]]) {
   test(`acceso y página adaptables ${width}x${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });

@@ -29,7 +29,8 @@ export default function Navbar({
   onManualSync,
   onOpenUpgrade,
   marketFilter = 'all',
-  onNavigate
+  onNavigate,
+  sportAvailable = true
 }) {
   const SOCIAL_LINKS = useSocialLinks();
   const telegramLink = getSocialLink(SOCIAL_LINKS, 'telegram');
@@ -92,6 +93,7 @@ export default function Navbar({
             </button>
 
             <button
+              disabled={!sportAvailable}
               onClick={() => { sounds.playClick(); onOpenStats(); }}
               className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 transition flex items-center space-x-1.5 cursor-pointer"
             >
@@ -100,6 +102,7 @@ export default function Navbar({
             </button>
 
             <button
+              disabled={!sportAvailable}
               onClick={() => { sounds.playClick(); onOpenParlay(); }}
               className="relative px-3 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-white/5 transition flex items-center space-x-1.5 cursor-pointer"
             >
@@ -198,6 +201,7 @@ export default function Navbar({
             </div>}
             {/* Real-time sync trigger */}
             <button
+              disabled={!sportAvailable}
               onClick={() => { sounds.playClick(); onManualSync?.(); }}
               title="Sincronizar partidos en vivo"
               className={`hidden min-[350px]:block p-1 sm:p-2 bg-[#161b22] border border-white/10 rounded-lg text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition cursor-pointer shrink-0 active:scale-95 ${
@@ -304,12 +308,14 @@ export default function Navbar({
             <span className="truncate">Partidos</span>
           </button>
           <button 
+            disabled={!sportAvailable}
             onClick={() => { sounds.playClick(); onOpenStats(); }} 
             className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-slate-800/80 text-sky-300 font-medium text-center whitespace-nowrap text-[10.5px] sm:text-xs flex items-center justify-center active:scale-95 cursor-pointer"
           >
             <span className="truncate">Stats</span>
           </button>
           <button 
+            disabled={!sportAvailable}
             onClick={() => { sounds.playClick(); onOpenParlay(); }} 
             className="flex-1 min-w-0 py-2 px-1 rounded-lg bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 font-bold text-center whitespace-nowrap text-[10.5px] sm:text-xs flex items-center justify-center active:scale-95 cursor-pointer"
           >
