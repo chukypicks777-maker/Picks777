@@ -48,3 +48,6 @@ artifacts/android/*.apk
 !artifacts/android/picks777-preview.apk
 artifacts/android/*.aab
 artifacts/mobile/
+ios/build/
+ios/**/xcuserdata/
+*.xcuserstate

@@ -1,6 +1,6 @@
 import express from 'express';
 import { mobileAuth } from '../mobileAuth.js';
-import { verifyGoogleToken } from '../auth/googleVerifier.js';
+import { verifyGoogleToken, verifyAppleToken } from '../auth/googleVerifier.js';
 import { rateLimit, consumeLimits, clientIdentity } from '../rateLimit.js';
 const router = express.Router();
 router.post('/start', rateLimit('auth'), async (req, res) => {
@@ -9,8 +9,9 @@ router.post('/start', rateLimit('auth'), async (req, res) => {
 });
 router.post('/complete', rateLimit('auth'), async (req, res) => {
   const credential = req.body?.credential;
-  if (typeof credential !== 'string' || credential.length > 16000 || !await verifyGoogleToken(credential)) {
-    return res.status(400).json({ success: false, message: 'Identidad de Google inválida.' });
+  const provider = req.body?.provider || 'google';
+  if (!['google', 'apple'].includes(provider) || typeof credential !== 'string' || credential.length > 16000 || !await (provider === 'apple' ? verifyAppleToken : verifyGoogleToken)(credential)) {
+    return res.status(400).json({ success: false, message: 'Identidad inválida.' });
   }
   if (!await mobileAuth.complete(req.body?.id, credential)) return res.status(410).json({ success: false, message: 'Solicitud vencida o ya utilizada. Vuelve a la app e inténtalo otra vez.' });
   res.json({ success: true });

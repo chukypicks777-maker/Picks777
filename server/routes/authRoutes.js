@@ -1,4 +1,4 @@
-import { verifyGoogleToken } from '../auth/googleVerifier.js';
+import { verifyGoogleToken, verifyAppleToken } from '../auth/googleVerifier.js';
 export { verifyGoogleToken } from '../auth/googleVerifier.js';
 import express from 'express';
 import { randomUUID } from 'node:crypto';
@@ -17,6 +17,7 @@ router.use((req, res, next) => {
 router.use('/verify-code', rateLimit('auth'));
 router.use('/redeem-code', rateLimit('auth'));
 router.use('/google', rateLimit('auth'));
+router.use('/apple', rateLimit('auth'));
 router.use('/delete-account', rateLimit('auth'));
 
 function publicSession(session) {
@@ -46,7 +47,8 @@ function publicSession(session) {
       expiresAt: session.expires ? new Date(session.expires).toISOString() : null,
       daysRemaining,
       plan,
-      hasCode: Boolean(session.code && session.code !== 'MASTER')
+      hasCode: Boolean(session.code && session.code !== 'MASTER'),
+      provider: session.provider || 'google'
     }
   };
 }
@@ -57,11 +59,14 @@ router.get('/google-config', (req, res) => {
   });
 });
 
-router.post('/google', async (req, res) => {
+const handleIdentityLogin = provider => async (req, res) => {
   try {
-    const googleProfile = await verifyGoogleToken(req.body?.credential);
+    const googleProfile = await (provider === 'apple' ? verifyAppleToken : verifyGoogleToken)(req.body?.credential);
     if (!googleProfile || !googleProfile.email) {
-      return res.status(400).json({ success: false, message: 'Autenticación con Google inválida o no proporcionada.' });
+      return res.status(400).json({ success: false, message: `Autenticación con ${provider === 'apple' ? 'Apple' : 'Google'} inválida o no proporcionada.` });
+    }
+    if (provider === 'apple' && ownerGoogleEmail() === googleProfile.email.toLowerCase()) {
+      return res.status(403).json({ success: false, message: 'La cuenta administradora requiere acceso con Google.' });
     }
 
     const deviceId = readSession(req)?.deviceId || randomUUID();
@@ -77,6 +82,7 @@ router.post('/google', async (req, res) => {
     const expires = isOwner ? now + 8 * 3600000 : user.expires;
 
     const session = {
+      provider,
       role: isOwner ? 'owner' : (isVip ? 'vip_user' : (trialExpired ? 'expired_user' : 'trial_user')),
       userId: user.id,
       googleId: user.googleId,
@@ -101,7 +107,9 @@ router.post('/google', async (req, res) => {
   } catch {
     res.status(503).json({ success: false, message: 'Servicio de autenticación no disponible. Intenta de nuevo.' });
   }
-});
+};
+router.post('/google', handleIdentityLogin('google'));
+router.post('/apple', handleIdentityLogin('apple'));
 
 router.post('/redeem-code', async (req, res) => {
   try {
@@ -216,7 +224,7 @@ const handleCheckSession = async (req, res) => {
     const session = await currentSession(req);
     res.json(session ? publicSession(session) : { success: false, valid: false });
   } catch {
-    res.json({ success: false, valid: false });
+    res.status(503).json({ success: false, message: 'No se pudo comprobar la sesión. Reintenta la conexión.' });
   }
 };
 router.get('/check-session', handleCheckSession);
@@ -234,9 +242,9 @@ router.post('/logout', async (req, res) => {
 router.post('/delete-account', async (req, res) => {
   const session = await currentSession(req);
   if (!session?.userId) return res.status(401).json({ success: false, message: 'Inicia sesión con la cuenta que deseas eliminar.' });
-  const identity = await verifyGoogleToken(req.body?.credential);
+  const identity = await (session.provider === 'apple' ? verifyAppleToken : verifyGoogleToken)(req.body?.credential);
   if (!identity || identity.email.toLowerCase() !== session.email?.toLowerCase()) {
-    return res.status(403).json({ success: false, message: 'Confirma la misma cuenta de Google para eliminarla.' });
+    return res.status(403).json({ success: false, message: 'Confirma la misma cuenta para eliminarla.' });
   }
   // Delete only this application's Firebase identity, never the Google account itself.
   const key = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8';

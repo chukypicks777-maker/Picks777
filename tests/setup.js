@@ -2,6 +2,7 @@ process.env.NODE_ENV = 'test';
 process.env.OWNER_GOOGLE_EMAIL = '';
 process.env.CUSTOM_AI_API_KEY = '';
 process.env.GEMINI_API_KEY = '';
+for (const key of ['AI_DEFAULT_CONFIG', 'VYCEAI_API_KEY', 'AI_API_KEY', 'THIRD_PARTY_API_KEY', 'THIRD_PARTY_AI_KEY', 'AGENTROUTER_API_KEY', 'DEEPSEEK_API_KEY', 'GROQ_API_KEY']) process.env[key] = '';
 process.env.UPSTASH_REDIS_REST_URL = '';
 process.env.UPSTASH_REDIS_REST_TOKEN = '';
 process.env.KV_REST_API_URL = '';

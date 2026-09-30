@@ -1,6 +1,6 @@
 # Material para Play Console — 777 Picks
 
-El archivo de la versión es `artifacts/android/picks777-release.aab` (1.1.0, código 6, paquete `app.picks777.mobile`). La ficha y las declaraciones son pasos adicionales: subir el AAB no publica automáticamente la aplicación.
+El archivo de la versión preparada es `artifacts/android/picks777-release.aab` (1.1.3, código 9, paquete `app.picks777.mobile`). La ficha y las declaraciones son pasos adicionales: subir el AAB no publica automáticamente la aplicación. La venta externa de códigos VIP fue confirmada por el propietario; consultar los pendientes de pagos y elegibilidad en [PUBLICAR-TIENDAS.md](PUBLICAR-TIENDAS.md) antes de enviar a revisión.
 
 ## Textos propuestos
 

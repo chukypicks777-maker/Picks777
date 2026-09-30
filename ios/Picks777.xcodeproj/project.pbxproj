@@ -1,0 +1,27 @@
+// !$*UTF8*$!
+{archiveVersion = 1; classes = {}; objectVersion = 56; objects = {
+000000000000000000000001 = {isa = PBXProject; attributes = {LastUpgradeCheck = 1600;}; buildConfigurationList = 000000000000000000000015; compatibilityVersion = "Xcode 14.0"; developmentRegion = es; hasScannedForEncodings = 0; knownRegions = (es, en, Base); mainGroup = 000000000000000000000002; productRefGroup = 000000000000000000000004; projectDirPath = ""; projectRoot = ""; targets = (000000000000000000000005);};
+000000000000000000000002 = {isa = PBXGroup; children = (000000000000000000000003, 000000000000000000000004); sourceTree = "<group>";};
+000000000000000000000003 = {isa = PBXGroup; path = Picks777; sourceTree = "<group>"; children = (000000000000000000000006, 000000000000000000000007, 000000000000000000000008, 000000000000000000000009, 000000000000000000000010);};
+000000000000000000000004 = {isa = PBXGroup; name = Products; sourceTree = "<group>"; children = (000000000000000000000011);};
+000000000000000000000005 = {isa = PBXNativeTarget; buildConfigurationList = 000000000000000000000016; buildPhases = (000000000000000000000012, 000000000000000000000013, 000000000000000000000014); buildRules = (); dependencies = (); name = Picks777; productName = Picks777; productReference = 000000000000000000000011; productType = "com.apple.product-type.application";};
+000000000000000000000006 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Picks777App.swift; sourceTree = "<group>";};
+000000000000000000000007 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PicksBrowser.swift; sourceTree = "<group>";};
+000000000000000000000008 = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>";};
+000000000000000000000009 = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>";};
+000000000000000000000010 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>";};
+000000000000000000000011 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Picks777.app; sourceTree = BUILT_PRODUCTS_DIR;};
+000000000000000000000012 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (000000000000000000000021, 000000000000000000000022); runOnlyForDeploymentPostprocessing = 0;};
+000000000000000000000013 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+000000000000000000000014 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (000000000000000000000023, 000000000000000000000024); runOnlyForDeploymentPostprocessing = 0;};
+000000000000000000000015 = {isa = XCConfigurationList; buildConfigurations = (000000000000000000000017, 000000000000000000000018); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+000000000000000000000016 = {isa = XCConfigurationList; buildConfigurations = (000000000000000000000019, 000000000000000000000020); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+000000000000000000000017 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; SWIFT_OPTIMIZATION_LEVEL = "-Onone";}; name = Debug;};
+000000000000000000000018 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O";}; name = Release;};
+000000000000000000000019 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 9; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Picks777/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 1.1.3; PRODUCT_BUNDLE_IDENTIFIER = app.picks777.mobile; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;}; name = Debug;};
+000000000000000000000020 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 9; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = Picks777/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 1.1.3; PRODUCT_BUNDLE_IDENTIFIER = app.picks777.mobile; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1;}; name = Release;};
+000000000000000000000021 = {isa = PBXBuildFile; fileRef = 000000000000000000000006;};
+000000000000000000000022 = {isa = PBXBuildFile; fileRef = 000000000000000000000007;};
+000000000000000000000023 = {isa = PBXBuildFile; fileRef = 000000000000000000000009;};
+000000000000000000000024 = {isa = PBXBuildFile; fileRef = 000000000000000000000010;};
+}; rootObject = 000000000000000000000001;}

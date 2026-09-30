@@ -162,7 +162,9 @@ test('codes persist, activate once, track sessions and revoke', async () => {
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
-test('AI without credentials returns an explicitly non-AI factual report', async () => {
+test('AI without credentials returns an explicitly non-AI factual report', async t => {
+  // The developer's saved provider key is outside this fixture.
+  t.mock.method(storage, 'getAiConfig', async () => null);
   const match = parseEspnEvent(fixture(), LEAGUES[0]);
   const result = await generateAiMatchReport(match);
   assert.equal(result.aiAvailable, false);

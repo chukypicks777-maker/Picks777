@@ -18,10 +18,11 @@ export function useSession() {
     try {
       const data = await sessionRequest('session', {}, signal);
       if (!signal?.aborted && started === revision.current) setAuthState(data.success && data.user ? data : null);
-    } catch {
+    } catch (cause) {
       if (!signal?.aborted && started === revision.current) {
-        setAuthState(null);
-        setError('');
+        // A connection failure cannot prove that the user's session ended.
+        // Keep the last confirmed identity; protected data still requires the server.
+        setError(cause.message || 'No se pudo comprobar la sesión. Reintenta la conexión.');
       }
     } finally {
       if (!signal?.aborted) setChecking(false);

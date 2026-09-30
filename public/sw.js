@@ -1,5 +1,5 @@
 // Cache only the public offline screen. Auth, picks and private data stay network-only.
-const CACHE = 'picks-offline-v1.1.2';
+const CACHE = 'picks-offline-v1.1.3';
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(caches.open(CACHE).then(cache => cache.add('/offline.html')));

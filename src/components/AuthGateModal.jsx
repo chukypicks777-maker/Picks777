@@ -5,7 +5,8 @@ import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
 import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
 import { identityProvider } from '../auth/providers';
-import { isAndroidApp, cancelMobileSignIn } from '../auth/mobileSignIn';
+import { isNativeApp, cancelMobileSignIn } from '../auth/mobileSignIn';
+import { isStoreApp } from '../auth/platform.js';
 import { confirmedSession, sessionRequest } from '../auth/sessionClient';
 
 function GoogleIcon({ className = "w-5 h-5" }) {
@@ -27,6 +28,8 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
   const [pendingAuth, setPendingAuth] = useState(null);
   const isTrialExpired = Boolean(auth?.trialExpired || pendingAuth?.trialExpired);
   const isAlreadyLoggedIn = Boolean(auth?.valid || auth?.user);
+  const isUpgrade = Boolean(auth?.user && onClose);
+  const storeApp = isStoreApp();
   
   // Step state: 'google' | 'code'
   const [step, setStep] = useState(() => {
@@ -42,14 +45,14 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
   const [successMsg, setSuccessMsg] = useState('');
 
   // Real Google Sign-In via Firebase Popup (accounts.google.com)
-  const handleRealGoogleLogin = async () => {
+  const handleRealGoogleLogin = async (provider = 'google') => {
     setLoading(true);
     setError('');
     sounds.playRadarScan();
 
     try {
-      const googleAuth = await identityProvider().signIn();
-      const data = await sessionRequest('google', { credential: googleAuth.token });
+      const googleAuth = await identityProvider(provider).signIn();
+      const data = await sessionRequest(provider, { credential: googleAuth.token });
 
       if (data.success) {
         sounds.playSuccess();
@@ -64,10 +67,10 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
         }
         if (data.trialExpired) {
           setStep('code');
-          setError('Tu período de prueba de 3 días ha vencido. Ingresa un código o clave VIP para reactivar tu acceso.');
+          setError(storeApp ? 'Tu acceso ha vencido.' : 'Tu período de prueba de 3 días ha vencido. Ingresa un código o clave VIP para reactivar tu acceso.');
           onAuthenticated?.(data);
         } else {
-          setSuccessMsg(`¡Bienvenido, ${data.user?.name || 'Usuario'}! Cuenta de Google vinculada con éxito.`);
+          setSuccessMsg(`¡Bienvenido, ${data.user?.name || 'Usuario'}! Cuenta vinculada con éxito.`);
           confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
           setStep('code'); // Move to Step 2: user can enter code or continue with 3-day trial
         }
@@ -117,13 +120,13 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
       const data = await res.json();
 
       if (data.success) {
+        const saved = await confirmedSession();
+        if (!saved.valid || saved.trialExpired) throw new Error('No se pudo confirmar la membresía. Reintenta la conexión.');
         sounds.playSuccess();
         confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
         setSuccessMsg(data.message || '¡Clave VIP activada con éxito!');
-        setTimeout(() => {
-          onAuthenticated?.(data);
-          if (!onAuthenticated) onClose?.();
-        }, 800);
+        onAuthenticated?.(saved);
+        if (!onAuthenticated) onClose?.();
       } else {
         sounds.playGlitchSound();
         setError(data.message || 'Código incorrecto o vencido. Verifica o solicita uno en nuestras comunidades.');
@@ -174,11 +177,13 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && canCloseModal) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
         handleSafeClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [canCloseModal, handleSafeClose]);
 
   return (
@@ -221,10 +226,10 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
 
         {/* Brand Header */}
         <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1 font-sans">
-          777 <span className="text-red-500">PICKS</span>
+          {isUpgrade ? (storeApp ? 'Mi acceso' : 'Activar membresía VIP') : <>777 <span className="text-red-500">PICKS</span></>}
         </h2>
         <p className="text-xs text-slate-400 mb-4 font-sans max-w-sm mx-auto">
-          Picks de Confianza • Plataforma Cuantitativa de Apuestas Deportivas
+          {isUpgrade ? 'Tu cuenta sigue conectada. Puedes cerrar este panel y continuar con tu acceso actual.' : 'Picks de Confianza • Plataforma Cuantitativa de Apuestas Deportivas'}
         </p>
 
         {/* Status Indicator */}
@@ -236,12 +241,12 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
         ) : step === 'google' ? (
           <div className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-mono font-bold uppercase tracking-wider mb-5">
             <ShieldCheck className="w-4 h-4 text-sky-400 shrink-0" />
-            <span>Paso 1: Registro Exclusivo con Google</span>
+            <span>{storeApp ? 'Paso 1: Accede con tu cuenta' : 'Paso 1: Registro Exclusivo con Google'}</span>
           </div>
         ) : (
           <div className="flex items-center justify-center space-x-2 py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider mb-5">
             <KeyRound className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{onClose ? '💎 Desbloquear Acceso VIP' : 'Paso 2: Canjear Clave VIP (Opcional)'}</span>
+            <span>{storeApp ? 'Estado de tu cuenta' : onClose ? '💎 Desbloquear Acceso VIP' : 'Paso 2: Canjear Clave VIP (Opcional)'}</span>
           </div>
         )}
 
@@ -265,11 +270,11 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
           <div className="space-y-4">
             <div className="bg-[#161b22] border border-white/5 rounded-xl p-4 text-left">
               <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed mb-2">
-                Para acceder a los picks diarios, análisis cuantitativos e inteligencia artificial deportiva, ingresa con tu cuenta oficial de Google.
+                {storeApp ? 'Accede con Apple o Google para consultar tu cuenta y tus análisis deportivos.' : 'Para acceder a los picks diarios, análisis cuantitativos e inteligencia artificial deportiva, ingresa con tu cuenta oficial de Google.'}
               </p>
               <div className="flex items-center space-x-2 text-emerald-400 text-xs font-mono font-bold">
                 <Clock className="w-3.5 h-3.5" />
-                <span>¡Incluye 3 días de acceso libre total garantizado!</span>
+                <span>Incluye una prueba de 3 días con funciones limitadas</span>
               </div>
             </div>
 
@@ -277,7 +282,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
             <div className="py-2">
               <button
                 type="button"
-                onClick={handleRealGoogleLogin}
+                onClick={() => handleRealGoogleLogin('google')}
                 disabled={loading}
                 className="w-full py-3.5 px-4 bg-white hover:bg-slate-100 text-slate-900 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center space-x-3 shadow-xl shadow-white/10 transition active:scale-[0.99] cursor-pointer disabled:opacity-50"
               >
@@ -292,8 +297,12 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
               </button>
             </div>
 
+            {storeApp && <button type="button" onClick={() => handleRealGoogleLogin('apple')} disabled={loading}
+              className="w-full py-3.5 px-4 bg-black border border-white rounded-xl font-semibold text-white disabled:opacity-50">
+              Continuar con Apple
+            </button>}
             {/* Google Identity Services container if active */}
-            {loading && isAndroidApp() && <div className="text-center text-sm space-y-2">
+            {loading && isNativeApp() && <div className="text-center text-sm space-y-2">
               <p>Confirma tu cuenta en la pantalla de Google y vuelve a esta aplicación.</p>
               <button type="button" className="p-3 underline" onClick={cancelMobileSignIn}>Cancelar acceso con Google</button>
             </div>}
@@ -301,7 +310,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
 
             <div className="flex items-center justify-center space-x-2 text-[11px] text-slate-400 font-sans pt-1">
               <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
-              <span>Autenticación oficial y segura con tu cuenta de Google</span>
+              <span>{storeApp ? 'Autenticación segura con tu cuenta' : 'Autenticación oficial y segura con tu cuenta de Google'}</span>
             </div>
           </div>
         )}
@@ -331,13 +340,13 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
                 <div className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
                   isTrialExpired ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 }`}>
-                  {isTrialExpired ? 'Vencido' : '3 Días Activos'}
+                  {isTrialExpired ? 'Vencido' : currentUser.plan || 'Prueba activa'}
                 </div>
               </div>
             )}
 
             {/* Explanatory text */}
-            <p className="text-xs text-slate-300 font-sans leading-relaxed">
+            {!storeApp && <p className="text-xs text-slate-300 font-sans leading-relaxed">
               {isTrialExpired ? (
                 <span className="text-rose-300 font-semibold">
                   Tu período de 3 días ha vencido. Para seguir utilizando todas las herramientas y pronósticos, ingresa una clave de membresía válida:
@@ -347,10 +356,9 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
                   ¿Tienes una clave o código VIP? Ingrésalo ahora para activar membresía extendida o beneficios exclusivos.
                 </span>
               )}
-            </p>
-
+            </p>}
             {/* VIP Code Form */}
-            <form onSubmit={handleCodeSubmit} className="space-y-3">
+            {!storeApp && <form onSubmit={handleCodeSubmit} className="space-y-3">
               <div>
                 <label className="block text-[11px] font-mono text-slate-400 uppercase tracking-wider mb-1 font-semibold">
                   Clave o Código VIP
@@ -386,8 +394,11 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
                   </>
                 )}
               </button>
-            </form>
-
+            </form>}
+            {storeApp && <div className="space-y-3 text-sm text-slate-300">
+              <p>{isTrialExpired ? 'Tu acceso ha vencido.' : 'Tu acceso actual está vinculado a esta cuenta.'}</p>
+              <button type="button" disabled={loading} onClick={handleContinueWithTrial} className="w-full rounded-xl border border-white/20 p-3">Actualizar estado de mi cuenta</button>
+            </div>}
             {/* Option to continue with 3-day trial without entering code */}
             {!isTrialExpired && (
               <button
@@ -413,7 +424,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
                 disabled={loading}
                 className="text-[11px] font-mono text-slate-400 hover:text-slate-200 transition cursor-pointer underline"
               >
-                {isTrialExpired ? '← Cerrar sesión o cambiar de cuenta Google' : '← Cambiar de cuenta Google'}
+                {storeApp ? (isTrialExpired ? '← Cerrar sesión o cambiar de cuenta' : '← Cambiar de cuenta') : (isTrialExpired ? '← Cerrar sesión o cambiar de cuenta Google' : '← Cambiar de cuenta Google')}
               </button>
             </div>
 
@@ -423,13 +434,13 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
         {/* SOCIAL NETWORKS SECTION - REQUIRED EXACT TEXT */}
         <div className="mt-5 flex flex-wrap justify-center gap-4 text-xs text-slate-400">
           <a href="/privacidad.html" className="underline">Privacidad</a>
-          <a href="/instalar" className="underline">Instalar en mi celular</a>
+          {!storeApp && <a href="/instalar" className="underline">Instalar en mi celular</a>}
           <a href="/eliminar-cuenta" className="underline">Eliminar mi cuenta</a>
         </div>
-        <div className="mt-6 pt-5 border-t border-white/10 text-left">
+        {!storeApp && <div className="mt-6 pt-5 border-t border-white/10 text-left">
           <div className="mb-3">
             <p className="text-xs sm:text-sm font-bold text-white font-sans leading-snug">
-              ¿Quieres acceso ilimitado? Únete a una de nuestras comunidades y reclama un código totalmente GRATIS
+              Consulta las condiciones de la membresía en nuestras comunidades oficiales.
             </p>
           </div>
 
@@ -496,7 +507,7 @@ export default function AuthGateModal({ auth, onAuthenticated, onClose }) {
             </a>
 
           </div>
-        </div>
+        </div>}
 
       </div>
     </div>

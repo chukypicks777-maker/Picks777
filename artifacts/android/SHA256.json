@@ -1,4 +1,14 @@
 {
-  "picks777-preview.apk": "664b8b7074d9c344c326608aa00b089ef2f70ea860884dc3d9f91003379f4abf",
-  "picks777-release.aab": "6395006c7ae090f7f87a1b2d3ac76f8599405c79c43e7e60d3d2a554946e0705"
+  "versionName": "1.1.3",
+  "versionCode": 9,
+  "files": {
+    "picks777-release.aab": {
+      "bytes": 164602,
+      "sha256": "4de539202352982d7ca99d1a317cd067fda739807bd3ad251377c4fb76649d8c"
+    },
+    "picks777-preview.apk": {
+      "bytes": 164228,
+      "sha256": "6d03ab0f5bf89cf885ff812b71178fcfd3a0758d287df9cc8811a7b510e8a5ff"
+    }
+  }
 }

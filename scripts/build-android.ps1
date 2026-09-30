@@ -24,6 +24,10 @@ try {
     $task = if ($Variant -eq 'Release') { 'bundleRelease' } elseif ($Variant -eq 'Preview') { 'assembleRelease' } else { 'assembleDebug' }
     & ./android/gradlew.bat -p android $task --max-workers=2 --console=plain
     if ($LASTEXITCODE -ne 0) { throw 'Falló la compilación Android.' }
+    if ($Variant -eq 'Release') {
+        New-Item -ItemType Directory -Path 'artifacts/android' -Force | Out-Null
+        Copy-Item -LiteralPath 'android/app/build/outputs/bundle/release/app-release.aab' -Destination 'artifacts/android/picks777-release.aab' -Force
+    }
     if ($Variant -eq 'Preview') {
         & node scripts/package-android-preview.mjs
         if ($LASTEXITCODE -ne 0) { throw 'Falló el empaquetado del APK.' }

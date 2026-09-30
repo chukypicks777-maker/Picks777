@@ -12,6 +12,7 @@ import {
 import { sounds } from '../utils/audioEffects';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
 import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
+import { isStoreApp } from '../auth/platform.js';
 
 export default function Navbar({ 
   auth, 
@@ -111,7 +112,7 @@ export default function Navbar({
               )}
             </button>
 
-            {auth?.isAdmin && (
+            {auth?.isAdmin && !isStoreApp() && (
               <button
                 onClick={() => { sounds.playSuccess(); onOpenAdmin(); }}
                 className="px-3 py-1.5 rounded-md text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 transition flex items-center space-x-1.5 cursor-pointer"
@@ -126,7 +127,7 @@ export default function Navbar({
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             
             {/* SOCIAL NETWORKS DIRECT ACCESS (Desktop) */}
-            <div className="hidden lg:flex items-center space-x-1 border-r border-white/10 pr-2 mr-0.5">
+            {!isStoreApp() && <div className="hidden lg:flex items-center space-x-1 border-r border-white/10 pr-2 mr-0.5">
               {/* Telegram */}
               <a
                 href={telegramLink.url}
@@ -162,10 +163,9 @@ export default function Navbar({
               >
                 <InstagramIcon className="w-3.5 h-3.5" />
               </a>
-            </div>
-
+            </div>}
             {/* Mobile Social Menu Dropdown Trigger */}
-            <div className="relative hidden min-[360px]:block lg:hidden">
+            {!isStoreApp() && <div className="relative hidden min-[360px]:block lg:hidden">
               <button
                 onClick={() => setShowSocialMenu(!showSocialMenu)}
                 className="p-1 sm:p-1.5 bg-[#161b22] border border-white/10 rounded-lg text-slate-300 hover:text-white transition active:scale-95 cursor-pointer"
@@ -195,8 +195,7 @@ export default function Navbar({
                   ))}
                 </div>
               )}
-            </div>
-
+            </div>}
             {/* Real-time sync trigger */}
             <button
               onClick={() => { sounds.playClick(); onManualSync?.(); }}
@@ -241,10 +240,10 @@ export default function Navbar({
               <button
                 onClick={() => { sounds.playClick(); onOpenUpgrade?.(); }}
                 className="hidden sm:flex items-center space-x-1 px-2.5 py-1 bg-gradient-to-r from-amber-500/20 to-emerald-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-mono font-bold transition cursor-pointer shrink-0"
-                title="Canjear Clave VIP"
+                title={isStoreApp() ? 'Mi acceso' : 'Canjear Clave VIP'}
               >
                 <Crown className="w-3 h-3 text-amber-400" />
-                <span>Canjear Clave</span>
+                <span>{isStoreApp() ? 'Mi acceso' : 'Canjear Clave'}</span>
               </button>
             )}
 

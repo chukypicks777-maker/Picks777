@@ -21,6 +21,7 @@ import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnal
 import { useSession } from './auth/useSession';
 import { sessionRequest } from './auth/sessionClient';
 import { identityProvider } from './auth/providers';
+import { isStoreApp } from './auth/platform.js';
 
 export default function App() {
   const { auth, setAuth, checking, error: sessionError, retry } = useSession();
@@ -85,6 +86,8 @@ export default function App() {
   const isPoppingModalRef = useRef(false);
 
   const openUpgradeModal = useCallback(() => {
+    if (showUpgradeModalRef.current) return;
+    showUpgradeModalRef.current = true;
     sounds.playClick();
     if (typeof window !== 'undefined' && window.history) {
       window.history.pushState({ modal: 'upgrade' }, '', window.location.href);
@@ -93,6 +96,7 @@ export default function App() {
   }, []);
 
   const closeUpgradeModal = useCallback(() => {
+    showUpgradeModalRef.current = false;
     setShowUpgradeModal(false);
     if (typeof window !== 'undefined' && window.history?.state?.modal === 'upgrade' && !isPoppingModalRef.current) {
       isPoppingModalRef.current = true;
@@ -643,7 +647,7 @@ export default function App() {
     leagues_cup: matches.filter(m => m?.leagueId === 'leagues_cup').length,
   };
 
-  if (checking || sessionError) return <main className="min-h-dvh grid place-items-center p-6 text-center" role="status">
+  if (!auth && (checking || sessionError)) return <main className="min-h-dvh grid place-items-center p-6 text-center" role="status">
     <div><p>{checking ? 'Comprobando tu sesión…' : sessionError}</p>
     {!checking && <button className="control mt-4" onClick={retry}>Reintentar conexión</button>}</div>
   </main>;
@@ -652,6 +656,9 @@ export default function App() {
     <div className="min-h-screen bg-[#080b11] text-slate-100 flex flex-col font-sans w-full overflow-x-hidden relative">
 
       {/* Toast Notification */}
+      {auth && sessionError && <div role="alert" className="p-3 text-center bg-amber-950 text-amber-200">
+        {sessionError} <button type="button" onClick={retry} className="underline">Reintentar conexión</button>
+      </div>}
       {toastMessage && (
         <div className="fixed top-20 right-4 z-[80] bg-[#111827]/95 backdrop-blur-md border border-sky-400/40 text-slate-100 px-4 py-2.5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] font-mono text-xs flex items-center space-x-2 animate-bounce-short">
           <Zap className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -699,7 +706,7 @@ export default function App() {
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
 
         {/* Community VIP Channels (Telegram, WhatsApp, Instagram) */}
-        {marketFilter === 'all' && <CommunityBanner />}
+        {!isStoreApp() && marketFilter === 'all' && <CommunityBanner />}
 
         {/* League Selector Carousel */}
         <LeagueSelector
@@ -836,7 +843,7 @@ export default function App() {
                     onClick={openUpgradeModal}
                     className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold rounded-lg text-xs font-mono shrink-0 cursor-pointer shadow-[0_0_12px_rgba(245,158,11,0.35)] transition"
                   >
-                    👑 Desbloquear VIP
+                    {isStoreApp() ? 'Mi acceso' : '👑 Desbloquear VIP'}
                   </button>
                 </div>
               )}
@@ -939,7 +946,7 @@ export default function App() {
         </div>
 
         {/* Community VIP Showcase with Reference Image and Tipsters */}
-        <FooterCommunityShowcase />
+        {!isStoreApp() && <FooterCommunityShowcase />}
 
       </main>
 
@@ -994,7 +1001,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-slate-300">DEPORTEPICKS AI VIP</span>
-            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.1.2</span>
+            <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px] text-slate-300 font-bold">v1.1.3</span>
             <span>•</span>
             <span>Plataforma de Análisis Cuantitativo para Apuestas</span>
           </div>
@@ -1002,8 +1009,8 @@ export default function App() {
             <a href="/contacto" className="hover:text-white underline">Contacto</a>
             <span>•</span>
             <a href="/privacidad.html" className="underline hover:text-white">Privacidad</a>
-            <span>•</span>
-            <a href="/instalar" className="underline hover:text-white">Instalar en mi celular</a>
+            {!isStoreApp() && <><span>•</span>
+            <a href="/instalar" className="underline hover:text-white">Instalar en mi celular</a></>}
             <span>•</span>
             <a href="/eliminar-cuenta" className="underline hover:text-white">Eliminar cuenta</a>
           </div>

@@ -1,7 +1,7 @@
 {
   "name": "proyecto-picks-apuesta",
   "private": true,
-  "version": "1.1.2",
+  "version": "1.1.3",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -p \"[{name}]\" -n \"SERVER,CLIENT\" -c \"cyan,magenta\" \"node server/index.js\" \"vite\"",
@@ -14,6 +14,7 @@
     "preview": "vite preview",
     "test": "node --import ./tests/setup.js --test tests/*.test.js",
     "mobile:configure": "node scripts/mobile-config.mjs",
+    "ios:prepare": "node scripts/generate-ios-project.mjs",
     "android:debug": "powershell -ExecutionPolicy Bypass -File scripts/build-android.ps1 -Variant Debug",
     "android:bundle": "powershell -ExecutionPolicy Bypass -File scripts/build-android.ps1 -Variant Release",
     "test:browser": "playwright test",

@@ -171,6 +171,7 @@ test('Navbar renders odds format selector visibly with Americano, Decimal and Fr
     .replaceAll('"lucide-react"', JSON.stringify(import.meta.resolve('lucide-react')))
     .replaceAll('"./SocialIcons"', JSON.stringify(socialIconsDataUri))
     .replaceAll('"../utils/audioEffects"', JSON.stringify(import.meta.resolve('../src/utils/audioEffects.js')))
+    .replaceAll('"../auth/platform.js"', JSON.stringify(import.meta.resolve('../src/auth/platform.js')))
     .replaceAll('"../utils/socialSettings"', JSON.stringify(mockSocialSettingsUri));
   const { default: Navbar } = await import('data:text/javascript;base64,' + Buffer.from(modCode).toString('base64'));
 

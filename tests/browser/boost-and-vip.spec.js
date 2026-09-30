@@ -19,8 +19,9 @@ const trialUser = {
   user: { id: 'test-user', name: 'Cuenta de prueba', email: 'test@example.invalid', plan: 'Prueba 3 Días', daysRemaining: 3 }
 };
 
-async function setup(page, { initial = trialUser } = {}) {
+async function setup(page, { initial = trialUser, redeem = null, sessionOutage = false } = {}) {
   let session = initial;
+  let sessionChecks = 0;
   await page.route(/^https:\/\//, route => route.abort());
   await page.route('**/src/auth/providers*', route => route.fulfill({
     contentType: 'application/javascript',
@@ -28,10 +29,19 @@ async function setup(page, { initial = trialUser } = {}) {
   }));
   await page.route('**/api/**', async route => {
     const path = new URL(route.request().url()).pathname;
+    if (path === '/api/auth/session' && sessionOutage && ++sessionChecks > 1) {
+      await route.fulfill({ status: 503, json: { success: false, message: 'Almacenamiento temporalmente no disponible.' } });
+      return;
+    }
     let body = { success: true };
     if (path === '/api/auth/check-session' || path === '/api/auth/session') body = session || { success: false, valid: false };
     if (path === '/api/auth/google') body = session;
+    if (path === '/api/auth/apple') { session = { ...trialUser, user: { ...trialUser.user, provider: 'apple' } }; body = session; }
     if (path === '/api/auth/logout') { session = null; body = { success: true }; }
+    if (path === '/api/auth/redeem-code') {
+      body = redeem || { success: false, message: 'Código incorrecto o vencido.' };
+      if (redeem) session = redeem;
+    }
     if (path.startsWith('/api/matches')) body = { success: true, matches: sampleMatches.slice(0, 5) };
     if (path === `/api/matches/${sampleMatches[0].id}`) body = { success: true, match: sampleMatches[0] };
     if (path.endsWith('/ai-analysis')) body = { success: true, match: sampleMatches.find(m => path.includes('/' + m.id + '/')), report: { aiAvailable: false, summary: 'Prueba' } };
@@ -41,6 +51,84 @@ async function setup(page, { initial = trialUser } = {}) {
 }
 
 test.describe('Boost, Audio and VIP Unlock Modal Verification', () => {
+  test('an invalid VIP code preserves the account, current page and session after reload', async ({ page }) => {
+    await setup(page);
+    const logouts = [];
+    page.on('request', request => { if (request.url().endsWith('/api/auth/logout')) logouts.push(request.url()); });
+    await page.goto('/banqueros');
+    await page.getByRole('button', { name: /Desbloquear VIP/ }).first().click();
+    const modal = page.getByRole('dialog', { name: 'Acceso a 777 Picks' });
+    await expect(modal.getByRole('heading', { name: 'Activar membresía VIP' })).toBeVisible();
+    await expect(modal.getByText('test@example.invalid', { exact: true })).toBeVisible();
+    await modal.getByPlaceholder('Ingresa tu código de acceso').fill('INVALID-CODE');
+    await modal.getByRole('button', { name: 'Canjear Clave VIP', exact: true }).click();
+    await expect(modal.getByText('Código incorrecto o vencido.', { exact: true })).toBeVisible();
+    await modal.getByRole('button', { name: 'Cerrar', exact: true }).click();
+    await expect(modal).not.toBeVisible();
+    await page.reload();
+    await expect(page.locator('header')).toBeVisible();
+    await expect(modal).not.toBeVisible();
+    expect(page.url()).toContain('/banqueros');
+    expect(logouts).toEqual([]);
+  });
+
+  test('VIP redemption confirms the stored membership and keeps it on reload', async ({ page }) => {
+    const vip = { ...trialUser, isTrial: false, role: 'vip_user', user: { ...trialUser.user, hasCode: true, plan: 'VIP' } };
+    await setup(page, { redeem: vip });
+    await page.goto('/banqueros');
+    await page.getByRole('button', { name: /Desbloquear VIP/ }).first().click();
+    const modal = page.getByRole('dialog', { name: 'Acceso a 777 Picks' });
+    await modal.getByPlaceholder('Ingresa tu código de acceso').fill('VALID-CODE');
+    await modal.getByRole('button', { name: 'Canjear Clave VIP', exact: true }).click();
+    await expect(modal).not.toBeVisible();
+    await expect(page.getByRole('button', { name: /Desbloquear VIP/ })).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator('header')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Desbloquear VIP/ })).toHaveCount(0);
+  });
+
+  test('a session refresh outage does not expel an authenticated user or close the VIP panel', async ({ page }) => {
+    await setup(page, { initial: { ...trialUser, user: { ...trialUser.user, expiresAt: new Date(Date.now() + 3000).toISOString() } }, sessionOutage: true });
+    await page.goto('/banqueros');
+    await page.getByRole('button', { name: /Desbloquear VIP/ }).first().click();
+    await expect(page.getByRole('alert')).toContainText('Almacenamiento temporalmente no disponible.');
+    const modal = page.getByRole('dialog', { name: 'Acceso a 777 Picks' });
+    await expect(modal.getByText('test@example.invalid', { exact: true })).toBeVisible();
+    await expect(modal.getByRole('button', { name: 'Continuar con Google' })).toHaveCount(0);
+    await modal.getByRole('button', { name: 'Cerrar', exact: true }).click();
+    await expect(page.locator('header')).toBeVisible();
+    await expect(modal).not.toBeVisible();
+  });
+
+  test('the iPhone native channel contains no code redemption or external sales communities', async ({ page }) => {
+    await page.addInitScript(() => Object.defineProperty(navigator, 'userAgent', { value: navigator.userAgent + ' Picks777iOS/1' }));
+    await setup(page);
+    await page.goto('/banqueros');
+    await page.getByRole('button', { name: 'Mi acceso', exact: true }).last().click();
+    const modal = page.getByRole('dialog', { name: 'Acceso a 777 Picks' });
+    await expect(modal.getByRole('button', { name: 'Actualizar estado de mi cuenta' })).toBeVisible();
+    await expect(modal.getByPlaceholder('Ingresa tu código de acceso')).toHaveCount(0);
+    await expect(page.locator('a[href*="t.me"],a[href*="wa.me"],a[href*="whatsapp.com"],a[href*="instagram.com"]')).toHaveCount(0);
+    await modal.getByRole('button', { name: 'Cerrar', exact: true }).click();
+    await expect(page.locator('header')).toBeVisible();
+    await page.screenshot({ path: 'artifacts/ios-account-channel.png' });
+  });
+
+  test('iPhone offers Apple login and confirms the account without requesting a VIP code', async ({ page }) => {
+    await page.addInitScript(() => Object.defineProperty(navigator, 'userAgent', { value: navigator.userAgent + ' Picks777iOS/1' }));
+    await setup(page, { initial: null });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Continuar con Apple', exact: true }).click();
+    const modal = page.getByRole('dialog', { name: 'Acceso a 777 Picks' });
+    await expect(modal.getByRole('button', { name: 'Actualizar estado de mi cuenta' })).toBeVisible();
+    await expect(modal.getByPlaceholder('Ingresa tu código de acceso')).toHaveCount(0);
+    await modal.getByRole('button', { name: /Continuar con mi Prueba/ }).click();
+    await expect(modal).not.toBeVisible();
+    await expect(page.locator('header')).toBeVisible();
+    await page.reload();
+    await expect(modal).not.toBeVisible();
+    await expect(page.locator('header')).toBeVisible();
+  });
 
   test('Direct visit to /banqueros activates Banqueros filter and renders banner', async ({ page }) => {
     await setup(page);

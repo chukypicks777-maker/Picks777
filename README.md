@@ -2,6 +2,8 @@
 
 Aplicación web de información deportiva con cliente React/Vite, API Express y aplicación Android híbrida con ventana propia (WebView). Revisión actual: [AUDITORIA-2026-09-28.md](AUDITORIA-2026-09-28.md).
 
+Preparación 1.1.3 y corrección del panel VIP: [PUBLICAR-TIENDAS.md](PUBLICAR-TIENDAS.md). Incluye proyecto Xcode en `ios/Picks777.xcodeproj` y guía de Apple/Firebase. La publicación comercial tiene pendientes de pagos de tienda, configuración externa y pruebas en Mac/dispositivos; no hay IPA firmado. `npm run ios:prepare` regenera el proyecto desde `mobile.config.json` sin claves privadas.
+
 ## Datos y probabilidades
 
 El backend consulta ESPN y conserva fuente y fecha de consulta. Las métricas ausentes se muestran como N/D. El modelo usa Poisson independiente sobre goles observados; como alternativa usa cuotas de mercados completos para aproximar una distribución. No implementa xG observado, Dixon-Coles ni una calibración histórica validada. La IA prioriza hechos del catálogo; su texto libre se descarta y no puede reemplazar números, cuotas ni selecciones calculadas.

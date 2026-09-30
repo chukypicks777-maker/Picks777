@@ -26,13 +26,13 @@ export default function CommunityBanner() {
           />
           <div>
             <h4 className="font-bold text-xs sm:text-sm font-sans flex items-center justify-center md:justify-start space-x-2">
-              <span>¿Quieres acceso ilimitado?</span>
+              <span>Comunidades oficiales</span>
               <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-bold border border-emerald-500/30 uppercase">
-                Código GRATIS
+                777 Picks
               </span>
             </h4>
             <p className="text-[11px] text-slate-300 font-sans">
-              Únete a una de nuestras comunidades y reclama un código totalmente GRATIS.
+              Consulta información y condiciones de la membresía en nuestras comunidades.
             </p>
           </div>
         </div>

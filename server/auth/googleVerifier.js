@@ -21,3 +21,18 @@ export async function verifyGoogleToken(credential) {
   } catch { return null; }
 }
 
+// Firebase validates Apple OAuth and the project-bound ID token on its server.
+// Never trust an email or provider name supplied by the client.
+export async function verifyAppleToken(credential) {
+  if (typeof credential !== 'string' || !credential || credential.length > 12000) return null;
+  try {
+    const key = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8';
+    const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(key), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: credential }), signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) return null;
+    const user = (await response.json()).users?.[0];
+    if (!user?.localId || !user.emailVerified || !user.email || user.disabled || !user.providerUserInfo?.some(p => p.providerId === 'apple.com')) return null;
+    return { sub: user.localId, email: user.email, name: user.displayName, picture: user.photoUrl };
+  } catch { return null; }
+}

@@ -16,6 +16,7 @@ async function loadComponent(relativePath, filename, extraReplaces = {}) {
   let modCode = compCode
     .replaceAll('"react"', JSON.stringify(import.meta.resolve('react')))
     .replaceAll('"lucide-react"', JSON.stringify(import.meta.resolve('lucide-react')))
+    .replaceAll('"../auth/platform.js"', JSON.stringify(import.meta.resolve('../src/auth/platform.js')))
     .replaceAll('"./NumberCounter"', JSON.stringify(numberCounterDataUri))
     .replaceAll('"../utils/audioEffects"', JSON.stringify(import.meta.resolve('../src/utils/audioEffects.js')))
     .replaceAll('"../utils/probability"', JSON.stringify(import.meta.resolve('../src/utils/probability.js')))

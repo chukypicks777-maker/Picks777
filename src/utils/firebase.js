@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { initializeAuth, browserPopupRedirectResolver, GoogleAuthProvider, signInWithPopup, signOut, inMemoryPersistence } from 'firebase/auth';
+import { initializeAuth, browserPopupRedirectResolver, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut, inMemoryPersistence } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8",
@@ -15,8 +15,13 @@ export const auth = initializeAuth(app, { persistence: inMemoryPersistence, popu
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-export async function loginWithRealGoogle() {
-  const result = await signInWithPopup(auth, googleProvider);
+const appleProvider = new OAuthProvider('apple.com');
+appleProvider.addScope('email');
+appleProvider.addScope('name');
+export async function loginWithRealGoogle() { return loginWithProvider(googleProvider); }
+export async function loginWithRealApple() { return loginWithProvider(appleProvider); }
+async function loginWithProvider(provider) {
+  const result = await signInWithPopup(auth, provider);
   const user = result.user;
   const token = await user.getIdToken();
   return {

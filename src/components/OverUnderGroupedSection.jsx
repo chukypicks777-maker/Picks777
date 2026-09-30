@@ -1,4 +1,5 @@
 import React from 'react';
+import { isStoreApp } from '../auth/platform.js';
 import { TrendingUp, ArrowUpRight, ArrowDownRight, Lock, Crown, Sparkles } from 'lucide-react';
 import NumberCounter from './NumberCounter';
 import { percent, complement } from '../utils/probability';
@@ -202,7 +203,7 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
                 className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold font-mono text-[11px] rounded-lg shadow-[0_0_15px_rgba(245,158,11,0.35)] transition transform hover:scale-[1.03] cursor-pointer flex items-center space-x-1"
               >
                 <Sparkles className="w-3.5 h-3.5 text-slate-950" />
-                <span>Desbloquear con VIP</span>
+                <span>{isStoreApp() ? 'Mi acceso' : 'Desbloquear con VIP'}</span>
               </button>
             </div>
           )}

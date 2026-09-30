@@ -25,7 +25,7 @@ class SoundEngine {
 
   _run(playFn) {
     if (!this.enabled || typeof window === 'undefined') return;
-    this.init();
+    try { this.init(); } catch { return; }
     if (!this.ctx) return;
 
     if (this.ctx.state === 'closed') {
@@ -169,7 +169,7 @@ if (typeof window !== 'undefined') {
 
   // Pre-warm Web Audio API on first user interaction
   const unlockAudio = () => {
-    sounds.init();
+    try { sounds.init(); } catch { /* Audio is optional, navigation must keep working. */ }
     ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
       window.removeEventListener(evt, unlockAudio);
     });
