@@ -49,17 +49,17 @@ export default function AdminGroups() {
       if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo guardar la visibilidad.');
       setSettings(previous => ({ ...previous, promoImageVisible: data.settings.promoImageVisible, revision: data.settings.revision }));
       updateSocialLinks(data.settings);
-      setMessage(data.settings.promoImageVisible ? 'Imagen del anuncio activada.' : 'Imagen del anuncio oculta para todos.');
+      setMessage(data.settings.promoImageVisible ? 'Anuncio de comunidad activado.' : 'Anuncio de comunidad oculto para todos.');
     } catch (error) { setMessage(error.message); }
     finally { setBusy(false); }
   };
   return <form onSubmit={save} className="space-y-5 text-slate-200">
     <h3 className="font-bold text-xl">Grupos y comunidad</h3>
     <section className="rounded-xl border border-white/10 bg-[#111723] p-4 space-y-3">
-      <h4 className="font-bold">Imagen del anuncio</h4>
-      <p className="text-sm text-slate-400">Muestra u oculta la imagen de los tipsters para todos los visitantes. Los enlaces de comunidad siguen disponibles. Se guarda al pulsar; los usuarios con la página abierta reciben el cambio en un minuto.</p>
-      <button type="button" role="switch" aria-label="Mostrar imagen del anuncio" aria-checked={settings.promoImageVisible !== false} disabled={busy || !loaded} onClick={togglePromo} className="rounded-lg px-4 py-3 bg-sky-700 font-bold disabled:opacity-40">
-        {settings.promoImageVisible !== false ? 'Activada · Ocultar imagen' : 'Desactivada · Mostrar imagen'}
+      <h4 className="font-bold">Anuncio de comunidad</h4>
+      <p className="text-sm text-slate-400">Muestra u oculta el bloque completo de comunidad: imagen, textos, tipsters y enlaces, para todos los visitantes. Se guarda al pulsar; los usuarios con la página abierta reciben el cambio en un minuto.</p>
+      <button type="button" role="switch" aria-label="Mostrar anuncio de comunidad" aria-checked={settings.promoImageVisible !== false} disabled={busy || !loaded} onClick={togglePromo} className="rounded-lg px-4 py-3 bg-sky-700 font-bold disabled:opacity-40">
+        {settings.promoImageVisible !== false ? 'Activo · Ocultar anuncio' : 'Oculto · Mostrar anuncio'}
       </button>
     </section>
     <p className="text-sm text-slate-400">Edita los enlaces, nombres y usuarios de los grupos. Usa enlaces HTTPS de Telegram, WhatsApp e Instagram.</p>

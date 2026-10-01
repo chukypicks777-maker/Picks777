@@ -6,7 +6,7 @@ import { sounds } from '../utils/audioEffects';
 
 export default function FooterCommunityShowcase() {
   const SOCIAL_LINKS = useSocialLinks();
-  const promoImageVisible = usePromoImageVisible();
+  const announcementVisible = usePromoImageVisible();
   const telegramLink = getSocialLink(SOCIAL_LINKS, 'telegram');
   const whatsappLink = getSocialLink(SOCIAL_LINKS, 'whatsapp');
   const instagramLink = getSocialLink(SOCIAL_LINKS, 'instagram');
@@ -15,8 +15,10 @@ export default function FooterCommunityShowcase() {
     "Cristian rey", "Gran islam", "Hugowx"
   ];
 
+  if (!announcementVisible) return null;
+
   return (
-    <section className="w-full mt-14 mb-8">
+    <section aria-label="Anuncio de comunidad" className="w-full mt-14 mb-8">
       <div className="bg-gradient-to-b from-[#101624] to-[#0a0e17] border border-white/10 rounded-3xl p-5 sm:p-8 shadow-2xl overflow-hidden relative">
         
         {/* Subtle background glow */}
@@ -43,7 +45,7 @@ export default function FooterCommunityShowcase() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
           
           {/* Left: The Reference Image with WhatsApp QR */}
-          {promoImageVisible && <div className="lg:col-span-5 flex justify-center">
+          <div className="lg:col-span-5 flex justify-center">
             <a 
               href={whatsappLink.url}
               target="_blank"
@@ -58,10 +60,10 @@ export default function FooterCommunityShowcase() {
                 className="w-full h-auto object-cover rounded-2xl transition duration-300 group-hover:scale-[1.02]"
               />
             </a>
-          </div>}
+          </div>
 
           {/* Right: Persuasive Copy & Social Networks */}
-          <div className={`${promoImageVisible ? 'lg:col-span-7' : 'lg:col-span-12'} space-y-4 text-left`}>
+          <div className="lg:col-span-7 space-y-4 text-left">
             
             {/* Alert Box Required by User */}
             <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-200">
