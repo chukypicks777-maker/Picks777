@@ -14,6 +14,7 @@ import {
 import { formatOdds } from '../utils/oddsFormatter';
 import { formatCurrency } from '../utils/currencyFormatter';
 import { sounds } from '../utils/audioEffects';
+import { calculateParlay } from '../utils/parlayCalculation.js';
 
 export default function ParlayBuilderDrawer({ 
   isOpen, 
@@ -22,6 +23,7 @@ export default function ParlayBuilderDrawer({
   onRemoveLeg, 
   onClearAll, 
   onLoadDailyBanker, 
+  loadingDailyParlay = false,
   currency = 'USD', 
   oddsFormat = 'decimal' 
 }) {
@@ -30,16 +32,22 @@ export default function ParlayBuilderDrawer({
   const [copyError, setCopyError] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
 
-  let totalDecimalOdds = 1.0;
-  legs.forEach(leg => {
-    totalDecimalOdds *= (parseFloat(leg.odds) || 1.0);
-  });
-  totalDecimalOdds = parseFloat(totalDecimalOdds.toFixed(2));
+  let calculation = null;
+  let calculationError = '';
+  try { calculation = calculateParlay(legs, stake); }
+  catch (error) { calculationError = error.message; }
+  const { totalDecimalOdds, potentialPayout, netProfit } = calculation || {};
 
-  const potentialPayout = parseFloat((stake * totalDecimalOdds).toFixed(2));
-  const netProfit = parseFloat((potentialPayout - stake).toFixed(2));
+  const startNewTicket = () => {
+    onClearAll();
+    setStake(50);
+    setCopied(false);
+    setCopyError('');
+    setIsMinimized(false);
+  };
 
   const handleCopyTicket = async () => {
+    if (!calculation || !legs.length) return;
     sounds.playClick();
     const summary = `🏆 DEPORTEPICKS PRO — TICKET DE PARLAY 🏆\n\n` +
       legs.map((l, i) => `${i + 1}. [${l.league}] ${l.matchTitle}\n   👉 Selección: ${l.selection} @ ${formatOdds(l.odds, oddsFormat)}${l.probability != null ? ` (${Math.round(l.probability)}% prob)` : ''}`).join('\n\n') +
@@ -56,7 +64,7 @@ export default function ParlayBuilderDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-4 sm:right-4 z-[70] w-[calc(100%_-_1.5rem)] sm:w-[calc(100%_-_2rem)] max-w-md animate-slide-up">
+    <div role="region" aria-label="Boleto de parlay" className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-4 sm:right-4 z-[70] w-[calc(100%_-_1.5rem)] sm:w-[calc(100%_-_2rem)] max-w-md animate-slide-up">
       <div className="bg-[#0e131d]/95 backdrop-blur-xl border border-sky-500/30 rounded-2xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
         
         {copyError && <p role="status" className="p-3 text-rose-300 text-xs">{copyError}</p>}
@@ -77,15 +85,19 @@ export default function ParlayBuilderDrawer({
           </div>
 
           <div className="flex items-center space-x-1 shrink-0">
+            <button type="button" onClick={startNewTicket} className="min-h-11 px-2 rounded text-[10px] text-sky-300 hover:bg-white/5 transition cursor-pointer touch-manipulation">
+              Nuevo boleto
+            </button>
             <button
               aria-label={isMinimized ? "Expandir parlay" : "Minimizar parlay"} onClick={() => setIsMinimized(!isMinimized)}
-              className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/5 transition cursor-pointer"
+              type="button" className="min-w-11 min-h-11 flex items-center justify-center rounded text-slate-400 hover:text-white hover:bg-white/5 transition cursor-pointer touch-manipulation"
             >
               {isMinimized ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             <button
+              type="button" title="Ocultar boleto y conservar selecciones"
               aria-label="Cerrar parlay" onClick={() => { sounds.playClick(); onClose(); }}
-              className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-white/5 transition cursor-pointer"
+              className="min-w-11 min-h-11 flex items-center justify-center rounded text-slate-400 hover:text-rose-400 hover:bg-white/5 transition cursor-pointer touch-manipulation"
             >
               <X className="w-4 h-4" />
             </button>
@@ -94,6 +106,7 @@ export default function ParlayBuilderDrawer({
 
         {!isMinimized && (
           <div className="p-3.5 sm:p-4 space-y-3 max-h-[72vh] sm:max-h-[70vh] overflow-y-auto overflow-x-hidden font-mono text-xs">
+            <p className="text-[11px] text-slate-400 font-sans">Cerrar conserva tus selecciones. Usa «Nuevo boleto» para empezar desde cero.</p>
             
             {/* Quick 1-Click Banker Import */}
             <div className="flex items-center justify-between p-2.5 bg-[#141c2b] rounded-xl border border-sky-500/20 shadow-inner gap-2">
@@ -102,13 +115,14 @@ export default function ParlayBuilderDrawer({
                 <span className="text-[11px] truncate">¿Cargar Parlay Banquero IA?</span>
               </div>
               <button
+                type="button" disabled={loadingDailyParlay}
                 onClick={() => {
                   sounds.playSuccess();
                   onLoadDailyBanker();
                 }}
                 className="px-2.5 py-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-bold text-[11px] rounded-lg transition cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.4)]"
               >
-                Cargar Banquero
+                {loadingDailyParlay ? 'Cargando…' : 'Cargar Banquero'}
               </button>
             </div>
 
@@ -122,9 +136,9 @@ export default function ParlayBuilderDrawer({
               </div>
             ) : (
               <div className="space-y-2">
-                {legs.map((leg, index) => (
+                {legs.map((leg) => (
                   <div
-                    key={index}
+                    key={leg.matchId}
                     className="p-2.5 bg-[#121824] rounded-lg border border-white/5 flex items-center justify-between transition hover:border-sky-500/30"
                   >
                     <div className="min-w-0 flex-1 pr-2">
@@ -149,12 +163,13 @@ export default function ParlayBuilderDrawer({
                     </div>
 
                     <div className="flex items-center space-x-2 shrink-0">
-                      <span className="px-1.5 py-0.5 bg-[#182030] rounded text-[11px] font-bold text-emerald-400 border border-emerald-500/20">
+                      <span aria-label={`Momio de ${leg.matchTitle}`} className="px-1.5 py-0.5 bg-[#182030] rounded text-[11px] font-bold text-emerald-400 border border-emerald-500/20">
                         {formatOdds(leg.odds, oddsFormat)}
                       </span>
                       <button
-                        onClick={() => { sounds.playClick(); onRemoveLeg(index); }}
-                        className="text-slate-500 hover:text-rose-400 p-1 transition"
+                        type="button" aria-label={`Quitar ${leg.selection} de ${leg.matchTitle}`}
+                        onClick={() => { sounds.playClick(); onRemoveLeg(leg); }}
+                        className="text-slate-500 hover:text-rose-400 min-w-11 min-h-11 flex items-center justify-center transition touch-manipulation"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -173,7 +188,8 @@ export default function ParlayBuilderDrawer({
             </div>
 
             {/* Calculation details */}
-            {legs.length > 0 && (
+            {calculationError && <p role="alert" className="text-rose-300">{calculationError}</p>}
+            {legs.length > 0 && calculation && (
               <div className="bg-[#121824] p-3.5 rounded-xl border border-sky-500/20 space-y-2.5 shadow-inner">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400">Multiplicador Cuota:</span>
@@ -182,10 +198,15 @@ export default function ParlayBuilderDrawer({
                   </span>
                 </div>
 
+                <p className="text-[10px] text-slate-400 break-words font-sans">
+                  Cuotas decimales: {legs.map(leg => formatOdds(leg.odds, 'decimal')).join(' × ')} = {formatOdds(totalDecimalOdds, 'decimal')}. Solo se redondea al mostrar el resultado.
+                </p>
+
                 <div className="flex items-center justify-between pt-2 border-t border-white/5">
                   <span className="text-slate-400">Monto ({currency}):</span>
                   <input
                     type="number"
+                    aria-label={`Monto (${currency})`} min="0" max="1000000" step="0.01"
                     value={stake}
                     onChange={(e) => setStake(Math.min(1000000, Math.max(0, parseFloat(e.target.value) || 0)))}
                     className="w-24 px-2.5 py-1 bg-[#090d15] border border-sky-500/30 rounded-lg text-right font-bold text-white text-xs focus:outline-none focus:border-sky-400"
@@ -216,6 +237,7 @@ export default function ParlayBuilderDrawer({
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={handleCopyTicket}
+                  type="button" disabled={!calculation}
                   className="py-2.5 px-3 bg-sky-500/20 hover:bg-sky-500/30 active:scale-95 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 shadow-[0_0_15px_rgba(56,189,248,0.2)] cursor-pointer"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <Copy className="w-3.5 h-3.5 shrink-0" />}
@@ -223,7 +245,7 @@ export default function ParlayBuilderDrawer({
                 </button>
 
                 <button
-                  onClick={() => { sounds.playClick(); onClearAll(); }}
+                  type="button" onClick={() => { sounds.playClick(); startNewTicket(); }}
                   className="py-2.5 px-3 bg-rose-500/10 hover:bg-rose-500/20 active:scale-95 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5 shrink-0" />

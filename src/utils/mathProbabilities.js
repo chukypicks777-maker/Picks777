@@ -1,4 +1,5 @@
 import { validNumber, parseNumeric, percent, complement, totalLines, poissonProbability, poissonCumulative } from './probability.js';
+import { parseDecimalOdds } from './oddsFormatter.js';
 export { poissonProbability, poissonCumulative };
 const probabilityValue = value => { const n = parseNumeric(value); return n !== null && n >= 0 && n <= 100 ? n : null; };
 export function calculateCornerProbabilities(avgCorners) {
@@ -95,7 +96,7 @@ export function getTop3Opportunities(match) {
   const p = { ...(match.model?.probabilities || match.probabilities || {}) };
 
   const parseOddsNum = val => {
-    const n = typeof val === 'number' ? val : parseFloat(val);
+    const n = parseDecimalOdds(val);
     return Number.isFinite(n) && n > 1 ? n : null;
   };
   const oddsH = parseOddsNum(match.odds?.homeWin);
@@ -125,7 +126,7 @@ export function getTop3Opportunities(match) {
   const add = (key, selection, market, probability, category) => {
     if (percent(probability) === null) return;
     const rawOdds = match.odds?.[key];
-    const oddsNum = typeof rawOdds === 'number' ? rawOdds : parseFloat(rawOdds);
+    const oddsNum = parseDecimalOdds(rawOdds);
     const odds = Number.isFinite(oddsNum) && oddsNum > 1 ? Number(oddsNum.toFixed(2)) : null;
     const rounded = percent(probability);
     const estimatedOdds = Number.isFinite(rounded) && rounded > 0 ? Number(Math.max(1.01, 100 / rounded).toFixed(2)) : null;
@@ -239,7 +240,7 @@ export function getContextualPick(match, marketFilter = 'all') {
   if (!match || ['POSTPONED', 'CANCELLED', 'SUSPENDED', 'ABANDONED', 'DELAYED', 'UNKNOWN'].includes(match.status)) return null;
 
   const parseOddsNum = val => {
-    const n = typeof val === 'number' ? val : parseFloat(val);
+    const n = parseDecimalOdds(val);
     return Number.isFinite(n) && n > 1 ? Number(n.toFixed(2)) : null;
   };
 
@@ -334,7 +335,7 @@ export const getBestBankerPick = match => getTop3Opportunities(match)[0] ?? null
 export function getEffectiveOdds(pick) {
   if (!pick) return null;
   const parseOddsNum = val => {
-    const n = typeof val === 'number' ? val : parseFloat(val);
+    const n = parseDecimalOdds(val);
     return Number.isFinite(n) && n > 1 ? Number(n.toFixed(2)) : null;
   };
   const realOdds = parseOddsNum(pick.odds);

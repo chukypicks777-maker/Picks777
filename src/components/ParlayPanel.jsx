@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Modal from './Modal';
 import { formatOdds } from '../utils/oddsFormatter';
 import { formatCurrency } from '../utils/currencyFormatter';
-import { calculateParlay } from '../../server/services/parlayEngine.js';
+import { calculateParlay } from '../utils/parlayCalculation.js';
 import { dateTime, percent } from '../utils/api';
 import { useClock } from '../utils/clock';
 export default function ParlayPanel({ onClose, legs, onRemoveLeg, onClearAll, onLoadDailyBanker, currency, oddsFormat = 'decimal' }) {
@@ -29,7 +29,7 @@ export default function ParlayPanel({ onClose, legs, onRemoveLeg, onClearAll, on
   return <Modal title="Simulador de combinadas" onClose={onClose}>
     <p className="notice mb-5">No hay una combinada segura. Si una selección pierde, puedes perder todo el importe. Las cuotas se multiplican suponiendo independencia entre partidos.</p>
     <button className="control mb-5" disabled={loading} onClick={loadDaily}>{loading ? 'Consultando…' : 'Consultar selecciones del modelo'}</button>
-    <div className="space-y-3">{legs.map((leg, index) => <article className="metric" key={leg.matchId}><div className="flex justify-between items-start gap-4"><div><h3 className="font-semibold">{leg.matchTitle}</h3><p className="text-sky-200 my-2">{leg.selection} · {formatOdds(leg.odds, oddsFormat)}</p><p className="text-xs text-slate-500">Consulta de cuota: {dateTime(leg.oddsFetchedAt)}</p></div><button className="control" aria-label={`Quitar ${leg.selection}`} onClick={() => onRemoveLeg(index)}>Quitar</button></div></article>)}</div>
+    <div className="space-y-3">{legs.map(leg => <article className="metric" key={leg.matchId}><div className="flex justify-between items-start gap-4"><div><h3 className="font-semibold">{leg.matchTitle}</h3><p className="text-sky-200 my-2">{leg.selection} · {formatOdds(leg.odds, oddsFormat)}</p><p className="text-xs text-slate-500">Consulta de cuota: {dateTime(leg.oddsFetchedAt)}</p></div><button className="control" aria-label={`Quitar ${leg.selection}`} onClick={() => onRemoveLeg(leg)}>Quitar</button></div></article>)}</div>
     {!legs.length && <p className="metric text-slate-400">Añade una selección desde un partido con cuota publicada.</p>}
     {outdated && <p className="notice mt-4">Estas cuotas no se han consultado recientemente. Los cálculos siguientes conservan los valores seleccionados y no representan una oferta vigente.</p>}
     <label className="block my-5 text-sm">Importe hipotético ({currency})<input className="field mt-2" type="number" min="0" max="1000000" step="0.01" value={stake} onChange={e => setStake(e.target.value)} /></label>

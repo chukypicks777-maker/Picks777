@@ -11,7 +11,7 @@ export function gcd(a, b) {
   return x || 1;
 }
 
-function parseOddsInput(val) {
+export function parseDecimalOdds(val) {
   if (val == null) return NaN;
   if (typeof val === 'number') return val;
   const s = String(val).trim().replace(',', '.');
@@ -19,7 +19,7 @@ function parseOddsInput(val) {
 }
 
 export function decimalToAmerican(decimalOdds) {
-  const num = parseOddsInput(decimalOdds);
+  const num = parseDecimalOdds(decimalOdds);
   if (!Number.isFinite(num) || num <= 1.0) return 'N/D';
 
   if (num >= 2.0) {
@@ -32,7 +32,7 @@ export function decimalToAmerican(decimalOdds) {
 }
 
 export function decimalToFraction(decimalOdds) {
-  const num = parseOddsInput(decimalOdds);
+  const num = parseDecimalOdds(decimalOdds);
   if (!Number.isFinite(num) || num <= 1.0) return 'N/D';
 
   const target = num - 1;
@@ -57,7 +57,7 @@ export function decimalToFraction(decimalOdds) {
 }
 
 export function formatOdds(decimalOdds, format = 'decimal') {
-  const num = parseOddsInput(decimalOdds);
+  const num = parseDecimalOdds(decimalOdds);
   if (!Number.isFinite(num) || num <= 1.0) return 'N/D';
 
   const fmt = (format || 'decimal').toLowerCase();
@@ -72,7 +72,7 @@ export function formatOdds(decimalOdds, format = 'decimal') {
 }
 
 export function oddsToProbability(decimalOdds) {
-  const num = parseFloat(decimalOdds);
+  const num = parseDecimalOdds(decimalOdds);
   if (isNaN(num) || num <= 1.0) return 0;
   return Math.round((1 / num) * 100);
 }

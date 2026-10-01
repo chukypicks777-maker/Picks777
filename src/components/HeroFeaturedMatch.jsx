@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Plus, Eye, Clock, Zap, Target, CheckCircle2 } from 'lucide-react';
 import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
+import { isSameMatch } from '../utils/parlayTicket.js';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
 import RadarScanner from './RadarScanner';
@@ -291,12 +292,12 @@ export default function HeroFeaturedMatch({
                         className={`py-2 px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 ${
                           !parlayCandidates.length
                             ? 'bg-slate-800/40 text-slate-500 border border-white/5 cursor-not-allowed opacity-60'
-                            : parlayLegs?.some(l => l.matchId === match.id)
+                            : parlayLegs?.some(l => isSameMatch(l.matchId, match.id) && l.selection === parlayCandidates[0]?.selection)
                               ? 'bg-emerald-500/25 hover:bg-rose-500/20 text-emerald-200 hover:text-rose-200 border border-emerald-400/80 hover:border-rose-400/60 active:scale-95 shadow-[0_0_12px_rgba(16,185,129,0.3)] cursor-pointer'
                               : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 active:scale-95 cursor-pointer shadow-[0_0_10px_rgba(16,185,129,0.15)]'
                         }`}
                       >
-                        {parlayLegs?.some(l => l.matchId === match.id) ? (
+                        {parlayLegs?.some(l => isSameMatch(l.matchId, match.id) && l.selection === parlayCandidates[0]?.selection) ? (
                           <>
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                             <span>En Parlay</span>

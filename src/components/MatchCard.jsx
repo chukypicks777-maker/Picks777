@@ -4,6 +4,7 @@ import { isStoreApp } from '../auth/platform.js';
 import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles, Lock, Crown, RotateCw } from 'lucide-react';
 import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
+import { isSameMatch } from '../utils/parlayTicket.js';
 import TiltCard from './TiltCard';
 import NumberCounter from './NumberCounter';
 import { getBestBankerPick, getEffectiveOdds, getContextualPick, fillPoissonGoalLadder, getCoherentPredictedScore } from '../utils/mathProbabilities';
@@ -102,7 +103,7 @@ export default function MatchCard({
   const displayProb = activePick?.probability;
   const confidenceScore = displayProb ?? bankerPick?.probability ?? 0;
   const isLegInParlay = Boolean(parlayLegs?.some(
-    l => l.matchId === match.id && l.selection === activePick?.selection
+    l => isSameMatch(l.matchId, match.id) && l.selection === activePick?.selection
   ));
   const formatMatchTime = (iso) => {
     const d = new Date(iso);

@@ -3,6 +3,7 @@ import { Plus, Check, Layers } from 'lucide-react';
 import { getTop3Opportunities, getEffectiveOdds } from '../utils/mathProbabilities';
 import { formatOdds } from '../utils/oddsFormatter';
 import { sounds } from '../utils/audioEffects';
+import { isSameMatch } from '../utils/parlayTicket.js';
 
 export default function VerifiedPicks({ 
   match, 
@@ -39,9 +40,9 @@ export default function VerifiedPicks({
         {picks.map(pick => {
           const finalOdds = pick.odds ?? pick.effectiveOdds;
           const isInParlay = Boolean(parlayLegs?.some(
-            l => l.matchId === pick.matchId && l.selection === pick.selection
+            l => isSameMatch(l.matchId, pick.matchId) && l.selection === pick.selection
           ));
-          const currentMatchLeg = parlayLegs?.find(l => l.matchId === pick.matchId);
+          const currentMatchLeg = parlayLegs?.find(l => isSameMatch(l.matchId, pick.matchId));
           const hasOtherFromSameMatch = Boolean(currentMatchLeg && currentMatchLeg.selection !== pick.selection);
 
           const handleClick = () => {

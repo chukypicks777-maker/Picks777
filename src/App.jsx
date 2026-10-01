@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer } from 'react';
 import Navbar from './components/Navbar';
 import LiveTicker from './components/LiveTicker';
 import SportSelector from './components/SportSelector';
@@ -17,7 +17,8 @@ import StatsCenterModal from './components/StatsCenterModal';
 import FooterCommunityShowcase from './components/FooterCommunityShowcase';
 import { sounds } from './utils/audioEffects';
 import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
-import { getMatchSafetyScore, getBestBankerPick, getEffectiveOdds, getContextualPick } from './utils/mathProbabilities';
+import { getMatchSafetyScore, getBestBankerPick, getContextualPick } from './utils/mathProbabilities';
+import { EMPTY_PARLAY, parlayTicketReducer } from './utils/parlayTicket.js';
 
 import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnalyzedModelName, getCachedAnalysis } from './utils/analysisCache';
 import { useSession } from './auth/useSession';
@@ -34,7 +35,10 @@ export default function App() {
   const isFootball = selectedSport === 'futbol';
 
   // Settings states
-  const [currency, setCurrency] = useState(() => localStorage.getItem('deportepicks_curr') || 'USD');
+  const [currency, setCurrency] = useState(() => {
+    try { return localStorage.getItem('deportepicks_curr') || 'USD'; }
+    catch { return 'USD'; }
+  });
   const [oddsFormat, setOddsFormat] = useState(() => {
     try {
       const saved = (localStorage.getItem('oddsFormat') || localStorage.getItem('deportepicks_odds') || '').toLowerCase();
@@ -71,8 +75,13 @@ export default function App() {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showParlayDrawer, setShowParlayDrawer] = useState(false);
-  const [parlayLegs, setParlayLegs] = useState([]);
+  const [parlayTicket, dispatchParlay] = useReducer(parlayTicketReducer, EMPTY_PARLAY);
+  const parlayLegs = parlayTicket.legs;
+  const dailyParlayRequest = useRef(null);
+  const [loadingDailyParlay, setLoadingDailyParlay] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [expiredParlayNotice, setExpiredParlayNotice] = useState(null);
+  const visibleToast = toastMessage || (parlayTicket !== expiredParlayNotice ? parlayTicket.notice : '');
   const [currentEpoch, setCurrentEpoch] = useState(() => Date.now());
   const [analyzedMatchesMap, setAnalyzedMatchesMap] = useState({});
   const [currentAnalyzingMatchId, setCurrentAnalyzingMatchId] = useState(null);
@@ -250,7 +259,7 @@ export default function App() {
       setShowAdminModal(false);
       setShowStatsModal(false);
       setShowParlayDrawer(false);
-      setParlayLegs([]);
+      dispatchParlay({ type: 'clear' });
     });
     return () => { active = false; };
   }, [auth, checking]);
@@ -402,7 +411,7 @@ export default function App() {
 
   // Persist currency & oddsFormat
   useEffect(() => {
-    localStorage.setItem('deportepicks_curr', currency);
+    try { localStorage.setItem('deportepicks_curr', currency); } catch {}
   }, [currency]);
 
   useEffect(() => {
@@ -455,6 +464,20 @@ export default function App() {
     setTimeout(() => setToastMessage(''), 3000);
   };
 
+  useEffect(() => {
+    if (!parlayTicket.notice) return;
+    const timer = setTimeout(() => setExpiredParlayNotice(parlayTicket), 3000);
+    return () => clearTimeout(timer);
+  }, [parlayTicket]);
+
+  // A delayed daily response must not overwrite subsequent edits or a signed-out ticket.
+  useEffect(() => {
+    return () => {
+      dailyParlayRequest.current?.abort();
+      dailyParlayRequest.current = null;
+    };
+  }, [parlayTicket, auth?.user?.id, auth?.role]);
+
   const handleAuthenticated = (authData) => {
     setAuth(authData);
 
@@ -485,83 +508,46 @@ export default function App() {
       clearAllAnalysisCache();
       setSelectedMatch(null);
       setShowAdminModal(false);
-      setParlayLegs([]);
+      dispatchParlay({ type: 'clear' });
       showToast('Sesión finalizada.');
     } catch { showToast('No se pudo cerrar la sesión. Comprueba la conexión e inténtalo otra vez.'); }
   };
 
   const handleAddToParlay = (legOrLegs) => {
-    const items = Array.isArray(legOrLegs) ? legOrLegs : [legOrLegs];
-    let addedCount = 0;
-    let replacedCount = 0;
-    const updated = [...parlayLegs];
-
-    for (const rawLeg of items) {
-      if (!rawLeg?.matchId || !rawLeg.selection) continue;
-      const leg = { ...rawLeg };
-      if (!Number.isFinite(leg.odds) || leg.odds <= 1) {
-        const est = getEffectiveOdds(leg);
-        if (est && est > 1) leg.odds = est;
-      }
-      if (!Number.isFinite(leg.odds) || leg.odds <= 1 || leg.odds > 1000 || updated.length >= 20) continue;
-      const existingIdx = updated.findIndex(l => l.matchId === leg.matchId);
-      if (existingIdx >= 0) {
-        if (updated[existingIdx].selection !== leg.selection) {
-          updated[existingIdx] = leg;
-          replacedCount++;
-        }
-      } else {
-        updated.push(leg);
-        addedCount++;
-      }
-    }
-
-    if (addedCount === 0 && replacedCount === 0) {
-      setShowParlayDrawer(true);
-      showToast('Selección ya presente en el parlay o límite alcanzado.');
-      return;
-    }
-
-    setParlayLegs(updated);
+    dispatchParlay({ type: 'add', legs: Array.isArray(legOrLegs) ? legOrLegs : [legOrLegs] });
     setShowParlayDrawer(true);
-    if (replacedCount > 0 && addedCount === 0) {
-      showToast(`Actualizado: ${items[0].selection}`);
-    } else if (items.length > 1) {
-      showToast(`🔥 Añadidas ${addedCount} selecciones al Parlay`);
-    } else {
-      showToast(`Añadido: ${items[0].selection}`);
-    }
   };
 
   const handleToggleParlay = (rawLeg) => {
-    if (!rawLeg?.matchId || !rawLeg.selection) return;
-    const existingIdx = parlayLegs.findIndex(l => l.matchId === rawLeg.matchId && l.selection === rawLeg.selection);
-    if (existingIdx >= 0) {
-      sounds.playClick();
-      const updated = parlayLegs.filter((_, i) => i !== existingIdx);
-      setParlayLegs(updated);
-      showToast(`Eliminado del parlay: ${rawLeg.selection}`);
-      return;
-    }
     sounds.playAddParlay();
-    handleAddToParlay(rawLeg);
+    dispatchParlay({ type: 'toggle', leg: rawLeg });
+    setShowParlayDrawer(true);
   };
 
-  const handleRemoveParlayLeg = (index) => {
-    const updated = parlayLegs.filter((_, i) => i !== index);
-    setParlayLegs(updated);
+  const handleRemoveParlayLeg = (leg) => {
+    dispatchParlay({ type: 'remove', leg });
   };
 
   const handleLoadDailyBanker = async () => {
+    if (dailyParlayRequest.current) return;
+    const controller = new AbortController();
+    dailyParlayRequest.current = controller;
+    setLoadingDailyParlay(true);
     try {
-      const res = await fetch('/api/parlays/daily-ai', { credentials: 'same-origin' });
+      const res = await fetch('/api/parlays/daily-ai', { credentials: 'same-origin', signal: controller.signal, cache: 'no-store' });
       const data = await res.json();
-      if (data.success && data.bankerParlay) {
-        setParlayLegs(data.bankerParlay.legs || []);
-        setShowParlayDrawer(true);
-        showToast('Parlay Banquero IA del Día cargado.');
+      if (controller.signal.aborted) return;
+      if (!res.ok || !data.success || !data.bankerParlay) throw new Error(data.message || 'No hay suficientes selecciones para cargar un parlay.');
+      dispatchParlay({ type: 'replace', legs: data.bankerParlay.legs });
+      setShowParlayDrawer(true);
+    } catch (error) {
+      if (!controller.signal.aborted) showToast(error.message || 'No se pudo cargar el parlay. Inténtalo de nuevo.');
+    } finally {
+      if (dailyParlayRequest.current === controller || !dailyParlayRequest.current) {
+        dailyParlayRequest.current = null;
+        setLoadingDailyParlay(false);
       }
-    } catch {}
+    }
   };
 
   // Filter by market if active
@@ -696,10 +682,10 @@ export default function App() {
       {auth && sessionError && <div role="alert" className="p-3 text-center bg-amber-950 text-amber-200">
         {sessionError} <button type="button" onClick={retry} className="underline">Reintentar conexión</button>
       </div>}
-      {toastMessage && (
+      {visibleToast && (
         <div className="fixed top-20 right-4 z-[80] bg-[#111827]/95 backdrop-blur-md border border-sky-400/40 text-slate-100 px-4 py-2.5 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] font-mono text-xs flex items-center space-x-2 animate-bounce-short">
           <Zap className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-          <span>{toastMessage}</span>
+          <span>{visibleToast}</span>
         </div>
       )}
 
@@ -1033,8 +1019,9 @@ export default function App() {
         onClose={() => setShowParlayDrawer(false)}
         legs={parlayLegs}
         onRemoveLeg={handleRemoveParlayLeg}
-        onClearAll={() => setParlayLegs([])}
+        onClearAll={() => dispatchParlay({ type: 'clear' })}
         onLoadDailyBanker={handleLoadDailyBanker}
+        loadingDailyParlay={loadingDailyParlay}
         currency={currency}
         oddsFormat={oddsFormat}
       />

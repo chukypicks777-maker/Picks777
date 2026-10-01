@@ -4,12 +4,22 @@ import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
 import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
 import { sounds } from '../utils/audioEffects';
 
+let dismissedInMemory = false;
+
 export default function CommunityBanner() {
   const SOCIAL_LINKS = useSocialLinks();
   const telegramLink = getSocialLink(SOCIAL_LINKS, 'telegram');
   const whatsappLink = getSocialLink(SOCIAL_LINKS, 'whatsapp');
   const instagramLink = getSocialLink(SOCIAL_LINKS, 'instagram');
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    try { return dismissedInMemory || localStorage.getItem('picks_community_dismissed') === '1'; }
+    catch { return dismissedInMemory; }
+  });
+  const dismiss = () => {
+    dismissedInMemory = true;
+    setDismissed(true);
+    try { localStorage.setItem('picks_community_dismissed', '1'); } catch {}
+  };
 
   if (dismissed) return null;
 
@@ -81,8 +91,10 @@ export default function CommunityBanner() {
 
           {/* Close button */}
           <button
-            onClick={() => setDismissed(true)}
-            className="p-1 rounded-lg text-slate-400 hover:text-white transition cursor-pointer"
+            type="button"
+            aria-label="Ocultar"
+            onClick={dismiss}
+            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-slate-400 hover:text-white transition cursor-pointer touch-manipulation"
             title="Ocultar"
           >
             <X className="w-4 h-4" />
