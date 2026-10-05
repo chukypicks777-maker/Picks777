@@ -1,9 +1,10 @@
 import React from 'react';
 import Modal from './Modal';
-import { Clock } from 'lucide-react';
+import { Clock, Sparkles, RotateCw, CheckCircle2 } from 'lucide-react';
 import { formatOdds, marketQuote } from '../utils/oddsFormatter.js';
 import { formatMatchSchedule } from '../utils/matchSchedule.js';
 import TeamForm from './TeamForm';
+import SportIdentity from './SportIdentity';
 
 export function Probability({ value }) {
   const available = typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
@@ -57,7 +58,7 @@ function HandicapTable({ title, lines = [], oddsFormat }) {
   </section>;
 }
 
-export default function SportMatchAnalysis({ match, onClose, loading = false, error = '', oddsFormat = 'decimal' }) {
+export default function SportMatchAnalysis({ match, onClose, loading = false, error = '', oddsFormat = 'decimal', isOwner = false, onRetryAi, aiLoading = false }) {
   const a = match.analysis || {};
   const home = match.homeTeam.name, away = match.awayTeam.name;
   return <Modal title="Análisis del encuentro" onClose={onClose}>
@@ -68,9 +69,19 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
         <p className="flex gap-1.5 items-center text-xs text-sky-300"><Clock size={14} /><time dateTime={match.kickoff}>{formatMatchSchedule(match.kickoff, { timeTBD: match.timeTBD })}</time></p>
         {match.venue && <p className="text-xs text-slate-500">{match.venue}</p>}
         <p className="text-xs text-sky-300">Probabilidades previas al partido</p>
+        <div className="grid grid-cols-2 gap-3 pt-2">{[match.homeTeam, match.awayTeam].map(team => <div key={team.id} className="flex items-center gap-2 min-w-0 rounded-xl border border-white/10 bg-[#111a28] p-3"><SportIdentity key={`${team.id}:${team.logo}`} team={team} size="large" /><span className="text-xs font-semibold break-words min-w-0">{team.name}</span></div>)}</div>
       </header>
       {loading && <p role="status" className="text-xs text-sky-300">Consultando historial de ambos equipos…</p>}
       {error && <p role="alert" className="text-xs text-amber-300">{error}</p>}
+      <section aria-label="Informe con IA" className={`rounded-xl border p-4 space-y-3 ${match.aiReport?.aiAvailable && match.aiReport?.dataGrounded ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-sky-500/20 bg-[#111a28]'}`}>
+        <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-1.5 text-sm font-bold"><Sparkles size={15} className="text-sky-400" />Informe con IA</h3>{isOwner && <button type="button" onClick={onRetryAi} disabled={aiLoading} className="min-h-9 px-3 rounded-lg border border-emerald-500/25 bg-emerald-500/10 text-emerald-300 text-[11px] font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"><RotateCw size={12} className={aiLoading ? 'animate-spin' : ''} />Reintentar con IA</button>}</div>
+        {aiLoading && <p role="status" className="text-xs text-sky-300">Consultando hechos y estimaciones con el proveedor de IA…</p>}
+        {match.aiReport?.aiAvailable && match.aiReport?.dataGrounded ? <>
+          <p className="flex gap-1.5 items-center text-xs text-emerald-300"><CheckCircle2 size={13} />Hechos priorizados por IA · {match.aiReport.modelUsed}</p>
+          <ul className="space-y-2 text-xs leading-relaxed text-slate-300">{(match.aiReport.tacticalKeypoints || []).map((fact, index) => <li key={index}>{fact}</li>)}</ul>
+          <p className="text-[10px] text-slate-500">Generado {new Date(match.aiReport.analyzedAt || match.aiReport.generatedAt).toLocaleString('es')}. Las probabilidades y momios se calculan con registros; la IA prioriza los hechos del informe.</p>
+        </> : <p className="text-xs text-slate-400 leading-relaxed">{match.aiReport?.aiStatus || 'Cálculo estadístico disponible. Todavía no hay un informe de IA confirmado para este encuentro.'}</p>}
+      </section>
       {['beisbol', 'basquetbol'].includes(match.sport) && <section aria-label="Cómo llegan los equipos" className="rounded-xl border border-white/10 bg-[#111a28] p-4 space-y-4">
         <h3 className="text-sm font-bold">Cómo llegan los equipos</h3>
         <div className="grid grid-cols-2 gap-3 text-center">{[['home', home], ['away', away]].map(([side, name]) => <div key={side} className="min-w-0 space-y-2"><p className="text-xs font-semibold break-words">{name}</p><TeamForm team={name} records={a.form?.[side]} loading={loading} /></div>)}</div>

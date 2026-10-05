@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import LiveTicker from './components/LiveTicker';
 import SportSelector from './components/SportSelector';
 import SportsPage from './components/SportsPage';
+import useActiveAiModel from './hooks/useActiveAiModel.js';
 import { SPORTS, sportFromPath, footballLeagueFromLocation } from './constants/sports.js';
 import { LEAGUES_DATA } from './constants/leagues.js';
 import AuthGateModal from './components/AuthGateModal';
@@ -30,6 +31,7 @@ import { isStoreApp } from './auth/platform.js';
 
 export default function App() {
   const { auth, setAuth, checking, error: sessionError, retry } = useSession();
+  const activeAiModel = useActiveAiModel(Boolean(auth?.valid && !auth?.trialExpired));
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedSport, setSelectedSport] = useState(() => sportFromPath(window.location.pathname));
@@ -456,10 +458,10 @@ export default function App() {
     }
   };
 
-  const showToast = (msg) => {
+  const showToast = useCallback((msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
-  };
+  }, []);
 
   useEffect(() => {
     if (!parlayTicket.notice) return;
@@ -718,7 +720,7 @@ export default function App() {
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
 
         {!isFootball ? (
-          <SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} sessionKey={auth?.user?.id || auth?.user?.uid || ''} oddsFormat={oddsFormat} onSessionExpired={handleSportsSessionExpired} />
+          <SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} sessionKey={auth?.user?.id || auth?.user?.uid || ''} oddsFormat={oddsFormat} currency={currency} isOwner={isOwner} activeModelInfo={activeAiModel} onToast={showToast} onSessionExpired={handleSportsSessionExpired} />
         ) : (
         <div role="tabpanel" id={`sport-panel-${selectedSport}`} aria-labelledby={`sport-${selectedSport}`}>
 
@@ -876,6 +878,7 @@ export default function App() {
               onMatchAnalyzed={handleMatchAnalyzed}
               onToast={showToast}
               isOwner={isOwner}
+              activeModelInfo={activeAiModel}
             />
           )}
 

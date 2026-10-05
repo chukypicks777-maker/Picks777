@@ -81,3 +81,22 @@ test('sports caches are session-scoped and late reports cannot replace a changed
     assert.deepEqual(mergeSportDetail(changed, original, detail), changed);
   }
 });
+
+test('late detail responses preserve a newer AI retry only when its sporting inputs and lifetime still match', () => {
+  const original = { id: 'ai-race', kickoff: new Date(Date.now() + 3600000).toISOString(), status: 'SCHEDULED', odds: {}, analysis: { winner: { home: 55, away: 45 } } };
+  const report = { aiAvailable: true, dataGrounded: true, generatedAt: new Date(Date.now() - 1000).toISOString() };
+  const confirmed = { ...original, aiReport: report, isAiAnalyzed: true };
+  const late = { ...original, aiReport: null, isAiAnalyzed: false };
+  assert.deepEqual(mergeSportDetail(confirmed, original, late).aiReport, report);
+  saveSportDetail('ai-race-account', 'tenis', original, confirmed);
+  saveSportDetail('ai-race-account', 'tenis', original, late);
+  assert.deepEqual(readSportDetail('ai-race-account', 'tenis', original).aiReport, report);
+  const newer = { ...report, generatedAt: new Date().toISOString(), modelUsed: 'newer' };
+  assert.deepEqual(mergeSportDetail(confirmed, original, { ...late, aiReport: newer }).aiReport, newer);
+  const updatedQuote = { ...original, odds: { homeWin: 1.8 } };
+  assert.deepEqual(mergeSportDetail(updatedQuote, original, { ...updatedQuote, aiReport: newer }).aiReport, newer,
+    'An AI request started before quote enrichment still applies when its returned quote matches the current feed');
+  assert.equal(mergeSportDetail(confirmed, original, { ...late, analysis: { winner: { home: 65, away: 35 } } }).aiReport, null);
+  const expired = { ...confirmed, aiReport: { ...report, generatedAt: new Date(Date.now() - 301000).toISOString() } };
+  assert.equal(mergeSportDetail(expired, original, late).aiReport, null);
+});

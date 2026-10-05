@@ -307,6 +307,17 @@ export async function generateAiMatchReport(match, options = {}) {
     facts: facts.map(f => f.text), analysisSections: baselineSections, narrativeAnalysis: narrative,
     aiStatus: 'Informe calculado con registros del proveedor; sin texto predictivo no verificado.',
     limitations: 'Estimaciones sujetas al tamaño de muestra y a errores del proveedor; no garantizan resultados.' };
+  return generateGroundedAiReport(match, facts, baseline, { ...options, deadline });
+}
+
+// All sports share the same provider configuration and fact-only validation.
+export async function generateGroundedAiReport(match, facts, baseline, options = {}) {
+  const deadline = options.deadline ?? Date.now() + 45000;
+  const p = baseline.probabilities || {};
+  const baselineSections = baseline.analysisSections || {};
+  const narrative = baseline.narrativeAnalysis || '';
+  const homeName = match.homeTeam?.name || 'Local';
+  const awayName = match.awayTeam?.name || 'Visitante';
   let config;
   try {
     config = await getEffectiveAiConfig();
@@ -390,7 +401,7 @@ export async function generateAiMatchReport(match, options = {}) {
             model: candidate,
             systemPrompt,
             userPrompt: `Partido a analizar (${match.leagueName || 'Liga Oficial'}): ${homeName} (Local) vs ${awayName} (Visitante).
-Registros del proveedor y estimaciones Poisson: ${JSON.stringify(promptCatalog)}.
+Registros del proveedor y estimaciones estadísticas: ${JSON.stringify(promptCatalog)}.
 Prioriza entre 1 y 6 hechos del catálogo, incluyendo incertidumbres y falta de datos cuando existan.
 Devuelve exclusivamente {"factIds":["id"]} con IDs válidos de ${JSON.stringify(validIdsList)}.
 No escribas análisis libre, no calcules probabilidades ni selecciones y no agregues hechos.`,
@@ -447,7 +458,7 @@ No escribas análisis libre, no calcules probabilidades ni selecciones y no agre
         return {
           ...baseline,
           aiAvailable: false,
-          aiStatus: 'Estimación Poisson sin calibración histórica de aciertos.'
+          aiStatus: 'Informe estadístico; la IA no devolvió una respuesta verificable.'
         };
       }
 

@@ -3,6 +3,8 @@ import { cachedData, fetchJson } from './dataCache.js';
 import { americanToDecimal, numberOrNull } from './footballDataService.js';
 import { getMlbLeague, getNpbLeague, getKboLeague, enrichNpbInnings } from './baseballDataService.js';
 import { analyzeSportMatch } from './sportProbabilityModel.js';
+import { readSportsAiReport } from './sportsAiService.js';
+import { rankSportWinners } from '../../src/utils/sportPicks.js';
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
 const shift = (day, amount) => new Date(Date.parse(day) + amount * 86400000).toISOString().slice(0, 10).replaceAll('-', '');
@@ -59,7 +61,10 @@ export function parseTennisEvents(data, tour, fetchedAt = new Date().toISOString
       if (comp.competitors?.length !== 2 || !home?.athlete?.displayName || !away?.athlete?.displayName || !home.id || !away.id || !comp.id || !Number.isFinite(Date.parse(comp.date))) continue;
       const status = espnSportStatus(comp.status);
       const player = entry => ({ id: `${tour}-${entry.id}`, name: entry.athlete.displayName,
-        shortName: entry.athlete.shortName || entry.athlete.displayName, logo: entry.athlete.headshot?.href || null });
+        shortName: entry.athlete.shortName || entry.athlete.displayName,
+        logo: entry.athlete.headshot?.href || entry.athlete.flag?.href || null,
+        flag: entry.athlete.flag?.href || null, country: entry.athlete.flag?.alt || null,
+        imageKind: entry.athlete.headshot?.href ? 'portrait' : entry.athlete.flag?.href ? 'country' : null });
       const setScores = Array.from({ length: Math.max(home.linescores?.length || 0, away.linescores?.length || 0) }, (_, i) => ({ home: numberOrNull(home.linescores?.[i]?.value), away: numberOrNull(away.linescores?.[i]?.value) }));
       const wonSets = side => setScores.filter(set => set.home !== null && set.away !== null && set[side] > set[side === 'home' ? 'away' : 'home']
         && ((Math.max(set.home, set.away) >= 6 && Math.abs(set.home - set.away) >= 2) || (Math.max(set.home, set.away) === 7 && Math.min(set.home, set.away) === 6))).length;
@@ -141,7 +146,9 @@ export async function getSportsMatch(sport, id, options = {}) {
   const match = feed.matches.find(match => match.id === id);
   if (!match) return null;
   const version = JSON.stringify([match.status, match.kickoff, match.liveScore, match.odds]);
-  return cachedData(`sports:detail:v3:${sport}:${options.leagueId || 'all'}:${id}:${today}:${version}`, 60, async () => loadSportsMatch(sport, id, match));
+  const detail = await cachedData(`sports:detail:v3:${sport}:${options.leagueId || 'all'}:${id}:${today}:${version}`, 60, async () => loadSportsMatch(sport, id, match), { forceRefresh: Boolean(options.forceRefresh) });
+  const report = await readSportsAiReport(detail);
+  return { ...detail, aiReport: report, isAiAnalyzed: Boolean(report?.aiAvailable) };
 }
 
 async function loadSportsMatch(sport, id, match) {
@@ -226,6 +233,33 @@ export async function getSportsHistory(sport, now = Date.now(), options = {}) {
   if (options.leagueId && !SPORT_LEAGUES[sport].some(league => league.id === options.leagueId)) throw new Error('Liga no válida.');
   const results = await (sport === 'tenis' ? getTennis(today, options) : sport === 'basquetbol' ? getBasketball(today, options) : getBaseball(today, now, options));
   return { games: [...new Map(results.flatMap(result => result.matches).map(match => [match.id, match])).values()], coverage: results.flatMap(result => result.coverage) };
+}
+
+// Rank every eligible upcoming fixture, independently of cards opened by the user.
+export async function getSportsBankerCandidates(sport, options = {}) {
+  if (!Object.hasOwn(SPORT_LEAGUES, sport)) throw new Error('Deporte no válido.');
+  const now = Date.now(), today = new Date(now).toISOString().slice(0, 10);
+  return cachedData(`sports:banker-pool:v1:${sport}:${options.leagueId || 'all'}:${today}`, 60, async () => {
+    const { games, coverage } = await getSportsHistory(sport, now, { ...options, calendarOnly: true });
+    if (coverage.every(league => league.status === 'unavailable')) throw new Error('Calendarios no disponibles para calcular Banqueros.');
+    const candidates = games.filter(match => match.status === 'SCHEDULED' && Date.parse(match.kickoff) > now && Date.parse(match.kickoff) <= now + 8 * 86400000
+      && (!options.leagueId || match.leagueId === options.leagueId));
+    const matches = candidates.map(match => ({ ...match, analysis: analyzeSportMatch(match, games, now) }));
+    if (sport === 'basquetbol') {
+      const missing = matches.filter(match => !Number.isFinite(match.analysis.winner.home));
+      let cursor = 0;
+      const deadline = Date.now() + 40000;
+      await Promise.all(Array.from({ length: Math.min(3, missing.length) }, async () => {
+        while (cursor < missing.length) {
+          if (Date.now() > deadline) throw new Error('El ranking todavía no pudo completar los historiales. Reintenta para continuar la consulta.');
+          const original = missing[cursor++];
+          const detail = await getSportsMatch(sport, original.id, { leagueId: original.leagueId });
+          if (detail) matches[matches.findIndex(match => match.id === original.id)] = detail;
+        }
+      }));
+    }
+    return { sport, matches, coverage, ranking: { examined: candidates.length, available: rankSportWinners(matches, now, Infinity).length } };
+  });
 }
 
 export async function getSportsFeed(sport, options = {}) {

@@ -1,0 +1,425 @@
+{
+  "checkedAt": "2026-10-05T22:08:14.320Z",
+  "pass": true,
+  "aiConfigured": true,
+  "configuredModel": "deepseek-v4.1",
+  "checks": [
+    {
+      "name": "beisbol:maximum-ten",
+      "pass": true
+    },
+    {
+      "name": "beisbol:unique",
+      "pass": true
+    },
+    {
+      "name": "beisbol:descending",
+      "pass": true
+    },
+    {
+      "name": "beisbol:only-upcoming",
+      "pass": true
+    },
+    {
+      "name": "tenis:maximum-ten",
+      "pass": true
+    },
+    {
+      "name": "tenis:unique",
+      "pass": true
+    },
+    {
+      "name": "tenis:descending",
+      "pass": true
+    },
+    {
+      "name": "tenis:only-upcoming",
+      "pass": true
+    },
+    {
+      "name": "basquetbol:maximum-ten",
+      "pass": true
+    },
+    {
+      "name": "basquetbol:unique",
+      "pass": true
+    },
+    {
+      "name": "basquetbol:descending",
+      "pass": true
+    },
+    {
+      "name": "basquetbol:only-upcoming",
+      "pass": true
+    },
+    {
+      "name": "beisbol:ai-confirmed",
+      "pass": true
+    },
+    {
+      "name": "beisbol:probabilities-unchanged",
+      "pass": true
+    },
+    {
+      "name": "beisbol:facts-only",
+      "pass": true
+    },
+    {
+      "name": "tenis:home:published-image",
+      "pass": true
+    },
+    {
+      "name": "tenis:away:published-image",
+      "pass": true
+    },
+    {
+      "name": "tenis:ai-confirmed",
+      "pass": true
+    },
+    {
+      "name": "tenis:probabilities-unchanged",
+      "pass": true
+    },
+    {
+      "name": "tenis:facts-only",
+      "pass": true
+    },
+    {
+      "name": "basquetbol:ai-confirmed",
+      "pass": true
+    },
+    {
+      "name": "basquetbol:probabilities-unchanged",
+      "pass": true
+    },
+    {
+      "name": "basquetbol:facts-only",
+      "pass": true
+    }
+  ],
+  "samples": [
+    {
+      "sport": "beisbol",
+      "milliseconds": 4739,
+      "examined": 41,
+      "estimable": 38,
+      "top10": [
+        {
+          "id": "kbo-2026-10-06-HANWHA-SSG-23",
+          "rank": 1,
+          "selection": "SSG gana",
+          "probability": 69.2,
+          "kickoff": "2026-10-06T09:30:00.000Z",
+          "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+        },
+        {
+          "id": "kbo-2026-10-07-SSG-NC-27",
+          "rank": 2,
+          "selection": "SSG gana",
+          "probability": 65.9,
+          "kickoff": "2026-10-07T09:30:00.000Z",
+          "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+        },
+        {
+          "id": "kbo-2026-10-06-KIWOOM-KT-24",
+          "rank": 3,
+          "selection": "KT gana",
+          "probability": 65.7,
+          "kickoff": "2026-10-06T09:30:00.000Z",
+          "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+        },
+        {
+          "id": "kbo-2026-10-09-NC-KIA-32",
+          "rank": 4,
+          "selection": "KIA gana",
+          "probability": 61,
+          "kickoff": "2026-10-09T05:00:00.000Z",
+          "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+        },
+        {
+          "id": "kbo-2026-10-07-KT-SAMSUNG-28",
+          "rank": 5,
+          "selection": "KT gana",
+          "probability": 58.3,
+          "kickoff": "2026-10-07T09:30:00.000Z",
+          "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+        },
+        {
+          "id": "kbo-2026-10-11-SAMSUNG-KT-36",
+          "rank": 6,
+          "selection": "KT gana",
+          "probability": 58.3,
+          "kickoff": "2026-10-11T05:00:00.000Z",
+          "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+        },
+        {
+          "id": "kbo-2026-10-12-SAMSUNG-KT-39",
+          "rank": 7,
+          "selection": "KT gana",
+          "probability": 58.3,
+          "kickoff": "2026-10-12T09:30:00.000Z",
+          "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+        },
+        {
+          "id": "npb-2026-10-08-t-s-0",
+          "rank": 8,
+          "selection": "Hanshin gana",
+          "probability": 57.2,
+          "kickoff": "2026-10-08T09:00:00.000Z",
+          "sourceUrl": "https://npb.jp/bis/eng/2026/games/gm20261008.html"
+        },
+        {
+          "id": "mlb-mlb-849819",
+          "rank": 9,
+          "selection": "Los Angeles Dodgers gana",
+          "probability": 57,
+          "kickoff": "2026-10-06T22:00:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/849819"
+        },
+        {
+          "id": "mlb-mlb-849822",
+          "rank": 10,
+          "selection": "Los Angeles Dodgers gana",
+          "probability": 57,
+          "kickoff": "2026-10-07T22:00:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/849822"
+        }
+      ]
+    },
+    {
+      "sport": "tenis",
+      "milliseconds": 10435,
+      "examined": 249,
+      "estimable": 45,
+      "top10": [
+        {
+          "id": "espn-tennis-wta-184346",
+          "rank": 1,
+          "selection": "Coco Gauff gana",
+          "probability": 64.6,
+          "kickoff": "2026-10-07T04:00Z",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261007"
+        },
+        {
+          "id": "espn-tennis-wta-185286",
+          "rank": 2,
+          "selection": "Shi Han gana",
+          "probability": 63.2,
+          "kickoff": "2026-10-06T03:30Z",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261006"
+        },
+        {
+          "id": "espn-tennis-wta-185276",
+          "rank": 3,
+          "selection": "Zheng Wushuang gana",
+          "probability": 59.4,
+          "kickoff": "2026-10-06T03:30Z",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261006"
+        },
+        {
+          "id": "espn-tennis-atp-184877",
+          "rank": 4,
+          "selection": "Jaume Munar gana",
+          "probability": 59.2,
+          "kickoff": "2026-10-07T04:00Z",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261007"
+        },
+        {
+          "id": "espn-tennis-wta-185285",
+          "rank": 5,
+          "selection": "Claire Liu gana",
+          "probability": 58.3,
+          "kickoff": "2026-10-07T04:00Z",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261007"
+        },
+        {
+          "id": "espn-tennis-wta-185277",
+          "rank": 6,
+          "selection": "Kyoka Okamura gana",
+          "probability": 58.2,
+          "kickoff": "2026-10-06T03:30Z",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261006"
+        },
+        {
+          "id": "espn-tennis-atp-184851",
+          "rank": 7,
+          "selection": "Denis Shapovalov gana",
+          "probability": 58.1,
+          "kickoff": "2026-10-07T04:00Z",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261007"
+        },
+        {
+          "id": "espn-tennis-atp-186318",
+          "rank": 8,
+          "selection": "Alexandre Muller gana",
+          "probability": 57.5,
+          "kickoff": "2026-10-06T07:30Z",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261006"
+        },
+        {
+          "id": "espn-tennis-atp-184869",
+          "rank": 9,
+          "selection": "Hubert Hurkacz gana",
+          "probability": 57.4,
+          "kickoff": "2026-10-07T04:00Z",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261007"
+        },
+        {
+          "id": "espn-tennis-wta-185240",
+          "rank": 10,
+          "selection": "Oksana Selekhmeteva gana",
+          "probability": 57.3,
+          "kickoff": "2026-10-06T08:30Z",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261006"
+        }
+      ]
+    },
+    {
+      "sport": "basquetbol",
+      "milliseconds": 9676,
+      "examined": 44,
+      "estimable": 43,
+      "top10": [
+        {
+          "id": "espn-nba_preseason-401898399",
+          "rank": 1,
+          "selection": "Golden State Warriors gana",
+          "probability": 75,
+          "kickoff": "2026-10-11T00:30Z",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401898399"
+        },
+        {
+          "id": "espn-nba_preseason-401898392",
+          "rank": 2,
+          "selection": "Boston Celtics gana",
+          "probability": 74.8,
+          "kickoff": "2026-10-08T23:00Z",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401898392"
+        },
+        {
+          "id": "espn-nba_preseason-401898401",
+          "rank": 3,
+          "selection": "Orlando Magic gana",
+          "probability": 72.3,
+          "kickoff": "2026-10-11T22:30Z",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401898401"
+        },
+        {
+          "id": "espn-nba_preseason-401898391",
+          "rank": 4,
+          "selection": "Orlando Magic gana",
+          "probability": 72.2,
+          "kickoff": "2026-10-08T00:00Z",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401898391"
+        },
+        {
+          "id": "espn-nba_preseason-401898390",
+          "rank": 5,
+          "selection": "Golden State Warriors gana",
+          "probability": 71.8,
+          "kickoff": "2026-10-07T02:00Z",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401898390"
+        },
+        {
+          "id": "espn-nba_preseason-401898394",
+          "rank": 6,
+          "selection": "San Antonio Spurs gana",
+          "probability": 69.8,
+          "kickoff": "2026-10-09T00:00Z",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401898394"
+        },
+        {
+          "id": "espn-nba_preseason-401898402",
+          "rank": 7,
+          "selection": "Oklahoma City Thunder gana",
+          "probability": 67.6,
+          "kickoff": "2026-10-12T23:00Z",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401898402"
+        },
+        {
+          "id": "espn-nba_preseason-401906508",
+          "rank": 8,
+          "selection": "New York Knicks gana",
+          "probability": 66.9,
+          "kickoff": "2026-10-08T23:30Z",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401906508"
+        },
+        {
+          "id": "espn-nba_preseason-401898716",
+          "rank": 9,
+          "selection": "Los Angeles Lakers gana",
+          "probability": 65.7,
+          "kickoff": "2026-10-06T02:00Z",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401898716"
+        },
+        {
+          "id": "espn-nba_preseason-401902645",
+          "rank": 10,
+          "selection": "LA Clippers gana",
+          "probability": 65.3,
+          "kickoff": "2026-10-10T22:30Z",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401902645"
+        }
+      ]
+    },
+    {
+      "sport": "beisbol",
+      "matchId": "kbo-2026-10-06-HANWHA-SSG-23",
+      "aiAvailable": true,
+      "modelUsed": "deepseek-v4.1",
+      "aiStatus": "Hechos priorizados por IA (deepseek-v4.1); cifras y conclusiones calculadas por el modelo estadístico. Sin calibración histórica de aciertos.",
+      "generatedAt": "2026-10-05T22:08:03.483Z",
+      "probabilities": {
+        "home": 26.1,
+        "draw": 4.7,
+        "away": 69.2
+      }
+    },
+    {
+      "sport": "tenis",
+      "side": "home",
+      "identity": "Coco Gauff",
+      "imageKind": "country",
+      "image": "https://a.espncdn.com/i/teamlogos/countries/500/usa.png",
+      "imageStatus": 200
+    },
+    {
+      "sport": "tenis",
+      "side": "away",
+      "identity": "Elise Mertens",
+      "imageKind": "country",
+      "image": "https://a.espncdn.com/i/teamlogos/countries/500/bel.png",
+      "imageStatus": 200
+    },
+    {
+      "sport": "tenis",
+      "matchId": "espn-tennis-wta-184346",
+      "aiAvailable": true,
+      "modelUsed": "deepseek-v4.1",
+      "aiStatus": "Hechos priorizados por IA (deepseek-v4.1); cifras y conclusiones calculadas por el modelo estadístico. Sin calibración histórica de aciertos.",
+      "generatedAt": "2026-10-05T22:08:07.077Z",
+      "probabilities": {
+        "home": 64.6,
+        "away": 35.4
+      }
+    },
+    {
+      "sport": "basquetbol",
+      "matchId": "espn-nba_preseason-401898399",
+      "aiAvailable": true,
+      "modelUsed": "deepseek-v4.1",
+      "aiStatus": "Hechos priorizados por IA (deepseek-v4.1); cifras y conclusiones calculadas por el modelo estadístico. Sin calibración histórica de aciertos.",
+      "generatedAt": "2026-10-05T22:08:08.683Z",
+      "probabilities": {
+        "home": 75,
+        "away": 25
+      }
+    }
+  ],
+  "limitations": [
+    "Only forecasts with sufficient real data enter Banqueros.",
+    "AI selects source facts; it cannot alter estimates or invent observations.",
+    "Provider pictures may be unavailable; country flags are explicitly identified as flags.",
+    "Prospective predictive accuracy remains unvalidated."
+  ]
+}

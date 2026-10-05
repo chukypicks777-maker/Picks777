@@ -126,6 +126,25 @@ export async function cachedData(key, ttlSeconds, loader, options = {}) {
   finally { pending.delete(key); }
 }
 
+// Reading a shared report must never start a paid provider request.
+export async function readCachedData(key) {
+  const local = memory.get(key);
+  if (local?.expires > Date.now()) return structuredClone(local.value);
+  if (redisConfigured()) {
+    try {
+      const stored = await redisCommand('GET', `picks:v2:cache:${key}`);
+      const envelope = stored ? JSON.parse(stored) : null;
+      if (envelope?.expires > Date.now()) { memory.set(key, envelope); return structuredClone(envelope.value); }
+    } catch { /* An unavailable cache does not authorize new AI work. */ }
+  }
+  if (key.startsWith('ai:')) {
+    await loadAiFileCache();
+    const entry = aiFileCacheMap.get(key);
+    if (entry?.expires > Date.now()) return structuredClone(entry.value);
+  }
+  return null;
+}
+
 export async function fetchJson(url) {
   const response = await fetch(url, { signal: AbortSignal.timeout(8000), headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`El proveedor responde HTTP ${response.status}.`);

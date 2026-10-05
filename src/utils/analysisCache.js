@@ -70,7 +70,8 @@ export function computeMatchFingerprint(m) {
     m.oddsProvider || '',
     m.homeTeam?.id || m.homeTeam?.name || '',
     m.awayTeam?.id || m.awayTeam?.name || '',
-    JSON.stringify([m.homeTeam, m.awayTeam].map(team => [team?.position, team?.points, team?.gamesPlayed, team?.goalsFor, team?.goalsAgainst, team?.form]))
+    JSON.stringify([m.homeTeam, m.awayTeam].map(team => [team?.position, team?.points, team?.gamesPlayed, team?.goalsFor, team?.goalsAgainst, team?.form])),
+    JSON.stringify(m.analysis || null)
   ].join('|');
 }
 

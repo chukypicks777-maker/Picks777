@@ -10,7 +10,9 @@ async function read(path, init = {}) {
     headers: { 'Cache-Control': 'no-cache', ...init.headers } });
   return { response, text: await response.text() };
 }
-const paths = ['/', '/femenil', '/beisbol', '/tenis', '/basquetbol', '/api/health', '/api/auth/session', '/api/admin/codes', '/api/matches', '/api/sports/beisbol', '/api/sports/tenis', '/api/sports/basquetbol', '/.env', '/server/data/access-v2.json', '/privacidad.html'];
+const paths = ['/', '/femenil', '/beisbol', '/tenis', '/basquetbol', '/api/health', '/api/auth/session', '/api/admin/codes', '/api/matches', '/api/sports/beisbol', '/api/sports/tenis', '/api/sports/basquetbol',
+  '/api/sports/beisbol?category=bankers', '/api/sports/tenis?category=bankers', '/api/sports/basquetbol?category=bankers',
+  '/.env', '/server/data/access-v2.json', '/privacidad.html'];
 const responses = await Promise.all(paths.map(async path => ({ path, ...await read(path) })));
 for (const { path, response, text } of responses) {
   let pass;
@@ -28,7 +30,7 @@ const html = responses.find(result => result.path === '/').text;
 const asset = html.match(/src="([^"]+\.js)"/)?.[1];
 if (asset) {
   const { response, text } = await read(asset);
-  const markers = ['sport-panel-', 'femenil', 'beisbol', 'tenis', 'basquetbol', 'Primer inning', 'KBO'];
+  const markers = ['sport-panel-', 'femenil', 'beisbol', 'tenis', 'basquetbol', 'Primer inning', 'KBO', 'Top 10 Banqueros', 'HECHOS PRIORIZADOS POR IA'];
   const digest = createHash('sha256').update(text).digest('hex');
   let localAssetMatches = false;
   let localAsset = null;
@@ -45,6 +47,16 @@ const deniedOrigin = await read('/api/auth/redeem-code', { method: 'POST',
 checks.push({ path: 'cross-origin-redeem', status: deniedOrigin.response.status, pass: deniedOrigin.response.status === 403 });
 const forged = await read('/api/matches', { headers: { Cookie: 'picks_session=unsigned.invalid' } });
 checks.push({ path: 'forged-session', status: forged.response.status, pass: forged.response.status === 401 });
+for (const sport of ['beisbol', 'tenis', 'basquetbol']) {
+  const result = await read(`/api/sports/${sport}/unauthorized-test/ai-analysis`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ forceRefresh: true }) });
+  checks.push({ path: `${sport}:anonymous-ai-denied`, status: result.response.status,
+    pass: result.response.status === 401 && result.response.headers.get('cache-control')?.includes('no-store') && JSON.parse(result.text).success === false });
+}
+const activeModel = await read('/api/settings/active-model');
+const metadata = JSON.parse(activeModel.text);
+checks.push({ path: 'configured-ai-metadata', status: activeModel.response.status, model: metadata.selectedModel,
+  pass: activeModel.response.status === 200 && metadata.success === true && metadata.isConfigured === true && !('apiKey' in metadata) });
 const report = { checkedAt: new Date().toISOString(), origin, localCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   pass: checks.every(check => check.pass), checks,
   limitation: 'Anonymous production checks only. Authenticated expiry, deletion and VIP tests run against isolated fixtures, not production users.' };

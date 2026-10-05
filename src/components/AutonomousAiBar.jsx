@@ -12,7 +12,10 @@ export default function AutonomousAiBar({
   onMatchAnalyzed,
   activeModelInfo = null,
   onToast = null,
-  isOwner = false
+  isOwner = false,
+  sport = 'futbol',
+  onAnalyzing = null,
+  externalBusy = false
 }) {
   const [isRunning, setIsRunning] = useState(false);
   const [currentMatchTitle, setCurrentMatchTitle] = useState('');
@@ -28,6 +31,12 @@ export default function AutonomousAiBar({
 
   const stopRequested = useRef(false);
   const runningRef = useRef(false);
+  const mounted = useRef(true);
+  const requestController = useRef(null);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; stopRequested.current = true; requestController.current?.abort(); };
+  }, []);
   const matchesRef = useRef(matches);
   useEffect(() => {
     matchesRef.current = matches;
@@ -58,6 +67,7 @@ export default function AutonomousAiBar({
 
   const executeAnalysisQueue = useCallback(async (forceAll = false) => {
     if (!isOwner || runningRef.current) return;
+    if (externalBusy) return;
     const currentMatches = matchesRef.current;
     if (!Array.isArray(currentMatches) || currentMatches.length === 0) return;
 
@@ -108,6 +118,7 @@ export default function AutonomousAiBar({
       attemptedMatchIdsRef.current.add(curMatch.id);
       const matchTitle = `${curMatch.homeTeam?.name || 'Local'} vs ${curMatch.awayTeam?.name || 'Visitante'}`;
       setCurrentMatchTitle(matchTitle);
+      onAnalyzing?.(curMatch.id);
       window.dispatchEvent(new CustomEvent('ai-analyzing-match', { detail: { matchId: curMatch.id } }));
 
       try {
@@ -115,16 +126,21 @@ export default function AutonomousAiBar({
           removeCachedAnalysis(curMatch.id);
         }
 
-        const res = await fetch(`/api/matches/${curMatch.id}/ai-analysis`, {
+        const controller = new AbortController();
+        requestController.current = controller;
+        const timeout = setTimeout(() => controller.abort(), 55000);
+        let res;
+        try { res = await fetch(sport === 'futbol' ? `/api/matches/${encodeURIComponent(curMatch.id)}/ai-analysis` : `/api/sports/${sport}/${encodeURIComponent(curMatch.id)}/ai-analysis?league=${curMatch.leagueId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
+          signal: controller.signal,
           body: JSON.stringify({
             forceRefresh: forceAll,
             model: resolvedModel,
             aiConfig: aiConfigPayload
           })
-        });
+        }); } finally { clearTimeout(timeout); }
 
         if (res.status === 401 || res.status === 403) {
           onToast?.('Sesión expirada o no autorizada. Inicia sesión nuevamente.');
@@ -137,6 +153,7 @@ export default function AutonomousAiBar({
         }
 
         const data = await res.json().catch(() => null);
+        if (!mounted.current || controller.signal.aborted) break;
         if (res.ok && data?.success && data.report) {
           if (data.report.aiAvailable) aiCompleted++; else statisticalCompleted++;
           const finalMatch = {
@@ -150,12 +167,13 @@ export default function AutonomousAiBar({
             model: resolvedModel
           });
 
-          onMatchAnalyzed?.(curMatch.id, finalMatch, data.report);
+          onMatchAnalyzed?.(curMatch.id, finalMatch, data.report, curMatch);
           window.dispatchEvent(new CustomEvent('ai-analysis-updated', {
             detail: { matchId: curMatch.id, match: finalMatch, report: data.report }
           }));
         }
       } catch (err) {
+        if (!mounted.current) break;
         console.warn(`[AutonomousAI] Error analyzing match ${curMatch.id}:`, err?.message || err);
       }
 
@@ -169,6 +187,8 @@ export default function AutonomousAiBar({
     }
 
     window.dispatchEvent(new CustomEvent('ai-analyzing-match', { detail: { matchId: null } }));
+    onAnalyzing?.(null);
+    if (!mounted.current) return;
     setIsRunning(false);
     runningRef.current = false;
     setCurrentMatchTitle('');
@@ -178,10 +198,11 @@ export default function AutonomousAiBar({
       sounds.playSuccess();
       onToast?.(`Revisión terminada: ${aiCompleted} informes con IA, ${statisticalCompleted} cálculos estadísticos y ${processed - aiCompleted - statisticalCompleted} solicitudes sin resultado.`);
     }
-  }, [isOwner, activeModelInfo, onMatchAnalyzed, onToast]);
+  }, [isOwner, activeModelInfo, onMatchAnalyzed, onToast, sport, onAnalyzing, externalBusy]);
 
   const handleStop = () => {
     stopRequested.current = true;
+    requestController.current?.abort();
     sounds.playClick();
     onToast?.('Pausando análisis autónomo...');
   };
@@ -189,6 +210,7 @@ export default function AutonomousAiBar({
   // Autonomous trigger on load: ONLY for Owner, using stable ID key and attempted match lock to prevent loops
   useEffect(() => {
     if (!isOwner || activeModelInfo?.isConfigured !== true || !autoRunOnLoad || runningRef.current) return;
+    if (externalBusy) return;
     const currentMatches = matchesRef.current;
     if (!Array.isArray(currentMatches) || currentMatches.length === 0) return;
 
@@ -204,7 +226,7 @@ export default function AutonomousAiBar({
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [matchIdsKey, isOwner, autoRunOnLoad, activeModelInfo?.isConfigured, executeAnalysisQueue]);
+  }, [matchIdsKey, isOwner, autoRunOnLoad, activeModelInfo?.isConfigured, executeAnalysisQueue, externalBusy]);
 
   if (!isOwner || !matches || matches.length === 0) return null;
 
@@ -310,7 +332,7 @@ export default function AutonomousAiBar({
             <>
               <button
                 onClick={() => executeAnalysisQueue(false)}
-                disabled={isAllAnalyzed}
+                disabled={isAllAnalyzed || externalBusy}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center space-x-1.5 transition active:scale-95 cursor-pointer ${
                   isAllAnalyzed
                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 opacity-70 cursor-default'
@@ -325,11 +347,12 @@ export default function AutonomousAiBar({
 
               <button
                 onClick={() => executeAnalysisQueue(true)}
+                disabled={externalBusy}
                 title="Forzar un nuevo análisis en vivo para todos los partidos con estadísticas actualizadas"
                 className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 rounded-xl text-xs font-mono flex items-center space-x-1.5 transition cursor-pointer active:scale-95"
               >
                 <RotateCw className="w-3 h-3 text-slate-400" />
-                <span>Re-analizar Todos</span>
+                <span>{sport === 'futbol' ? 'Re-analizar Todos' : 'Reintentar con IA'}</span>
               </button>
             </>
           )}

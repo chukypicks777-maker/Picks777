@@ -11,18 +11,23 @@ process.env.VERCEL = '';
 const { default: app } = await import('../server/index.js');
 const { storage } = await import('../server/storage.js');
 const { clearCachePattern } = await import('../server/services/dataCache.js');
+const { setSession } = await import('../server/session.js');
 
 test('sports APIs require a session, keep the women feed separate, filter leagues, enrich any basketball match and report provider outages', async t => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'picks-sports-api-'));
   const originalFile = storage.file, originalFetch = globalThis.fetch;
   storage.file = path.join(directory, 'access.json');
-  let providerCalls = 0, historyCalls = 0, outage = false, womenOutage = false;
+  let providerCalls = 0, historyCalls = 0, aiCalls = 0, outage = false, womenOutage = false;
   const now = Date.now();
   const competitors = names => names.map((name, index) => ({ id: String(index + 1), homeAway: index ? 'away' : 'home', team: { id: String(index + 1), displayName: name }, score: '0' }));
   const event = names => ({ id: 'api-fixture', date: new Date(now + 3600000).toISOString(), season: { year: 2027, type: 1 }, competitions: [{ status: { type: { state: 'pre', name: 'STATUS_SCHEDULED' } }, competitors: competitors(names) }] });
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     const address = new URL(String(url));
     if (address.hostname === '127.0.0.1') return originalFetch(url, options);
+    if (address.hostname === 'vyceai.com') {
+      aiCalls++;
+      return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ factIds: ['winner', 'sample', 'limits'], topPick: { probability: 999 } }) } }] }));
+    }
     providerCalls++;
     if (outage) throw new Error('Simulated provider outage');
     if (womenOutage && address.pathname.includes('soccer/mex.w.1/scoreboard')) throw new Error('Women provider outage');
@@ -61,6 +66,7 @@ test('sports APIs require a session, keep the women feed separate, filter league
   try {
     assert.equal((await request('/api/sports/basquetbol')).status, 401);
     assert.equal((await request('/api/sports/basquetbol/unknown')).status, 401);
+    assert.equal((await request('/api/sports/tenis/unknown/ai-analysis', '', { forceRefresh: true })).status, 401);
     assert.equal(providerCalls, 0);
     const login = await request('/api/auth/verify-code', '', { code: 'SportsApiTestOwner', username: 'Owner' });
     assert.equal(login.status, 200);
@@ -92,10 +98,32 @@ test('sports APIs require a session, keep the women feed separate, filter league
     const tennisMatch = tennis.matches.find(match => match.status === 'SCHEDULED' && match.tour === 'atp');
     assert.ok(tennisMatch);
     assert.equal(tennisMatch.analysis.sampleSize.home, 0, 'Do not calculate every tennis forecast before returning the calendar');
+    const bankers = await (await request('/api/sports/tenis?category=bankers&league=atp', cookie)).json();
+    assert.equal(bankers.matches.length, 1); assert.equal(bankers.matches[0].bankerRank, 1);
+    assert.ok(bankers.matches[0].analysis.sampleSize.home >= 5, 'Ranking computes all candidates before any card is opened');
+    assert.equal((await request('/api/sports/tenis?category=over25', cookie)).status, 400);
     const tennisDetail = await (await request(`/api/sports/tenis/${tennisMatch.id}?league=atp`, cookie)).json();
     assert.ok(tennisDetail.match.analysis.sampleSize.home >= 5);
     assert.ok(tennisDetail.match.analysis.winner.home > 0);
     assert.equal(tennisDetail.match.analysis.firstSet.home + tennisDetail.match.analysis.firstSet.away, 100);
+    const regular = await storage.upsertGoogleUser({ googleId: 'sports-regular-fixture', email: 'regular@example.invalid', name: 'Cliente de prueba', deviceId: 'sports-device' });
+    let regularCookie;
+    setSession({ cookie: (name, value) => { regularCookie = `${name}=${value}`; } }, { role: 'trial_user', userId: regular.id, expires: Date.now() + 3600000 });
+    const aiPath = `/api/sports/tenis/${tennisMatch.id}/ai-analysis?league=atp`;
+    assert.equal((await request(aiPath, regularCookie, { forceRefresh: true })).status, 403, 'A hidden owner button must also be protected by the server');
+    assert.equal(aiCalls, 0);
+    await storage.updateAiConfig({ provider: 'custom', baseUrl: 'https://vyceai.com/v1', apiKey: 'sports-api-test-key', selectedModel: 'sports-fixture-model' });
+    const generated = await (await request(aiPath, cookie, { forceRefresh: true, match: { homeTeam: { name: 'Browser invented team' } } })).json();
+    assert.equal(generated.report.aiAvailable, true); assert.equal(generated.report.modelUsed, 'sports-fixture-model');
+    assert.ok(!JSON.stringify(generated).includes('Browser invented team'));
+    assert.deepEqual(generated.report.probabilities, tennisDetail.match.analysis.winner); assert.equal(aiCalls, 1);
+    const shared = await (await request(`/api/sports/tenis/${tennisMatch.id}?league=atp`, regularCookie)).json();
+    assert.equal(shared.match.aiReport.aiAvailable, true); assert.equal(aiCalls, 1, 'Clients read the shared report without spending tokens or forcing a retry');
+    const wtaMatch = tennis.matches.find(match => match.status === 'SCHEDULED' && match.tour === 'wta');
+    const initialClientReport = await (await request(`/api/sports/tenis/${wtaMatch.id}/ai-analysis?league=wta`, regularCookie, { forceRefresh: false })).json();
+    assert.equal(initialClientReport.report.aiAvailable, true, 'A client can receive the initial automatic report without owner retry controls');
+    assert.equal(aiCalls, 2);
+    assert.equal((await request(`/api/sports/tenis/${wtaMatch.id}/ai-analysis?league=wta`, regularCookie, { model: 'client-override' })).status, 403);
     womenOutage = true; clearCachePattern('scoreboard:mexico_femenil');
     assert.equal((await request('/api/matches?league=mexico_femenil', cookie)).status, 503, 'A selected women provider outage cannot masquerade as a valid empty calendar');
     assert.equal((await request('/api/matches', cookie)).status, 200, 'Other football leagues remain available');
