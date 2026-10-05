@@ -91,14 +91,14 @@ export function normalizeModelId(provider, model) {
   return trimmed;
 }
 
-export async function executeAiChatCompletion({ provider = 'custom', apiKey, baseUrl, model, selectedModel, systemPrompt = '', userPrompt, maxTokens = 4000, temperature = 0.3 }) {
+export async function executeAiChatCompletion({ provider = 'custom', apiKey, baseUrl, model, selectedModel, systemPrompt = '', userPrompt, maxTokens = 4000, temperature = 0.3, timeoutMs = 45000 }) {
   const chosenModel = model || selectedModel;
   const config = validateAiConfig({ provider, apiKey, baseUrl, selectedModel: chosenModel });
   ({ provider, apiKey, baseUrl } = config);
   model = normalizeModelId(provider, config.selectedModel);
   if (!apiKey) throw providerError('Ingresa la clave API de este proveedor.', 'MISSING_KEY');
   if (!model) throw providerError('Selecciona un modelo del catálogo o escribe su ID exacto.', 'MISSING_MODEL');
-  const signal = AbortSignal.timeout(45000); // One request fits within the 60s hosting limit.
+  const signal = AbortSignal.timeout(Math.max(1, Math.min(45000, Math.floor(timeoutMs))));
   let url, headers, body;
   const agentRouter = ['agentrouter.org', 'co.agentrouter.org'].includes(new URL(baseUrl).hostname);
   const anthropic = agentRouter && /^claude-/i.test(model);

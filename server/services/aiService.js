@@ -184,6 +184,7 @@ export function extractJsonFromAiResponse(raw) {
 }
 
 export async function generateAiMatchReport(match, options = {}) {
+  const deadline = options.deadline ?? Date.now() + 45000;
   let activeMatch = match;
   if (!activeMatch.model && activeMatch.status !== 'POSTPONED' && activeMatch.status !== 'CANCELLED') {
     const computed = poissonModel(activeMatch.homeTeam, activeMatch.awayTeam) ||
@@ -210,7 +211,7 @@ export async function generateAiMatchReport(match, options = {}) {
 
   const facts = [
     { id: 'fixture', text: `${homeName} vs ${awayName}. Torneo: ${match.leagueName || 'Oficial'}. Estado: ${match.status}. Inicio: ${match.kickoff}.` },
-    { id: 'source', text: `Fuente oficial: ${match.source || 'ESPN'}.` }
+    { id: 'source', text: `Fuente de los registros: ${match.source || 'ESPN'}. Consulta: ${match.fetchedAt || 'N/D'}.` }
   ];
   if (match.status === 'LIVE') {
     facts.push({
@@ -349,7 +350,7 @@ export async function generateAiMatchReport(match, options = {}) {
     config.selectedModel = PROVIDER_PRESETS.groq?.defaultModel || 'llama-3.3-70b-versatile';
   }
   if (!config.isConfigured) return baseline;
-  const cacheKey = 'ai:grounded-v5:' + createHash('sha256').update(JSON.stringify([facts, p, config.updatedAt, config.provider, config.selectedModel])).digest('hex');
+  const cacheKey = 'ai:grounded-v6:' + createHash('sha256').update(JSON.stringify([facts, p, config.updatedAt, config.provider, config.selectedModel])).digest('hex');
   const generate = async () => {
     try {
       const promptCatalog = facts.map(f => ({ id: f.id, summary: f.text }));
@@ -381,22 +382,21 @@ export async function generateAiMatchReport(match, options = {}) {
       const systemPrompt = 'Selecciona y ordena los hechos más relevantes del catálogo para explicar el partido y sus incertidumbres. Devuelve solo JSON: {"factIds":["id"]}, con 1 a 6 IDs presentes en el catálogo. No generes cifras, selecciones, tácticas, lesiones, cuotas ni texto libre. Las probabilidades no son tasas históricas de aciertos.';
 
       for (const candidate of candidateModels) {
+        const remaining = deadline - Date.now();
+        if (remaining < 1000) break;
         try {
           const raw = await executeAiChatCompletion({
             ...config,
             model: candidate,
             systemPrompt,
             userPrompt: `Partido a analizar (${match.leagueName || 'Liga Oficial'}): ${homeName} (Local) vs ${awayName} (Visitante).
-Estadísticas oficiales y modelo Poisson: ${JSON.stringify(promptCatalog)}.
-Instrucciones analíticas estrictas:
-1. Menciona explícitamente a "${homeName}" y a "${awayName}" por su nombre en cada sección del informe.
-2. Compara el ataque de ${homeName} contra la defensa de ${awayName}, sus posiciones en la clasificación (${homePos ? `#${homePos}` : 'N/D'} vs ${awayPos ? `#${awayPos}` : 'N/D'}), sus rachas recientes y cuotas del mercado.
-3. Determina el "topPick" óptimo: selection, market, probability y reasoning cuantitativo fundamentado.
-4. Razona por qué el modelo proyecta el marcador ${match.model?.predictedScore || 'N/D'} y evalúa probabilidades para Más/Menos 1.5 y 2.5 goles y Ambos Anotan (BTTS).
-5. Elige entre 1 y 6 factIds válidos exclusivamente de: ${JSON.stringify(validIdsList)}.
-6. Devuelve ÚNICAMENTE el objeto JSON en español profesional.`,
+Registros del proveedor y estimaciones Poisson: ${JSON.stringify(promptCatalog)}.
+Prioriza entre 1 y 6 hechos del catálogo, incluyendo incertidumbres y falta de datos cuando existan.
+Devuelve exclusivamente {"factIds":["id"]} con IDs válidos de ${JSON.stringify(validIdsList)}.
+No escribas análisis libre, no calcules probabilidades ni selecciones y no agregues hechos.`,
             maxTokens: 4000,
-            temperature: 0.3
+            temperature: 0.3,
+            timeoutMs: Math.min(20000, remaining)
           });
 
           if (raw) {
@@ -410,7 +410,7 @@ Instrucciones analíticas estrictas:
               if (Array.isArray(rawIds) && rawIds.length >= 1 && rawIds.length <= 12) {
                 const allStrings = rawIds.every(id => typeof id === 'string');
                 const validSelected = allStrings ? rawIds.map(s => s.trim()).filter(id => validIdsList.includes(id)) : [];
-                if (allStrings && validSelected.length >= 1) {
+                if (allStrings && validSelected.length >= 1 && validSelected.length <= 6 && validSelected.length === rawIds.length) {
                   candidateParsed.factIds = validSelected;
                   if (!candidateParsed.analysis || typeof candidateParsed.analysis !== 'object') {
                     const fallbackSource = (candidateParsed.analysisSections && typeof candidateParsed.analysisSections === 'object')
@@ -430,14 +430,6 @@ Instrucciones analíticas estrictas:
                 } else {
                   console.warn(`[aiService] Candidate model ${candidate} returned unauthorized or invalid factIds. Trying next candidate...`);
                 }
-              } else if (!rawIds && ((candidateParsed.analysis && typeof candidateParsed.analysis === 'object') || (candidateParsed.analysisSections && typeof candidateParsed.analysisSections === 'object'))) {
-                candidateParsed.factIds = validIdsList.slice(0, 3);
-                if (!candidateParsed.analysis) {
-                  candidateParsed.analysis = candidateParsed.analysisSections;
-                }
-                parsed = candidateParsed;
-                usedModel = candidate;
-                break;
               } else {
                 console.warn(`[aiService] Candidate model ${candidate} returned missing or non-array factIds. Trying next candidate...`);
               }
@@ -474,7 +466,7 @@ Instrucciones analíticas estrictas:
         aiAvailable: true,
         modelUsed: usedModel,
         analyzedAt: new Date().toISOString(),
-        isDeepAnalysis: true,
+        isDeepAnalysis: false,
         dataGrounded: true,
         analysisMode: 'fact-selection',
         narrativeVerified: true,
@@ -493,13 +485,13 @@ Instrucciones analíticas estrictas:
       };
     }
   };
-  let ttlSeconds = 48 * 3600; // 48 horas de persistencia duradera para partidos programados
+  let ttlSeconds = 300;
   if (match.status === 'FINISHED') {
-    ttlSeconds = 7 * 86400; // 7 días para partidos finalizados
+    ttlSeconds = 3600;
   } else if (match.status === 'LIVE') {
-    ttlSeconds = 120; // 2 minutos para partidos en juego
+    ttlSeconds = 30;
   } else if (match.status === 'SCHEDULED' && match.kickoff && Date.now() > Date.parse(match.kickoff)) {
-    ttlSeconds = 120; // 2 minutos si la hora del partido ya pasó
+    ttlSeconds = 30;
   }
   return cachedData(cacheKey, ttlSeconds, generate, { forceRefresh: Boolean(options.forceRefresh) });
 }

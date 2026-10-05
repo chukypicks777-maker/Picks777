@@ -21,7 +21,7 @@ export default function Modal({ title, onClose, children }) {
   return <dialog ref={ref} aria-labelledby={id} onCancel={event => { event.preventDefault(); onClose?.(); }} className="picks-dialog">
     <header className="flex justify-between items-center gap-4 p-5 border-b border-white/10 sticky top-0 bg-[#0c1420] z-10">
       <h2 id={id} className="text-lg font-bold">{title}</h2>
-      {onClose && <button className="control" aria-label="Cerrar ventana" onClick={onClose}><X size={18} /></button>}
+      {onClose && <button type="button" className="min-w-11 min-h-11 rounded-xl border border-white/10 inline-flex items-center justify-center shrink-0 text-slate-400 hover:text-white hover:bg-white/5 cursor-pointer" aria-label="Cerrar ventana" onClick={onClose}><X size={18} /></button>}
     </header>
     <div className="p-5 sm:p-7">{children}</div>
   </dialog>;

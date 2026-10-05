@@ -1,6 +1,7 @@
 import { enrichHistoricalStats } from './verifiedStats.js';
 import { cachedData, fetchJson } from './dataCache.js';
 import { poissonModel, deriveCalibratedPoissonModel, buildPick } from './probabilityModel.js';
+import { hasReportedStatistics } from './espnParsing.js';
 
 export const LEAGUES = [
   ['inglaterra', 'Premier League', '🏴', 'eng.1'],
@@ -10,8 +11,9 @@ export const LEAGUES = [
   ['italia', 'Serie A', '🇮🇹', 'ita.1'],
   ['francia', 'Ligue 1', '🇫🇷', 'fra.1'],
   ['champions', 'UEFA Champions League', '🏆', 'uefa.champions'],
-  ['leagues_cup', 'Leagues Cup', '🌎', 'concacaf.leagues.cup']
-].map(([id, name, flag, espnCode]) => ({ id, name, flag, espnCode }));
+  ['leagues_cup', 'Leagues Cup', '🌎', 'concacaf.leagues.cup'],
+  ['mexico_femenil', 'Liga MX Femenil', '🇲🇽', 'mex.w.1']
+].map(([id, name, flag, espnCode]) => ({ id, name, flag, espnCode, sport: id === 'mexico_femenil' ? 'femenil' : 'futbol' }));
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 let lastObservation = null;
 export function sportsDiagnostic(now = Date.now()) {
@@ -21,7 +23,7 @@ export function sportsDiagnostic(now = Date.now()) {
 export const numberOrNull = value => {
   if (value === null || value === undefined || value === '') return null;
   const raw = typeof value === 'object' ? (value.value != null ? value.value : value.displayValue) : value;
-  if (raw === null || raw === undefined || raw === '') return null;
+  if (raw === null || raw === undefined || typeof raw === 'string' && raw.trim() === '') return null;
   const number = Number(raw);
   return Number.isFinite(number) ? number : null;
 };
@@ -70,8 +72,9 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
       shortName: c.team.abbreviation || c.team.shortDisplayName || c.team.name,
       logo: c.team.logo || c.team.logos?.[0]?.href,
       position: row.rank ?? null, points: row.points ?? null,
-      goalsFor: row.goalsFor ?? null, goalsAgainst: row.goalsAgainst ?? null,
-      gamesPlayed: row.gamesPlayed ?? null, form: form(c.form),
+      // Current standings can include this game's result. They cannot recreate a pregame forecast.
+      goalsFor: !['LIVE', 'FINISHED'].includes(status) ? row.goalsFor ?? null : null, goalsAgainst: !['LIVE', 'FINISHED'].includes(status) ? row.goalsAgainst ?? null : null,
+      gamesPlayed: !['LIVE', 'FINISHED'].includes(status) ? row.gamesPlayed ?? null : null, form: form(c.form),
       avgCorners: null, avgCornersConceded: null,
       avgFouls: null, avgYellowCards: null,
       bttsRate: null, over25Rate: null, cleanSheetRate: null,
@@ -88,7 +91,7 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
     if (total?.line === `${side === 'over' ? 'o' : 'u'}2.5`) odds[`${side}25`] = americanToDecimal(total.odds);
   }
   const match = {
-    id: `espn-${event.id}`, espnEventId: String(event.id), espnCode: league.espnCode,
+    id: `espn-${league.sport === 'femenil' ? 'femenil-' : ''}${event.id}`, sport: league.sport || 'futbol', espnEventId: String(event.id), espnCode: league.espnCode,
     homeTeamId: String(hc.team.id), awayTeamId: String(ac.team.id),
     leagueId: league.id, leagueName: league.name, leagueFlag: league.flag, season,
     status, statusDetail: s.type?.description || status, liveMinute: status === 'LIVE' ? s.displayClock || null : null,
@@ -100,11 +103,11 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
     source: 'ESPN', sourceUrl: `https://www.espn.com/soccer/match/_/gameId/${event.id}`,
     fetchedAt, providerUpdatedAt: null, h2h: [], recentMatches: [], realBoxscore: null
   };
-  match.model = (status !== 'POSTPONED' && status !== 'CANCELLED') ? poissonModel(match.homeTeam, match.awayTeam) : null;
+  match.model = status === 'SCHEDULED' ? poissonModel(match.homeTeam, match.awayTeam) : null;
   if (match.model) {
     match.probabilities = match.model.probabilities;
     match.probabilities.predictedScore = match.model.predictedScore;
-  } else if (status !== 'POSTPONED' && status !== 'CANCELLED') {
+  } else if (status === 'SCHEDULED') {
     const invH = odds.homeWin ? 1 / odds.homeWin : 0;
     const invD = odds.draw ? 1 / odds.draw : 0;
     const invA = odds.awayWin ? 1 / odds.awayWin : 0;
@@ -141,9 +144,10 @@ function getScoreboardDates() {
 }
 export async function getFootballFeed(options = {}) {
   const forceRefresh = Boolean(options?.forceRefresh);
+  const leagues = LEAGUES.filter(league => league.sport === (options.sport || 'futbol'));
   const dates = getScoreboardDates();
   const rangeKey = `${dates[0]}-${dates[dates.length - 1]}`;
-  const results = await Promise.all(LEAGUES.map(async league => {
+  const results = await Promise.all(leagues.map(async league => {
     try {
       const [scoreboard, standings] = await Promise.all([
         cachedData(`scoreboard:${league.id}:${rangeKey}`, 60, async () => {
@@ -172,7 +176,7 @@ export async function getFootballFeed(options = {}) {
               events: Array.from(eventsMap.values()),
               leagues: baseLeague
             },
-            fetchedAt: new Date().toISOString()
+            fetchedAt: new Date().toISOString(), degraded: valid.length !== urls.length
           };
         }, { forceRefresh }),
         standingsFor(league, { forceRefresh }).catch(() => null)
@@ -189,14 +193,14 @@ export async function getFootballFeed(options = {}) {
         }
         return true;
       });
-      return { matches, coverage: { leagueId: league.id, name: league.name, status: 'available', count: matches.length, fetchedAt: scoreboard.fetchedAt, standingsAvailable: Boolean(standings) } };
+      return { matches, coverage: { leagueId: league.id, name: league.name, status: scoreboard.degraded ? 'degraded' : 'available', count: matches.length, fetchedAt: scoreboard.fetchedAt, standingsAvailable: Boolean(standings) } };
     } catch {
       return { matches: [], coverage: { leagueId: league.id, name: league.name, status: 'unavailable', count: 0, fetchedAt: null } };
     }
   }));
   const coverage = results.map(r => r.coverage);
   lastObservation = { source: 'ESPN', scope: 'instance', checkedAt: new Date().toISOString(), providerUpdatedAt: null,
-    status: coverage.every(c => c.status === 'unavailable') ? 'unavailable' : coverage.some(c => c.status === 'unavailable' || !c.standingsAvailable) ? 'degraded' : 'available', coverage };
+    status: coverage.every(c => c.status === 'unavailable') ? 'unavailable' : coverage.some(c => c.status !== 'available' || !c.standingsAvailable) ? 'degraded' : 'available', coverage };
   const order = { LIVE: 0, SCHEDULED: 1, FINISHED: 2 };
   return {
     matches: results.flatMap(r => r.matches).sort((a, b) => ((order[a.status] ?? 3) - (order[b.status] ?? 3)) || Date.parse(a.kickoff) - Date.parse(b.kickoff)),
@@ -247,7 +251,7 @@ export function parseSummaryDetails(data, match) {
   const fields = { fouls: 'foulsCommitted', corners: 'wonCorners', yellowCards: 'yellowCards', redCards: 'redCards', shots: 'totalShots', shotsOnTarget: 'shotsOnTarget', possession: 'possessionPct' };
   const side = id => {
     const box = ['LIVE', 'FINISHED'].includes(match.status)
-      ? data.boxscore?.teams?.find(t => String(t.team?.id) === id)
+      ? data.boxscore?.teams?.find(t => String(t.team?.id) === id && hasReportedStatistics(t.statistics))
       : null;
     return Object.fromEntries(Object.entries(fields).map(([key, name]) => {
       const s = box?.statistics?.find(v => v.name === name);
@@ -286,7 +290,7 @@ export async function enrichMatchWithRealData(match, options = {}) {
     }
   }
   try {
-    const details = await cachedData(`summary:${match.id}:${match.status}`, match.status === 'LIVE' ? 60 : 600, async () => {
+    const details = await cachedData(`summary:v2:${match.id}:${match.status}`, match.status === 'LIVE' ? 60 : 600, async () => {
       const url = `${BASE}/${match.espnCode}/summary?event=${match.espnEventId}`;
       const data = await fetchJson(url);
       return { ...parseSummaryDetails(data, match), rawHeader: data.header, fetchedAt: new Date().toISOString(), sourceUrl: url };
@@ -355,7 +359,7 @@ export async function enrichMatchWithRealData(match, options = {}) {
           if (rivalScore === 0) clean++;
         }
       }
-      return count > 0 ? Number(((clean / count) * 100).toFixed(1)) : null;
+      return count >= 5 ? Number(((clean / count) * 100).toFixed(1)) : null;
     };
 
     const homeRecent = details.recentMatches?.find(g => g.teamId === match.homeTeamId || g.team === match.homeTeam?.name);

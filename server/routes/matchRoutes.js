@@ -4,8 +4,9 @@ import { generateAiMatchReport } from '../services/aiService.js';
 import { rateLimit } from '../rateLimit.js';
 const router = express.Router();
 router.get('/leagues', async (req, res) => {
-  const feed = await getFootballFeed();
-  res.json({ success: true, leagues: LEAGUES, coverage: feed.coverage });
+  const sport = req.query.sport === 'femenil' ? 'femenil' : 'futbol';
+  const feed = await getFootballFeed({ sport });
+  res.json({ success: true, leagues: LEAGUES.filter(league => league.sport === sport), coverage: feed.coverage });
 });
 router.get('/standings', async (req, res) => {
   try {
@@ -33,7 +34,8 @@ export function filterMatches(matches, query, now = new Date()) {
     (!search || `${m.homeTeam.name} ${m.awayTeam.name} ${m.leagueName} ${m.venue || ''}`.toLowerCase().includes(String(search).trim().toLowerCase())));
 }
 async function feedHandler(req, res) {
-  const feed = await getFootballFeed();
+  if (req.query.sport && !['futbol', 'femenil'].includes(req.query.sport)) return res.status(400).json({ success: false, message: 'Deporte inválido.' });
+  const feed = await getFootballFeed({ sport: req.query.sport || 'futbol' });
   if (feed.coverage.every(c => c.status === 'unavailable')) {
     return res.status(503).json({ ...feed, success: false, message: 'No se puede consultar el proveedor. No se muestran datos de demostración.' });
   }
@@ -119,16 +121,17 @@ router.get('/btts', async (req, res) => {
 });
 router.get('/:id', async (req, res) => {
   try {
+    const sport = req.params.id.startsWith('espn-femenil-') ? 'femenil' : 'futbol';
     let feed;
     try {
-      feed = await getFootballFeed();
+      feed = await getFootballFeed({ sport });
     } catch {
       feed = { matches: [] };
     }
     let match = feed.matches?.find(m => m.id === req.params.id);
     if (!match) {
       try {
-        feed = await getFootballFeed({ forceRefresh: true });
+        feed = await getFootballFeed({ forceRefresh: true, sport });
         match = feed.matches?.find(m => m.id === req.params.id);
       } catch (err) {
         console.warn('[matchRoutes] Error refreshing feed for match by id:', err?.message || err);
@@ -148,11 +151,13 @@ router.get('/:id', async (req, res) => {
   }
 });
 router.post('/:id/ai-analysis', rateLimit('ai'), async (req, res) => {
+  const deadline = Date.now() + 50000;
   try {
+    const sport = req.params.id.startsWith('espn-femenil-') ? 'femenil' : 'futbol';
     const forceRefresh = Boolean(req.query.force === '1' || req.body?.forceRefresh);
     let feed;
     try {
-      feed = await getFootballFeed();
+      feed = await getFootballFeed({ sport });
     } catch {
       feed = { matches: [] };
     }
@@ -160,7 +165,7 @@ router.post('/:id/ai-analysis', rateLimit('ai'), async (req, res) => {
     // Fixture facts must come from the server's provider feed, never the browser.
     if (!match && forceRefresh) {
       try {
-        feed = await getFootballFeed({ forceRefresh: true });
+        feed = await getFootballFeed({ forceRefresh: true, sport });
         match = feed.matches?.find(m => m.id === req.params.id);
       } catch (err) {
         console.warn('[matchRoutes] Error refreshing football feed:', err?.message || err);
@@ -176,7 +181,7 @@ router.post('/:id/ai-analysis', rateLimit('ai'), async (req, res) => {
     }
     const model = req.body?.model || req.query?.model || undefined;
     const aiConfig = req.body?.aiConfig;
-    const report = await generateAiMatchReport(enriched, { forceRefresh, model, aiConfig });
+    const report = await generateAiMatchReport(enriched, { forceRefresh, model, aiConfig, deadline });
     if (report?.topPick && report.aiAvailable) {
       enriched.aiPick = {
         ...enriched.aiPick,
@@ -187,9 +192,6 @@ router.post('/:id/ai-analysis', rateLimit('ai'), async (req, res) => {
         odds: report.topPick.odds ?? enriched.aiPick?.odds,
         summaryRationale: report.topPick.rationale || report.analysisSections?.verdict || enriched.aiPick?.summaryRationale
       };
-      if (enriched.probabilities) {
-        enriched.probabilities.confidence = report.topPick.probability;
-      }
     }
     enriched.isAiAnalyzed = Boolean(report?.aiAvailable);
     enriched.aiReport = report;

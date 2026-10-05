@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+.picks-dialog {
+  width: min(56rem, calc(100vw - 1.5rem));
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  margin: auto;
+  padding: 0;
+  color: #f1f5f9;
+  background: #0c1420;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.6);
+}
+.picks-dialog::backdrop { background: rgb(0 0 0 / 0.82); backdrop-filter: blur(4px); }
+
 @layer base {
   html, body {
     background-color: #06090e;

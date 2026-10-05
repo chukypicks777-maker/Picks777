@@ -1,6 +1,7 @@
 import { cachedData, fetchJson } from './dataCache.js';
-import { numberOrNull } from './espnParsing.js';
+import { numberOrNull, hasReportedStatistics } from './espnParsing.js';
 import { totalLines } from '../../src/utils/probability.js';
+import { poissonModel } from './probabilityModel.js';
 
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 const MIN_SAMPLE = 5;
@@ -10,8 +11,8 @@ export function readHistoricalSummary(data, teamId, cutoff) {
   const own = comp.competitors?.find(c => String(c.id) === String(teamId));
   const rival = comp.competitors?.find(c => String(c.id) !== String(teamId));
   if (!own || !rival) return null;
-  const box = id => data.boxscore?.teams?.find(t => String(t.team?.id) === String(id));
-  const stat = (id, name) => { const s = box(id)?.statistics?.find(v => v.name === name); const n = numberOrNull(s?.value ?? s?.displayValue); return Number.isFinite(n) && n >= 0 ? n : null; };
+  const box = id => data.boxscore?.teams?.find(t => String(t.team?.id) === String(id) && hasReportedStatistics(t.statistics));
+  const stat = (id, name) => { const s = box(id)?.statistics?.find(v => v.name === name); const n = numberOrNull(s?.value ?? s?.displayValue); return Number.isInteger(n) && n >= 0 ? n : null; };
   const halves = c => {
     if (c.linescores?.length !== 2) return null; // Exclude extra time/shootouts.
     const values = c.linescores.map(s => numberOrNull(s.value ?? s.displayValue));
@@ -19,11 +20,12 @@ export function readHistoricalSummary(data, teamId, cutoff) {
     return values;
   };
   const ownHalves = halves(own), rivalHalves = halves(rival);
-  const ownScore = numberOrNull(own.score);
-  const rivalScore = numberOrNull(rival.score);
+  const score = c => { const n = numberOrNull(c.score); return Number.isInteger(n) && n >= 0 ? n : null; };
+  const ownScore = score(own);
+  const rivalScore = score(rival);
   const cleanSheet = rivalScore !== null ? (rivalScore === 0 ? 1 : 0) : null;
   const btts = (ownScore !== null && rivalScore !== null) ? (ownScore > 0 && rivalScore > 0 ? 1 : 0) : null;
-  return { id: comp.id, date: comp.date, corners: stat(own.id, 'wonCorners'), cornersAgainst: stat(rival.id, 'wonCorners'),
+  return { id: comp.id, date: comp.date, goalsFor: ownScore, goalsAgainst: rivalScore, corners: stat(own.id, 'wonCorners'), cornersAgainst: stat(rival.id, 'wonCorners'),
     cards: stat(own.id, 'yellowCards'), fouls: stat(own.id, 'foulsCommitted'), cleanSheet, btts,
     ownHalves: ownHalves && rivalHalves ? ownHalves : null, rivalHalves: ownHalves && rivalHalves ? rivalHalves : null };
 }
@@ -43,17 +45,21 @@ export function aggregateHistory(rows) {
   sampleSizes.btts = bttsList.length;
   const bttsRate = bttsList.length >= MIN_SAMPLE ? Number(((bttsList.reduce((a, b) => a + b, 0) / bttsList.length) * 100).toFixed(1)) : null;
   const halves = valid.filter(r => r.ownHalves && r.rivalHalves);
+  const goals = valid.filter(r => Number.isInteger(r.goalsFor) && r.goalsFor >= 0 && Number.isInteger(r.goalsAgainst) && r.goalsAgainst >= 0);
+  sampleSizes.goals = goals.length;
   sampleSizes.halves = halves.length;
   return { ...metrics, sampleSizes, cleanSheetRate, bttsRate, firstFor: halves.reduce((n, r) => n + r.ownHalves[0], 0),
     firstAgainst: halves.reduce((n, r) => n + r.rivalHalves[0], 0),
     totalFor: halves.reduce((n, r) => n + r.ownHalves[0] + r.ownHalves[1], 0),
     totalAgainst: halves.reduce((n, r) => n + r.rivalHalves[0] + r.rivalHalves[1], 0),
-    records: valid.map(r => ({ id: r.id, date: r.date })), fetchedAt: new Date().toISOString() };
+    goalsFor: goals.length >= MIN_SAMPLE ? goals.reduce((sum, r) => sum + r.goalsFor, 0) : null,
+    goalsAgainst: goals.length >= MIN_SAMPLE ? goals.reduce((sum, r) => sum + r.goalsAgainst, 0) : null,
+    records: valid.map(r => ({ id: r.id, date: r.date, leagueCode: r.leagueCode })), fetchedAt: new Date().toISOString() };
 }
 async function history(match, teamId, options = {}) {
   const cutoff = Math.min(Date.now(), Date.parse(match.kickoff));
   const forceRefresh = Boolean(options?.forceRefresh);
-  return cachedData(`verified-history:v1:${match.espnCode}:${teamId}:${match.kickoff}`, 3600, async () => {
+  return cachedData(`verified-history:v3:${match.espnCode}:${teamId}:${match.kickoff}`, 300, async () => {
     let leagueCode = match.espnCode;
     let schedule = await fetchJson(`${BASE}/${leagueCode}/teams/${teamId}/schedule`).catch(() => null);
     let events = [...new Map((schedule?.events || []).map(e => [e.id, e])).values()]
@@ -62,7 +68,7 @@ async function history(match, teamId, options = {}) {
 
     // If tournament/cup schedule has fewer than MIN_SAMPLE completed matches,
     // look up the team in their domestic league to gather full verified stats
-    if (events.length < MIN_SAMPLE) {
+    if (events.length < MIN_SAMPLE && match.sport !== 'femenil' && !match.espnCode.includes('.w.')) {
       let resolvedCode = null;
       try {
         const teamInfo = await fetchJson(`${BASE}/teams/${teamId}`).catch(() => null);
@@ -83,21 +89,7 @@ async function history(match, teamId, options = {}) {
         }
       } catch {}
 
-      if (events.length < MIN_SAMPLE) {
-        const domesticLeagues = ['esp.1', 'ita.1', 'eng.1', 'ger.1', 'fra.1', 'por.1', 'ned.1', 'tur.1', 'bel.1', 'sco.1', 'mex.1', 'usa.1', 'arg.1', 'bra.1'];
-        for (const domCode of domesticLeagues) {
-          if (domCode === match.espnCode || domCode === resolvedCode) continue;
-          const domSchedule = await fetchJson(`${BASE}/${domCode}/teams/${teamId}/schedule`).catch(() => null);
-          const domEvents = [...new Map((domSchedule?.events || []).map(e => [e.id, e])).values()]
-            .filter(e => (e.competitions?.[0]?.status?.type?.completed || e.status?.type?.completed) && Date.parse(e.date) < cutoff)
-            .sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 10);
-          if (domEvents.length >= MIN_SAMPLE || domEvents.length > events.length) {
-            leagueCode = domCode;
-            events = domEvents;
-            if (events.length >= MIN_SAMPLE) break;
-          }
-        }
-      }
+      // No guessed league scan: use only the team's provider-declared domestic league.
     }
 
     const rows = [];
@@ -106,7 +98,8 @@ async function history(match, teamId, options = {}) {
       rows.push(...await Promise.all(events.slice(i, i + 4).map(async e => {
         try {
           const data = await cachedData(`historical-summary:v1:${leagueCode}:${e.id}`, 21600, () => fetchJson(`${BASE}/${leagueCode}/summary?event=${e.id}`), { forceRefresh });
-          return readHistoricalSummary(data, teamId, cutoff);
+          const row = readHistoricalSummary(data, teamId, cutoff);
+          return row ? { ...row, leagueCode } : null;
         } catch { return null; }
       })));
     }
@@ -135,10 +128,11 @@ export async function enrichHistoricalStats(match, options = {}) {
   const team = (original, stats) => {
     if (!stats) return original;
     const hasSufficientOriginal = Number.isFinite(original.gamesPlayed) && original.gamesPlayed >= MIN_SAMPLE && Number.isFinite(original.goalsFor) && Number.isFinite(original.goalsAgainst);
-    const validSamples = Math.max(stats.sampleSizes?.halves ?? 0, stats.sampleSizes?.corners ?? 0, stats.sampleSizes?.cards ?? 0, stats.records?.length ?? 0);
-    const fallbackGF = !hasSufficientOriginal && Number.isFinite(stats.totalFor) && validSamples >= MIN_SAMPLE ? stats.totalFor : original.goalsFor;
-    const fallbackGA = !hasSufficientOriginal && Number.isFinite(stats.totalAgainst) && validSamples >= MIN_SAMPLE ? stats.totalAgainst : original.goalsAgainst;
-    const fallbackGP = !hasSufficientOriginal && validSamples >= MIN_SAMPLE ? validSamples : original.gamesPlayed;
+    const validSamples = stats.sampleSizes?.goals ?? 0;
+    const useHistory = !hasSufficientOriginal && validSamples >= MIN_SAMPLE;
+    const fallbackGF = useHistory ? stats.goalsFor : original.goalsFor;
+    const fallbackGA = useHistory ? stats.goalsAgainst : original.goalsAgainst;
+    const fallbackGP = useHistory ? validSamples : original.gamesPlayed;
     return {
       ...original,
       goalsFor: fallbackGF ?? null,
@@ -156,6 +150,7 @@ export async function enrichHistoricalStats(match, options = {}) {
       statsRecords: stats.records
     };
   };
-  return { ...match, homeTeam: team(match.homeTeam, histories[0]), awayTeam: team(match.awayTeam, histories[1]),
-    halfGoals: (match.status !== 'POSTPONED' && match.status !== 'CANCELLED') ? halfGoalModel(match.model, ...histories) : null };
+  const homeTeam = team(match.homeTeam, histories[0]), awayTeam = team(match.awayTeam, histories[1]);
+  return { ...match, homeTeam, awayTeam,
+    halfGoals: ['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status) ? halfGoalModel(match.model || poissonModel(homeTeam, awayTeam), ...histories) : null };
 }

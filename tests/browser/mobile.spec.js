@@ -17,6 +17,7 @@ async function setup(page, { initial = null, loseCookie = false, googleResult = 
     if (path === '/api/auth/google') { body = googleResult; if (!loseCookie) session = googleResult; }
     if (path === '/api/auth/logout') session = null;
     if (path.startsWith('/api/matches')) body = { success: true, matches: sampleMatches.slice(0, 3) };
+    if (path.startsWith('/api/sports')) body = { success: true, matches: [], coverage: [] };
     if (path === `/api/matches/${sampleMatches[0].id}`) body = { success: true, match: sampleMatches[0] };
     if (path.endsWith('/ai-analysis')) body = { success: true, match: sampleMatches.find(match => path.includes('/' + match.id + '/')), report: { aiAvailable: false, summary: 'Fixture de prueba de interfaz' } };
     if (path === '/api/community') body = { success: true, settings: { links: [] } };
@@ -122,30 +123,30 @@ test('prueba vencida no ofrece continuar sin código', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Continuar con mi Prueba/ })).toHaveCount(0);
 });
 
-test('los apartados de deportes muestran Próximamente y permiten volver a fútbol', async ({ page }) => {
+test('los apartados de deportes muestran sus filtros y permiten volver a fútbol', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 680 });
   await setup(page, { initial: trial });
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'Ver Informe', exact: true }).first()).toBeVisible();
   const sports = page.getByRole('tablist', { name: 'Deportes' });
-  await expect(sports.getByRole('tab')).toHaveCount(4);
+  await expect(sports.getByRole('tab')).toHaveCount(5);
   for (const [name, path] of [['Béisbol', '/beisbol'], ['Tenis', '/tenis'], ['Básquetbol', '/basquetbol']]) {
     const tab = sports.getByRole('tab', { name, exact: true });
     await tab.click();
     await expect(tab).toHaveAttribute('aria-selected', 'true');
     await expect(page).toHaveURL(new RegExp(path + '$'));
-    await expect(page.getByRole('tabpanel').getByText('Próximamente', { exact: true })).toBeVisible();
+    await expect(page.getByRole('tabpanel').getByText('Sin encuentros disponibles para este filtro', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Ver Informe', exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Stats', exact: true })).toBeDisabled();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.reload();
-    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: new RegExp(name) }).first()).toBeVisible();
   }
-  await page.screenshot({ path: 'artifacts/mobile/sports-coming-soon-320.png' });
+  await page.screenshot({ path: 'artifacts/mobile/sports-leagues-320.png' });
   await sports.getByRole('tab', { name: 'Fútbol', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Ver Informe', exact: true }).first()).toBeVisible();
   await page.goBack();
-  await expect(page.getByRole('heading', { name: 'Básquetbol', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Básquetbol/ })).toBeVisible();
   await sports.getByRole('tab', { name: 'Tenis', exact: true }).focus();
   await page.keyboard.press('Home');
   await expect(sports.getByRole('tab', { name: 'Fútbol', exact: true })).toBeFocused();

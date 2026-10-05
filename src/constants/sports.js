@@ -1,5 +1,6 @@
 export const SPORTS = [
   { id: 'futbol', name: 'Fútbol', icon: '⚽', path: '/' },
+  { id: 'femenil', name: 'Liga femenil', icon: '⚽', path: '/femenil' },
   { id: 'beisbol', name: 'Béisbol', icon: '⚾', path: '/beisbol' },
   { id: 'tenis', name: 'Tenis', icon: '🎾', path: '/tenis' },
   { id: 'basquetbol', name: 'Básquetbol', icon: '🏀', path: '/basquetbol' }

@@ -108,6 +108,7 @@ export default function MatchDetailModal({
   const fetchAiAnalysis = useCallback(async (forceRefresh = false, modelOverride = null) => {
     const curMatch = matchRef.current;
     if (!curMatch?.id) return;
+    const requestedFingerprint = computeMatchFingerprint(curMatch);
     const modelToUse = modelOverride || activeModelInfoRef.current.selectedModel || undefined;
 
     if (forceRefresh) {
@@ -157,7 +158,7 @@ export default function MatchDetailModal({
         })
       });
       const data = await res.json().catch(() => null);
-      if (requestId !== aiRequestId.current || matchRef.current?.id !== curMatch.id) return;
+      if (requestId !== aiRequestId.current || computeMatchFingerprint(matchRef.current) !== requestedFingerprint) return;
       if (data?.success) {
         const finalReport = data.report || null;
         if (finalReport) {
@@ -178,9 +179,9 @@ export default function MatchDetailModal({
         if (forceRefresh) {
           if (finalReport?.aiAvailable) {
             sounds.playSuccess?.();
-            onToastRef.current?.('✅ Pronóstico táctico de IA generado y confirmado con datos oficiales.');
+            onToastRef.current?.('✅ Informe actualizado: hechos del proveedor ordenados por IA y estimaciones estadísticas.');
           } else {
-            onToastRef.current?.('ℹ️ Pronóstico cuantitativo institucional verificado (Poisson oficial).');
+            onToastRef.current?.('ℹ️ Informe estadístico actualizado; proveedor de IA no disponible.');
           }
         }
       } else {
@@ -621,8 +622,8 @@ export default function MatchDetailModal({
                           {loadingAi
                             ? 'Procesando Análisis con IA...'
                             : aiReport?.aiAvailable
-                              ? 'Pronóstico IA: Procesado y Verificado'
-                              : 'Análisis Cuantitativo Institucional'}
+                              ? 'Informe con hechos priorizados por IA'
+                              : 'Estimación estadística'}
                         </span>
                         
                         {loadingAi && (
@@ -650,7 +651,7 @@ export default function MatchDetailModal({
                         {loadingAi
                           ? `Conectando con ${activeModelInfo.selectedModel || 'deepseek-v4.1'} • Cruzando probabilidades Poisson y métricas de temporada...`
                           : aiReport?.aiAvailable
-                            ? `Motor: ${aiReport.modelUsed || activeModelInfo.selectedModel || 'deepseek-v4.1'} • Análisis fundamentado en hechos oficiales verificables.`
+                            ? `Motor: ${aiReport.modelUsed || activeModelInfo.selectedModel || 'deepseek-v4.1'} • La IA ordena registros; las probabilidades las calcula el modelo estadístico.`
                             : (aiReport?.aiStatus || 'Pronóstico calculado mediante modelo matemático Poisson sobre estadísticas de temporada.')}
                       </p>
                     </div>
@@ -667,7 +668,7 @@ export default function MatchDetailModal({
                         onClick={() => fetchAiAnalysis(true)}
                         disabled={loadingAi}
                         className="px-3 py-1.5 bg-gradient-to-r from-sky-500/20 to-emerald-500/20 hover:from-sky-500/30 hover:to-emerald-500/30 active:scale-95 text-sky-200 border border-sky-400/40 rounded-lg text-xs font-mono font-semibold transition-all shadow-[0_0_12px_rgba(56,189,248,0.15)] flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
-                        title="👑 Modo Owner: Reanalizar y recalcular datos con IA sin restricciones de cuota"
+                        title="Actualizar el informe; sujeto a la cuota de análisis del servidor"
                       >
                         <RotateCw className={`w-3.5 h-3.5 ${loadingAi ? 'animate-spin text-sky-400' : ''}`} />
                         <span>{loadingAi ? 'Actualizando datos...' : (aiReport?.aiAvailable ? 'Regenerar con IA' : 'Reintentar con IA')}</span>
@@ -676,6 +677,8 @@ export default function MatchDetailModal({
                   )}
                 </div>
               </div>
+
+              <p className="text-[11px] text-slate-400 leading-relaxed">Fuente: <a href={m.detailsSourceUrl || m.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-sky-300 underline">{m.source || 'ESPN'}</a> · Consultado {m.detailsFetchedAt || m.fetchedAt ? new Date(m.detailsFetchedAt || m.fetchedAt).toLocaleString('es') : 'N/D'}. Estimación previa al partido; precisión sin validación prospectiva. La consulta no confirma cuándo actualizó el proveedor.</p>
 
               <VerifiedPicks 
                 match={m} 
@@ -697,7 +700,7 @@ export default function MatchDetailModal({
                 <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
                   <h5 className="font-bold text-xs uppercase tracking-wide text-sky-400 font-mono flex items-center space-x-2">
                     <span>⚡</span>
-                    <span>Análisis Táctico Especializado & Inteligencia Predictiva</span>
+                    <span>Registros y estimaciones del encuentro</span>
                   </h5>
                   {aiReport?.aiAvailable && (
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
@@ -711,7 +714,7 @@ export default function MatchDetailModal({
                     <div className="flex items-center space-x-2 min-w-0">
                       <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span className="text-emerald-200">
-                        <strong>Análisis Realizado a Profundidad y Confirmado:</strong> Métricas oficiales cruzadas (clasificación, H2H, goles y rachas recientes).
+                        <strong>Hechos del proveedor y estimaciones calculadas:</strong> La IA prioriza hechos disponibles; no determina porcentajes ni verifica resultados futuros.
                       </span>
                     </div>
                     <span className="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-bold self-start sm:self-auto shrink-0 border border-emerald-500/30">

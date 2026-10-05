@@ -10,6 +10,7 @@ import authRoutes from './routes/authRoutes.js';
 import mobileAuthRoutes from './routes/mobileAuthRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import matchRoutes from './routes/matchRoutes.js';
+import sportsRoutes from './routes/sportsRoutes.js';
 import parlayRoutes from './routes/parlayRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import { getEffectiveAiConfig } from './services/aiService.js';
@@ -53,6 +54,7 @@ app.get('/api/settings/active-model', async (req, res) => {
 app.use('/api', requireSession);
 app.use('/api/admin', adminRoutes);
 app.use('/api/matches', matchRoutes);
+app.use('/api/sports', sportsRoutes);
 app.use('/api/boost', (req, res, next) => {
   const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
   req.url = '/boost' + query;

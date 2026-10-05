@@ -23,5 +23,11 @@ test('AI cannot inject made-up probabilities, scores, tactics, odds, HTML or una
   assert.ok(!JSON.stringify(injected).includes('800 goles'));
   response={factIds:['made-up']};const bad=await generateAiMatchReport(match,{forceRefresh:true});assert.equal(bad.aiAvailable,false);assert.deepEqual(bad.probabilities,model.probabilities);
   response={factIds:[{text:'injected'}]};assert.equal((await generateAiMatchReport(match,{forceRefresh:true})).aiAvailable,false);
+  response={analysisSections:{verdict:'Predicción inventada sin catálogo'}};assert.equal((await generateAiMatchReport(match,{forceRefresh:true})).aiAvailable,false);
+  response={factIds:['fixture','made-up']};assert.equal((await generateAiMatchReport(match,{forceRefresh:true})).aiAvailable,false);
+  let requests = 0;
+  globalThis.fetch = async () => { requests++; throw new Error('Expired analysis must not start a provider request'); };
+  const expired = await generateAiMatchReport(match, { forceRefresh: true, deadline: Date.now() - 1 });
+  assert.equal(expired.aiAvailable, false); assert.equal(requests, 0);
  }finally{globalThis.fetch=oldFetch;storage.file=oldFile;await rm(dir,{recursive:true,force:true});}
 });

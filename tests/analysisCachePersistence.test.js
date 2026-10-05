@@ -10,70 +10,23 @@ import {
 } from '../src/utils/analysisCache.js';
 import { cachedData, clearCachePattern } from '../server/services/dataCache.js';
 
-test('getMatchCacheTtlMs assigns proper durable TTLs based on match status', () => {
-  // SCHEDULED matches must persist for 48 hours (172,800,000 ms)
-  const scheduledTtl = getMatchCacheTtlMs('SCHEDULED', { aiAvailable: true });
-  assert.equal(scheduledTtl, 48 * 3600 * 1000);
-
-  // FINISHED matches persist for 7 days
-  const finishedTtl = getMatchCacheTtlMs('FINISHED', { aiAvailable: true });
-  assert.equal(finishedTtl, 7 * 24 * 3600 * 1000);
-
-  // LIVE matches persist for 2 minutes
-  const liveTtl = getMatchCacheTtlMs('LIVE', { aiAvailable: true });
-  assert.equal(liveTtl, 2 * 60 * 1000);
-
-  // Baseline without AI availability expires in 1 minute to allow quick retry
-  const baselineTtl = getMatchCacheTtlMs('SCHEDULED', { aiAvailable: false });
-  assert.equal(baselineTtl, 60 * 1000);
-
-  // SCHEDULED match whose kickoff already passed expires in 2 minutes (no stale pre-match analysis)
-  const pastMatch = {
-    status: 'SCHEDULED',
-    kickoff: new Date(Date.now() - 3600 * 1000).toISOString()
-  };
-  assert.equal(getMatchCacheTtlMs(pastMatch, { aiAvailable: true }), 2 * 60 * 1000);
+test('report cache expires within five minutes and live reports within thirty seconds', () => {
+  assert.equal(getMatchCacheTtlMs('SCHEDULED', { aiAvailable: true }), 300000);
+  assert.equal(getMatchCacheTtlMs('FINISHED', { aiAvailable: true }), 3600000);
+  assert.equal(getMatchCacheTtlMs('LIVE', { aiAvailable: true }), 30000);
+  assert.equal(getMatchCacheTtlMs('SCHEDULED', { aiAvailable: false }), 60000);
+  assert.equal(getMatchCacheTtlMs({ status: 'SCHEDULED', kickoff: new Date(Date.now() - 3600000).toISOString() }, { aiAvailable: true }), 30000);
 });
 
-test('scheduled match analysis remains valid in cache well beyond 10 minutes (up to 48 hours)', () => {
+test('a scheduled report is preserved briefly and expires before stale hours of analysis accumulate', () => {
   clearAllAnalysisCache();
-
-  const match = {
-    id: 'match-scheduled-long',
-    status: 'SCHEDULED',
-    kickoff: new Date(Date.now() + 72 * 3600000).toISOString(),
-    probabilities: { homeWin: 55, awayWin: 20 }
-  };
-
-  setCachedAnalysis(match.id, match, {
-    aiReport: { aiAvailable: true, narrativeAnalysis: 'Reporte para el fin de semana' },
-    enrichedMatch: match
-  });
-
-  // Verify immediate retrieval
-  const immediate = getCachedAnalysis(match.id, match);
-  assert.ok(immediate, 'Immediate read must hit');
-
-  // Simulate 12 hours later (12 * 3600 * 1000 ms)
+  const match = { id: 'freshness-test', status: 'SCHEDULED', kickoff: new Date(Date.now() + 86400000).toISOString() };
+  setCachedAnalysis(match.id, match, { aiReport: { aiAvailable: true } });
   const entry = getCachedAnalysis(match.id, match);
-  assert.ok(entry);
-  entry.timestamp = Date.now() - (12 * 3600 * 1000); // 12 hours old
-
-  // In the old version, this would be purged because > 10 minutes.
-  // With durable 48h TTL, it MUST still hit!
-  const cached12h = getCachedAnalysis(match.id, match);
-  assert.ok(cached12h, 'Cache must still be valid after 12 hours for scheduled matches');
-  assert.equal(cached12h.aiReport.narrativeAnalysis, 'Reporte para el fin de semana');
-
-  // Simulate 36 hours later
-  entry.timestamp = Date.now() - (36 * 3600 * 1000); // 36 hours old
-  const cached36h = getCachedAnalysis(match.id, match);
-  assert.ok(cached36h, 'Cache must still be valid after 36 hours');
-
-  // Simulate 50 hours later (beyond 48h TTL)
-  entry.timestamp = Date.now() - (50 * 3600 * 1000); // 50 hours old
-  const cached50h = getCachedAnalysis(match.id, match);
-  assert.equal(cached50h, null, 'Cache should expire after 48 hours');
+  entry.timestamp = Date.now() - 240000;
+  assert.ok(getCachedAnalysis(match.id, match));
+  entry.timestamp = Date.now() - 360000;
+  assert.equal(getCachedAnalysis(match.id, match), null);
 });
 
 test('localStorage persistence allows retrieval across mock browser sessions', () => {

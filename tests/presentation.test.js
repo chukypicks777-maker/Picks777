@@ -138,3 +138,12 @@ test('OverUnderGroupedSection reconstructs goal ladder while preserving missing 
   assert.ok(p15 > p25, `Over 1.5 (${p15}%) must be greater than Over 2.5 (${p25}%)`);
   assert.ok(p25 > p35, `Over 2.5 (${p25}%) must be greater than Over 3.5 (${p35}%)`);
 });
+
+test('football renders the full requested corner and card ladders on both sides, preserving zero', () => {
+  const diff = { matchCornersProbs: { over55: 90, over65: 80, over75: 65, over85: 50, over95: 30 }, matchCardsProbs: { over25: 40, over35: 20, over45: 0 } };
+  const html = renderToStaticMarkup(React.createElement(OverUnderGroupedSection, { match: { probabilities: {} }, diff, isVip: true }));
+  for (const line of [5.5, 6.5, 7.5, 8.5, 9.5]) for (const sign of ['+', '-']) assert.ok(html.includes(`${sign}${line} Córners Partido`));
+  for (const line of [2.5, 3.5, 4.5]) for (const sign of ['+', '-']) assert.ok(html.includes(`${sign}${line} Tarjetas`));
+  assert.match(html, /\+4\.5 Tarjetas[\s\S]*?0%/);
+  assert.match(html, /-4\.5 Tarjetas[\s\S]*?100%/);
+});

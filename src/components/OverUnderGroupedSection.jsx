@@ -19,22 +19,18 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
   const homeCornersUnder5 = complement(homeCornersOver5);
   const awayCornersOver5 = awayStats?.cornerOver55 ?? null;
   const awayCornersUnder5 = complement(awayCornersOver5);
-  const matchCornersOver5 = diff.matchCornersProbs?.over55 ?? null;
-  const matchCornersUnder5 = complement(matchCornersOver5);
-  const matchCornersOver85 = diff.matchCornersProbs?.over85 ?? null;
-  const matchCornersUnder85 = complement(matchCornersOver85);
-  const overCards = diff.matchCardsProbs?.over35 ?? null;
-  const underCards = complement(overCards);
 
   const lines = [
-    {
+    ...[2.5, 3.5, 4.5].map(line => {
+      const overProb = percent(diff.matchCardsProbs?.[`over${String(line).replace('.', '')}`]);
+      return {
       market: 'Tarjetas amarillas totales',
-      overLabel: '+3.5 Tarjetas',
-      underLabel: '-3.5 Tarjetas',
-      overProb: overCards,
-      underProb: underCards,
-      note: diff.matchCardsProbs?.over35 ? 'Amarillas registradas; no puntos por tarjetas' : 'Sin muestra verificada suficiente'
-    },
+      overLabel: `+${line} Tarjetas`,
+      underLabel: `-${line} Tarjetas`,
+      overProb,
+      underProb: complement(overProb),
+      note: overProb !== null ? 'Amarillas registradas; no puntos por tarjetas' : 'Sin muestra verificada suficiente'
+    }; }),
     {
       market: 'Línea de 0.5 Goles',
       overLabel: '+0.5 Goles',
@@ -91,22 +87,17 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
       underProb: awayCornersUnder5,
       note: 'Volumen individual visita'
     },
-    {
-      market: 'Córners Totales Partido (Línea 5.5)',
-      overLabel: '+5.5 Córners Partido',
-      overProb: matchCornersOver5,
-      underLabel: '-5.5 Córners Partido',
-      underProb: matchCornersUnder5,
-      note: 'Total combinado de ambos'
-    },
-    {
-      market: 'Córners Totales Partido (Línea 8.5)',
-      overLabel: '+8.5 Córners Partido',
-      overProb: matchCornersOver85,
-      underLabel: '-8.5 Córners Partido',
-      underProb: matchCornersUnder85,
-      note: 'Línea principal de córners'
-    }
+    ...[5.5, 6.5, 7.5, 8.5, 9.5].map(line => {
+      const overProb = percent(diff.matchCornersProbs?.[`over${String(line).replace('.', '')}`]);
+      return {
+        market: `Córners Totales Partido (Línea ${line})`,
+        overLabel: `+${line} Córners Partido`,
+        overProb,
+        underLabel: `-${line} Córners Partido`,
+        underProb: complement(overProb),
+        note: 'Total combinado de ambos'
+      };
+    })
   ];
 
   return (

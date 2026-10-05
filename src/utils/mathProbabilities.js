@@ -3,14 +3,13 @@ import { parseDecimalOdds } from './oddsFormatter.js';
 export { poissonProbability, poissonCumulative };
 const probabilityValue = value => { const n = parseNumeric(value); return n !== null && n >= 0 && n <= 100 ? n : null; };
 export function calculateCornerProbabilities(avgCorners) {
-  const lines = totalLines(avgCorners, [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 8.5, 9.5]);
+  const lines = totalLines(avgCorners, [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]);
   return { lambda: validNumber(avgCorners) ? avgCorners : null, ...lines, over5: lines.over55, under5: lines.under55 };
 }
 const meanGoals = (t, field, avg) => validNumber(t[avg]) ? t[avg] : validNumber(t[field]) && t.gamesPlayed > 0 ? t[field] / t.gamesPlayed : null;
 const subtract = (a, b) => Number.isFinite(a) && Number.isFinite(b) ? Number((a - b).toFixed(2)) : null;
 const sum = (a, b) => validNumber(a) && validNumber(b) ? a + b : null;
 export function calculateTeamDetailedStats(team = {}, isHome = true, match = {}) {
-  const hasIdentity = Boolean((team.name && team.name !== 'Local' && team.name !== 'Visitante') || team.id || team.shortName);
   const avgGF = meanGoals(team, 'goalsFor', 'avgGoalsScored');
   const avgGC = meanGoals(team, 'goalsAgainst', 'avgGoalsConceded');
   const expGoals = match.model?.expectedGoals?.[isHome ? 'home' : 'away'] ?? avgGF;
@@ -45,16 +44,10 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, match = {})
           if (rivalScore === 0) clean++;
         }
       }
-      if (count > 0) cleanSheetRate = Math.round((clean / count) * 100);
+      if (count >= 5) cleanSheetRate = Math.round((clean / count) * 100);
     }
   }
-  if (cleanSheetRate === null && validNumber(avgGC) && hasIdentity) {
-    cleanSheetRate = Math.round(Math.exp(-avgGC) * 100);
-  }
-  let bttsRate = percent(team.bttsRate);
-  if (bttsRate === null && validNumber(avgGF) && validNumber(avgGC) && hasIdentity) {
-    bttsRate = Math.round((1 - Math.exp(-avgGF)) * (1 - Math.exp(-avgGC)) * 100);
-  }
+  const bttsRate = percent(team.bttsRate);
   const gamesPlayed = team.gamesPlayed ?? null;
 
   return {

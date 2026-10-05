@@ -1,0 +1,160 @@
+{
+  "checkedAt": "2026-10-05T05:07:53.633Z",
+  "reports": [
+    {
+      "sport": "beisbol",
+      "league": "mlb",
+      "all": {
+        "n": 450,
+        "newBrier": 0.25000523704465344,
+        "oldBrier": 0.2603882022222222,
+        "neutralBrier": 0.25
+      },
+      "early": {
+        "n": 315,
+        "newBrier": 0.2543731971544459,
+        "oldBrier": 0.26768774920634913,
+        "neutralBrier": 0.25
+      },
+      "later": {
+        "n": 135,
+        "newBrier": 0.23981333012180533,
+        "oldBrier": 0.24335592592592578,
+        "neutralBrier": 0.25
+      }
+    },
+    {
+      "sport": "beisbol",
+      "league": "lmb",
+      "all": {
+        "n": 13,
+        "newBrier": 0.2331264361303271,
+        "oldBrier": 0.2508197692307692,
+        "neutralBrier": 0.25
+      },
+      "early": {
+        "n": 9,
+        "newBrier": 0.2294750403811789,
+        "oldBrier": 0.26159066666666664,
+        "neutralBrier": 0.25
+      },
+      "later": {
+        "n": 4,
+        "newBrier": 0.24134207656591053,
+        "oldBrier": 0.22658525,
+        "neutralBrier": 0.25
+      }
+    },
+    {
+      "sport": "beisbol",
+      "league": "kbo",
+      "all": {
+        "n": 89,
+        "newBrier": 0.24003989198252648,
+        "oldBrier": 0.2675532303770029,
+        "neutralBrier": 0.25
+      },
+      "early": {
+        "n": 62,
+        "newBrier": 0.25036518684555775,
+        "oldBrier": 0.2890481682854596,
+        "neutralBrier": 0.25
+      },
+      "later": {
+        "n": 27,
+        "newBrier": 0.2163299556303805,
+        "oldBrier": 0.21819448406869457,
+        "neutralBrier": 0.25
+      }
+    },
+    {
+      "sport": "beisbol",
+      "league": "npb",
+      "all": {
+        "n": 50,
+        "newBrier": 0.25263503744860866,
+        "oldBrier": 0.2707549649291663,
+        "neutralBrier": 0.25
+      },
+      "early": {
+        "n": 35,
+        "newBrier": 0.2588496776980594,
+        "oldBrier": 0.2772269837924008,
+        "neutralBrier": 0.25
+      },
+      "later": {
+        "n": 15,
+        "newBrier": 0.2381342101998903,
+        "oldBrier": 0.255653587581619,
+        "neutralBrier": 0.25
+      }
+    },
+    {
+      "sport": "tenis",
+      "league": "wta",
+      "all": {
+        "n": 209,
+        "newBrier": 0.24883835960126127,
+        "oldBrier": 0.26970433492822976,
+        "neutralBrier": 0.25
+      },
+      "early": {
+        "n": 146,
+        "newBrier": 0.24806744290547544,
+        "oldBrier": 0.2684675205479452,
+        "neutralBrier": 0.25
+      },
+      "later": {
+        "n": 63,
+        "newBrier": 0.2506249284518125,
+        "oldBrier": 0.27257060317460324,
+        "neutralBrier": 0.25
+      }
+    },
+    {
+      "sport": "tenis",
+      "league": "atp",
+      "all": {
+        "n": 106,
+        "newBrier": 0.24351622043346904,
+        "oldBrier": 0.24313203773584907,
+        "neutralBrier": 0.25
+      },
+      "early": {
+        "n": 74,
+        "newBrier": 0.24525241495624436,
+        "oldBrier": 0.25103783783783773,
+        "neutralBrier": 0.25
+      },
+      "later": {
+        "n": 32,
+        "newBrier": 0.23950127059955115,
+        "oldBrier": 0.224849875,
+        "neutralBrier": 0.25
+      }
+    },
+    {
+      "sport": "tenis",
+      "league": "us_open",
+      "all": {
+        "n": 95,
+        "newBrier": 0.2377645662320769,
+        "oldBrier": 0.22209007368421055,
+        "neutralBrier": 0.25
+      },
+      "early": {
+        "n": 66,
+        "newBrier": 0.24062837745936794,
+        "oldBrier": 0.22940981818181827,
+        "neutralBrier": 0.25
+      },
+      "later": {
+        "n": 29,
+        "newBrier": 0.23124692688720766,
+        "oldBrier": 0.2054313448275862,
+        "neutralBrier": 0.25
+      }
+    }
+  ],
+  "note": "Exploratory chronological comparison; constant K=24 chosen before this run, no fitting of the later holdout."
+}

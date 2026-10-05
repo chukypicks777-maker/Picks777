@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { LEAGUES_DATA } from '../constants/leagues';
-export default function StatsCenterModal({ onClose }) {
-  const [league,setLeague]=useState('espana'),[result,setResult]=useState(null),[error,setError]=useState('');
+export default function StatsCenterModal({ onClose, leagues = LEAGUES_DATA }) {
+  const [league,setLeague]=useState(leagues.find(item => item.id === 'espana')?.id || leagues.find(item => item.id !== 'all')?.id || 'espana'),[result,setResult]=useState(null),[error,setError]=useState('');
   useEffect(()=>{
     const controller=new AbortController();
     fetch(`/api/matches/standings?league=${league}`,{signal:controller.signal}).then(r=>r.json()).then(data=>{if(!data.success)throw new Error(data.message);setResult({...data,league});setError('');}).catch(e=>{if(e.name!=='AbortError'){setResult({league,standings:[]});setError('El proveedor no entrega clasificación para esta liga.');}});
@@ -21,7 +21,7 @@ export default function StatsCenterModal({ onClose }) {
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <label htmlFor="stats-league-select" className="text-xs sm:text-sm font-semibold text-slate-300">Liga:</label>
           <select id="stats-league-select" value={league} onChange={e=>{setLeague(e.target.value);setError('');}} className="rounded-lg bg-slate-800 border border-white/10 p-2 text-xs sm:text-sm text-slate-200 max-w-full focus:outline-none focus:border-sky-500 cursor-pointer">
-            {LEAGUES_DATA.filter(l=>l.id!=='all').map(l=><option key={l.id} value={l.id}>{l.flag} {l.name}</option>)}
+            {leagues.filter(l=>l.id!=='all').map(l=><option key={l.id} value={l.id}>{l.flag} {l.name}</option>)}
           </select>
         </div>
         {result?.league!==league ? (

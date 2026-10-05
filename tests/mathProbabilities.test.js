@@ -15,7 +15,7 @@ test('5.5 corners means six or more, and every ladder is bounded, monotonic and 
  for(let i=0;i<=400;i++) {
   const rate=i/10,p=calculateCornerProbabilities(rate);
   assert.equal(p.over55,Math.round((1-poissonCumulative(rate,5))*100)); assert.equal(p.over5,p.over55);
-  const values=['15','25','35','45','55','65','85','95'];
+  const values=['15','25','35','45','55','65','75','85','95'];
   values.forEach((key,j)=>{ assert.ok(p[`over${key}`]>=0 && p[`over${key}`]<=100); assert.equal(p[`over${key}`]+p[`under${key}`],100); if(j)assert.ok(p[`over${key}`]<=p[`over${values[j-1]}`]); });
  }
 });
@@ -59,7 +59,7 @@ test('half parser rejects contradictory scores, extra time, unfinished and futur
  comp.competitors[0].linescores.push({displayValue:'6'});assert.equal(readHistoricalSummary(data,'a',cutoff).ownHalves,null);
 });
 
-test('cleanSheetRate and bttsRate are derived from recent matches, history, or Poisson fallback without fake data',()=>{
+test('historical clean sheet and BTTS rates require observations and never masquerade as Poisson estimates',()=>{
  const teamA={id:'team-1',name:'Santos',gamesPlayed:10,goalsFor:15,goalsAgainst:10};
  const matchWithRecent={
   recentMatches:[
@@ -80,7 +80,8 @@ test('cleanSheetRate and bttsRate are derived from recent matches, history, or P
  assert.equal(statsA.cleanSheetRate,60);
 
  const statsFallback=calculateTeamDetailedStats(teamA,true,{});
- assert.equal(statsFallback.cleanSheetRate,37);
+ assert.equal(statsFallback.cleanSheetRate,null);
+ assert.equal(statsFallback.bttsRate,null);
 
  const statsEmpty=calculateTeamDetailedStats({},true,{});
  assert.equal(statsEmpty.cleanSheetRate,null);

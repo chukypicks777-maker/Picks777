@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer } 
 import Navbar from './components/Navbar';
 import LiveTicker from './components/LiveTicker';
 import SportSelector from './components/SportSelector';
+import SportsPage from './components/SportsPage';
 import { SPORTS, sportFromPath } from './constants/sports.js';
+import { LEAGUES_DATA, WOMENS_LEAGUES } from './constants/leagues.js';
 import AuthGateModal from './components/AuthGateModal';
 import CommunityBanner from './components/CommunityBanner';
 import LeagueSelector from './components/LeagueSelector';
@@ -20,7 +22,7 @@ import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
 import { getMatchSafetyScore, getBestBankerPick, getContextualPick } from './utils/mathProbabilities';
 import { EMPTY_PARLAY, parlayTicketReducer } from './utils/parlayTicket.js';
 
-import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnalyzedModelName, getCachedAnalysis } from './utils/analysisCache';
+import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnalyzedModelName, mergeFreshMatch } from './utils/analysisCache';
 import { useSession } from './auth/useSession';
 import { sessionRequest } from './auth/sessionClient';
 import { identityProvider } from './auth/providers';
@@ -31,8 +33,16 @@ export default function App() {
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedSport, setSelectedSport] = useState(() => sportFromPath(window.location.pathname));
-  const activeSport = SPORTS.find(sport => sport.id === selectedSport);
-  const isFootball = selectedSport === 'futbol';
+  const currentSportRef = useRef(selectedSport);
+  useEffect(() => { currentSportRef.current = selectedSport; }, [selectedSport]);
+  const isFootball = selectedSport === 'futbol' || selectedSport === 'femenil';
+  const footballLeagues = selectedSport === 'femenil' ? WOMENS_LEAGUES : LEAGUES_DATA;
+  const handleSportsSessionExpired = useCallback(result => {
+    if (result?.trialExpired) {
+      setAuth(prev => ({ ...(prev || {}), valid: false, trialExpired: true }));
+      setShowUpgradeModal(true);
+    } else setAuth(null);
+  }, [setAuth]);
 
   // Settings states
   const [currency, setCurrency] = useState(() => {
@@ -135,10 +145,13 @@ export default function App() {
 
   const handleNavigate = useCallback((filterId) => {
     sounds.playClick();
-    setSelectedSport('futbol');
+    const sport = selectedSport === 'femenil' ? 'femenil' : 'futbol';
+    setSelectedSport(sport);
     const target = (filterId === 'safe' || filterId === 'boost') ? 'safe' : filterId;
     setMarketFilter(target);
-    if (target === 'safe') {
+    if (sport === 'femenil') {
+      window.history.pushState({ sport, market: target }, '', '/femenil');
+    } else if (target === 'safe') {
       window.history.pushState({ market: 'safe' }, '', '/banqueros');
     } else if (target === 'btts') {
       window.history.pushState({ market: 'btts' }, '', '/btts');
@@ -147,24 +160,32 @@ export default function App() {
     } else {
       window.history.pushState({ market: 'all' }, '', '/');
     }
-  }, []);
+  }, [selectedSport]);
 
   const handleSelectSport = useCallback(sportId => {
     const sport = SPORTS.find(item => item.id === sportId);
-    if (!sport) return;
+    if (!sport || sport.id === selectedSport) return;
     sounds.playClick();
     setSelectedSport(sport.id);
+    setSelectedLeague('all');
+    setMatches([]);
+    setMatchError('');
     setSelectedMatch(null);
     setShowStatsModal(false);
     setShowParlayDrawer(false);
     window.history.pushState({ sport: sport.id }, '', sport.path);
-    if (sport.id === 'futbol') setMarketFilter('all');
-  }, []);
+    setMarketFilter('all');
+  }, [selectedSport]);
 
   useEffect(() => {
     const handlePopState = (e) => {
       isPoppingModalRef.current = false;
-      setSelectedSport(sportFromPath(window.location.pathname));
+      const nextSport = sportFromPath(window.location.pathname);
+      if (nextSport !== currentSportRef.current) {
+        setSelectedLeague('all');
+        setMatches([]);
+      }
+      setSelectedSport(nextSport);
       const state = e?.state;
 
       // 1. Popped into upgrade modal state
@@ -296,6 +317,7 @@ export default function App() {
       setLoadingMatches(true);
       setMatchError('');
       const params = new URLSearchParams();
+      if (selectedSport === 'femenil') params.append('sport', 'femenil');
       if (selectedLeague !== 'all') params.append('league', selectedLeague);
       if (timeframe !== 'all') params.append('timeframe', timeframe);
       if (matchStatusFilter !== 'all') params.append('status', matchStatusFilter);
@@ -325,18 +347,7 @@ export default function App() {
       const data = await res.json();
       if (controller.signal.aborted) return;
       if (data.success && Array.isArray(data.matches)) {
-        const hydratedMatches = data.matches.map(m => {
-          const cached = getCachedAnalysis(m?.id, m);
-          if (cached?.aiReport && cached.aiReport.aiAvailable === true) {
-            return {
-              ...m,
-              ...(cached.enrichedMatch || {}),
-              isAiAnalyzed: true,
-              aiReport: cached.aiReport
-            };
-          }
-          return m;
-        });
+        const hydratedMatches = data.matches.map(mergeFreshMatch);
         setMatches(hydratedMatches);
         setCurrentEpoch(Date.now());
         setMatchError('');
@@ -350,64 +361,38 @@ export default function App() {
     } finally {
       if (feedRequest.current === controller) setLoadingMatches(false);
     }
-  }, [selectedLeague, timeframe, matchStatusFilter, searchQuery, setAuth]);
+  }, [selectedSport, selectedLeague, timeframe, matchStatusFilter, searchQuery, setAuth]);
 
   const syncLiveMatchesSilent = useCallback(async () => {
     try {
-      const res = await fetch('/api/matches/live-sync', {
+      const res = await fetch(`/api/matches/live-sync${selectedSport === 'femenil' ? '?sport=femenil' : ''}`, {
         credentials: 'same-origin'
       });
       const data = await res.json();
       if (data.success && data.matches) {
+        setMatchError('');
         setCurrentEpoch(Date.now());
         setMatches(prev => {
           return prev.map(m => {
             const updated = data.matches.find(u => u.id === m.id);
             if (!updated) return m;
-            const cached = getCachedAnalysis(m.id, m);
-            const isAnalyzed = m.isAiAnalyzed || Boolean(cached?.aiReport && cached.aiReport.aiAvailable === true);
-            const report = m.aiReport || cached?.aiReport || null;
-            const enriched = cached?.enrichedMatch || {};
-            return {
-              ...updated,
-              ...enriched,
-              ...m,
-              isAiAnalyzed: isAnalyzed,
-              aiReport: report,
-              status: updated.status,
-              minute: updated.minute || updated.liveMinute || m.minute,
-              liveMinute: updated.liveMinute || updated.minute || m.liveMinute,
-              liveScore: updated.liveScore || m.liveScore,
-              finalScore: updated.finalScore || m.finalScore,
-              odds: updated.odds || m.odds
-            };
+            return mergeFreshMatch(updated);
           });
         });
         setSelectedMatch(prev => {
           if (!prev) return null;
           const updated = data.matches.find(u => u.id === prev.id);
           if (!updated) return prev;
-          const cached = getCachedAnalysis(prev.id, prev);
-          const isAnalyzed = prev.isAiAnalyzed || Boolean(cached?.aiReport && cached.aiReport.aiAvailable === true);
-          const report = prev.aiReport || cached?.aiReport || null;
-          const enriched = cached?.enrichedMatch || {};
-          return {
-            ...updated,
-            ...enriched,
-            ...prev,
-            isAiAnalyzed: isAnalyzed,
-            aiReport: report,
-            status: updated.status,
-            minute: updated.minute || updated.liveMinute || prev.minute,
-            liveMinute: updated.liveMinute || updated.minute || prev.liveMinute,
-            liveScore: updated.liveScore || prev.liveScore,
-            finalScore: updated.finalScore || prev.finalScore,
-            odds: updated.odds || prev.odds
-          };
+          return mergeFreshMatch(updated);
         });
+      } else {
+        setMatches([]); setSelectedMatch(null);
+        setMatchError(data.message || 'El proveedor no respondió a la actualización.');
+        if (res.status === 401) setAuth(null);
+        if (res.status === 403 && data.trialExpired) setAuth(previous => ({ ...(previous || {}), valid: false, trialExpired: true }));
       }
-    } catch {}
-  }, []);
+    } catch { setMatches([]); setSelectedMatch(null); setMatchError('No se pudo actualizar el calendario. Revisa la conexión.'); }
+  }, [selectedSport, setAuth]);
 
   // Persist currency & oddsFormat
   useEffect(() => {
@@ -441,7 +426,7 @@ export default function App() {
   useEffect(() => {
     if (!isFootball || !auth?.valid || auth?.trialExpired) return;
     pollingRef.current = setInterval(() => {
-      syncLiveMatchesSilent();
+      if (!document.hidden) syncLiveMatchesSilent();
     }, 25000);
 
     return () => {
@@ -658,17 +643,8 @@ export default function App() {
   const liveMatchesCount = matches.filter(m => m && m.status === 'LIVE').length;
   const featuredMatch = matches.find(m => m && m.isFeatured && m.status !== 'FINISHED') || matches.find(m => m && m.status !== 'FINISHED') || matches[0] || null;
 
-  const leagueMatchCounts = {
-    total: matches.length,
-    inglaterra: matches.filter(m => m?.leagueId === 'inglaterra').length,
-    espana: matches.filter(m => m?.leagueId === 'espana').length,
-    mexico: matches.filter(m => m?.leagueId === 'mexico').length,
-    mls: matches.filter(m => m?.leagueId === 'mls').length,
-    italia: matches.filter(m => m?.leagueId === 'italia').length,
-    francia: matches.filter(m => m?.leagueId === 'francia').length,
-    champions: matches.filter(m => m?.leagueId === 'champions').length,
-    leagues_cup: matches.filter(m => m?.leagueId === 'leagues_cup').length,
-  };
+  const leagueMatchCounts = Object.fromEntries(footballLeagues.map(league => [league.id === 'all' ? 'total' : league.id,
+    league.id === 'all' ? matches.length : matches.filter(match => match?.leagueId === league.id).length]));
 
   if (!auth && (checking || sessionError)) return <main className="min-h-dvh grid place-items-center p-6 text-center" role="status">
     <div><p>{checking ? 'Comprobando tu sesión…' : sessionError}</p>
@@ -730,20 +706,18 @@ export default function App() {
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
 
         {!isFootball ? (
-          <section role="tabpanel" id={`sport-panel-${selectedSport}`} aria-labelledby={`sport-${selectedSport}`} tabIndex={0}
-            className="terminal-card rounded-2xl border border-white/10 bg-[#0d121c] my-4 min-h-[320px] sm:min-h-[420px] flex flex-col items-center justify-center text-center px-6 py-14">
-            <span aria-hidden="true" className="text-5xl sm:text-6xl mb-5">{activeSport.icon}</span>
-            <h1 className="text-xl sm:text-2xl font-bold text-white mb-3">{activeSport.name}</h1>
-            <p className="text-sm sm:text-base font-semibold tracking-wide text-slate-400">Próximamente</p>
-          </section>
+          <SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} onSessionExpired={handleSportsSessionExpired} />
         ) : (
-        <div role="tabpanel" id="sport-panel-futbol" aria-labelledby="sport-futbol">
+        <div role="tabpanel" id={`sport-panel-${selectedSport}`} aria-labelledby={`sport-${selectedSport}`}>
+
+        {selectedSport === 'femenil' && <header className="py-3 mb-3"><h1 className="text-xl font-bold">🇲🇽 Liga MX Femenil</h1><p className="text-sm text-slate-400 mt-2">Encuentros y análisis de la liga femenil de México.</p></header>}
 
         {/* Community VIP Channels (Telegram, WhatsApp, Instagram) */}
         {!isStoreApp() && marketFilter === 'all' && <CommunityBanner />}
 
         {/* League Selector Carousel */}
         <LeagueSelector
+          leagues={footballLeagues}
           selectedLeague={selectedLeague}
           onSelectLeague={setSelectedLeague}
           matchCounts={leagueMatchCounts}
@@ -1031,7 +1005,7 @@ export default function App() {
       )}
 
       {showStatsModal && (
-        <StatsCenterModal onClose={() => setShowStatsModal(false)} />
+        <StatsCenterModal key={selectedSport} leagues={footballLeagues} onClose={() => setShowStatsModal(false)} />
       )}
 
       {/* Footer */}

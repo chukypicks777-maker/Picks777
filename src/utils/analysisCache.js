@@ -1,14 +1,13 @@
 /**
  * analysisCache.js
  * Sistema inteligente de caché en cliente para análisis tácticos y reportes de IA.
- * Almacena en localStorage de forma duradera (48 horas para partidos programados)
- * para evitar que los datos se borren al cerrar pestañas, recargar o si nadie entra.
+ * Conserva informes brevemente y los invalida al cambiar hechos o estadísticas.
  * Invalida automáticamente solo cuando cambian los hechos deportivos reales (marcador en vivo,
  * estado, minuto o modelo) o si el usuario solicita regeneración manual vía "Reintentar / Regenerar con IA".
  */
 
 const memoryCache = new Map();
-const STORAGE_PREFIX = 'picks777_ai_cache_v7';
+const STORAGE_PREFIX = 'picks777_ai_cache_v8';
 const SESSION_STORAGE_KEY = 'picks777_analysis_cache_v5';
 
 function getStorage() {
@@ -33,20 +32,19 @@ export function getMatchCacheTtlMs(matchOrStatus, aiReport) {
   const match = typeof matchOrStatus === 'object' ? matchOrStatus : null;
   const status = typeof matchOrStatus === 'string' ? matchOrStatus : matchOrStatus?.status;
   if (status === 'FINISHED') {
-    return 7 * 24 * 3600 * 1000; // 7 días para partidos finalizados
+    return 3600 * 1000;
   }
   if (status === 'LIVE') {
-    return 2 * 60 * 1000; // 2 minutos para partidos en juego (marcador cambiante)
+    return 30 * 1000;
   }
-  // Si el partido figura como SCHEDULED pero la hora de kickoff ya pasó, no mantener análisis pre-partido por 48h
+  // Una hora de inicio pasada exige la misma caducidad que un partido en vivo.
   if (status === 'SCHEDULED' && match?.kickoff) {
     const kTime = new Date(match.kickoff).getTime();
     if (Number.isFinite(kTime) && Date.now() > kTime) {
-      return 2 * 60 * 1000;
+      return 30 * 1000;
     }
   }
-  // Partidos programados futuros (SCHEDULED): 48 horas de persistencia duradera
-  return 48 * 3600 * 1000;
+  return 5 * 60 * 1000;
 }
 
 /**
@@ -62,6 +60,7 @@ export function computeMatchFingerprint(m) {
     m.id || '',
     m.status || '',
     m.kickoff || '',
+    m.liveMinute || m.minute || '',
     m.liveScore?.home ?? '',
     m.liveScore?.away ?? '',
     m.finalScore?.home ?? '',
@@ -70,7 +69,8 @@ export function computeMatchFingerprint(m) {
     JSON.stringify(Object.entries(m.odds || {}).sort(([a], [b]) => a.localeCompare(b))),
     m.oddsProvider || '',
     m.homeTeam?.id || m.homeTeam?.name || '',
-    m.awayTeam?.id || m.awayTeam?.name || ''
+    m.awayTeam?.id || m.awayTeam?.name || '',
+    JSON.stringify([m.homeTeam, m.awayTeam].map(team => [team?.position, team?.points, team?.gamesPlayed, team?.goalsFor, team?.goalsAgainst, team?.form]))
   ].join('|');
 }
 
@@ -89,10 +89,7 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
     const storage = getStorage();
     if (storage) {
       try {
-        let raw = storage.getItem(`${STORAGE_PREFIX}_${matchId}`);
-        if (!raw) {
-          raw = storage.getItem(`${SESSION_STORAGE_KEY}_${matchId}`);
-        }
+        const raw = storage.getItem(`${STORAGE_PREFIX}_${matchId}`);
         if (raw) {
           entry = JSON.parse(raw);
           memoryCache.set(matchId, entry);
@@ -103,7 +100,7 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
 
   if (!entry) return null;
 
-  // Comprobar TTL dinámico según el estado del partido (48h para SCHEDULED, 7d para FINISHED)
+  // Aplicar caducidad breve según el estado del partido.
   const ttl = getMatchCacheTtlMs(currentMatch || entry.matchStatus, entry.aiReport);
   if (!entry.timestamp || Date.now() - entry.timestamp > ttl) {
     removeCachedAnalysis(matchId);
@@ -111,7 +108,7 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
   }
 
   // Verificar si el partido cambió deportivamente (cambio de estado o cambio en marcador de partido en vivo)
-  if (currentFingerprint && entry.fingerprint && entry.fingerprint !== currentFingerprint) {
+  if (currentFingerprint && entry.fingerprint !== currentFingerprint) {
     removeCachedAnalysis(matchId);
     return null;
   }
@@ -131,6 +128,20 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
   return entry;
 }
 
+// The current provider response always owns scores, odds, model and timestamps.
+export function mergeFreshMatch(currentMatch) {
+  const cached = getCachedAnalysis(currentMatch?.id, currentMatch);
+  if (!cached?.aiReport?.aiAvailable) return { ...currentMatch, isAiAnalyzed: false, aiReport: null };
+  const historicalFields = ['avgCorners', 'avgCornersConceded', 'avgYellowCards', 'avgFouls', 'cleanSheetRate', 'bttsRate', 'sampleSizes', 'statsSource', 'statsFetchedAt', 'statsRecords'];
+  const mergeTeam = side => {
+    const old = cached.enrichedMatch?.[side] || {};
+    return { ...currentMatch[side], ...Object.fromEntries(historicalFields.filter(key => old[key] !== undefined).map(key => [key, old[key]])) };
+  };
+  return { ...cached.enrichedMatch, ...currentMatch, homeTeam: mergeTeam('homeTeam'), awayTeam: mergeTeam('awayTeam'),
+    h2h: cached.enrichedMatch?.h2h || currentMatch.h2h, recentMatches: cached.enrichedMatch?.recentMatches || currentMatch.recentMatches,
+    isAiAnalyzed: true, aiReport: cached.aiReport };
+}
+
 /**
  * Guarda en caché el reporte y los datos enriquecidos del partido.
  * Si se actualiza solo uno de los dos campos, fusiona con el valor existente para evitar borrar datos.
@@ -144,8 +155,8 @@ export function setCachedAnalysis(matchId, currentMatch, { aiReport, enrichedMat
   const entry = {
     matchId,
     matchStatus: currentMatch?.status || existing?.matchStatus || 'SCHEDULED',
-    liveScore: curLiveScore ? { home: Number(curLiveScore.home), away: Number(curLiveScore.away) } : null,
-    finalScore: curFinalScore ? { home: Number(curFinalScore.home), away: Number(curFinalScore.away) } : null,
+    liveScore: curLiveScore ? { home: curLiveScore.home ?? null, away: curLiveScore.away ?? null } : null,
+    finalScore: curFinalScore ? { home: curFinalScore.home ?? null, away: curFinalScore.away ?? null } : null,
     fingerprint,
     aiReport: aiReport !== undefined ? aiReport : (existing?.aiReport || null),
     enrichedMatch: enrichedMatch !== undefined ? enrichedMatch : (existing?.enrichedMatch || null),
@@ -269,5 +280,3 @@ export function getBatchAnalyzedStatus(matches = []) {
     analyzedMap
   };
 }
-
-

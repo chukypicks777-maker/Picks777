@@ -135,7 +135,7 @@ test('generateAiMatchReport grounds report on real match stats, odds, and return
   const oldFetch = globalThis.fetch;
   try {
     const aiResponse = {
-      factIds: ['goals', 'score', 'odds', 'form'],
+      factIds: ['goals', 'score', 'odds', 'sample'],
       tacticalAnalysis: 'Bayern domina con superioridad ofensiva y alta probabilidad de goles.',
       analysisSections: {
         tacticalBreakdown: 'Formación equilibrada con posesión alta.',
@@ -161,7 +161,7 @@ test('generateAiMatchReport grounds report on real match stats, odds, and return
     });
 
     assert.equal(report.aiAvailable, true);
-    assert.equal(report.isDeepAnalysis, true, 'Report must be marked as deep analysis');
+    assert.equal(report.isDeepAnalysis, false, 'Fact selection must not claim validated predictive reasoning');
     assert.equal(report.dataGrounded, true, 'Report must be grounded in facts');
     assert.ok(report.verifiedStatsCount > 0, 'Facts catalog must be populated');
     assert.ok(report.analysisSections, 'Deep analysis structured sections must be present');
@@ -212,7 +212,7 @@ test('MatchDetailModal and mobile.css enforce mobile close button, sticky header
 
   // Confirmation banner
   assert.ok(
-    modalContent.includes('Análisis Realizado a Profundidad y Confirmado'),
+    modalContent.includes('Hechos del proveedor y estimaciones calculadas'),
     'MatchDetailModal must feature confirmation badge confirming deep analysis'
   );
 
