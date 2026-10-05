@@ -153,7 +153,7 @@ export default function MatchCard({
             <div className="flex items-center space-x-1.5 font-mono text-[11px] shrink-0">
               {predictedScore && predictedScore !== 'N/D' && match.status !== 'LIVE' && match.status !== 'FINISHED' && (
                 <span className="hidden xs:inline-flex items-center space-x-1 px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/25 text-[10px] font-bold" title="Marcador más probable estimado según modelo Poisson">
-                  <span className="text-[9px] text-slate-400 font-sans">IA:</span>
+                  <span className="text-[9px] text-slate-400 font-sans">Est.:</span>
                   <span>{predictedScore}</span>
                 </span>
               )}
@@ -178,12 +178,12 @@ export default function MatchCard({
           {/* AI Analysis Confirmation Banner */}
           {analyzed ? (
             <div 
-              title={modelName ? `Análisis verificado por IA (${modelName})` : 'Análisis IA completado y verificado'}
+              title={modelName ? `Hechos priorizados por IA (${modelName})` : 'Hechos priorizados por IA; probabilidades del modelo estadístico'}
               className="mb-2.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/35 flex items-center justify-between font-mono text-[10px] text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.15)]"
             >
               <span className="font-bold flex items-center space-x-1">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                <span>ANÁLISIS IA COMPLETADO</span>
+                <span>HECHOS PRIORIZADOS POR IA</span>
               </span>
               <span className="text-emerald-400 font-bold flex items-center space-x-1">
                 <CheckCircle2 className="w-3 h-3" />
@@ -194,7 +194,7 @@ export default function MatchCard({
             <div className="mb-2.5 px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-500/35 flex items-center justify-between font-mono text-[10px] text-sky-300 animate-pulse shadow-[0_0_10px_rgba(14,165,233,0.15)]">
               <span className="font-bold flex items-center space-x-1.5">
                 <RotateCw className="w-3 h-3 text-sky-400 animate-spin" />
-                <span>ANALIZANDO CON IA EN VIVO...</span>
+                <span>CONSULTANDO IA...</span>
               </span>
               <span className="text-sky-400 font-semibold">Procesando</span>
             </div>
@@ -241,7 +241,7 @@ export default function MatchCard({
               <div className="flex items-center space-x-2 font-mono text-xs shrink-0">
                 {match.status === 'LIVE' || match.status === 'FINISHED' ? (
                   <span className="font-bold text-white text-sm">
-                    {match.status === 'LIVE' ? match.liveScore?.home ?? match.finalScore?.home ?? 0 : match.finalScore?.home ?? match.liveScore?.home ?? 0}
+                    {match.status === 'LIVE' ? match.liveScore?.home ?? match.finalScore?.home ?? 'N/D' : match.finalScore?.home ?? match.liveScore?.home ?? 'N/D'}
                   </span>
                 ) : (
                   <span className="text-slate-400 text-[11px]">
@@ -290,7 +290,7 @@ export default function MatchCard({
               <div className="flex items-center space-x-2 font-mono text-xs shrink-0">
                 {match.status === 'LIVE' || match.status === 'FINISHED' ? (
                   <span className="font-bold text-white text-sm">
-                    {match.status === 'LIVE' ? match.liveScore?.away ?? match.finalScore?.away ?? 0 : match.finalScore?.away ?? match.liveScore?.away ?? 0}
+                    {match.status === 'LIVE' ? match.liveScore?.away ?? match.finalScore?.away ?? 'N/D' : match.finalScore?.away ?? match.liveScore?.away ?? 'N/D'}
                   </span>
                 ) : (
                   <span className="text-slate-400 text-[11px]">
@@ -371,8 +371,8 @@ export default function MatchCard({
                     : marketFilter === 'under' || marketFilter === 'under25'
                     ? 'Pronóstico Under 2.5'
                     : isBankerMode || confidenceScore >= 80
-                    ? 'Pick Banquero IA'
-                    : 'Pronóstico IA'}
+                    ? 'Pick Banquero'
+                    : 'Pronóstico estadístico'}
                 </span>
               </span>
               {match.aiPick?.settlement === 'WON' ? (
@@ -383,7 +383,7 @@ export default function MatchCard({
               ) : analyzed ? (
                 <span className="text-[9.5px] font-mono text-emerald-300 font-bold flex items-center space-x-1 bg-emerald-500/15 px-1.5 py-0.2 rounded border border-emerald-500/30">
                   <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
-                  <span>IA {displayProb}% Conf.</span>
+                  <span>{displayProb == null ? 'N/D' : `${displayProb}% Prob. estimada`}</span>
                   {bankerPick?.probability != null && (
                     <span className="text-slate-400 font-normal ml-0.5" title="Probabilidad matemática Poisson">
                       ({bankerPick.probability}% Poisson)
@@ -392,7 +392,7 @@ export default function MatchCard({
                 </span>
               ) : (
                 <span className="text-[9.5px] font-mono text-slate-400">
-                  {displayProb}% Conf.
+                  {displayProb == null ? 'N/D' : `${displayProb}% Prob. estimada`}
                 </span>
               )}
             </div>
@@ -401,7 +401,7 @@ export default function MatchCard({
                 {displayPick}
               </p>
               <span className="text-[11px] font-mono font-bold text-emerald-400 shrink-0 ml-1.5">
-                @{formatOdds(displayOdds, oddsFormat)}
+                {activePick?.odds ? 'Cuota publicada' : 'Cuota teórica'}: {formatOdds(displayOdds, oddsFormat)}
               </span>
             </div>
 

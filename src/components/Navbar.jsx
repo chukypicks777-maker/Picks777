@@ -73,7 +73,7 @@ export default function Navbar({
               <div className="hidden sm:flex items-center space-x-1 text-[9.5px] sm:text-[10px] font-mono text-slate-400 truncate">
                 <span className="text-slate-300 font-semibold">Picks de Confianza</span>
                 <span className="text-slate-600">•</span>
-                <span>8 Ligas</span>
+                <span>5 Deportes</span>
               </div>
             </div>
           </div>

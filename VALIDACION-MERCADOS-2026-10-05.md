@@ -1,6 +1,6 @@
 # Mercados, fuentes y auditoría de probabilidades — 5 de octubre de 2026
 
-Cambios preparados para la web [Picks777](https://picks777.vercel.app), incluyendo frontend y API. El despliegue se comprueba con el estado de Vercel para el commit publicado y con el hash del archivo JavaScript servido. La evidencia posterior al despliegue se guarda en `artifacts/sports-production-verification-2026-10-05.json`.
+Cambios publicados en la web [Picks777](https://picks777.vercel.app), incluyendo frontend y API. Se comprueba el estado de Vercel para el commit publicado y la coincidencia byte por byte del archivo JavaScript servido con la compilación local. La evidencia posterior al despliegue se guarda en `artifacts/sports-production-verification-2026-10-05.json`.
 
 ## Funciones incorporadas
 
@@ -38,6 +38,7 @@ NPB/KBO anuncian la ausencia de marcador en vivo verificado. Un resultado numér
 - Los innings NPB comprueban URL del encuentro, identidad de ambos equipos, orden de las filas y suma de carreras contra el marcador final. Los escudos del encabezado pueden listar primero al ganador y no determinan local/visitante.
 - La IA generativa solo elige identificadores de hechos existentes en el catálogo. Sus números, cuotas, selecciones y texto libre no reemplazan los cálculos o registros del servidor. Respuestas sin identificadores válidos no se anuncian como análisis realizado por IA.
 - Se retiraron mensajes de “pronóstico confirmado”, “profundidad confirmada” y porcentajes presentados como precisión. Las solicitudes IA tienen un presupuesto de tiempo acotado al límite del despliegue.
+- La revisión con sesión Owner en producción detectó un 88 % por defecto en la tarjeta destacada cuando no existía pronóstico. Se eliminó ese valor, así como los ceros de marcadores desconocidos de las tarjetas. Los porcentajes se identifican como probabilidades estimadas y las cuotas calculadas como teóricas; el modo Owner no se anuncia sin límites.
 
 ## Métodos y coherencia
 
@@ -79,8 +80,9 @@ No hubo una muestra histórica de fútbol utilizable para estimar aciertos de su
 
 | Comprobación | Resultado |
 |---|---|
-| `npm test` | 152 aprobadas, 0 fallos |
+| `npm test` | 153 aprobadas, 0 fallos |
 | Suite completa de navegador: Chromium, WebKit y Firefox | 156 aprobadas, 0 fallos |
+| Revisión posterior de tarjetas, cuotas y nuevos mercados en Chromium | 16 aprobadas, 0 fallos |
 | `npm run lint` | Sin errores |
 | `npm run build` | Aprobada; aviso sobre tamaño del paquete principal |
 | `npm run test:offline` | Navegación sin conexión aprobada; solo se almacena offline.html |
@@ -88,4 +90,4 @@ No hubo una muestra histórica de fútbol utilizable para estimar aciertos de su
 
 Las pruebas automatizadas usan fixtures aislados para autenticación, UI y fallos; esos fixtures no se sirven como datos de producción. La auditoría de proveedores consulta servicios reales sin credenciales de producción ni modificaciones de usuarios.
 
-La comprobación del despliegue es de lectura, incluye las cinco rutas, salud de API/Redis, protección de todos los feeds deportivos y coincidencia del bundle publicado. La sesión disponible del navegador no estaba autenticada: la comprobación privada con un usuario real en producción no forma parte de esta evidencia. Los flujos autenticados se verificaron con pruebas aisladas, y las fuentes reales se auditaron directamente desde los servicios del proyecto.
+La comprobación HTTP del despliegue es de lectura: incluye las cinco rutas, salud de API/Redis, protección de todos los feeds deportivos y coincidencia del bundle publicado. Además, con la sesión Owner disponible en el navegador se verificaron los nuevos apartados en producción y sus informes. MLB mostró registros reales de primer inning y F5 para ambos equipos; tenis mostró ganador, ambos sets, sí/no de al menos un set, muestra, método y enlace de origen. Los flujos de vencimiento y membresía se verificaron con fixtures aislados, sin modificar usuarios de producción. Las fuentes reales se auditaron también directamente desde los servicios del proyecto.

@@ -30,6 +30,32 @@ async function loadComponent(relativePath, filename, extraReplaces = {}) {
 const HalfGoalsSection = await loadComponent('../src/components/HalfGoalsSection.jsx', 'HalfGoalsSection.jsx');
 const OverUnderGroupedSection = await loadComponent('../src/components/OverUnderGroupedSection.jsx', 'OverUnderGroupedSection.jsx');
 const LiveTicker = await loadComponent('../src/components/LiveTicker.jsx', 'LiveTicker.jsx');
+const plainWrapper = 'data:text/javascript;base64,' + Buffer.from(`import React from ${JSON.stringify(import.meta.resolve('react'))}; export default function Wrapper({children}) { return React.createElement('div', null, children); }`).toString('base64');
+const HeroFeaturedMatch = await loadComponent('../src/components/HeroFeaturedMatch.jsx', 'HeroFeaturedMatch.jsx', {
+  '"../utils/oddsFormatter"': JSON.stringify(import.meta.resolve('../src/utils/oddsFormatter.js')),
+  '"../utils/parlayTicket.js"': JSON.stringify(import.meta.resolve('../src/utils/parlayTicket.js')),
+  '"../utils/analysisCache"': JSON.stringify(import.meta.resolve('../src/utils/analysisCache.js')),
+  '"./TiltCard"': JSON.stringify(plainWrapper),
+  '"./RadarScanner"': JSON.stringify(plainWrapper)
+});
+const MatchCard = await loadComponent('../src/components/MatchCard.jsx', 'MatchCard.jsx', {
+  '"../utils/oddsFormatter"': JSON.stringify(import.meta.resolve('../src/utils/oddsFormatter.js')),
+  '"../utils/parlayTicket.js"': JSON.stringify(import.meta.resolve('../src/utils/parlayTicket.js')),
+  '"../utils/analysisCache"': JSON.stringify(import.meta.resolve('../src/utils/analysisCache.js')),
+  '"./TiltCard"': JSON.stringify(plainWrapper)
+});
+
+test('featured fixture never invents a score, 88 percent confidence or a quote from another pick', () => {
+  const match = { id: 'featured-missing-data', status: 'FINISHED', kickoff: new Date().toISOString(), homeTeam: { name: 'A' }, awayTeam: { name: 'B' }, liveScore: { home: null, away: null }, finalScore: { home: null, away: null }, probabilities: {} };
+  const missing = renderToStaticMarkup(React.createElement(HeroFeaturedMatch, { match }));
+  assert.match(missing, /N\/D - N\/D/); assert.match(missing, /Sin datos suficientes/);
+  assert.doesNotMatch(missing, /88%|0 - 0|Conf\./);
+  const reported = renderToStaticMarkup(React.createElement(HeroFeaturedMatch, { match: { ...match, finalScore: { home: 0, away: 0 }, aiPick: { selection: 'Empate', probability: 30, confidence: '88%', odds: 3.5 } } }));
+  assert.match(reported, /0 - 0/); assert.match(reported, /30% Prob\. estimada/); assert.match(reported, /Cuota publicada/);
+  assert.doesNotMatch(reported, /88%/);
+  const standard = renderToStaticMarkup(React.createElement(MatchCard, { match }));
+  assert.doesNotMatch(standard, />0<\/span>/, 'Unknown scores must not become zero on the ordinary fixture card');
+});
 
 test('ticker never invents a 0–0 score or announces an empty feed as live', () => {
   const missing = { homeTeam: { name: 'Home' }, awayTeam: { name: 'Away' }, liveScore: { home: null, away: null }, finalScore: { home: null, away: null } };

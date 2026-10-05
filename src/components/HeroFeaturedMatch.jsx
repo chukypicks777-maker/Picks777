@@ -84,7 +84,7 @@ export default function HeroFeaturedMatch({
                 {isMatchAnalyzed(match.id, match) && (
                   <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-md font-mono text-[10px] sm:text-[11px] font-bold flex items-center space-x-1 shadow-[0_0_12px_rgba(16,185,129,0.2)] shrink-0">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{getAnalyzedModelName(match.id, match) ? `IA: ${getAnalyzedModelName(match.id, match).slice(0, 15)}` : 'ANÁLISIS IA CONFIRMADO'}</span>
+                    <span>{getAnalyzedModelName(match.id, match) ? `IA: ${getAnalyzedModelName(match.id, match).slice(0, 15)}` : 'HECHOS PRIORIZADOS POR IA'}</span>
                   </span>
                 )}
 
@@ -137,7 +137,7 @@ export default function HeroFeaturedMatch({
                         {match.homeTeam?.name}
                       </h4>
                       <p className="text-[9.5px] sm:text-xs font-mono text-slate-400 truncate">
-                        Local{match.homeTeam?.position ? ` • #${match.homeTeam.position} (${match.homeTeam.points ?? 0} pts)` : ''}
+                        Local{match.homeTeam?.position ? ` • #${match.homeTeam.position} (${match.homeTeam.points ?? 'N/D'} pts)` : ''}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-0.5 sm:gap-1 mt-0.5 sm:mt-1 justify-center shrink-0 max-w-full">
@@ -158,14 +158,14 @@ export default function HeroFeaturedMatch({
                   <div className="flex flex-col items-center justify-center px-1 sm:px-3 shrink-0">
                     <div className="bg-[#141a27] border border-white/10 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-xl text-center shadow-inner">
                       <span className="text-[8px] sm:text-[10px] font-mono text-slate-400 uppercase tracking-wider block whitespace-nowrap">
-                        <span className="sm:hidden">{match.status === 'LIVE' ? 'En Vivo' : match.status === 'FINISHED' ? 'Final' : 'Marcador IA'}</span>
-                        <span className="hidden sm:inline">{match.status === 'LIVE' ? 'Marcador en Vivo' : match.status === 'FINISHED' ? 'Resultado Final' : 'Marcador IA'}</span>
+                        <span className="sm:hidden">{match.status === 'LIVE' ? 'En Vivo' : match.status === 'FINISHED' ? 'Final' : 'Estimado'}</span>
+                        <span className="hidden sm:inline">{match.status === 'LIVE' ? 'Marcador en Vivo' : match.status === 'FINISHED' ? 'Resultado Final' : 'Marcador estimado'}</span>
                       </span>
                       <span className="text-sm sm:text-xl md:text-2xl font-black font-mono text-white tracking-wider whitespace-nowrap">
                         {match.status === 'LIVE' 
-                          ? `${match.liveScore?.home ?? match.finalScore?.home ?? 0} - ${match.liveScore?.away ?? match.finalScore?.away ?? 0}`
+                          ? `${match.liveScore?.home ?? match.finalScore?.home ?? 'N/D'} - ${match.liveScore?.away ?? match.finalScore?.away ?? 'N/D'}`
                           : match.status === 'FINISHED'
-                          ? `${match.finalScore?.home ?? match.liveScore?.home ?? 0} - ${match.finalScore?.away ?? match.liveScore?.away ?? 0}`
+                          ? `${match.finalScore?.home ?? match.liveScore?.home ?? 'N/D'} - ${match.finalScore?.away ?? match.liveScore?.away ?? 'N/D'}`
                           : getCoherentPredictedScore(match)}
                       </span>
                     </div>
@@ -183,7 +183,7 @@ export default function HeroFeaturedMatch({
                         {match.awayTeam?.name}
                       </h4>
                       <p className="text-[9.5px] sm:text-xs font-mono text-slate-400 truncate">
-                        Visita{match.awayTeam?.position ? ` • #${match.awayTeam.position} (${match.awayTeam.points ?? 0} pts)` : ''}
+                        Visita{match.awayTeam?.position ? ` • #${match.awayTeam.position} (${match.awayTeam.points ?? 'N/D'} pts)` : ''}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-0.5 sm:gap-1 mt-0.5 sm:mt-1 justify-center shrink-0 max-w-full">
@@ -236,17 +236,12 @@ export default function HeroFeaturedMatch({
                       <span>{match.aiPick?.type || 'Pick Principal'}</span>
                     </span>
                     <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 text-[10px] font-mono font-bold border border-sky-500/30">
-                      {(() => {
-                        const confRaw = match.aiPick?.confidence;
-                        if (typeof confRaw === 'number') return `${Math.round(confRaw)}% Conf.`;
-                        const parsed = parseFloat(String(confRaw || '').replace('%', ''));
-                        return Number.isFinite(parsed) ? `${Math.round(parsed)}% Conf.` : (confRaw || '88% Conf.');
-                      })()}
+                      {percent(match.aiPick?.probability) === null ? 'N/D' : `${percent(match.aiPick.probability)}% Prob. estimada`}
                     </span>
                   </div>
 
                   <h5 className="text-white font-bold text-sm md:text-base mb-2 font-sans">
-                    {match.aiPick?.selection}
+                    {match.aiPick?.selection || 'Sin datos suficientes'}
                   </h5>
 
                   <p className="text-xs text-slate-300 line-clamp-3 mb-4 leading-relaxed font-sans">
@@ -256,9 +251,9 @@ export default function HeroFeaturedMatch({
 
                 <div className="space-y-3 pt-3 border-t border-white/5">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-slate-400">Cuota Recomendada:</span>
+                    <span className="text-slate-400">{match.aiPick?.odds ? 'Cuota publicada:' : 'Cuota teórica:'}</span>
                     <span className="text-sky-300 font-bold text-sm">
-                      {formatOdds(match.aiPick?.odds ?? match.aiPick?.estimatedOdds ?? parlayCandidates[0]?.odds, oddsFormat)}
+                      {formatOdds(getEffectiveOdds(match.aiPick), oddsFormat)}
                     </span>
                   </div>
 
