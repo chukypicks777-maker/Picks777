@@ -31,8 +31,14 @@ if (asset) {
   const markers = ['sport-panel-', 'femenil', 'beisbol', 'tenis', 'basquetbol', 'Primer inning', 'KBO'];
   const digest = createHash('sha256').update(text).digest('hex');
   let localAssetMatches = false;
-  try { localAssetMatches = digest === createHash('sha256').update(await fs.readFile('dist' + asset)).digest('hex'); } catch {}
-  checks.push({ path: asset, status: response.status, pass: response.ok && localAssetMatches && markers.every(marker => text.includes(marker)), sha256: digest, localAssetMatches });
+  let localAsset = null;
+  try {
+    // Vite's filename hash can differ by build platform even for identical bytes.
+    const localHtml = await fs.readFile('dist/index.html', 'utf8');
+    localAsset = localHtml.match(/src="([^"]+\.js)"/)?.[1];
+    localAssetMatches = Boolean(localAsset) && digest === createHash('sha256').update(await fs.readFile('dist' + localAsset)).digest('hex');
+  } catch {}
+  checks.push({ path: asset, status: response.status, pass: response.ok && localAssetMatches && markers.every(marker => text.includes(marker)), sha256: digest, localAsset, localAssetMatches });
 } else checks.push({ path: 'frontend-asset', pass: false });
 const deniedOrigin = await read('/api/auth/redeem-code', { method: 'POST',
   headers: { Origin: 'https://untrusted.example.invalid', 'Content-Type': 'application/json' }, body: '{}' });
