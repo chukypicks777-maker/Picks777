@@ -2,7 +2,8 @@ import { percent, roundDistribution } from '../utils/probability';
 import React from 'react';
 import { isStoreApp } from '../auth/platform.js';
 import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles, Lock, Crown, RotateCw } from 'lucide-react';
-import { formatOdds } from '../utils/oddsFormatter';
+import { formatOdds, marketQuote } from '../utils/oddsFormatter';
+import { formatMatchSchedule } from '../utils/matchSchedule.js';
 import { sounds } from '../utils/audioEffects';
 import { isSameMatch } from '../utils/parlayTicket.js';
 import TiltCard from './TiltCard';
@@ -105,10 +106,7 @@ export default function MatchCard({
   const isLegInParlay = Boolean(parlayLegs?.some(
     l => isSameMatch(l.matchId, match.id) && l.selection === activePick?.selection
   ));
-  const formatMatchTime = (iso) => {
-    const d = new Date(iso);
-    return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-  };
+  const winnerQuotes = { home: marketQuote(match.odds?.homeWin, homeProb), draw: marketQuote(match.odds?.draw, drawProb), away: marketQuote(match.odds?.awayWin, awayProb) };
 
   return (
     <TiltCard 
@@ -168,12 +166,13 @@ export default function MatchCard({
                 </span>
               ) : (
                 <span className="text-slate-400 flex items-center space-x-1">
-                  <Clock className="w-3 h-3 text-slate-500" />
-                  <span>{formatMatchTime(match.kickoff)}</span>
+                  <span>PROGRAMADO</span>
                 </span>
               )}
             </div>
           </div>
+
+          <p className="flex items-center justify-center gap-1.5 mb-3 text-[11px] text-sky-300"><Clock className="w-3 h-3 shrink-0" /><time dateTime={match.kickoff} title={`Hora local · ${Intl.DateTimeFormat().resolvedOptions().timeZone}`}>{formatMatchSchedule(match.kickoff, { timeTBD: match.timeTBD })}</time></p>
 
           {/* AI Analysis Confirmation Banner */}
           {analyzed ? (
@@ -245,7 +244,7 @@ export default function MatchCard({
                   </span>
                 ) : (
                   <span className="text-slate-400 text-[11px]">
-                    {formatOdds(match.odds?.homeWin, oddsFormat)}
+                    {formatOdds(winnerQuotes.home.odds, oddsFormat)}
                   </span>
                 )}
               </div>
@@ -294,7 +293,7 @@ export default function MatchCard({
                   </span>
                 ) : (
                   <span className="text-slate-400 text-[11px]">
-                    {formatOdds(match.odds?.awayWin, oddsFormat)}
+                    {formatOdds(winnerQuotes.away.odds, oddsFormat)}
                   </span>
                 )}
               </div>
@@ -306,15 +305,15 @@ export default function MatchCard({
             <div className="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
               <span>
                 1: <strong><NumberCounter value={homeProb} suffix="%" /></strong>
-                {match.odds?.homeWin ? <span className="text-slate-500 ml-1">(@{formatOdds(match.odds.homeWin, oddsFormat)})</span> : null}
+                <span className="block text-sky-300">{formatOdds(winnerQuotes.home.odds, oddsFormat)} <span className="text-slate-500">{winnerQuotes.home.label}</span></span>
               </span>
               <span>
                 X: <strong><NumberCounter value={drawProb} suffix="%" /></strong>
-                {match.odds?.draw ? <span className="text-slate-500 ml-1">(@{formatOdds(match.odds.draw, oddsFormat)})</span> : null}
+                <span className="block text-sky-300">{formatOdds(winnerQuotes.draw.odds, oddsFormat)} <span className="text-slate-500">{winnerQuotes.draw.label}</span></span>
               </span>
               <span>
                 2: <strong><NumberCounter value={awayProb} suffix="%" /></strong>
-                {match.odds?.awayWin ? <span className="text-slate-500 ml-1">(@{formatOdds(match.odds.awayWin, oddsFormat)})</span> : null}
+                <span className="block text-sky-300">{formatOdds(winnerQuotes.away.odds, oddsFormat)} <span className="text-slate-500">{winnerQuotes.away.label}</span></span>
               </span>
             </div>
             <div className="h-1.5 w-full bg-[#161c28] rounded-full overflow-hidden flex gap-0.5">

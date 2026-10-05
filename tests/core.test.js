@@ -179,7 +179,7 @@ test('provider outage yields unavailable coverage and no example matches', async
   try {
     const feed = await getFootballFeed();
     assert.equal(feed.matches.length, 0);
-    assert.equal(feed.coverage.length, 8);
+    assert.equal(feed.coverage.length, 9);
     assert.ok(feed.coverage.every(c => c.status === 'unavailable'));
   } finally { globalThis.fetch = original; }
 });

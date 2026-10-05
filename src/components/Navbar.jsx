@@ -201,7 +201,7 @@ export default function Navbar({
             </div>}
             {/* Real-time sync trigger */}
             <button
-              disabled={!sportAvailable}
+              disabled={!auth?.valid || auth?.trialExpired}
               onClick={() => { sounds.playClick(); onManualSync?.(); }}
               title="Sincronizar partidos en vivo"
               className={`hidden min-[350px]:block p-1 sm:p-2 bg-[#161b22] border border-white/10 rounded-lg text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition cursor-pointer shrink-0 active:scale-95 ${

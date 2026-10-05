@@ -9,7 +9,7 @@ export default function SportSelector({ selectedSport, onSelect }) {
   };
   return (
     <div className="w-full bg-[#0d1117] border-b border-white/10">
-      <nav role="tablist" aria-label="Deportes" className="grid grid-cols-5 gap-1 sm:gap-2 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3">
+      <nav role="tablist" aria-label="Deportes" className="grid grid-cols-4 gap-1 sm:gap-2 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3">
         {SPORTS.map((sport, index) => (
           <button
             key={sport.id}

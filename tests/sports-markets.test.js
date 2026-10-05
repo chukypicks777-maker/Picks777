@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SPORT_LEAGUES } from '../src/constants/leagues.js';
-import { SPORTS, sportFromPath } from '../src/constants/sports.js';
+import { SPORT_LEAGUES, LEAGUES_DATA } from '../src/constants/leagues.js';
+import { SPORTS, sportFromPath, footballLeagueFromLocation } from '../src/constants/sports.js';
 import { baseballAnalysis, basketballAnalysis, tennisAnalysis, analyzeSportMatch, poissonResult, seriesWinProbability, observedExtraInnings } from '../server/services/sportProbabilityModel.js';
 import { parseMlbGame, parseNpbSchedule, parseKboSchedule } from '../server/services/baseballDataService.js';
 import { parseBasketballEvent, parseTennisEvents } from '../server/services/sportsDataService.js';
@@ -16,9 +16,12 @@ const history = (match, ownHome = [4, 6, 2, 3, 5, 4], ownAway = [2, 1, 3, 5, 2, 
 ]);
 const sum = values => Object.values(values).reduce((total, value) => total + value, 0);
 
-test('requested competition catalog separates women and exposes exactly four US basketball leagues', () => {
-  assert.equal(SPORTS.length, 5);
-  assert.equal(sportFromPath('/femenil/'), 'femenil');
+test('women share the football league selector, legacy deep links remain valid, and basketball has four US leagues', () => {
+  assert.equal(SPORTS.length, 4);
+  assert.equal(sportFromPath('/femenil/'), 'futbol');
+  assert.equal(footballLeagueFromLocation('/femenil/'), 'mexico_femenil');
+  assert.equal(footballLeagueFromLocation('/', '?league=mexico_femenil'), 'mexico_femenil');
+  assert.equal(LEAGUES_DATA[LEAGUES_DATA.findIndex(league => league.id === 'mexico') + 1].id, 'mexico_femenil');
   assert.deepEqual(SPORT_LEAGUES.beisbol.map(league => league.id), ['mlb', 'npb', 'kbo', 'lmb']);
   assert.equal(SPORT_LEAGUES.tenis.length, 6);
   assert.deepEqual(SPORT_LEAGUES.basquetbol.map(league => league.id), ['nba', 'nba_preseason', 'ncaaw', 'wnba']);
@@ -28,6 +31,8 @@ test('requested competition catalog separates women and exposes exactly four US 
   ] }] };
   const parsed = parseEspnEvent(event, women);
   assert.equal(parsed.sport, 'femenil'); assert.equal(parsed.id, 'espn-femenil-women'); assert.equal(parsed.espnCode, 'mex.w.1');
+  event.competitions[0].timeValid = false;
+  assert.equal(parseEspnEvent(event, women).timeTBD, true);
 });
 
 test('baseball totals are monotone and complementary, first inning includes the draw, and game winners sum to 100', () => {

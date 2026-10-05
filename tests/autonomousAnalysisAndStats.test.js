@@ -300,20 +300,6 @@ test('MatchCard preserves quantitative statistics, banker picks, and defines mod
     'MatchCard must prioritize bankerPick over verifiedAiPick in banker mode'
   );
 
-  // 1X2 Probabilities bar must format market odds next to win rates
-  assert.ok(
-    cardContent.includes('(@{formatOdds(match.odds.homeWin, oddsFormat)})'),
-    'MatchCard must display home win market odds alongside probability'
-  );
-  assert.ok(
-    cardContent.includes('(@{formatOdds(match.odds.draw, oddsFormat)})'),
-    'MatchCard must display draw market odds alongside probability'
-  );
-  assert.ok(
-    cardContent.includes('(@{formatOdds(match.odds.awayWin, oddsFormat)})'),
-    'MatchCard must display away win market odds alongside probability'
-  );
-
   // Quick stats pills (+1.5, +2.5, BTTS) must be rendered
   assert.ok(cardContent.includes('+1.5 Over'), 'MatchCard must display +1.5 Over pill');
   assert.ok(cardContent.includes('+2.5 Over'), 'MatchCard must display +2.5 Over pill');

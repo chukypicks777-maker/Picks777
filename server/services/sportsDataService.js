@@ -10,7 +10,7 @@ const exceptional = { STATUS_POSTPONED: 'POSTPONED', STATUS_CANCELED: 'CANCELLED
 export function espnSportStatus(status) {
   return exceptional[status?.type?.name] || (status?.type?.completed ? 'FINISHED' : status?.type?.state === 'in' ? 'LIVE' : status?.type?.state === 'pre' ? 'SCHEDULED' : 'UNKNOWN');
 }
-function oddsFor(comp) {
+export function oddsFor(comp) {
   const data = comp.odds?.[0];
   return {
     odds: Object.fromEntries(['home', 'away'].map(side => [`${side}Win`, americanToDecimal(data?.moneyline?.[side]?.close?.odds ?? data?.[`${side}TeamOdds`]?.moneyLine)])),
@@ -103,9 +103,10 @@ async function basketballTeamHistory(entry, today) {
   return schedules.filter(result => result.status === 'fulfilled').flatMap(result => result.value.data.events.map(event => parseBasketballEvent(event, [entry.league], result.value.fetchedAt))).filter(Boolean);
 }
 
-async function getBasketball(today) {
-  return Promise.all(['nba', 'wnba', 'womens-college-basketball'].map(async code => {
-    const leagues = SPORT_LEAGUES.basquetbol.filter(league => league.espnCode === code);
+async function getBasketball(today, options = {}) {
+  const selectedLeagues = SPORT_LEAGUES.basquetbol.filter(league => !options.leagueId || league.id === options.leagueId);
+  return Promise.all([...new Set(selectedLeagues.map(league => league.espnCode))].map(async code => {
+    const leagues = selectedLeagues.filter(league => league.espnCode === code);
     try {
       // Basketball scoreboards accept individual dates, unlike tennis's ranges.
       const responses = await Promise.allSettled([
@@ -122,7 +123,7 @@ async function getBasketball(today) {
       const history = [];
       // Bound cold feed work, especially NCAA's hundreds of teams. Every other
       // fixture gets its own two-team history when its report is opened.
-      const preload = teams.slice(0, 12);
+      const preload = options.calendarOnly ? [] : teams.slice(0, 12);
       for (let i = 0; i < preload.length; i += 6) {
         const batch = await Promise.allSettled(preload.slice(i, i + 6).map(entry => basketballTeamHistory(entry, today)));
         history.push(...batch.filter(result => result.status === 'fulfilled').flatMap(result => result.value));
@@ -134,10 +135,16 @@ async function getBasketball(today) {
   }));
 }
 
-export async function getSportsMatch(sport, id) {
-  const feed = await getSportsFeed(sport);
+export async function getSportsMatch(sport, id, options = {}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const feed = await getSportsFeed(sport, { leagueId: options.leagueId, calendarOnly: true });
   const match = feed.matches.find(match => match.id === id);
   if (!match) return null;
+  const version = JSON.stringify([match.status, match.kickoff, match.liveScore, match.odds]);
+  return cachedData(`sports:detail:v3:${sport}:${options.leagueId || 'all'}:${id}:${today}:${version}`, 60, async () => loadSportsMatch(sport, id, match));
+}
+
+async function loadSportsMatch(sport, id, match) {
   if (sport === 'beisbol' && match.leagueId === 'npb') {
     const league = SPORT_LEAGUES.beisbol.find(league => league.id === 'npb');
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -151,6 +158,18 @@ export async function getSportsMatch(sport, id) {
     const games = data.matches.map(game => enriched.get(game.id) || game);
     return { ...match, analysis: analyzeSportMatch(match, games) };
   }
+  if (sport === 'beisbol' && match.leagueId === 'mlb') {
+    try {
+      // ESPN's MLB calendar uses the Eastern day, rather than the UTC start date.
+      const espnDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(match.kickoff));
+      const result = await espnScoreboard('baseball/mlb', `dates=${espnDay.replaceAll('-', '')}&limit=100`);
+      return { ...match, ...publishedMlbOdds(match, result.data, result.fetchedAt) };
+    } catch { return match; }
+  }
+  if (sport === 'tenis') {
+    const { games } = await getSportsHistory(sport, Date.now(), { leagueId: match.tour });
+    return { ...match, analysis: analyzeSportMatch(match, games) };
+  }
   if (sport !== 'basquetbol') return match;
   const league = SPORT_LEAGUES.basquetbol.find(league => league.id === match.leagueId);
   const today = new Date().toISOString().slice(0, 10);
@@ -159,8 +178,21 @@ export async function getSportsMatch(sport, id) {
   return { ...match, analysis: analyzeSportMatch(match, games) };
 }
 
-async function getTennis(today) {
-  const results = await Promise.all(['atp', 'wta'].map(async tour => {
+export function publishedMlbOdds(match, data, fetchedAt) {
+  const normalize = value => String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!['home', 'away'].every(side => normalize(match[`${side}Team`]?.name))) return {};
+  // Exact home/away names and start time protect doubleheaders and rescheduled games.
+  const matching = (data.events || []).filter(event => Math.abs(Date.parse(event.date) - Date.parse(match.kickoff)) <= 60000
+    && ['home', 'away'].every(side => normalize(event.competitions?.[0]?.competitors?.find(team => team.homeAway === side)?.team?.displayName) === normalize(match[`${side}Team`]?.name)));
+  if (matching.length !== 1) return {};
+  const quote = oddsFor(matching[0].competitions[0]);
+  if (!Object.values(quote.odds).some(value => value > 1)) return {};
+  return { ...quote, oddsSource: 'ESPN', oddsFetchedAt: fetchedAt, oddsSourceUrl: `https://www.espn.com/mlb/game/_/gameId/${matching[0].id}` };
+}
+
+async function getTennis(today, options = {}) {
+  const tours = ['atp', 'wta'].filter(tour => !['atp', 'wta'].includes(options.leagueId) || options.leagueId === tour);
+  const results = await Promise.all(tours.map(async tour => {
     try {
       const results = await Promise.allSettled([
         espnScoreboard(`tennis/${tour}`, `dates=${shift(today, -60)}-${shift(today, 7)}&limit=100`),
@@ -168,18 +200,18 @@ async function getTennis(today) {
       ]);
       const valid = results.filter(result => result.status === 'fulfilled').map(result => result.value);
       if (!valid.length) throw new Error('ESPN no disponible.');
-      return { matches: valid.flatMap(result => parseTennisEvents(result.data, tour, result.fetchedAt)), fetchedAt: valid[0].fetchedAt, available: true };
-    } catch { return { matches: [], available: false, fetchedAt: null }; }
+      return { tour, matches: valid.flatMap(result => parseTennisEvents(result.data, tour, result.fetchedAt)), fetchedAt: valid[0].fetchedAt, available: true };
+    } catch { return { tour, matches: [], available: false, fetchedAt: null }; }
   }));
-  return [{ matches: results.flatMap(result => result.matches), coverage: SPORT_LEAGUES.tenis.map(league => {
-    const relevant = ['atp', 'wta'].includes(league.id) ? [results[league.id === 'atp' ? 0 : 1]] : results;
+  return [{ matches: results.flatMap(result => result.matches), coverage: SPORT_LEAGUES.tenis.filter(league => !options.leagueId || options.leagueId === league.id).map(league => {
+    const relevant = ['atp', 'wta'].includes(league.id) ? results.filter(result => result.tour === league.id) : results;
     return { leagueId: league.id, name: league.name, source: 'ESPN', status: relevant.every(result => !result.available) ? 'unavailable' : relevant.some(result => !result.available) ? 'degraded' : 'available', fetchedAt: relevant.find(result => result.available)?.fetchedAt || null };
   }) }];
 }
 
-async function getBaseball(today, now) {
+async function getBaseball(today, now, options = {}) {
   const asiaDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(now));
-  return Promise.all(SPORT_LEAGUES.beisbol.map(async league => {
+  return Promise.all(SPORT_LEAGUES.beisbol.filter(league => !options.leagueId || options.leagueId === league.id).map(async league => {
     try {
       const loader = league.provider === 'npb' ? getNpbLeague : league.provider === 'kbo' ? getKboLeague : getMlbLeague;
       const result = await loader(league, ['npb', 'kbo'].includes(league.id) ? asiaDay : today);
@@ -188,24 +220,26 @@ async function getBaseball(today, now) {
   }));
 }
 
-export async function getSportsHistory(sport, now = Date.now()) {
+export async function getSportsHistory(sport, now = Date.now(), options = {}) {
   if (!Object.hasOwn(SPORT_LEAGUES, sport)) throw new Error('Deporte no válido.');
   const today = new Date(now).toISOString().slice(0, 10);
-  const results = await (sport === 'tenis' ? getTennis(today) : sport === 'basquetbol' ? getBasketball(today) : getBaseball(today, now));
+  if (options.leagueId && !SPORT_LEAGUES[sport].some(league => league.id === options.leagueId)) throw new Error('Liga no válida.');
+  const results = await (sport === 'tenis' ? getTennis(today, options) : sport === 'basquetbol' ? getBasketball(today, options) : getBaseball(today, now, options));
   return { games: [...new Map(results.flatMap(result => result.matches).map(match => [match.id, match])).values()], coverage: results.flatMap(result => result.coverage) };
 }
 
 export async function getSportsFeed(sport, options = {}) {
   if (!Object.hasOwn(SPORT_LEAGUES, sport)) throw new Error('Deporte no válido.');
+  if (options.leagueId && !SPORT_LEAGUES[sport].some(league => league.id === options.leagueId)) throw new Error('Liga no válida.');
   const now = options.now ?? Date.now();
   const today = new Date(now).toISOString().slice(0, 10);
-  return cachedData(`sports:feed:v3:${sport}:${today}`, 15, async () => {
-    const { games, coverage: sourceCoverage } = await getSportsHistory(sport, now);
+  return cachedData(`sports:feed:v4:${sport}:${today}:${options.leagueId || 'all'}:${options.calendarOnly ? 'calendar' : 'full'}`, 15, async () => {
+    const { games, coverage: sourceCoverage } = await getSportsHistory(sport, now, options);
     const order = { LIVE: 0, SCHEDULED: 1, FINISHED: 2 };
     const matches = games.filter(match => {
       const date = Date.parse(match.kickoff);
-      return date >= now - 72 * 3600000 && date <= now + 8 * 86400000;
-    }).map(match => ({ ...match, analysis: analyzeSportMatch(match, games, now) }))
+      return (!options.leagueId || match.leagueId === options.leagueId) && date >= now - 72 * 3600000 && date <= now + 8 * 86400000;
+    }).map(match => ({ ...match, analysis: analyzeSportMatch(match, options.calendarOnly && sport === 'tenis' ? [] : games, now) }))
       .sort((a, b) => ((order[a.status] ?? 3) - (order[b.status] ?? 3)) || Date.parse(a.kickoff) - Date.parse(b.kickoff));
     const coverage = sourceCoverage.map(league => ({ ...league, count: matches.filter(match => match.leagueId === league.leagueId).length }));
     return { sport, matches, coverage, source: sport === 'beisbol' ? 'MLB / NPB / KBO' : 'ESPN', refreshIntervalSeconds: 60,

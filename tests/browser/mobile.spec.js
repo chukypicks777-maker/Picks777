@@ -129,7 +129,7 @@ test('los apartados de deportes muestran sus filtros y permiten volver a fútbol
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'Ver Informe', exact: true }).first()).toBeVisible();
   const sports = page.getByRole('tablist', { name: 'Deportes' });
-  await expect(sports.getByRole('tab')).toHaveCount(5);
+  await expect(sports.getByRole('tab')).toHaveCount(4);
   for (const [name, path] of [['Béisbol', '/beisbol'], ['Tenis', '/tenis'], ['Básquetbol', '/basquetbol']]) {
     const tab = sports.getByRole('tab', { name, exact: true });
     await tab.click();

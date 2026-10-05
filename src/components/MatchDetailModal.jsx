@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { sounds } from '../utils/audioEffects';
+import { formatMatchSchedule } from '../utils/matchSchedule.js';
 import LiveTacticalPitch from './LiveTacticalPitch';
 import RadarScanner from './RadarScanner';
 import NumberCounter from './NumberCounter';
@@ -474,8 +475,8 @@ export default function MatchDetailModal({
                   PRO AI REPORT
                 </span>
               </h3>
-              <p className="text-[10px] sm:text-xs font-mono text-slate-400 truncate">
-                {m.venue} • {new Date(m.kickoff).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+              <p className="text-[10px] sm:text-xs font-mono text-slate-400 break-words">
+                <time dateTime={m.kickoff}>{formatMatchSchedule(m.kickoff, { timeTBD: m.timeTBD })}</time>{m.venue ? ` · ${m.venue}` : ''}
               </p>
             </div>
           </div>

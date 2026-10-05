@@ -20,6 +20,7 @@ async function loadComponent(relativePath, filename, extraReplaces = {}) {
     .replaceAll('"./NumberCounter"', JSON.stringify(numberCounterDataUri))
     .replaceAll('"../utils/audioEffects"', JSON.stringify(import.meta.resolve('../src/utils/audioEffects.js')))
     .replaceAll('"../utils/probability"', JSON.stringify(import.meta.resolve('../src/utils/probability.js')))
+    .replaceAll('"../utils/matchSchedule.js"', JSON.stringify(import.meta.resolve('../src/utils/matchSchedule.js')))
     .replaceAll('"../utils/mathProbabilities"', JSON.stringify(import.meta.resolve('../src/utils/mathProbabilities.js')));
   for (const [key, val] of Object.entries(extraReplaces)) {
     modCode = modCode.replaceAll(key, val);
@@ -72,6 +73,21 @@ test('ticker never invents a 0–0 score or announces an empty feed as live', ()
   const onlyResults = renderToStaticMarkup(React.createElement(LiveTicker, { matches: [{ ...missing, status: 'FINISHED', aiPick: { settlement: 'WON' } }] }));
   assert.match(onlyResults, /Resultado del proveedor/);
   assert.doesNotMatch(onlyResults, /Parlay Banquero|cuotas disponibles|Pronóstico Acertado|Pick IA/);
+});
+
+test('football cards and spotlight retain published 1X2 prices, label theory, and show dates for all statuses', () => {
+  const match = { id: 'quotes-and-date', kickoff: '2026-10-05T21:00:00Z', homeTeam: { name: 'Equipo A' }, awayTeam: { name: 'Equipo B' },
+    probabilities: { homeWin: 50, draw: 30, awayWin: 20 }, odds: { homeWin: 1.8, draw: 3.5, awayWin: 4.5 } };
+  for (const Component of [MatchCard, HeroFeaturedMatch]) {
+    for (const status of ['SCHEDULED', 'LIVE', 'FINISHED']) {
+      const html = renderToStaticMarkup(React.createElement(Component, { match: { ...match, status }, oddsFormat: 'american' }));
+      assert.match(html, /dateTime="2026-10-05T21:00:00Z"/);
+      for (const price of ['-125', '+250', '+350']) assert.ok(html.includes(price));
+      assert.match(html, /Publicado/);
+    }
+    const theoretical = renderToStaticMarkup(React.createElement(Component, { match: { ...match, status: 'SCHEDULED', odds: {} }, oddsFormat: 'american' }));
+    assert.match(theoretical, /Teórico/); assert.match(theoretical, /\+400/);
+  }
 });
 
 test('probability display never turns unavailable data into 0% or animates false intermediate values', () => {

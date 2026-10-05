@@ -8,7 +8,7 @@ const pair = home => Number.isFinite(home) && home >= 0 && home <= 1
   ? roundDistribution({ home: home * 100, away: (1 - home) * 100 }, 1)
   : { home: null, away: null };
 const yesNo = p => { const values = pair(p); return { yes: values.home, no: values.away }; };
-const historical = (match, games, now) => games.filter(game => game.id !== match.id && game.status === 'FINISHED'
+const historical = (match, games, now) => [...new Map(games.map(game => [game.id, game])).values()].filter(game => game.id !== match.id && game.status === 'FINISHED'
   && Date.parse(game.kickoff) < Math.min(Date.parse(match.kickoff), now)
   && game.leagueId === match.leagueId);
 
@@ -41,9 +41,13 @@ function teamSample(match, games, side, now) {
     if (!ownSide) return [];
     const own = game.finalScore?.[ownSide], against = game.finalScore?.[ownSide === 'home' ? 'away' : 'home'];
     return Number.isInteger(own) && own >= 0 && Number.isInteger(against) && against >= 0
-      ? [{ own, against, date: game.kickoff, id: game.id, sourceUrl: game.sourceUrl, inningScores: game.inningScores, scheduledInnings: game.scheduledInnings, lastInning: game.lastInning, finalScore: game.finalScore, status: game.status, ownSide }] : [];
+      ? [{ own, against, date: game.kickoff, id: game.id, opponent: game[`${ownSide === 'home' ? 'away' : 'home'}Team`]?.name || null, sourceUrl: game.sourceUrl, inningScores: game.inningScores, scheduledInnings: game.scheduledInnings, lastInning: game.lastInning, finalScore: game.finalScore, status: game.status, ownSide }] : [];
   }).sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 20);
 }
+
+const recentForm = sample => sample.slice(0, 5).reverse().map(({ own, against, date, id, opponent, sourceUrl }) => ({
+  result: own > against ? 'W' : own < against ? 'L' : 'D', own, against, date, id, opponent, sourceUrl
+}));
 
 export function runLadder(lambda, lines = RUN_LINES) {
   const probabilities = totalLines(lambda, lines);
@@ -126,7 +130,7 @@ export function baseballAnalysis(match, games = [], now = Date.now()) {
   const extraCount = extraGames.filter(game => observedExtraInnings(game)).length;
   const extraReady = Number.isInteger(match.scheduledInnings) && match.scheduledInnings > 0 && extraHome.length >= 5 && extraAway.length >= 5;
   return {
-    kind: 'baseball', available: ready, winner,
+    kind: 'baseball', available: ready, winner, form: { home: recentForm(home), away: recentForm(away) },
     expectedRuns: { home: homeRate, away: awayRate },
     scoresRun: { home: yesNo(homeRate === null ? null : 1 - Math.exp(-homeRate)), away: yesNo(awayRate === null ? null : 1 - Math.exp(-awayRate)) },
     teamRuns: { home: runLadder(homeRate), away: runLadder(awayRate) },
@@ -178,7 +182,7 @@ export function basketballAnalysis(match, games = [], now = Date.now()) {
     line, probability: hasDistribution ? pair(normalCdf(((side === 'home' ? distributionMargin : -distributionMargin) + line) / deviation)).home : null
   }))]));
   return {
-    kind: 'basketball', available: winner.home !== null, winner, handicaps,
+    kind: 'basketball', available: winner.home !== null, winner, handicaps, form: { home: recentForm(home), away: recentForm(away) },
     sampleSize: { home: home.length, away: away.length },
     records: { home: home.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })), away: away.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })) },
     method: 'Hándicaps estimados con una distribución normal del margen, calculada sobre los últimos 20 resultados disponibles de la misma competición (mínimo 5 por equipo). Incluyen prórroga cuando está incluida en el resultado oficial.'

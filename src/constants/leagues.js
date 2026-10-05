@@ -3,6 +3,7 @@ export const LEAGUES_DATA = [
   { id: 'espana', name: 'LaLiga', flag: '🇪🇸' },
   { id: 'inglaterra', name: 'Premier League', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
   { id: 'mexico', name: 'Liga MX', flag: '🇲🇽' },
+  { id: 'mexico_femenil', name: 'Liga MX Femenil', flag: '🇲🇽' },
   { id: 'champions', name: 'Champions League', flag: '🏆' },
   { id: 'italia', name: 'Serie A', flag: '🇮🇹' },
   { id: 'francia', name: 'Ligue 1', flag: '🇫🇷' },

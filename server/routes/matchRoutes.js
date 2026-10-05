@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/leagues', async (req, res) => {
   const sport = req.query.sport === 'femenil' ? 'femenil' : 'futbol';
   const feed = await getFootballFeed({ sport });
-  res.json({ success: true, leagues: LEAGUES.filter(league => league.sport === sport), coverage: feed.coverage });
+  res.json({ success: true, leagues: sport === 'femenil' ? LEAGUES.filter(league => league.sport === sport) : LEAGUES, coverage: feed.coverage });
 });
 router.get('/standings', async (req, res) => {
   try {
@@ -36,7 +36,8 @@ export function filterMatches(matches, query, now = new Date()) {
 async function feedHandler(req, res) {
   if (req.query.sport && !['futbol', 'femenil'].includes(req.query.sport)) return res.status(400).json({ success: false, message: 'Deporte inválido.' });
   const feed = await getFootballFeed({ sport: req.query.sport || 'futbol' });
-  if (feed.coverage.every(c => c.status === 'unavailable')) {
+  const coverage = feed.coverage.filter(league => !req.query.league || req.query.league === 'all' || league.leagueId === req.query.league);
+  if (coverage.length && coverage.every(c => c.status === 'unavailable')) {
     return res.status(503).json({ ...feed, success: false, message: 'No se puede consultar el proveedor. No se muestran datos de demostración.' });
   }
   try {

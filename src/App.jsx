@@ -3,8 +3,8 @@ import Navbar from './components/Navbar';
 import LiveTicker from './components/LiveTicker';
 import SportSelector from './components/SportSelector';
 import SportsPage from './components/SportsPage';
-import { SPORTS, sportFromPath } from './constants/sports.js';
-import { LEAGUES_DATA, WOMENS_LEAGUES } from './constants/leagues.js';
+import { SPORTS, sportFromPath, footballLeagueFromLocation } from './constants/sports.js';
+import { LEAGUES_DATA } from './constants/leagues.js';
 import AuthGateModal from './components/AuthGateModal';
 import CommunityBanner from './components/CommunityBanner';
 import LeagueSelector from './components/LeagueSelector';
@@ -35,8 +35,8 @@ export default function App() {
   const [selectedSport, setSelectedSport] = useState(() => sportFromPath(window.location.pathname));
   const currentSportRef = useRef(selectedSport);
   useEffect(() => { currentSportRef.current = selectedSport; }, [selectedSport]);
-  const isFootball = selectedSport === 'futbol' || selectedSport === 'femenil';
-  const footballLeagues = selectedSport === 'femenil' ? WOMENS_LEAGUES : LEAGUES_DATA;
+  const isFootball = selectedSport === 'futbol';
+  const footballLeagues = LEAGUES_DATA;
   const handleSportsSessionExpired = useCallback(result => {
     if (result?.trialExpired) {
       setAuth(prev => ({ ...(prev || {}), valid: false, trialExpired: true }));
@@ -61,7 +61,7 @@ export default function App() {
   });
 
   // Filters
-  const [selectedLeague, setSelectedLeague] = useState('all');
+  const [selectedLeague, setSelectedLeague] = useState(() => footballLeagueFromLocation(window.location.pathname, window.location.search));
   const [timeframe, setTimeframe] = useState('all');
   const [matchStatusFilter, setMatchStatusFilter] = useState('all'); // 'all' | 'LIVE' | 'FINISHED'
   const [searchQuery, setSearchQuery] = useState('');
@@ -145,22 +145,21 @@ export default function App() {
 
   const handleNavigate = useCallback((filterId) => {
     sounds.playClick();
-    const sport = selectedSport === 'femenil' ? 'femenil' : 'futbol';
+    const sport = 'futbol';
     setSelectedSport(sport);
     const target = (filterId === 'safe' || filterId === 'boost') ? 'safe' : filterId;
     setMarketFilter(target);
-    if (sport === 'femenil') {
-      window.history.pushState({ sport, market: target }, '', '/femenil');
-    } else if (target === 'safe') {
-      window.history.pushState({ market: 'safe' }, '', '/banqueros');
-    } else if (target === 'btts') {
-      window.history.pushState({ market: 'btts' }, '', '/btts');
-    } else if (target === 'over') {
-      window.history.pushState({ market: 'over' }, '', '/over');
-    } else {
-      window.history.pushState({ market: 'all' }, '', '/');
-    }
-  }, [selectedSport]);
+    const path = target === 'safe' ? '/banqueros' : target === 'btts' ? '/btts' : target === 'over' ? '/over' : '/';
+    const query = selectedLeague === 'all' ? '' : `?league=${encodeURIComponent(selectedLeague)}`;
+    window.history.pushState({ market: target }, '', `${path}${query}`);
+  }, [selectedLeague]);
+
+  const handleSelectLeague = useCallback(league => {
+    setSelectedLeague(league);
+    setSelectedMatch(null);
+    const query = league === 'all' ? '' : `?league=${encodeURIComponent(league)}`;
+    window.history.pushState({ sport: 'futbol', league }, '', `${window.location.pathname === '/femenil' ? '/' : window.location.pathname}${query}`);
+  }, []);
 
   const handleSelectSport = useCallback(sportId => {
     const sport = SPORTS.find(item => item.id === sportId);
@@ -186,6 +185,7 @@ export default function App() {
         setMatches([]);
       }
       setSelectedSport(nextSport);
+      if (nextSport === 'futbol') setSelectedLeague(footballLeagueFromLocation(window.location.pathname, window.location.search));
       const state = e?.state;
 
       // 1. Popped into upgrade modal state
@@ -267,6 +267,7 @@ export default function App() {
   // Auto-polling interval reference
   const pollingRef = useRef(null);
   const feedRequest = useRef(null);
+  const syncRequest = useRef(null);
 
   useEffect(() => {
     if ((checking && !auth) || (auth?.valid && !auth?.trialExpired)) return;
@@ -311,13 +312,13 @@ export default function App() {
 
   const fetchMatches = useCallback(async () => {
     feedRequest.current?.abort();
+    syncRequest.current?.abort();
     const controller = new AbortController();
     feedRequest.current = controller;
     try {
       setLoadingMatches(true);
       setMatchError('');
       const params = new URLSearchParams();
-      if (selectedSport === 'femenil') params.append('sport', 'femenil');
       if (selectedLeague !== 'all') params.append('league', selectedLeague);
       if (timeframe !== 'all') params.append('timeframe', timeframe);
       if (matchStatusFilter !== 'all') params.append('status', matchStatusFilter);
@@ -332,6 +333,7 @@ export default function App() {
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         if (controller.signal.aborted) return;
+        setMatches([]); setSelectedMatch(null);
         if (res.status === 403 && errData.trialExpired) {
           setAuth(prev => ({ ...(prev || {}), valid: false, trialExpired: true }));
           setShowUpgradeModal(true);
@@ -351,38 +353,44 @@ export default function App() {
         setMatches(hydratedMatches);
         setCurrentEpoch(Date.now());
         setMatchError('');
+        return true;
       } else {
+        setMatches([]); setSelectedMatch(null);
         setMatchError(data.message || 'No se pudieron procesar los partidos.');
       }
     } catch (err) {
       if (controller.signal.aborted) return;
+      setMatches([]); setSelectedMatch(null);
       console.error('Error fetching matches:', err);
       setMatchError('Error de conexión al consultar el feed de partidos en vivo.');
     } finally {
-      if (feedRequest.current === controller) setLoadingMatches(false);
+      if (feedRequest.current === controller) { feedRequest.current = null; setLoadingMatches(false); }
     }
-  }, [selectedSport, selectedLeague, timeframe, matchStatusFilter, searchQuery, setAuth]);
+  }, [selectedLeague, timeframe, matchStatusFilter, searchQuery, setAuth]);
 
   const syncLiveMatchesSilent = useCallback(async () => {
+    if (feedRequest.current || syncRequest.current) return;
+    const controller = new AbortController();
+    syncRequest.current = controller;
     try {
-      const res = await fetch(`/api/matches/live-sync${selectedSport === 'femenil' ? '?sport=femenil' : ''}`, {
-        credentials: 'same-origin'
+      const params = new URLSearchParams({ timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' });
+      if (selectedLeague !== 'all') params.set('league', selectedLeague);
+      if (timeframe !== 'all') params.set('timeframe', timeframe);
+      if (matchStatusFilter !== 'all') params.set('status', matchStatusFilter);
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      const res = await fetch(`/api/matches/live-sync?${params}`, {
+        credentials: 'same-origin', signal: controller.signal, cache: 'no-store'
       });
       const data = await res.json();
-      if (data.success && data.matches) {
+      if (controller.signal.aborted) return;
+      if (res.ok && data.success && Array.isArray(data.matches)) {
         setMatchError('');
         setCurrentEpoch(Date.now());
-        setMatches(prev => {
-          return prev.map(m => {
-            const updated = data.matches.find(u => u.id === m.id);
-            if (!updated) return m;
-            return mergeFreshMatch(updated);
-          });
-        });
+        setMatches(data.matches.map(mergeFreshMatch));
         setSelectedMatch(prev => {
           if (!prev) return null;
           const updated = data.matches.find(u => u.id === prev.id);
-          if (!updated) return prev;
+          if (!updated) return null;
           return mergeFreshMatch(updated);
         });
       } else {
@@ -391,8 +399,10 @@ export default function App() {
         if (res.status === 401) setAuth(null);
         if (res.status === 403 && data.trialExpired) setAuth(previous => ({ ...(previous || {}), valid: false, trialExpired: true }));
       }
-    } catch { setMatches([]); setSelectedMatch(null); setMatchError('No se pudo actualizar el calendario. Revisa la conexión.'); }
-  }, [selectedSport, setAuth]);
+    } catch {
+      if (!controller.signal.aborted) { setMatches([]); setSelectedMatch(null); setMatchError('No se pudo actualizar el calendario. Revisa la conexión.'); }
+    } finally { if (syncRequest.current === controller) syncRequest.current = null; }
+  }, [selectedLeague, timeframe, matchStatusFilter, searchQuery, setAuth]);
 
   // Persist currency & oddsFormat
   useEffect(() => {
@@ -431,14 +441,16 @@ export default function App() {
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
+      syncRequest.current?.abort();
     };
   }, [syncLiveMatchesSilent, isFootball, auth?.valid, auth?.trialExpired]);
 
   const handleManualSync = async () => {
+    if (!isFootball) { window.dispatchEvent(new Event('picks-refresh-sports')); return; }
     setIsSyncing(true);
     try {
-      await fetchMatches();
-      showToast('Feed de datos en vivo sincronizado.');
+      const updated = await fetchMatches();
+      if (updated) showToast('Feed de datos en vivo sincronizado.');
     } finally {
       setTimeout(() => setIsSyncing(false), 600);
     }
@@ -706,11 +718,11 @@ export default function App() {
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
 
         {!isFootball ? (
-          <SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} onSessionExpired={handleSportsSessionExpired} />
+          <SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} sessionKey={auth?.user?.id || auth?.user?.uid || ''} oddsFormat={oddsFormat} onSessionExpired={handleSportsSessionExpired} />
         ) : (
         <div role="tabpanel" id={`sport-panel-${selectedSport}`} aria-labelledby={`sport-${selectedSport}`}>
 
-        {selectedSport === 'femenil' && <header className="py-3 mb-3"><h1 className="text-xl font-bold">🇲🇽 Liga MX Femenil</h1><p className="text-sm text-slate-400 mt-2">Encuentros y análisis de la liga femenil de México.</p></header>}
+        {selectedLeague === 'mexico_femenil' && <header className="py-3 mb-3"><h1 className="text-xl font-bold">🇲🇽 Liga MX Femenil</h1></header>}
 
         {/* Community VIP Channels (Telegram, WhatsApp, Instagram) */}
         {!isStoreApp() && marketFilter === 'all' && <CommunityBanner />}
@@ -719,8 +731,21 @@ export default function App() {
         <LeagueSelector
           leagues={footballLeagues}
           selectedLeague={selectedLeague}
-          onSelectLeague={setSelectedLeague}
+          onSelectLeague={handleSelectLeague}
           matchCounts={leagueMatchCounts}
+        />
+
+        <DateFilterTabs
+          timeframe={timeframe}
+          setTimeframe={setTimeframe}
+          matchStatusFilter={matchStatusFilter}
+          setMatchStatusFilter={setMatchStatusFilter}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          marketFilter={marketFilter}
+          setMarketFilter={setMarketFilter}
+          onNavigate={handleNavigate}
+          liveCount={liveMatchesCount}
         />
 
         {/* Featured Spotlight Match */}
@@ -734,20 +759,6 @@ export default function App() {
             oddsFormat={oddsFormat}
           />
         )}
-
-        {/* Filters */}
-        <DateFilterTabs
-          timeframe={timeframe}
-          setTimeframe={setTimeframe}
-          matchStatusFilter={matchStatusFilter}
-          setMatchStatusFilter={setMatchStatusFilter}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          marketFilter={marketFilter}
-          setMarketFilter={setMarketFilter}
-          onNavigate={handleNavigate}
-          liveCount={liveMatchesCount}
-        />
 
         {/* Matches Grid */}
         <div className="mb-12">
@@ -897,7 +908,7 @@ export default function App() {
               ))}
             </div>
           ) : matchError ? (
-            <div className="text-center py-12 terminal-card rounded-2xl border border-rose-500/30 bg-rose-500/5 my-4">
+            <div role="alert" className="text-center py-12 terminal-card rounded-2xl border border-rose-500/30 bg-rose-500/5 my-4">
               <AlertCircle className="w-10 h-10 text-rose-400 mx-auto mb-2" />
               <h4 className="text-sm font-bold text-white mb-1">
                 No se pudieron consultar los partidos en vivo

@@ -76,3 +76,12 @@ export function oddsToProbability(decimalOdds) {
   if (isNaN(num) || num <= 1.0) return 0;
   return Math.round((1 / num) * 100);
 }
+// A fair price derived from a forecast is never a published bookmaker offer.
+export function marketQuote(publishedOdds, probability) {
+  const published = parseDecimalOdds(publishedOdds);
+  if (Number.isFinite(published) && published > 1) return { odds: published, kind: 'published', label: 'Publicado' };
+  if (typeof probability === 'number' && Number.isFinite(probability) && probability > 0 && probability < 100) {
+    return { odds: 100 / probability, kind: 'theoretical', label: 'Teórico' };
+  }
+  return { odds: null, kind: 'unavailable', label: 'N/D' };
+}

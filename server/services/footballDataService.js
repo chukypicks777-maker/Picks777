@@ -95,7 +95,7 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
     homeTeamId: String(hc.team.id), awayTeamId: String(ac.team.id),
     leagueId: league.id, leagueName: league.name, leagueFlag: league.flag, season,
     status, statusDetail: s.type?.description || status, liveMinute: status === 'LIVE' ? s.displayClock || null : null,
-    kickoff: event.date, venue: comp.venue?.fullName || null, referee: comp.officials?.[0]?.displayName || null,
+    kickoff: event.date, timeTBD: comp.timeValid === false, venue: comp.venue?.fullName || null, referee: comp.officials?.[0]?.displayName || null,
     liveScore: { home: status === 'SCHEDULED' ? null : numberOrNull(hc.score), away: status === 'SCHEDULED' ? null : numberOrNull(ac.score) },
     finalScore: { home: status === 'FINISHED' ? numberOrNull(hc.score) : null, away: status === 'FINISHED' ? numberOrNull(ac.score) : null },
     homeTeam: team(hc), awayTeam: team(ac), odds,
@@ -144,7 +144,8 @@ function getScoreboardDates() {
 }
 export async function getFootballFeed(options = {}) {
   const forceRefresh = Boolean(options?.forceRefresh);
-  const leagues = LEAGUES.filter(league => league.sport === (options.sport || 'futbol'));
+  // Women's football shares the football selector; retain the legacy women-only API.
+  const leagues = options.sport === 'femenil' ? LEAGUES.filter(league => league.sport === 'femenil') : LEAGUES;
   const dates = getScoreboardDates();
   const rangeKey = `${dates[0]}-${dates[dates.length - 1]}`;
   const results = await Promise.all(leagues.map(async league => {
