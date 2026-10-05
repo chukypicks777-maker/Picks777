@@ -39,6 +39,7 @@ NPB/KBO anuncian la ausencia de marcador en vivo verificado. Un resultado numér
 - La IA generativa solo elige identificadores de hechos existentes en el catálogo. Sus números, cuotas, selecciones y texto libre no reemplazan los cálculos o registros del servidor. Respuestas sin identificadores válidos no se anuncian como análisis realizado por IA.
 - Se retiraron mensajes de “pronóstico confirmado”, “profundidad confirmada” y porcentajes presentados como precisión. Las solicitudes IA tienen un presupuesto de tiempo acotado al límite del despliegue.
 - La revisión con sesión Owner en producción detectó un 88 % por defecto en la tarjeta destacada cuando no existía pronóstico. Se eliminó ese valor, así como los ceros de marcadores desconocidos de las tarjetas. Los porcentajes se identifican como probabilidades estimadas y las cuotas calculadas como teóricas; el modo Owner no se anuncia sin límites.
+- El ticker ya no anuncia un parlay diario sin una selección real ni afirma aciertos de pronósticos sin un registro previo al encuentro. Distingue las estimaciones de los resultados publicados por el proveedor.
 
 ## Métodos y coherencia
 

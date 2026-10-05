@@ -17,7 +17,7 @@ export default function LiveTicker({ matches = [], loading = false, error = '' }
         type: 'LIVE',
         minute: m.liveMinute || "LIVE",
         match: `${m.homeTeam?.name || 'Local'} ${m.liveScore?.home ?? 'N/D'} - ${m.liveScore?.away ?? 'N/D'} ${m.awayTeam?.name || 'Visitante'}`,
-        pick: `Pick IA: ${m.aiPick?.selection || 'En Juego'}`,
+        pick: m.aiPick?.selection ? `Estimación: ${m.aiPick.selection}` : 'Sin pronóstico disponible',
         corners: `${m.leagueName}`
       });
     });
@@ -30,28 +30,19 @@ export default function LiveTicker({ matches = [], loading = false, error = '' }
         type: 'PRE',
         minute: timeStr,
         match: `${m.homeTeam?.name || 'Local'} vs ${m.awayTeam?.name || 'Visitante'}`,
-        pick: `Pick: ${m.aiPick?.selection || 'Ver Pronóstico'}`,
+        pick: m.aiPick?.selection ? `Estimación: ${m.aiPick.selection}` : 'Sin pronóstico disponible',
         corners: m.leagueName
       });
     });
 
-    // 3. Banker Parlay Banner
-    items.push({
-      type: 'PARLAY',
-      minute: 'AI VIP',
-      match: 'Parlay Banquero Cuantitativo del Día',
-      pick: 'Estimaciones con cuotas disponibles del proveedor',
-      corners: 'Probabilidades, sin garantía'
-    });
-
-    // 4. Recently finished matches
+    // 3. Recently finished matches
     const finished = matches.filter(m => m.status === 'FINISHED').slice(0, 4);
     finished.forEach(m => {
       items.push({
         type: 'FT',
         minute: 'FT',
         match: `${m.homeTeam?.name || 'Local'} ${m.finalScore?.home ?? 'N/D'} - ${m.finalScore?.away ?? 'N/D'} ${m.awayTeam?.name || 'Visitante'}`,
-        pick: m.aiPick?.settlement === 'WON' ? '✅ Pronóstico Acertado' : `Pick: ${m.aiPick?.selection || 'Resultado'}`,
+        pick: 'Resultado del proveedor',
         corners: m.leagueName
       });
     });
@@ -76,10 +67,6 @@ export default function LiveTicker({ matches = [], loading = false, error = '' }
             ) : item.type === 'FT' ? (
               <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
                 FT
-              </span>
-            ) : item.type === 'PARLAY' ? (
-              <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold">
-                PARLAY
               </span>
             ) : (
               <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-white/10 text-[10px] font-bold">

@@ -69,6 +69,9 @@ test('ticker never invents a 0–0 score or announces an empty feed as live', ()
   const empty = renderToStaticMarkup(React.createElement(LiveTicker));
   assert.doesNotMatch(empty, /LIVE ESPN/);
   assert.match(empty, /Sin partidos disponibles/);
+  const onlyResults = renderToStaticMarkup(React.createElement(LiveTicker, { matches: [{ ...missing, status: 'FINISHED', aiPick: { settlement: 'WON' } }] }));
+  assert.match(onlyResults, /Resultado del proveedor/);
+  assert.doesNotMatch(onlyResults, /Parlay Banquero|cuotas disponibles|Pronóstico Acertado|Pick IA/);
 });
 
 test('probability display never turns unavailable data into 0% or animates false intermediate values', () => {
