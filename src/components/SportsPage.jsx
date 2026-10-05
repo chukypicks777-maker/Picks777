@@ -4,9 +4,10 @@ import { SPORTS } from '../constants/sports.js';
 import { SPORT_LEAGUES } from '../constants/leagues.js';
 import LeagueSelector from './LeagueSelector';
 import SportMatchAnalysis, { Probability } from './SportMatchAnalysis';
+import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
+import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
 
 const summaries = {
-  beisbol: 'Ganador, carreras por equipo, primer inning y total de innings 1 a 5.',
   tenis: 'Ganador del partido, primer y segundo set, y al menos un set por jugador.',
   basquetbol: 'Ganador y hándicaps positivos y negativos para ambos equipos.'
 };
@@ -15,6 +16,7 @@ const day = value => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 
 
 export default function SportsPage({ sport, enabled, onSessionExpired }) {
   const activeSport = SPORTS.find(item => item.id === sport);
+  const socialLinks = useSocialLinks();
   const leagues = useMemo(() => [{ id: 'all', name: sport === 'tenis' ? 'Todos los torneos' : 'Todas las Ligas', flag: '🌍' }, ...SPORT_LEAGUES[sport]], [sport]);
   const [league, setLeague] = useState('all'), [filter, setFilter] = useState('all'), [search, setSearch] = useState('');
   const [feed, setFeed] = useState({ matches: [], coverage: [] }), [loading, setLoading] = useState(enabled), [error, setError] = useState('');
@@ -87,7 +89,12 @@ export default function SportsPage({ sport, enabled, onSessionExpired }) {
 
   return <section role="tabpanel" id={`sport-panel-${sport}`} aria-labelledby={`sport-${sport}`} className="space-y-5 pb-6">
     <header className="flex items-start justify-between gap-4 py-2">
-      <div><h1 className="text-xl sm:text-2xl font-bold">{activeSport.icon} {activeSport.name}</h1><p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-2xl leading-relaxed">{summaries[sport]}</p></div>
+      <div className="min-w-0 space-y-3"><h1 className="text-xl sm:text-2xl font-bold">{activeSport.icon} {activeSport.name}</h1>
+        {summaries[sport] && <p className="text-xs sm:text-sm text-slate-400 max-w-2xl leading-relaxed">{summaries[sport]}</p>}
+        <nav aria-label="Comunidades de Picks777" className="flex flex-wrap gap-2">
+          {[["telegram", "Telegram", TelegramIcon, 'text-sky-300'], ["whatsapp", "WhatsApp", WhatsAppIcon, 'text-emerald-300'], ["instagram", "Instagram", InstagramIcon, 'text-pink-300']].map(([id, label, Icon, color]) => <a key={id} href={getSocialLink(socialLinks, id).url} target="_blank" rel="noopener noreferrer" className={`inline-flex gap-1.5 items-center min-h-11 px-2.5 rounded-xl border border-white/10 bg-[#111a28] text-[11px] font-semibold hover:bg-white/5 ${color}`}><Icon className="w-3.5 h-3.5" />{label}</a>)}
+        </nav>
+      </div>
       <button type="button" onClick={reload} disabled={loading || !enabled} className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-xl border border-white/10 bg-[#111a28] text-slate-400 hover:text-white disabled:opacity-40 cursor-pointer shrink-0" aria-label="Actualizar encuentros"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>
     </header>
     <LeagueSelector leagues={leagues} selectedLeague={league} onSelectLeague={setLeague} matchCounts={counts} />
@@ -100,7 +107,7 @@ export default function SportsPage({ sport, enabled, onSessionExpired }) {
     {missing.length > 0 && <p role="status" className="text-xs text-amber-300 bg-amber-500/5 border border-amber-500/20 rounded-xl p-3">Cobertura limitada: {missing.map(item => item.name).join(', ')}. Algunos calendarios o datos no están disponibles.</p>}
     {error && <div role="alert" className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4 text-sm text-rose-300">{error} <button type="button" onClick={reload} className="underline ml-2 cursor-pointer">Reintentar</button></div>}
     {loading ? <div role="status" className="py-16 text-center text-slate-400 text-sm">Consultando encuentros y estadísticas…</div> : !matches.length ? <div role="status" className="py-16 px-4 text-center rounded-2xl border border-white/10 bg-[#0d121c]"><p className="font-semibold">Sin encuentros disponibles para este filtro</p><p className="text-xs text-slate-500 mt-2">Los partidos aparecerán cuando la competición tenga un calendario publicado.</p></div> : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-      {matches.map(match => <article key={match.id} className="min-w-0 rounded-2xl border border-white/10 bg-[#0d121c] p-4 sm:p-5 space-y-4" aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`}>
+      {matches.map(match => <article key={match.id} className="relative min-w-0 rounded-2xl border border-white/10 bg-[#0d121c] p-4 sm:p-5 space-y-4 cursor-pointer hover:border-sky-500/40 focus-within:ring-2 focus-within:ring-sky-400 transition-colors" aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`}>
         <div className="flex justify-between items-center gap-2 text-[11px]"><span className="text-slate-400">{match.leagueFlag} {match.leagueName}</span><span className={`rounded-full px-2 py-1 shrink-0 ${match.status === 'LIVE' ? 'bg-rose-500/15 text-rose-300' : 'bg-white/5 text-slate-400'}`}>{statuses[match.status] || match.status}</span></div>
         {match.tournamentName && <p className="text-[11px] text-slate-500 truncate">{match.tournamentName}{match.round ? ` · ${match.round}` : ''}</p>}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
@@ -110,7 +117,7 @@ export default function SportsPage({ sport, enabled, onSessionExpired }) {
         {match.liveSupported === false && <p className="text-center text-[10px] text-amber-300">Calendario oficial · Sin marcador en vivo verificado</p>}
         {['LIVE', 'FINISHED'].includes(match.status) && <p className="text-center font-mono text-sm text-slate-300">{match.liveScore?.home ?? 'N/D'} – {match.liveScore?.away ?? 'N/D'}{sport === 'tenis' ? ' sets' : sport === 'beisbol' ? ' carreras' : ' puntos'}</p>}
         <div className="rounded-xl bg-[#111a28] p-3 space-y-2"><p className="text-[10px] uppercase tracking-wide text-slate-500">Ganador · Probabilidad previa</p><div className="flex justify-between text-sm gap-2"><span className="truncate text-slate-300">{match.homeTeam.shortName}</span><Probability value={match.analysis?.winner?.home} /></div>{match.allowsDraw && <div className="flex justify-between text-sm"><span className="text-slate-400">Empate</span><Probability value={match.analysis?.winner?.draw} /></div>}<div className="flex justify-between text-sm gap-2"><span className="truncate text-slate-300">{match.awayTeam.shortName}</span><Probability value={match.analysis?.winner?.away} /></div></div>
-        <button type="button" onClick={() => setSelected(match.id)} className="flex justify-center items-center gap-2 min-h-11 w-full rounded-xl bg-sky-500/10 border border-sky-500/25 text-sky-300 font-semibold text-xs cursor-pointer hover:bg-sky-500/20">Ver análisis y mercados<ArrowUpRight size={15} /></button>
+        <button type="button" onClick={() => setSelected(match.id)} className="flex justify-center items-center gap-2 min-h-11 w-full rounded-xl bg-sky-500/10 border border-sky-500/25 text-sky-300 font-semibold text-xs cursor-pointer hover:bg-sky-500/20"><span aria-hidden="true" className="absolute inset-0 rounded-2xl" />Ver análisis y mercados<ArrowUpRight size={15} /></button>
       </article>)}
     </div>}
     <p className="text-[11px] text-slate-500 leading-relaxed">Los porcentajes son estimaciones sin una tasa de aciertos validada. N/D indica falta de datos. Consulta automática cada minuto; el proveedor puede publicar con retraso. NPB y KBO muestran calendarios y resultados publicados, sin marcador en vivo verificado.</p>

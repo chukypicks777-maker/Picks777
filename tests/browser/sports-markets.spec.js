@@ -18,7 +18,17 @@ function fixture(sport, leagueId, homeName, awayName) {
     { ...match, id: `b-${i}`, status: 'FINISHED', kickoff: new Date(now - (i + 1) * 86400000).toISOString(), homeTeam: { id: 'c' }, finalScore: { home: 99 + i, away: 101 + i * 2 },
       setScores: [{ home: 6, away: 3 }, { home: 6, away: 4 }] }
   ]);
-  if (sport === 'beisbol') games.forEach((game, i) => { game.finalScore = { home: 3 + i % 4, away: 1 + i % 3 }; });
+  if (sport === 'beisbol') {
+    match.scheduledInnings = 9;
+    games.forEach((game, i) => {
+      game.finalScore = { home: 3 + i % 4, away: 1 + i % 3 };
+      const extra = i % 4 === 0, regulationRuns = Math.min(game.finalScore.home, game.finalScore.away);
+      game.scheduledInnings = 9; game.lastInning = extra ? 10 : 9;
+      game.inningScores = Array.from({ length: game.lastInning }, (_, n) => ({ num: n + 1,
+        home: n === 0 ? (extra ? regulationRuns : game.finalScore.home) : n === 9 ? game.finalScore.home - regulationRuns : 0,
+        away: n === 0 ? (extra ? regulationRuns : game.finalScore.away) : n === 9 ? game.finalScore.away - regulationRuns : 0 }));
+    });
+  }
   if (sport === 'tenis') { match.tour = 'atp'; games.forEach(game => { game.tour = 'atp'; }); match.maxSets = 3; }
   match.analysis = sport === 'beisbol' ? baseballAnalysis(match, games, now) : sport === 'tenis' ? tennisAnalysis(match, games, now) : basketballAnalysis(match, games, now);
   return match;
@@ -73,25 +83,62 @@ test('la liga femenil tiene encuentros propios, informe, recarga y regreso a fú
   await expect(page.getByText('Tigres Femenil', { exact: true })).toHaveCount(0);
 });
 
-test('béisbol muestra cuatro ligas y carreras 1.5–5.5 por equipo, empate del primer inning y total 1 a 5', async ({ page }) => {
+test('béisbol abre toda la tarjeta y ofrece Over/Under, totales 1.5–9.5 y extra innings sí/no', async ({ page }) => {
   await setup(page, '/beisbol');
   const panel = page.getByRole('tabpanel');
   for (const name of ['MLB', 'NPB', 'KBO', 'LMB']) await expect(panel.getByRole('button', { name: new RegExp(name) })).toBeVisible();
+  const social = panel.getByRole('navigation', { name: 'Comunidades de Picks777' });
+  for (const name of ['Telegram', 'WhatsApp', 'Instagram']) {
+    await expect(social.getByRole('link', { name, exact: true })).toBeVisible();
+    await expect(social.getByRole('link', { name, exact: true })).toHaveAttribute('target', '_blank');
+  }
+  await expect(panel.getByText('Ganador, carreras por equipo, primer inning y total de innings 1 a 5.', { exact: true })).toHaveCount(0);
   await panel.getByRole('button', { name: /MLB/ }).click();
   await expect(panel.getByRole('article')).toHaveCount(1);
-  await panel.getByRole('button', { name: 'Ver análisis y mercados' }).click();
+  await panel.getByRole('article').click({ position: { x: 25, y: 70 } });
   const dialog = page.getByRole('dialog', { name: 'Análisis del encuentro' });
   for (const name of ['Carreras · LA Dodgers', 'Carreras · ATL Braves', 'Innings 1 a 5 · Total de carreras de ambos equipos']) {
     const market = dialog.getByRole('region', { name, exact: true });
     for (const line of ['1.5', '2.5', '3.5', '4.5', '5.5']) await expect(market.getByRole('rowheader', { name: line, exact: true })).toHaveCount(1);
-    await expect(market.getByRole('columnheader', { name: 'Más de' })).toHaveCount(1);
-    await expect(market.getByRole('columnheader', { name: 'Menos de' })).toHaveCount(1);
+    await expect(market.getByRole('columnheader', { name: 'Over', exact: true })).toHaveCount(1);
+    await expect(market.getByRole('columnheader', { name: 'Under', exact: true })).toHaveCount(1);
   }
+  const totals = dialog.getByRole('region', { name: 'Totales extra innings', exact: true });
+  for (const line of ['1.5', '2.5', '3.5', '4.5', '5.5', '6.5', '7.5', '8.5', '9.5']) await expect(totals.getByRole('rowheader', { name: line, exact: true })).toHaveCount(1);
+  await expect(dialog.getByRole('region', { name: /anota al menos una carrera/ })).toHaveCount(0);
+  await dialog.getByText('¿Habrá extra innings?', { exact: true }).click();
+  const extra = dialog.getByRole('region', { name: 'Probabilidad de extra innings', exact: true });
+  for (const name of ['Sí', 'No']) await expect(extra.getByText(name, { exact: true })).toBeVisible();
+  await expect(extra).not.toContainText('N/D');
   await expect(dialog.getByRole('region', { name: 'Primer inning · 1X2' }).getByText('Empate', { exact: true })).toHaveCount(1);
   expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
   await dialog.screenshot({ path: `artifacts/mobile/baseball-markets-${test.info().project.name}.png` });
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
+});
+
+test('las tarjetas de tenis y básquetbol abren desde el cuerpo y con teclado; las redes respetan la configuración', async ({ page }) => {
+  for (const sport of ['tenis', 'basquetbol']) {
+    await setup(page, `/${sport}`);
+    await page.route('**/api/community', route => route.fulfill({ json: { success: true, settings: { revision: 100, promoImageVisible: false, links: [
+      { id: 'telegram', url: 'https://t.me/picks_test' }, { id: 'whatsapp', url: 'https://chat.whatsapp.com/picks_test' }, { id: 'instagram', url: 'https://instagram.com/picks_test' }
+    ] } } }));
+    await page.reload();
+    const panel = page.getByRole('tabpanel'), card = panel.getByRole('article').first();
+    const social = panel.getByRole('navigation', { name: 'Comunidades de Picks777' });
+    await expect(social.getByRole('link', { name: 'Telegram', exact: true })).toHaveAttribute('href', 'https://t.me/picks_test');
+    await expect(social.getByRole('link', { name: 'WhatsApp', exact: true })).toHaveAttribute('href', 'https://chat.whatsapp.com/picks_test');
+    await expect(social.getByRole('link', { name: 'Instagram', exact: true })).toHaveAttribute('href', 'https://instagram.com/picks_test');
+    await card.click({ position: { x: 25, y: 70 } });
+    const dialog = page.getByRole('dialog', { name: 'Análisis del encuentro' });
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await card.getByRole('button', { name: 'Ver análisis y mercados' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(dialog).toBeVisible();
+    await page.keyboard.press('Escape');
+  }
 });
 
 test('tenis ofrece los seis torneos, ambos sets y sí/no para al menos un set de cada jugador', async ({ page }) => {

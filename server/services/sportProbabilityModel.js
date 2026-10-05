@@ -1,6 +1,7 @@
 import { roundDistribution, totalLines, validNumber, poissonProbability } from '../../src/utils/probability.js';
 
 export const RUN_LINES = [1.5, 2.5, 3.5, 4.5, 5.5];
+export const TOTAL_RUN_LINES = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5];
 export const HANDICAP_LINES = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, -1.5, -2.5, -3.5, -4.5, -5.5, -6.5];
 const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length;
 const pair = home => Number.isFinite(home) && home >= 0 && home <= 1
@@ -40,16 +41,31 @@ function teamSample(match, games, side, now) {
     if (!ownSide) return [];
     const own = game.finalScore?.[ownSide], against = game.finalScore?.[ownSide === 'home' ? 'away' : 'home'];
     return Number.isInteger(own) && own >= 0 && Number.isInteger(against) && against >= 0
-      ? [{ own, against, date: game.kickoff, id: game.id, sourceUrl: game.sourceUrl, inningScores: game.inningScores, ownSide }] : [];
+      ? [{ own, against, date: game.kickoff, id: game.id, sourceUrl: game.sourceUrl, inningScores: game.inningScores, scheduledInnings: game.scheduledInnings, lastInning: game.lastInning, finalScore: game.finalScore, status: game.status, ownSide }] : [];
   }).sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 20);
 }
 
-export function runLadder(lambda) {
-  const probabilities = totalLines(lambda, RUN_LINES);
-  return RUN_LINES.map(line => {
+export function runLadder(lambda, lines = RUN_LINES) {
+  const probabilities = totalLines(lambda, lines);
+  return lines.map(line => {
     const key = String(line).replace('.', '');
     return { line, over: probabilities[`over${key}`], under: probabilities[`under${key}`] };
   });
+}
+
+export function observedExtraInnings(game) {
+  const scheduled = game.scheduledInnings, innings = game.inningScores;
+  if (game.status !== 'FINISHED' || !Number.isInteger(scheduled) || scheduled < 1 || !Array.isArray(innings) || !innings.length || game.lastInning !== innings.length
+    || !['home', 'away'].every(side => Number.isInteger(game.finalScore?.[side]) && game.finalScore[side] >= 0)) return null;
+  for (let i = 0; i < innings.length; i++) {
+    const inning = innings[i];
+    const unplayedHomeHalf = inning.home == null && i === innings.length - 1 && inning.num <= scheduled && game.finalScore.home > game.finalScore.away;
+    if (inning.num !== i + 1 || !Number.isInteger(inning.away) || inning.away < 0
+      || !(Number.isInteger(inning.home) && inning.home >= 0 || unplayedHomeHalf)) return null;
+  }
+  if (['home', 'away'].some(side => innings.reduce((sum, inning) => sum + (inning[side] ?? 0), 0) !== game.finalScore[side])) return null;
+  if (innings.length > scheduled && innings.slice(0, scheduled).reduce((margin, inning) => margin + inning.home - inning.away, 0) !== 0) return null;
+  return innings.at(-1).num > scheduled;
 }
 
 export function poissonResult(homeRate, awayRate) {
@@ -104,17 +120,25 @@ export function baseballAnalysis(match, games = [], now = Date.now()) {
       sampleSize: { home: h.length, away: a.length } };
   };
   const first = periodRates(1), five = periodRates(5);
+  const extraSample = sample => [...new Map(sample.filter(game => game.scheduledInnings === match.scheduledInnings && observedExtraInnings(game) !== null).map(game => [game.id, game])).values()];
+  const extraHome = extraSample(home), extraAway = extraSample(away);
+  const extraGames = [...new Map([...extraHome, ...extraAway].map(game => [game.id, game])).values()];
+  const extraCount = extraGames.filter(game => observedExtraInnings(game)).length;
+  const extraReady = Number.isInteger(match.scheduledInnings) && match.scheduledInnings > 0 && extraHome.length >= 5 && extraAway.length >= 5;
   return {
     kind: 'baseball', available: ready, winner,
     expectedRuns: { home: homeRate, away: awayRate },
     scoresRun: { home: yesNo(homeRate === null ? null : 1 - Math.exp(-homeRate)), away: yesNo(awayRate === null ? null : 1 - Math.exp(-awayRate)) },
     teamRuns: { home: runLadder(homeRate), away: runLadder(awayRate) },
+    totalRuns: runLadder(homeRate !== null && awayRate !== null ? homeRate + awayRate : null, TOTAL_RUN_LINES),
+    extraInnings: yesNo(extraReady ? (extraCount + 0.5) / (extraGames.length + 1) : null),
+    extraInningsSampleSize: { home: extraHome.length, away: extraAway.length, uniqueGames: extraGames.length, extraGames: extraCount },
     firstInning: poissonResult(first.home, first.away),
     firstFive: runLadder(five.home !== null && five.away !== null ? five.home + five.away : null),
     sampleSize: { home: home.length, away: away.length },
     inningSampleSize: { first: first.sampleSize, five: five.sampleSize },
     records: { home: home.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })), away: away.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })) },
-    method: 'Total esperado de carreras basado en las medias anotadas y recibidas de los últimos 20 resultados completos (mínimo 5 por equipo; incluyen extra innings si los hubo). El reparto entre equipos se ajusta a una fuerza relativa tipo Elo calculada con resultados previos del mismo torneo: punto inicial neutral 1500, escala 400 y actualización 24 por partido. Son parámetros matemáticos, no rankings oficiales. Totales: Poisson sobre esas medias ajustadas. Primer inning y total de innings 1 a 5 usan exclusivamente carreras observadas en esos innings, con mínimo 5 registros por equipo; sin esos registros se muestra N/D. No incorpora lanzadores ni alineaciones.'
+    method: 'Total esperado de carreras basado en las medias anotadas y recibidas de los últimos 20 resultados completos (mínimo 5 por equipo; incluyen extra innings si los hubo). El reparto entre equipos se ajusta a una fuerza relativa tipo Elo calculada con resultados previos del mismo torneo: punto inicial neutral 1500, escala 400 y actualización 24 por partido. Son parámetros matemáticos, no rankings oficiales. Totales por equipo y combinado del partido: Poisson sobre esas medias ajustadas, incluidos extra innings presentes en los resultados. Primer inning y total de innings 1 a 5 usan exclusivamente carreras observadas en esos innings, con mínimo 5 registros por equipo; sin esos registros se muestra N/D. ¿Habrá extra innings?: frecuencia de partidos que excedieron la duración reglamentaria publicada por el proveedor, con mínimo 5 registros verificables por equipo, de la misma duración que el encuentro y sin contar dos veces un enfrentamiento común. Suavizado matemático de Jeffreys (0.5 añadido al numerador y 1 al denominador); esos valores no son partidos observados. Sin duración reglamentaria o innings completos comprobables, N/D. No incorpora lanzadores ni alineaciones.'
       + (match.allowsDraw ? ' Empate final estimado con la frecuencia observada, suavizada con un registro por resultado; la masa decisiva se reparte según Poisson.' : ' Ganador aproximado condicionando la distribución Poisson a un resultado decisivo; no simula extra innings.'),
     notice: ready ? 'Probabilidades estimadas antes del partido; no se recalculan según el marcador en vivo.' : 'Faltan al menos 5 partidos finalizados por equipo con carreras verificadas.'
   };

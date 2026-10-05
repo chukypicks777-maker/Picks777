@@ -2,6 +2,8 @@
 
 Cambios publicados en la web [Picks777](https://picks777.vercel.app), incluyendo frontend y API. Se comprueba el estado de Vercel para el commit publicado y la coincidencia byte por byte del archivo JavaScript servido con la compilación local. La evidencia posterior al despliegue se guarda en `artifacts/sports-production-verification-2026-10-05.json`.
 
+Actualización posterior del mismo día: se retiraron los bloques de anota al menos una carrera de la interfaz, se añadieron totales 1.5–9.5 y la consulta sí/no de extra innings, comunidades y apertura de tarjetas completas. La evidencia de esos ajustes está en [VALIDACION-AJUSTES-BEISBOL-2026-10-05.md](VALIDACION-AJUSTES-BEISBOL-2026-10-05.md); las tablas de esta auditoría documentan la revisión inicial.
+
 ## Funciones incorporadas
 
 - Fútbol: córners totales 5.5, 6.5, 7.5, 8.5 y 9.5; tarjetas **amarillas** totales 2.5, 3.5 y 4.5, con más/menos por línea.

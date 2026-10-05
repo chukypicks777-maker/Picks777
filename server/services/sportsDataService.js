@@ -199,7 +199,7 @@ export async function getSportsFeed(sport, options = {}) {
   if (!Object.hasOwn(SPORT_LEAGUES, sport)) throw new Error('Deporte no válido.');
   const now = options.now ?? Date.now();
   const today = new Date(now).toISOString().slice(0, 10);
-  return cachedData(`sports:feed:v2:${sport}:${today}`, 15, async () => {
+  return cachedData(`sports:feed:v3:${sport}:${today}`, 15, async () => {
     const { games, coverage: sourceCoverage } = await getSportsHistory(sport, now);
     const order = { LIVE: 0, SCHEDULED: 1, FINISHED: 2 };
     const matches = games.filter(match => {

@@ -39,6 +39,7 @@ export function parseMlbGame(game, league, fetchedAt = new Date().toISOString())
     venue: game.venue?.name || null, season: game.season,
     source: 'MLB Stats API', sourceUrl: league.id === 'lmb' ? `https://www.milb.com/gameday/${game.gamePk}` : `https://www.mlb.com/gameday/${game.gamePk}`,
     scheduledInnings: number(game.scheduledInnings ?? game.linescore?.scheduledInnings),
+    lastInning: number(game.linescore?.currentInning),
     inningScores: (game.linescore?.innings || []).map(inning => ({ num: number(inning.num), home: number(inning.home?.runs), away: number(inning.away?.runs) })),
     liveSupported: true
   }, fetchedAt);

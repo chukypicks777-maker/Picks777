@@ -19,7 +19,7 @@ function RunTable({ title, lines = [] }) {
   return <section className="rounded-xl border border-white/10 overflow-hidden bg-[#111a28]" aria-label={title}>
     <h3 className="p-4 text-sm font-bold border-b border-white/10">{title}</h3>
     <table className="w-full text-xs sm:text-sm">
-      <thead className="text-slate-400 bg-white/[0.03]"><tr><th scope="col" className="p-3 text-left">Carreras</th><th scope="col" className="p-3 text-right">Más de</th><th scope="col" className="p-3 text-right">Menos de</th></tr></thead>
+      <thead className="text-slate-400 bg-white/[0.03]"><tr><th scope="col" className="p-3 text-left">Carreras</th><th scope="col" className="p-3 text-right">Over</th><th scope="col" className="p-3 text-right">Under</th></tr></thead>
       <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="p-3 text-left font-mono font-semibold text-slate-300">{row.line}</th><td className="p-3 text-right"><Probability value={row.over} /></td><td className="p-3 text-right"><Probability value={row.under} /></td></tr>)}</tbody>
     </table>
   </section>;
@@ -57,9 +57,10 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
       {a.notice && <p role="status" className="text-xs text-slate-400 leading-relaxed">{a.notice}</p>}
 
       {match.sport === 'beisbol' && <>
-        <div className="grid sm:grid-cols-2 gap-3"><BinaryMarket title={`${home} anota al menos una carrera`} values={a.scoresRun?.home} /><BinaryMarket title={`${away} anota al menos una carrera`} values={a.scoresRun?.away} /></div>
         <p className="text-xs text-slate-400">Carreras por equipo · Partido completo, incluidos extra innings</p>
         <div className="grid sm:grid-cols-2 gap-3"><RunTable title={`Carreras · ${home}`} lines={a.teamRuns?.home} /><RunTable title={`Carreras · ${away}`} lines={a.teamRuns?.away} /></div>
+        <RunTable title="Totales extra innings" lines={a.totalRuns} />
+        <p className="text-xs text-slate-400">Carreras de ambos equipos durante el partido completo, incluidos extra innings; no son únicamente las carreras de las entradas extra.</p>
         <Outcomes title="Primer inning · 1X2" values={a.firstInning} home={home} away={away} draw />
         <RunTable title="Innings 1 a 5 · Total de carreras de ambos equipos" lines={a.firstFive} />
         {a.inningSampleSize && <p className="text-xs text-slate-400">Registros por equipo · Primer inning: {a.inningSampleSize.first.home} / {a.inningSampleSize.first.away} · Innings 1 a 5: {a.inningSampleSize.five.home} / {a.inningSampleSize.five.away}. Sin 5 registros por equipo, el mercado indica N/D.</p>}
@@ -84,6 +85,13 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
         <p>Fuente: <a href={match.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline text-sky-300">{match.source}</a> · Consultado {match.fetchedAt ? new Date(match.fetchedAt).toLocaleString('es') : 'N/D'}.</p>
         <p>La hora de consulta no confirma cuándo actualizó el proveedor. Las probabilidades se calculan a partir de registros; su precisión predictiva todavía no está validada.</p>
       </details>
+      {match.sport === 'beisbol' && <details className="rounded-xl bg-[#111a28] border border-sky-500/25 text-xs text-slate-400 overflow-hidden">
+        <summary className="cursor-pointer text-sky-300 font-semibold p-4 min-h-11">¿Habrá extra innings?</summary>
+        <div className="p-3 pt-0 space-y-3">
+          <BinaryMarket title="Probabilidad de extra innings" values={a.extraInnings} />
+          <p className="leading-relaxed">Muestra verificada: {a.extraInningsSampleSize?.home ?? 0} partidos de {home} y {a.extraInningsSampleSize?.away ?? 0} de {away}; {a.extraInningsSampleSize?.uniqueGames ?? 0} encuentros distintos, {a.extraInningsSampleSize?.extraGames ?? 0} con extra innings. Sin al menos 5 registros por equipo y duración reglamentaria publicada, N/D.</p>
+        </div>
+      </details>}
     </div>
   </Modal>;
 }

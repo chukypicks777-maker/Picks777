@@ -1,0 +1,1040 @@
+{
+  "checkedAt": "2026-10-05T16:12:39.320Z",
+  "pass": true,
+  "checks": [
+    {
+      "name": "mlb:real-calendar",
+      "pass": true
+    },
+    {
+      "name": "mlb:total-lines",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:1.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:2.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:2.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:3.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:3.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:4.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:4.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:5.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:5.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:6.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:6.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:7.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:7.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:8.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:8.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:9.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "mlb:total:9.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "mlb:extra-samples",
+      "pass": true
+    },
+    {
+      "name": "mlb:extra-complement",
+      "pass": true
+    },
+    {
+      "name": "mlb:extra-reproducible-frequency",
+      "pass": true
+    },
+    {
+      "name": "lmb:real-calendar",
+      "pass": true
+    },
+    {
+      "name": "lmb:total-lines",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:1.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:2.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:2.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:3.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:3.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:4.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:4.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:5.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:5.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:6.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:6.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:7.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:7.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:8.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:8.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:9.5:range-and-complement",
+      "pass": true
+    },
+    {
+      "name": "lmb:total:9.5:monotonic",
+      "pass": true
+    },
+    {
+      "name": "lmb:extra-samples",
+      "pass": true
+    },
+    {
+      "name": "lmb:extra-complement",
+      "pass": true
+    },
+    {
+      "name": "lmb:extra-reproducible-frequency",
+      "pass": true
+    }
+  ],
+  "samples": [
+    {
+      "league": "mlb",
+      "id": "mlb-mlb-849834",
+      "teams": [
+        "Cleveland Guardians",
+        "Chicago White Sox"
+      ],
+      "status": "SCHEDULED",
+      "sourceUrl": "https://www.mlb.com/gameday/849834",
+      "fetchedAt": "2026-10-05T16:12:39.108Z",
+      "scheduledInnings": 9,
+      "totalRuns": [
+        {
+          "line": 1.5,
+          "over": 100,
+          "under": 0
+        },
+        {
+          "line": 2.5,
+          "over": 99,
+          "under": 1
+        },
+        {
+          "line": 3.5,
+          "over": 98,
+          "under": 2
+        },
+        {
+          "line": 4.5,
+          "over": 95,
+          "under": 5
+        },
+        {
+          "line": 5.5,
+          "over": 90,
+          "under": 10
+        },
+        {
+          "line": 6.5,
+          "over": 81,
+          "under": 19
+        },
+        {
+          "line": 7.5,
+          "over": 70,
+          "under": 30
+        },
+        {
+          "line": 8.5,
+          "over": 57,
+          "under": 43
+        },
+        {
+          "line": 9.5,
+          "over": 44,
+          "under": 56
+        }
+      ],
+      "extraInnings": {
+        "yes": 4.1,
+        "no": 95.9
+      },
+      "extraInningsSampleSize": {
+        "home": 20,
+        "away": 20,
+        "uniqueGames": 36,
+        "extraGames": 1
+      },
+      "observedRecords": [
+        {
+          "id": "mlb-mlb-849829",
+          "date": "2026-10-03T17:00:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/849829",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 0,
+            "away": 3
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824055",
+          "date": "2026-09-27T19:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824055",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 3,
+            "away": 2
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824057",
+          "date": "2026-09-26T23:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824057",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 5,
+            "away": 11
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824058",
+          "date": "2026-09-25T23:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824058",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 9,
+            "away": 12
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824707",
+          "date": "2026-09-24T22:45:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824707",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 0,
+            "away": 1
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824710",
+          "date": "2026-09-23T23:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824710",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 1,
+            "away": 0
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824709",
+          "date": "2026-09-22T22:45:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824709",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 2,
+            "away": 3
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824381",
+          "date": "2026-09-20T17:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824381",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 1,
+            "away": 0
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824380",
+          "date": "2026-09-19T22:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824380",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 12,
+            "away": 6
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824383",
+          "date": "2026-09-18T23:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824383",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 5,
+            "away": 3
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824382",
+          "date": "2026-09-16T17:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824382",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 6,
+            "away": 3
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824384",
+          "date": "2026-09-15T22:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824384",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 7,
+            "away": 6
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824386",
+          "date": "2026-09-14T22:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824386",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 3,
+            "away": 7
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-823658",
+          "date": "2026-09-13T18:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/823658",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 2,
+            "away": 9
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-823657",
+          "date": "2026-09-12T20:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/823657",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 4,
+            "away": 3
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-823659",
+          "date": "2026-09-12T00:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/823659",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 2,
+            "away": 5
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824791",
+          "date": "2026-09-09T22:35:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824791",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 9,
+            "away": 5
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824792",
+          "date": "2026-09-08T22:35:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824792",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 5,
+            "away": 9
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824793",
+          "date": "2026-09-07T17:35:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824793",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 6,
+            "away": 4
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824385",
+          "date": "2026-09-06T17:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824385",
+          "scheduledInnings": 9,
+          "lastInning": 10,
+          "finalScore": {
+            "home": 3,
+            "away": 2
+          },
+          "extraInnings": true
+        },
+        {
+          "id": "mlb-mlb-849846",
+          "date": "2026-09-30T21:00:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/849846",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 3,
+            "away": 7
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-849849",
+          "date": "2026-09-29T21:00:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/849849",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 3,
+            "away": 6
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824542",
+          "date": "2026-09-27T19:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824542",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 4,
+            "away": 2
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824543",
+          "date": "2026-09-26T23:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824543",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 6,
+            "away": 9
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824544",
+          "date": "2026-09-25T23:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824544",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 6,
+            "away": 1
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824059",
+          "date": "2026-09-24T18:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824059",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 1,
+            "away": 9
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824060",
+          "date": "2026-09-23T23:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824060",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 5,
+            "away": 4
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824061",
+          "date": "2026-09-22T23:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824061",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 11,
+            "away": 14
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824546",
+          "date": "2026-09-20T18:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824546",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 8,
+            "away": 1
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824545",
+          "date": "2026-09-19T18:10:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824545",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 3,
+            "away": 1
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824547",
+          "date": "2026-09-18T23:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824547",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 8,
+            "away": 11
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824548",
+          "date": "2026-09-17T23:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824548",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 3,
+            "away": 1
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-823008",
+          "date": "2026-09-13T18:15:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/823008",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 3,
+            "away": 1
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-823009",
+          "date": "2026-09-12T23:15:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/823009",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 5,
+            "away": 6
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-823012",
+          "date": "2026-09-12T00:15:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/823012",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 7,
+            "away": 3
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-mlb-824550",
+          "date": "2026-09-10T23:40:00Z",
+          "sourceUrl": "https://www.mlb.com/gameday/824550",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 0,
+            "away": 2
+          },
+          "extraInnings": false
+        }
+      ]
+    },
+    {
+      "league": "lmb",
+      "id": "mlb-lmb-867481",
+      "teams": [
+        "Toros de Tijuana",
+        "Olmecas de Tabasco"
+      ],
+      "status": "FINISHED",
+      "sourceUrl": "https://www.milb.com/gameday/867481",
+      "fetchedAt": "2026-10-05T16:12:39.315Z",
+      "scheduledInnings": 9,
+      "totalRuns": [
+        {
+          "line": 1.5,
+          "over": 100,
+          "under": 0
+        },
+        {
+          "line": 2.5,
+          "over": 99,
+          "under": 1
+        },
+        {
+          "line": 3.5,
+          "over": 98,
+          "under": 2
+        },
+        {
+          "line": 4.5,
+          "over": 95,
+          "under": 5
+        },
+        {
+          "line": 5.5,
+          "over": 90,
+          "under": 10
+        },
+        {
+          "line": 6.5,
+          "over": 81,
+          "under": 19
+        },
+        {
+          "line": 7.5,
+          "over": 70,
+          "under": 30
+        },
+        {
+          "line": 8.5,
+          "over": 58,
+          "under": 42
+        },
+        {
+          "line": 9.5,
+          "over": 44,
+          "under": 56
+        }
+      ],
+      "extraInnings": {
+        "yes": 18.8,
+        "no": 81.2
+      },
+      "extraInningsSampleSize": {
+        "home": 13,
+        "away": 15,
+        "uniqueGames": 23,
+        "extraGames": 4
+      },
+      "observedRecords": [
+        {
+          "id": "mlb-lmb-867490",
+          "date": "2026-09-14T00:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867490",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 5,
+            "away": 6
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867489",
+          "date": "2026-09-13T01:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867489",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 9,
+            "away": 1
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867488",
+          "date": "2026-09-12T01:30:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867488",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 0,
+            "away": 2
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867487",
+          "date": "2026-09-10T02:35:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867487",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 13,
+            "away": 2
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867486",
+          "date": "2026-09-09T02:35:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867486",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 1,
+            "away": 7
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867494",
+          "date": "2026-09-03T01:30:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867494",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 1,
+            "away": 10
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867493",
+          "date": "2026-09-02T01:30:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867493",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 7,
+            "away": 15
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867498",
+          "date": "2026-09-01T01:30:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867498",
+          "scheduledInnings": 9,
+          "lastInning": 11,
+          "finalScore": {
+            "home": 5,
+            "away": 6
+          },
+          "extraInnings": true
+        },
+        {
+          "id": "mlb-lmb-867499",
+          "date": "2026-08-30T02:35:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867499",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 0,
+            "away": 4
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867500",
+          "date": "2026-08-29T02:35:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867500",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 2,
+            "away": 0
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867442",
+          "date": "2026-08-23T23:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867442",
+          "scheduledInnings": 9,
+          "lastInning": 10,
+          "finalScore": {
+            "home": 2,
+            "away": 3
+          },
+          "extraInnings": true
+        },
+        {
+          "id": "mlb-lmb-867441",
+          "date": "2026-08-23T20:30:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867441",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 2,
+            "away": 7
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867446",
+          "date": "2026-08-22T01:30:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867446",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 1,
+            "away": 2
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867483",
+          "date": "2026-09-05T01:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867483",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 8,
+            "away": 10
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867482",
+          "date": "2026-09-04T01:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867482",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 1,
+            "away": 2
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867492",
+          "date": "2026-09-03T01:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867492",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 5,
+            "away": 6
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867491",
+          "date": "2026-08-31T00:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867491",
+          "scheduledInnings": 9,
+          "lastInning": 11,
+          "finalScore": {
+            "home": 4,
+            "away": 3
+          },
+          "extraInnings": true
+        },
+        {
+          "id": "mlb-lmb-867497",
+          "date": "2026-08-30T01:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867497",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 1,
+            "away": 5
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867465",
+          "date": "2026-08-28T01:30:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867465",
+          "scheduledInnings": 9,
+          "lastInning": 13,
+          "finalScore": {
+            "home": 5,
+            "away": 3
+          },
+          "extraInnings": true
+        },
+        {
+          "id": "mlb-lmb-867466",
+          "date": "2026-08-27T01:30:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867466",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 8,
+            "away": 1
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867467",
+          "date": "2026-08-25T01:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867467",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 4,
+            "away": 5
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867468",
+          "date": "2026-08-23T23:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867468",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 6,
+            "away": 4
+          },
+          "extraInnings": false
+        },
+        {
+          "id": "mlb-lmb-867469",
+          "date": "2026-08-22T23:00:00Z",
+          "sourceUrl": "https://www.milb.com/gameday/867469",
+          "scheduledInnings": 9,
+          "lastInning": 9,
+          "finalScore": {
+            "home": 12,
+            "away": 8
+          },
+          "extraInnings": false
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Totals mean the complete game including extra innings, not just runs scored in extra innings.",
+    "Extra innings use a smoothed observed frequency, not a validated predictive success rate.",
+    "NPB/KBO lack verified regulation-duration metadata in this integration; their extra-innings probabilities remain unavailable.",
+    "Provider records are not independently guaranteed ground truth; fetchedAt is consultation time."
+  ]
+}

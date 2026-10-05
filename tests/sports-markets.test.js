@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SPORT_LEAGUES } from '../src/constants/leagues.js';
 import { SPORTS, sportFromPath } from '../src/constants/sports.js';
-import { baseballAnalysis, basketballAnalysis, tennisAnalysis, analyzeSportMatch, poissonResult, seriesWinProbability } from '../server/services/sportProbabilityModel.js';
+import { baseballAnalysis, basketballAnalysis, tennisAnalysis, analyzeSportMatch, poissonResult, seriesWinProbability, observedExtraInnings } from '../server/services/sportProbabilityModel.js';
 import { parseMlbGame, parseNpbSchedule, parseKboSchedule } from '../server/services/baseballDataService.js';
 import { parseBasketballEvent, parseTennisEvents } from '../server/services/sportsDataService.js';
 import { parseEspnEvent, LEAGUES } from '../server/services/footballDataService.js';
@@ -55,6 +55,56 @@ test('no future results, current game results or other leagues leak into forecas
   assert.equal(missing.winner.home, null); assert.equal(missing.teamRuns.home[0].over, null); assert.equal(missing.firstInning.draw, null);
   assert.deepEqual(poissonResult(0, 0), { home: 0, draw: 100, away: 0 });
   for (const value of [null, undefined, NaN, Infinity, -1]) assert.equal(poissonResult(value, 3).home, null);
+});
+
+test('full baseball game totals include all nine requested lines and preserve missing samples', () => {
+  const match = target('beisbol'), result = baseballAnalysis(match, history(match), NOW);
+  assert.deepEqual(result.totalRuns.map(row => row.line), [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]);
+  for (let i = 0; i < result.totalRuns.length; i++) {
+    const row = result.totalRuns[i];
+    assert.equal(row.over + row.under, 100);
+    if (i) assert.ok(row.over <= result.totalRuns[i - 1].over);
+    assert.ok(row.over >= result.teamRuns.home.find(team => team.line === row.line)?.over || row.line > 5.5);
+  }
+  assert.ok(baseballAnalysis(match, [], NOW).totalRuns.every(row => row.over === null && row.under === null));
+});
+
+function verifiedInnings(extra, scheduled = 9) {
+  return { status: 'FINISHED', scheduledInnings: scheduled, lastInning: scheduled + Number(extra), finalScore: { home: 2, away: 1 },
+    inningScores: Array.from({ length: scheduled + Number(extra) }, (_, i) => ({ num: i + 1, home: i === 0 ? (extra ? 1 : 2) : i === scheduled ? 1 : 0, away: i === 0 ? 1 : 0 })) };
+}
+
+test('extra innings require actual duration, complete consistent scoring and a tied regulation, including seven-inning games', () => {
+  for (const scheduled of [7, 9]) {
+    const ordinary = verifiedInnings(false, scheduled), extra = verifiedInnings(true, scheduled);
+    assert.equal(observedExtraInnings(ordinary), false); assert.equal(observedExtraInnings(extra), true);
+    const unplayed = { ...ordinary, inningScores: ordinary.inningScores.map((inning, i) => i === scheduled - 1 ? { ...inning, home: null } : inning) };
+    assert.equal(observedExtraInnings(unplayed), false);
+    for (const bad of [{ ...extra, scheduledInnings: undefined }, { ...extra, lastInning: undefined }, { ...extra, status: 'LIVE' },
+      { ...extra, inningScores: extra.inningScores.slice(0, scheduled) }, { ...extra, finalScore: { home: 20, away: 1 } },
+      { ...extra, inningScores: extra.inningScores.map((inning, i) => i === 0 ? { ...inning, home: null } : inning) },
+      { ...extra, finalScore: { home: 3, away: 1 }, inningScores: extra.inningScores.map((inning, i) => i === 0 ? { ...inning, home: 2 } : inning) }]) {
+      assert.equal(observedExtraInnings(bad), null);
+    }
+  }
+});
+
+test('extra innings probability uses verified same-duration history, unique games and a disclosed mathematical prior', () => {
+  const match = { ...target('beisbol', 'mlb'), scheduledInnings: 9 };
+  const games = history(match).map((game, i) => ({ ...game, ...verifiedInnings(i % 3 === 0) }));
+  const result = baseballAnalysis(match, games, NOW);
+  assert.deepEqual(result.extraInningsSampleSize, { home: 6, away: 6, uniqueGames: 12, extraGames: 4 });
+  assert.deepEqual(result.extraInnings, { yes: 34.6, no: 65.4 });
+  assert.match(result.method, /Jeffreys/);
+  assert.deepEqual(baseballAnalysis(match, [...games, games[0]], NOW).extraInningsSampleSize, result.extraInningsSampleSize);
+  const common = games.filter(game => game.id.startsWith('home')).map(game => ({ ...game, awayTeam: match.awayTeam }));
+  assert.equal(baseballAnalysis(match, common, NOW).extraInningsSampleSize.uniqueGames, 6);
+  for (const sample of [games.slice(0, 8), games.map(game => ({ ...game, scheduledInnings: 7 })), games.map(game => ({ ...game, lastInning: null }))]) {
+    assert.deepEqual(baseballAnalysis(match, sample, NOW).extraInnings, { yes: null, no: null });
+  }
+  assert.deepEqual(baseballAnalysis({ ...match, scheduledInnings: undefined }, games, NOW).extraInnings, { yes: null, no: null });
+  const excluded = [{ ...games[0], id: match.id }, { ...games[0], id: 'future-extra', kickoff: new Date(NOW + 86400000).toISOString() }, { ...games[0], id: 'foreign-extra', leagueId: 'npb' }];
+  assert.deepEqual(baseballAnalysis(match, [...games, ...excluded], NOW), result);
 });
 
 test('basketball handicaps apply the correct team sign and agree with opposite-team complementary markets', () => {
