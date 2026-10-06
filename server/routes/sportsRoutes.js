@@ -1,6 +1,6 @@
 import express from 'express';
 import { SPORT_LEAGUES } from '../../src/constants/leagues.js';
-import { getSportsFeed, getSportsMatch, getSportsBankerCandidates } from '../services/sportsDataService.js';
+import { getSportsFeed, getSportsMatch, getSportsBankerCandidates, getSportsDetails } from '../services/sportsDataService.js';
 import { filterMatches } from './matchRoutes.js';
 import { generateAiSportsReport } from '../services/sportsAiService.js';
 import { rankSportWinners } from '../../src/utils/sportPicks.js';
@@ -8,6 +8,16 @@ import { requireAdmin } from '../session.js';
 import { rateLimit } from '../rateLimit.js';
 
 const router = express.Router();
+router.post('/:sport/details', async (req, res) => {
+  if (!Object.hasOwn(SPORT_LEAGUES, req.params.sport)) return res.status(400).json({ success: false, message: 'Deporte no válido.' });
+  const ids = req.body?.ids;
+  if (!Array.isArray(ids) || !ids.length || ids.length > 12 || ids.some(id => typeof id !== 'string' || !id || id.length > 120) || new Set(ids).size !== ids.length)
+    return res.status(400).json({ success: false, message: 'Selecciona entre 1 y 12 encuentros distintos.' });
+  let options;
+  try { options = leagueOptions(req.params.sport, req.body.league); } catch { return res.status(400).json({ success: false, message: 'Liga no válida.' }); }
+  try { res.json({ success: true, ...(await getSportsDetails(req.params.sport, ids, options)) }); }
+  catch { res.status(503).json({ success: false, message: 'No se pudieron consultar las estadísticas. Reintenta.' }); }
+});
 function leagueOptions(sport, value) {
   if (!value || value === 'all') return {};
   if (typeof value !== 'string' || !SPORT_LEAGUES[sport].some(league => league.id === value)) throw new Error('Liga no válida.');

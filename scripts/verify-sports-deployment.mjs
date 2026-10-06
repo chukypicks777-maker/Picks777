@@ -30,7 +30,7 @@ const html = responses.find(result => result.path === '/').text;
 const asset = html.match(/src="([^"]+\.js)"/)?.[1];
 if (asset) {
   const { response, text } = await read(asset);
-  const markers = ['sport-panel-', 'femenil', 'beisbol', 'tenis', 'basquetbol', 'Primer inning', 'KBO', 'Top 10 Banqueros', 'HECHOS PRIORIZADOS POR IA'];
+  const markers = ['sport-panel-', 'femenil', 'beisbol', 'tenis', 'basquetbol', 'Primer inning', 'KBO', 'Top 10 Banqueros', 'HECHOS PRIORIZADOS POR IA', 'picks777-sport-details-v1', 'Reintentar estadísticas'];
   const digest = createHash('sha256').update(text).digest('hex');
   let localAssetMatches = false;
   let localAsset = null;
@@ -48,6 +48,10 @@ checks.push({ path: 'cross-origin-redeem', status: deniedOrigin.response.status,
 const forged = await read('/api/matches', { headers: { Cookie: 'picks_session=unsigned.invalid' } });
 checks.push({ path: 'forged-session', status: forged.response.status, pass: forged.response.status === 401 });
 for (const sport of ['beisbol', 'tenis', 'basquetbol']) {
+  const detailBatch = await read(`/api/sports/${sport}/details`, { method: 'POST',
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: ['unauthorized-test'] }) });
+  checks.push({ path: `${sport}:anonymous-statistics-denied`, status: detailBatch.response.status, pass: detailBatch.response.status === 401
+    && detailBatch.response.headers.get('cache-control')?.includes('no-store') && JSON.parse(detailBatch.text).success === false });
   const result = await read(`/api/sports/${sport}/unauthorized-test/ai-analysis`, { method: 'POST',
     headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ forceRefresh: true }) });
   checks.push({ path: `${sport}:anonymous-ai-denied`, status: result.response.status,

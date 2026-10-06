@@ -1,0 +1,857 @@
+{
+  "started": "2026-10-05T23:05:37.721Z",
+  "finished": "2026-10-05T23:05:53.241Z",
+  "pass": true,
+  "checks": [
+    {
+      "sport": "tenis",
+      "leagueId": "wta",
+      "calendarMs": 1941,
+      "detailMs": 7132,
+      "calendarCount": 104,
+      "upcomingCount": 32,
+      "inspectedCount": 2,
+      "records": [
+        {
+          "id": "espn-tennis-wta-185279",
+          "teams": [
+            "Guo Hanyu",
+            "Aliona Falei"
+          ],
+          "kickoff": "2026-10-06T02:00Z",
+          "source": "ESPN",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261006",
+          "fetchedAt": "2026-10-05T23:05:39.133Z",
+          "winner": {
+            "home": 47.6,
+            "away": 52.4
+          },
+          "sampleSize": {
+            "home": 20,
+            "away": 18
+          },
+          "setSampleSize": {
+            "home": 46,
+            "away": 43
+          },
+          "probabilitySource": "experimental-model",
+          "method": "Ganador por fuerza relativa tipo Elo con resultados previos del mismo circuito (mínimo 5 partidos y 5 sets verificados por jugador). Inicialización neutral 1500, escala 400 y actualización 24: parámetros matemáticos, no rankings oficiales. Probabilidad por set inferida del ganador. Partido al mejor de 3 sets. Los sets se suponen independientes y con la misma probabilidad: primer y segundo set comparten estimación. Gana un set significa al menos uno; se supone que el partido se completa.",
+          "notice": "Estimaciones previas al partido; no incorporan cambios durante el encuentro. Precisión predictiva sin validación prospectiva."
+        },
+        {
+          "id": "espn-tennis-wta-185288",
+          "teams": [
+            "Moyuka Uchijima",
+            "Bai Zhuoxuan"
+          ],
+          "kickoff": "2026-10-06T02:00Z",
+          "source": "ESPN",
+          "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261006",
+          "fetchedAt": "2026-10-05T23:05:39.133Z",
+          "winner": {
+            "home": 46.1,
+            "away": 53.9
+          },
+          "sampleSize": {
+            "home": 20,
+            "away": 19
+          },
+          "setSampleSize": {
+            "home": 49,
+            "away": 43
+          },
+          "probabilitySource": "experimental-model",
+          "method": "Ganador por fuerza relativa tipo Elo con resultados previos del mismo circuito (mínimo 5 partidos y 5 sets verificados por jugador). Inicialización neutral 1500, escala 400 y actualización 24: parámetros matemáticos, no rankings oficiales. Probabilidad por set inferida del ganador. Partido al mejor de 3 sets. Los sets se suponen independientes y con la misma probabilidad: primer y segundo set comparten estimación. Gana un set significa al menos uno; se supone que el partido se completa.",
+          "notice": "Estimaciones previas al partido; no incorporan cambios durante el encuentro. Precisión predictiva sin validación prospectiva."
+        }
+      ],
+      "verifiedHistory": [
+        {
+          "id": "espn-tennis-wta-185279",
+          "samples": [
+            {
+              "name": "Guo Hanyu",
+              "verifiedCompletedSingles": 30,
+              "sourceExamples": [
+                {
+                  "id": "espn-tennis-wta-180017",
+                  "date": "2026-06-23T16:15Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20260623",
+                  "score": {
+                    "home": 2,
+                    "away": 0
+                  },
+                  "sets": [
+                    {
+                      "home": 7,
+                      "away": 6
+                    },
+                    {
+                      "home": 6,
+                      "away": 3
+                    }
+                  ]
+                },
+                {
+                  "id": "espn-tennis-wta-183324",
+                  "date": "2026-08-01T19:30Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20260801",
+                  "score": {
+                    "home": 0,
+                    "away": 2
+                  },
+                  "sets": [
+                    {
+                      "home": 5,
+                      "away": 7
+                    },
+                    {
+                      "home": 2,
+                      "away": 6
+                    }
+                  ]
+                },
+                {
+                  "id": "espn-tennis-wta-184698",
+                  "date": "2026-08-25T22:40Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20260825",
+                  "score": {
+                    "home": 2,
+                    "away": 0
+                  },
+                  "sets": [
+                    {
+                      "home": 6,
+                      "away": 2
+                    },
+                    {
+                      "home": 6,
+                      "away": 4
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Aliona Falei",
+              "verifiedCompletedSingles": 18,
+              "sourceExamples": [
+                {
+                  "id": "espn-tennis-wta-184185",
+                  "date": "2026-10-01T08:05Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261001",
+                  "score": {
+                    "home": 2,
+                    "away": 1
+                  },
+                  "sets": [
+                    {
+                      "home": 4,
+                      "away": 6
+                    },
+                    {
+                      "home": 7,
+                      "away": 6
+                    },
+                    {
+                      "home": 6,
+                      "away": 4
+                    }
+                  ]
+                },
+                {
+                  "id": "espn-tennis-wta-184191",
+                  "date": "2026-10-02T04:10Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261002",
+                  "score": {
+                    "home": 2,
+                    "away": 0
+                  },
+                  "sets": [
+                    {
+                      "home": 6,
+                      "away": 4
+                    },
+                    {
+                      "home": 6,
+                      "away": 2
+                    }
+                  ]
+                },
+                {
+                  "id": "espn-tennis-wta-184197",
+                  "date": "2026-10-03T05:50Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261003",
+                  "score": {
+                    "home": 2,
+                    "away": 0
+                  },
+                  "sets": [
+                    {
+                      "home": 6,
+                      "away": 3
+                    },
+                    {
+                      "home": 6,
+                      "away": 3
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "espn-tennis-wta-185288",
+          "samples": [
+            {
+              "name": "Moyuka Uchijima",
+              "verifiedCompletedSingles": 59,
+              "sourceExamples": [
+                {
+                  "id": "espn-tennis-wta-184727",
+                  "date": "2026-08-25T15:05Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20260825",
+                  "score": {
+                    "home": 2,
+                    "away": 0
+                  },
+                  "sets": [
+                    {
+                      "home": 6,
+                      "away": 3
+                    },
+                    {
+                      "home": 6,
+                      "away": 3
+                    }
+                  ]
+                },
+                {
+                  "id": "espn-tennis-wta-184788",
+                  "date": "2026-08-26T19:25Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20260826",
+                  "score": {
+                    "home": 1,
+                    "away": 2
+                  },
+                  "sets": [
+                    {
+                      "home": 2,
+                      "away": 6
+                    },
+                    {
+                      "home": 6,
+                      "away": 2
+                    },
+                    {
+                      "home": 6,
+                      "away": 7
+                    }
+                  ]
+                },
+                {
+                  "id": "espn-tennis-wta-184041",
+                  "date": "2026-09-21T03:05Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20260921",
+                  "score": {
+                    "home": 2,
+                    "away": 1
+                  },
+                  "sets": [
+                    {
+                      "home": 6,
+                      "away": 4
+                    },
+                    {
+                      "home": 6,
+                      "away": 7
+                    },
+                    {
+                      "home": 6,
+                      "away": 2
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Bai Zhuoxuan",
+              "verifiedCompletedSingles": 19,
+              "sourceExamples": [
+                {
+                  "id": "espn-tennis-wta-186231",
+                  "date": "2026-09-28T03:05Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20260928",
+                  "score": {
+                    "home": 0,
+                    "away": 2
+                  },
+                  "sets": [
+                    {
+                      "home": 4,
+                      "away": 6
+                    },
+                    {
+                      "home": 3,
+                      "away": 6
+                    }
+                  ]
+                },
+                {
+                  "id": "espn-tennis-wta-186204",
+                  "date": "2026-09-29T03:10Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20260929",
+                  "score": {
+                    "home": 0,
+                    "away": 2
+                  },
+                  "sets": [
+                    {
+                      "home": 1,
+                      "away": 6
+                    },
+                    {
+                      "home": 0,
+                      "away": 6
+                    }
+                  ]
+                },
+                {
+                  "id": "espn-tennis-wta-184233",
+                  "date": "2026-09-30T07:25Z",
+                  "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20260930",
+                  "score": {
+                    "home": 0,
+                    "away": 2
+                  },
+                  "sets": [
+                    {
+                      "home": 2,
+                      "away": 6
+                    },
+                    {
+                      "home": 3,
+                      "away": 6
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "sport": "beisbol",
+      "leagueId": "mlb",
+      "calendarMs": 2049,
+      "detailMs": 946,
+      "calendarCount": 23,
+      "upcomingCount": 16,
+      "inspectedCount": 2,
+      "records": [
+        {
+          "id": "mlb-mlb-849819",
+          "teams": [
+            "Atlanta Braves",
+            "Los Angeles Dodgers"
+          ],
+          "kickoff": "2026-10-06T22:00:00Z",
+          "source": "MLB Stats API",
+          "sourceUrl": "https://www.mlb.com/gameday/849819",
+          "fetchedAt": "2026-10-05T23:05:49.151Z",
+          "winner": {
+            "home": 43,
+            "away": 57
+          },
+          "sampleSize": {
+            "home": 20,
+            "away": 20
+          },
+          "inningSampleSize": {
+            "first": {
+              "home": 20,
+              "away": 20
+            },
+            "five": {
+              "home": 20,
+              "away": 20
+            }
+          },
+          "form": {
+            "home": [
+              {
+                "result": "W",
+                "own": 5,
+                "against": 3,
+                "date": "2026-09-29T18:00:00Z",
+                "id": "mlb-mlb-849845",
+                "opponent": "Philadelphia Phillies",
+                "sourceUrl": "https://www.mlb.com/gameday/849845"
+              },
+              {
+                "result": "L",
+                "own": 3,
+                "against": 4,
+                "date": "2026-09-30T18:00:00Z",
+                "id": "mlb-mlb-849841",
+                "opponent": "Philadelphia Phillies",
+                "sourceUrl": "https://www.mlb.com/gameday/849841"
+              },
+              {
+                "result": "W",
+                "own": 6,
+                "against": 2,
+                "date": "2026-10-02T00:00:00Z",
+                "id": "mlb-mlb-849844",
+                "opponent": "Philadelphia Phillies",
+                "sourceUrl": "https://www.mlb.com/gameday/849844"
+              },
+              {
+                "result": "L",
+                "own": 3,
+                "against": 5,
+                "date": "2026-10-03T20:00:00Z",
+                "id": "mlb-mlb-849828",
+                "opponent": "Los Angeles Dodgers",
+                "sourceUrl": "https://www.mlb.com/gameday/849828"
+              },
+              {
+                "result": "W",
+                "own": 3,
+                "against": 2,
+                "date": "2026-10-05T00:00:00Z",
+                "id": "mlb-mlb-849823",
+                "opponent": "Los Angeles Dodgers",
+                "sourceUrl": "https://www.mlb.com/gameday/849823"
+              }
+            ],
+            "away": [
+              {
+                "result": "W",
+                "own": 2,
+                "against": 0,
+                "date": "2026-09-26T02:15:00Z",
+                "id": "mlb-mlb-823167",
+                "opponent": "San Francisco Giants",
+                "sourceUrl": "https://www.mlb.com/gameday/823167"
+              },
+              {
+                "result": "W",
+                "own": 4,
+                "against": 3,
+                "date": "2026-09-26T20:05:00Z",
+                "id": "mlb-mlb-823165",
+                "opponent": "San Francisco Giants",
+                "sourceUrl": "https://www.mlb.com/gameday/823165"
+              },
+              {
+                "result": "W",
+                "own": 5,
+                "against": 1,
+                "date": "2026-09-27T19:05:00Z",
+                "id": "mlb-mlb-823164",
+                "opponent": "San Francisco Giants",
+                "sourceUrl": "https://www.mlb.com/gameday/823164"
+              },
+              {
+                "result": "W",
+                "own": 5,
+                "against": 3,
+                "date": "2026-10-03T20:00:00Z",
+                "id": "mlb-mlb-849828",
+                "opponent": "Atlanta Braves",
+                "sourceUrl": "https://www.mlb.com/gameday/849828"
+              },
+              {
+                "result": "L",
+                "own": 2,
+                "against": 3,
+                "date": "2026-10-05T00:00:00Z",
+                "id": "mlb-mlb-849823",
+                "opponent": "Atlanta Braves",
+                "sourceUrl": "https://www.mlb.com/gameday/849823"
+              }
+            ]
+          },
+          "method": "Total esperado de carreras basado en las medias anotadas y recibidas de los últimos 20 resultados completos (mínimo 5 por equipo; incluyen extra innings si los hubo). El reparto entre equipos se ajusta a una fuerza relativa tipo Elo calculada con resultados previos del mismo torneo: punto inicial neutral 1500, escala 400 y actualización 24 por partido. Son parámetros matemáticos, no rankings oficiales. Totales por equipo y combinado del partido: Poisson sobre esas medias ajustadas, incluidos extra innings presentes en los resultados. Primer inning y total de innings 1 a 5 usan exclusivamente carreras observadas en esos innings, con mínimo 5 registros por equipo; sin esos registros se muestra N/D. ¿Habrá extra innings?: frecuencia de partidos que excedieron la duración reglamentaria publicada por el proveedor, con mínimo 5 registros verificables por equipo, de la misma duración que el encuentro y sin contar dos veces un enfrentamiento común. Suavizado matemático de Jeffreys (0.5 añadido al numerador y 1 al denominador); esos valores no son partidos observados. Sin duración reglamentaria o innings completos comprobables, N/D. No incorpora lanzadores ni alineaciones. Ganador aproximado condicionando la distribución Poisson a un resultado decisivo; no simula extra innings.",
+          "notice": "Probabilidades estimadas antes del partido; no se recalculan según el marcador en vivo."
+        },
+        {
+          "id": "mlb-mlb-849839",
+          "teams": [
+            "Tampa Bay Rays",
+            "New York Yankees"
+          ],
+          "kickoff": "2026-10-06T00:00:00Z",
+          "source": "MLB Stats API",
+          "sourceUrl": "https://www.mlb.com/gameday/849839",
+          "fetchedAt": "2026-10-05T23:05:49.151Z",
+          "winner": {
+            "home": 52.1,
+            "away": 47.9
+          },
+          "sampleSize": {
+            "home": 20,
+            "away": 20
+          },
+          "inningSampleSize": {
+            "first": {
+              "home": 20,
+              "away": 20
+            },
+            "five": {
+              "home": 20,
+              "away": 20
+            }
+          },
+          "form": {
+            "home": [
+              {
+                "result": "L",
+                "own": 4,
+                "against": 6,
+                "date": "2026-09-24T23:05:00Z",
+                "id": "mlb-mlb-823493",
+                "opponent": "New York Yankees",
+                "sourceUrl": "https://www.mlb.com/gameday/823493"
+              },
+              {
+                "result": "W",
+                "own": 2,
+                "against": 0,
+                "date": "2026-09-25T22:40:00Z",
+                "id": "mlb-mlb-823409",
+                "opponent": "Philadelphia Phillies",
+                "sourceUrl": "https://www.mlb.com/gameday/823409"
+              },
+              {
+                "result": "W",
+                "own": 12,
+                "against": 1,
+                "date": "2026-09-26T23:15:00Z",
+                "id": "mlb-mlb-823407",
+                "opponent": "Philadelphia Phillies",
+                "sourceUrl": "https://www.mlb.com/gameday/823407"
+              },
+              {
+                "result": "L",
+                "own": 3,
+                "against": 7,
+                "date": "2026-09-27T18:30:00Z",
+                "id": "mlb-mlb-823408",
+                "opponent": "Philadelphia Phillies",
+                "sourceUrl": "https://www.mlb.com/gameday/823408"
+              },
+              {
+                "result": "W",
+                "own": 1,
+                "against": 0,
+                "date": "2026-10-03T22:30:00Z",
+                "id": "mlb-mlb-849835",
+                "opponent": "New York Yankees",
+                "sourceUrl": "https://www.mlb.com/gameday/849835"
+              }
+            ],
+            "away": [
+              {
+                "result": "L",
+                "own": 2,
+                "against": 10,
+                "date": "2026-09-25T20:05:00Z",
+                "id": "mlb-mlb-823491",
+                "opponent": "Baltimore Orioles",
+                "sourceUrl": "https://www.mlb.com/gameday/823491"
+              },
+              {
+                "result": "W",
+                "own": 6,
+                "against": 3,
+                "date": "2026-09-25T20:10:00Z",
+                "id": "mlb-mlb-823489",
+                "opponent": "Baltimore Orioles",
+                "sourceUrl": "https://www.mlb.com/gameday/823489"
+              },
+              {
+                "result": "W",
+                "own": 9,
+                "against": 0,
+                "date": "2026-09-30T00:00:00Z",
+                "id": "mlb-mlb-849851",
+                "opponent": "Boston Red Sox",
+                "sourceUrl": "https://www.mlb.com/gameday/849851"
+              },
+              {
+                "result": "W",
+                "own": 9,
+                "against": 2,
+                "date": "2026-10-01T00:00:00Z",
+                "id": "mlb-mlb-849848",
+                "opponent": "Boston Red Sox",
+                "sourceUrl": "https://www.mlb.com/gameday/849848"
+              },
+              {
+                "result": "L",
+                "own": 0,
+                "against": 1,
+                "date": "2026-10-03T22:30:00Z",
+                "id": "mlb-mlb-849835",
+                "opponent": "Tampa Bay Rays",
+                "sourceUrl": "https://www.mlb.com/gameday/849835"
+              }
+            ]
+          },
+          "method": "Total esperado de carreras basado en las medias anotadas y recibidas de los últimos 20 resultados completos (mínimo 5 por equipo; incluyen extra innings si los hubo). El reparto entre equipos se ajusta a una fuerza relativa tipo Elo calculada con resultados previos del mismo torneo: punto inicial neutral 1500, escala 400 y actualización 24 por partido. Son parámetros matemáticos, no rankings oficiales. Totales por equipo y combinado del partido: Poisson sobre esas medias ajustadas, incluidos extra innings presentes en los resultados. Primer inning y total de innings 1 a 5 usan exclusivamente carreras observadas en esos innings, con mínimo 5 registros por equipo; sin esos registros se muestra N/D. ¿Habrá extra innings?: frecuencia de partidos que excedieron la duración reglamentaria publicada por el proveedor, con mínimo 5 registros verificables por equipo, de la misma duración que el encuentro y sin contar dos veces un enfrentamiento común. Suavizado matemático de Jeffreys (0.5 añadido al numerador y 1 al denominador); esos valores no son partidos observados. Sin duración reglamentaria o innings completos comprobables, N/D. No incorpora lanzadores ni alineaciones. Ganador aproximado condicionando la distribución Poisson a un resultado decisivo; no simula extra innings.",
+          "notice": "Probabilidades estimadas antes del partido; no se recalculan según el marcador en vivo."
+        }
+      ]
+    },
+    {
+      "sport": "basquetbol",
+      "leagueId": "nba_preseason",
+      "calendarMs": 1375,
+      "detailMs": 1287,
+      "calendarCount": 41,
+      "upcomingCount": 35,
+      "inspectedCount": 2,
+      "records": [
+        {
+          "id": "espn-nba_preseason-401914102",
+          "teams": [
+            "Milwaukee Bucks",
+            "Minnesota Timberwolves"
+          ],
+          "kickoff": "2026-10-06T00:00Z",
+          "source": "ESPN",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401914102",
+          "fetchedAt": "2026-10-05T23:05:51.013Z",
+          "winner": {
+            "home": 37.8,
+            "away": 62.2
+          },
+          "sampleSize": {
+            "home": 8,
+            "away": 11
+          },
+          "form": {
+            "home": [
+              {
+                "result": "L",
+                "own": 84,
+                "against": 109,
+                "date": "2024-10-17T23:30Z",
+                "id": "espn-nba_preseason-401717014",
+                "opponent": "Dallas Mavericks",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401717014"
+              },
+              {
+                "result": "W",
+                "own": 103,
+                "against": 93,
+                "date": "2025-10-06T23:30Z",
+                "id": "espn-nba_preseason-401812678",
+                "opponent": "Miami Heat",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812678"
+              },
+              {
+                "result": "W",
+                "own": 117,
+                "against": 111,
+                "date": "2025-10-10T00:00Z",
+                "id": "espn-nba_preseason-401812693",
+                "opponent": "Detroit Pistons",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812693"
+              },
+              {
+                "result": "W",
+                "own": 127,
+                "against": 121,
+                "date": "2025-10-12T23:00Z",
+                "id": "espn-nba_preseason-401812708",
+                "opponent": "Chicago Bulls",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812708"
+              },
+              {
+                "result": "L",
+                "own": 112,
+                "against": 116,
+                "date": "2025-10-15T00:00Z",
+                "id": "espn-nba_preseason-401812718",
+                "opponent": "Oklahoma City Thunder",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812718"
+              }
+            ],
+            "away": [
+              {
+                "result": "L",
+                "own": 134,
+                "against": 135,
+                "date": "2025-10-08T00:00Z",
+                "id": "espn-nba_preseason-401812685",
+                "opponent": "Indiana Pacers",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812685"
+              },
+              {
+                "result": "L",
+                "own": 95,
+                "against": 100,
+                "date": "2025-10-09T23:30Z",
+                "id": "espn-nba_preseason-401812691",
+                "opponent": "New York Knicks",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812691"
+              },
+              {
+                "result": "W",
+                "own": 134,
+                "against": 74,
+                "date": "2025-10-14T00:00Z",
+                "id": "espn-nba_preseason-401812714",
+                "opponent": "Guangzhou Loong-Lions",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812714"
+              },
+              {
+                "result": "L",
+                "own": 120,
+                "against": 126,
+                "date": "2025-10-17T00:00Z",
+                "id": "espn-nba_preseason-401812729",
+                "opponent": "Chicago Bulls",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812729"
+              },
+              {
+                "result": "L",
+                "own": 110,
+                "against": 126,
+                "date": "2025-10-17T23:00Z",
+                "id": "espn-nba_preseason-401812732",
+                "opponent": "Philadelphia 76ers",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812732"
+              }
+            ]
+          },
+          "method": "Hándicaps estimados con una distribución normal del margen, calculada sobre los últimos 20 resultados disponibles de la misma competición (mínimo 5 por equipo). Incluyen prórroga cuando está incluida en el resultado oficial. Ganador: probabilidad implícita en las dos cuotas publicadas, sin margen de la casa. La distribución de hándicaps se centra en ese ganador y conserva la dispersión histórica.",
+          "notice": "El hándicap suma o resta puntos al equipo elegido. Proyección previa al partido."
+        },
+        {
+          "id": "espn-nba_preseason-401898716",
+          "teams": [
+            "Sacramento Kings",
+            "Los Angeles Lakers"
+          ],
+          "kickoff": "2026-10-06T02:00Z",
+          "source": "ESPN",
+          "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401898716",
+          "fetchedAt": "2026-10-05T23:05:51.013Z",
+          "winner": {
+            "home": 34.3,
+            "away": 65.7
+          },
+          "sampleSize": {
+            "home": 9,
+            "away": 12
+          },
+          "form": {
+            "home": [
+              {
+                "result": "L",
+                "own": 91,
+                "against": 113,
+                "date": "2024-10-18T02:30Z",
+                "id": "espn-nba_preseason-401717018",
+                "opponent": "LA Clippers",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401717018"
+              },
+              {
+                "result": "L",
+                "own": 122,
+                "against": 130,
+                "date": "2025-10-09T02:00Z",
+                "id": "espn-nba_preseason-401812690",
+                "opponent": "Toronto Raptors",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812690"
+              },
+              {
+                "result": "L",
+                "own": 123,
+                "against": 124,
+                "date": "2025-10-11T02:00Z",
+                "id": "espn-nba_preseason-401812700",
+                "opponent": "Portland Trail Blazers",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812700"
+              },
+              {
+                "result": "L",
+                "own": 91,
+                "against": 109,
+                "date": "2025-10-16T02:00Z",
+                "id": "espn-nba_preseason-401812725",
+                "opponent": "LA Clippers",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812725"
+              },
+              {
+                "result": "W",
+                "own": 117,
+                "against": 116,
+                "date": "2025-10-18T02:30Z",
+                "id": "espn-nba_preseason-401812738",
+                "opponent": "Los Angeles Lakers",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812738"
+              }
+            ],
+            "away": [
+              {
+                "result": "L",
+                "own": 103,
+                "against": 111,
+                "date": "2025-10-06T00:30Z",
+                "id": "espn-nba_preseason-401812677",
+                "opponent": "Golden State Warriors",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812677"
+              },
+              {
+                "result": "W",
+                "own": 126,
+                "against": 116,
+                "date": "2025-10-13T01:30Z",
+                "id": "espn-nba_preseason-401812710",
+                "opponent": "Golden State Warriors",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812710"
+              },
+              {
+                "result": "L",
+                "own": 104,
+                "against": 113,
+                "date": "2025-10-15T02:00Z",
+                "id": "espn-nba_preseason-401812721",
+                "opponent": "Phoenix Suns",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812721"
+              },
+              {
+                "result": "L",
+                "own": 94,
+                "against": 121,
+                "date": "2025-10-16T02:30Z",
+                "id": "espn-nba_preseason-401812724",
+                "opponent": "Dallas Mavericks",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812724"
+              },
+              {
+                "result": "L",
+                "own": 116,
+                "against": 117,
+                "date": "2025-10-18T02:30Z",
+                "id": "espn-nba_preseason-401812738",
+                "opponent": "Sacramento Kings",
+                "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401812738"
+              }
+            ]
+          },
+          "method": "Hándicaps estimados con una distribución normal del margen, calculada sobre los últimos 20 resultados disponibles de la misma competición (mínimo 5 por equipo). Incluyen prórroga cuando está incluida en el resultado oficial. Ganador: probabilidad implícita en las dos cuotas publicadas, sin margen de la casa. La distribución de hándicaps se centra en ese ganador y conserva la dispersión histórica.",
+          "notice": "El hándicap suma o resta puntos al equipo elegido. Proyección previa al partido."
+        }
+      ]
+    }
+  ],
+  "limitation": "Provider queries at the recorded time, not future prediction accuracy. These checks do not call the paid AI. Missing histories remain unavailable."
+}

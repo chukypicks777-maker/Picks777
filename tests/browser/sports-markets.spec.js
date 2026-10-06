@@ -54,7 +54,8 @@ async function setup(page, path = '/') {
     }
     if (path.startsWith('/api/sports/')) {
       const sport = path.split('/')[3];
-      body = path.split('/').length > 4 ? { success: true, match: feeds[sport].find(match => match.id === path.split('/')[4]) }
+      body = path.endsWith('/details') ? { success: true, matches: feeds[sport].filter(match => route.request().postDataJSON().ids.includes(match.id)) }
+        : path.split('/').length > 4 ? { success: true, match: feeds[sport].find(match => match.id === path.split('/')[4]) }
         : { success: true, matches: feeds[sport].filter(match => !url.searchParams.has('league') || match.leagueId === url.searchParams.get('league')), coverage: SPORT_LEAGUES[sport].filter(league => !url.searchParams.has('league') || league.id === url.searchParams.get('league')).map(league => ({ leagueId: league.id, name: league.name, status: 'available' })) };
     }
     if (path === '/api/community') body = { success: true, settings: { links: [] } };
@@ -263,7 +264,11 @@ test('básquetbol carga el calendario primero y completa forma y probabilidades 
     const league = new URL(route.request().url()).searchParams.get('league');
     return route.fulfill({ json: { success: true, matches: league === 'nba' ? [original] : [], coverage: [{ leagueId: league, name: league, status: 'available' }] } });
   });
-  await page.route('**/api/sports/basquetbol/*', async route => { await waiting; await route.fulfill({ json: { success: true, match: feeds.basquetbol[0] } }); });
+  await page.route('**/api/sports/basquetbol/*', async route => {
+    await waiting;
+    await route.fulfill({ json: new URL(route.request().url()).pathname.endsWith('/details')
+      ? { success: true, matches: [feeds.basquetbol[0]] } : { success: true, match: feeds.basquetbol[0] } });
+  });
   await page.getByRole('tab', { name: 'Básquetbol', exact: true }).click();
   const card = page.getByRole('article', { name: 'Boston Celtics vs LA Lakers' });
   await expect(card).toBeVisible(); await expect(card).toContainText('N/D');

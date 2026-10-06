@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SPORT_LEAGUES } from '../constants/leagues.js';
-import { readSportsCache, saveSportsCache, readSportDetail, mergeSportDetail, sportMatchVersion, requestSports } from '../utils/sportsClient.js';
+import { readSportsCache, saveSportsCache, readSportDetail, restoreSportDetails, mergeSportDetail, sportMatchVersion, requestSports } from '../utils/sportsClient.js';
 
 const empty = { matches: [], coverage: [] };
 const order = { LIVE: 0, SCHEDULED: 1, FINISHED: 2 };
@@ -18,7 +18,7 @@ export default function useSportsFeed({ sport, enabled, sessionKey, revision, on
     const groups = sport === 'tenis' ? ['all'] : SPORT_LEAGUES[sport].map(league => league.id);
     const saved = readSportsCache(sessionKey, sport);
     const load = async () => {
-      await Promise.resolve();
+      if (!initialized) await restoreSportDetails(sessionKey, sport);
       // Visibility changes and polling must not cancel an in-flight calendar.
       if (busy || !active) return;
       busy = true;
@@ -42,9 +42,10 @@ export default function useSportsFeed({ sport, enabled, sessionKey, revision, on
         if (!active) return;
         setFeed(previous => {
           const owns = match => group === 'all' || match.leagueId === group;
+          const byId = new Map(previous.matches.map(item => [item.id, item]));
           const incoming = payload.matches.filter(owns).map(match => {
-            const old = previous.matches.find(item => item.id === match.id);
-            const detail = readSportDetail(sessionKey, sport, match);
+            const old = byId.get(match.id);
+            const detail = readSportDetail(sessionKey, sport, match, { allowStale: true });
             // Never apply a report from a different score, date or quote.
             return detail || (old?.detailLoadedAt && Date.now() - old.detailLoadedAt < 60000 && sportMatchVersion(old) === sportMatchVersion(match)
               ? { ...old, ...match, analysis: old.analysis, detailLoadedAt: old.detailLoadedAt } : match);
@@ -67,16 +68,25 @@ export default function useSportsFeed({ sport, enabled, sessionKey, revision, on
     return () => { active = false; controller.abort(); clearInterval(timer); document.removeEventListener('visibilitychange', visible); };
   }, [sport, enabled, sessionKey, revision]);
 
-  const patchMatch = useCallback((original, detail) => {
+  const patchMatches = useCallback(updates => {
+    const byId = new Map(updates.map(({ original, detail }) => [original.id, { original, detail }]));
     setFeed(previous => {
-      const next = { ...previous, matches: previous.matches.map(current => {
-        if (current.id !== original.id) return current;
+      let changed = false;
+      const matches = previous.matches.map(current => {
+        const update = byId.get(current.id);
+        if (!update) return current;
+        const { original, detail } = update;
         const merged = mergeSportDetail(current, original, detail);
-        return merged === current ? current : { ...merged, detailLoadedAt: Date.now() };
-      }) };
+        if (merged === current) return current;
+        changed = true;
+        return { ...merged, detailLoadedAt: detail.detailLoadedAt || Date.now() };
+      });
+      if (!changed) return previous;
+      const next = { ...previous, matches };
       saveSportsCache(sessionKey, sport, next);
       return next;
     });
   }, [sessionKey, sport]);
-  return { feed: enabled ? feed : empty, pending: enabled ? pending : [], patchMatch };
+  const patchMatch = useCallback((original, detail) => patchMatches([{ original, detail }]), [patchMatches]);
+  return { feed: enabled ? feed : empty, pending: enabled ? pending : [], patchMatch, patchMatches };
 }

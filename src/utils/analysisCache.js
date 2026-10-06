@@ -44,7 +44,9 @@ export function getMatchCacheTtlMs(matchOrStatus, aiReport) {
       return 30 * 1000;
     }
   }
-  return 5 * 60 * 1000;
+  // Successful pre-match reports are retained while their exact facts match.
+  // Source scores/quotes still refresh independently and invalidate this entry.
+  return aiReport?.aiAvailable === true ? 24 * 3600 * 1000 : 5 * 60 * 1000;
 }
 
 /**
@@ -104,12 +106,11 @@ export function getCachedAnalysis(matchId, currentMatch, requestedModel = null, 
   // Aplicar caducidad breve según el estado del partido.
   const ttl = getMatchCacheTtlMs(currentMatch || entry.matchStatus, entry.aiReport);
   if (!entry.timestamp || Date.now() - entry.timestamp > ttl) {
-    removeCachedAnalysis(matchId);
     return null;
   }
 
   // Verificar si el partido cambió deportivamente (cambio de estado o cambio en marcador de partido en vivo)
-  if (currentFingerprint && entry.fingerprint !== currentFingerprint) {
+  if (currentFingerprint && entry.fingerprint !== currentFingerprint && !entry.calendarFingerprints?.includes(currentFingerprint)) {
     removeCachedAnalysis(matchId);
     return null;
   }
@@ -143,14 +144,25 @@ export function mergeFreshMatch(currentMatch) {
     isAiAnalyzed: true, aiReport: cached.aiReport };
 }
 
+export function mergeAnalyzedMatch(current, enriched, report, original = null) {
+  if (original && computeMatchFingerprint(current) !== computeMatchFingerprint(original)
+    && computeMatchFingerprint(current) !== computeMatchFingerprint(enriched)) return current;
+  return { ...current, ...(enriched || {}), isAiAnalyzed: Boolean(report?.aiAvailable), aiReport: report };
+}
+
 /**
  * Guarda en caché el reporte y los datos enriquecidos del partido.
  * Si se actualiza solo uno de los dos campos, fusiona con el valor existente para evitar borrar datos.
  */
-export function setCachedAnalysis(matchId, currentMatch, { aiReport, enrichedMatch, model = null }) {
+export function setCachedAnalysis(matchId, currentMatch, { aiReport, enrichedMatch, model = null, originalMatch = null }) {
   if (!matchId) return;
   const existing = getCachedAnalysis(matchId, currentMatch);
   const fingerprint = computeMatchFingerprint(currentMatch);
+  // A summary may omit quotes present in a complete detail. Accept its exact
+  // original input only when enrichment added missing quotes without changing
+  // any existing quote, score, participant or model probability.
+  const compatibleCalendar = originalMatch && Object.entries(originalMatch.odds || {}).every(([key, value]) => value == null || value === currentMatch?.odds?.[key])
+    && computeMatchFingerprint({ ...originalMatch, odds: currentMatch?.odds }) === fingerprint;
   const curLiveScore = currentMatch?.liveScore || enrichedMatch?.liveScore || existing?.liveScore || null;
   const curFinalScore = currentMatch?.finalScore || enrichedMatch?.finalScore || existing?.finalScore || null;
   const entry = {
@@ -159,14 +171,15 @@ export function setCachedAnalysis(matchId, currentMatch, { aiReport, enrichedMat
     liveScore: curLiveScore ? { home: curLiveScore.home ?? null, away: curLiveScore.away ?? null } : null,
     finalScore: curFinalScore ? { home: curFinalScore.home ?? null, away: curFinalScore.away ?? null } : null,
     fingerprint,
+    calendarFingerprints: compatibleCalendar ? [computeMatchFingerprint(originalMatch)] : existing?.calendarFingerprints || [],
     aiReport: aiReport !== undefined ? aiReport : (existing?.aiReport || null),
     enrichedMatch: enrichedMatch !== undefined ? enrichedMatch : (existing?.enrichedMatch || null),
     model: model || aiReport?.modelUsed || existing?.model || null,
     timestamp: Date.now()
   };
 
-  // Evict oldest entries if in-memory cache exceeds 150 items
-  if (memoryCache.size > 150) {
+  // Retain large queues; persistent storage can restore evicted memory entries.
+  if (memoryCache.size > 1000) {
     const oldestKey = memoryCache.keys().next().value;
     memoryCache.delete(oldestKey);
   }
@@ -239,6 +252,7 @@ export function isMatchAnalyzed(matchId, currentMatch) {
   if (currentMatch?.isAiAnalyzed === true && currentMatch?.aiReport?.aiAvailable === true) {
     return true;
   }
+  if (['beisbol', 'tenis', 'basquetbol'].includes(currentMatch?.sport)) return false;
   const cached = getCachedAnalysis(matchId, currentMatch);
   return Boolean(cached?.aiReport && cached.aiReport.aiAvailable === true);
 }
@@ -251,6 +265,7 @@ export function getAnalyzedModelName(matchId, currentMatch) {
   if (currentMatch?.aiReport?.modelUsed) {
     return currentMatch.aiReport.modelUsed;
   }
+  if (['beisbol', 'tenis', 'basquetbol'].includes(currentMatch?.sport)) return null;
   const cached = getCachedAnalysis(matchId, currentMatch);
   return cached?.aiReport?.modelUsed || cached?.model || null;
 }

@@ -97,6 +97,6 @@ test('late detail responses preserve a newer AI retry only when its sporting inp
   assert.deepEqual(mergeSportDetail(updatedQuote, original, { ...updatedQuote, aiReport: newer }).aiReport, newer,
     'An AI request started before quote enrichment still applies when its returned quote matches the current feed');
   assert.equal(mergeSportDetail(confirmed, original, { ...late, analysis: { winner: { home: 65, away: 35 } } }).aiReport, null);
-  const expired = { ...confirmed, aiReport: { ...report, generatedAt: new Date(Date.now() - 301000).toISOString() } };
+  const expired = { ...confirmed, aiReport: { ...report, generatedAt: new Date(Date.now() - 86400001).toISOString() } };
   assert.equal(mergeSportDetail(expired, original, late).aiReport, null);
 });

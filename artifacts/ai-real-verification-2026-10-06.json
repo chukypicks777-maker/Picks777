@@ -1,0 +1,294 @@
+{
+  "startedAt": "2026-10-06T03:57:54.421Z",
+  "finishedAt": "2026-10-06T03:58:18.447Z",
+  "pass": true,
+  "configuredProvider": "custom",
+  "configuredModel": "deepseek-v4.1",
+  "requests": [
+    {
+      "sport": "futbol",
+      "requestedAt": "2026-10-06T03:57:59.704Z",
+      "requestedModel": "deepseek-v4.1",
+      "catalogSize": 15,
+      "catalogIds": [
+        "fixture",
+        "source",
+        "home",
+        "away",
+        "result",
+        "expectedGoals",
+        "goals",
+        "score",
+        "sample",
+        "h2h",
+        "standings",
+        "form",
+        "odds",
+        "recent_home",
+        "recent_away"
+      ],
+      "promptSha256": "ea6a1236181a786b413b6a0aab24ccf835f3b8ad1fd30a3f4ebfda9861415be1",
+      "httpStatus": 200,
+      "latencyMs": 4387,
+      "responseSha256": "cbbe281b51a02a1b2cbfc42dba2e01479c246741aef785feb167e12469c92c28",
+      "responseModel": "deepseek-v4.1",
+      "returnedFactIds": [
+        "fixture",
+        "home",
+        "away",
+        "result",
+        "expectedGoals",
+        "h2h"
+      ],
+      "usage": {
+        "promptTokens": 1057,
+        "completionTokens": 20
+      }
+    },
+    {
+      "sport": "beisbol",
+      "requestedAt": "2026-10-06T03:58:06.077Z",
+      "requestedModel": "deepseek-v4.1",
+      "catalogSize": 13,
+      "catalogIds": [
+        "fixture",
+        "source",
+        "winner",
+        "sample",
+        "method",
+        "limits",
+        "form_home",
+        "runs_home",
+        "form_away",
+        "runs_away",
+        "first_inning",
+        "first_five",
+        "extra"
+      ],
+      "promptSha256": "7423159eb4af92bbba47a74931de109d94725d6365f0dee872ca082f1057ac31",
+      "httpStatus": 200,
+      "latencyMs": 1758,
+      "responseSha256": "53c88453ec4438ab60877e4cf798f5a9b1d5f93567b6d628b4668b193b492a1c",
+      "responseModel": "deepseek-v4.1",
+      "returnedFactIds": [
+        "fixture",
+        "source",
+        "winner",
+        "sample",
+        "method",
+        "limits"
+      ],
+      "usage": {
+        "promptTokens": 1388,
+        "completionTokens": 17
+      }
+    },
+    {
+      "sport": "tenis",
+      "requestedAt": "2026-10-06T03:58:13.637Z",
+      "requestedModel": "deepseek-v4.1",
+      "catalogSize": 7,
+      "catalogIds": [
+        "fixture",
+        "source",
+        "winner",
+        "sample",
+        "method",
+        "limits",
+        "sets"
+      ],
+      "promptSha256": "88ef8d2e90d2925d678d98578667764eb751e09a995080779612fa7bead03be6",
+      "httpStatus": 200,
+      "latencyMs": 1827,
+      "responseSha256": "2e6f628681477e09f53378d7c8e3dbeff93d5fa299177bea2a665be6ef2e37f7",
+      "responseModel": "deepseek-v4.1",
+      "returnedFactIds": [
+        "fixture",
+        "winner",
+        "sample",
+        "method",
+        "limits",
+        "sets"
+      ],
+      "usage": {
+        "promptTokens": 657,
+        "completionTokens": 17
+      }
+    },
+    {
+      "sport": "basquetbol",
+      "requestedAt": "2026-10-06T03:58:17.318Z",
+      "requestedModel": "deepseek-v4.1",
+      "catalogSize": 10,
+      "catalogIds": [
+        "fixture",
+        "source",
+        "winner",
+        "sample",
+        "method",
+        "limits",
+        "form_home",
+        "handicap_home",
+        "form_away",
+        "handicap_away"
+      ],
+      "promptSha256": "88d537234219306e4b59dd4b94f050b35acbf62ad442ee292be4bed369d25a78",
+      "httpStatus": 200,
+      "latencyMs": 1111,
+      "responseSha256": "316afe745cf5a13fbca0e32938a953ea90a6a3c0c86c5d38622543b61d12bd61",
+      "responseModel": "deepseek-v4.1",
+      "returnedFactIds": [
+        "fixture",
+        "winner",
+        "sample",
+        "method",
+        "limits",
+        "form_home"
+      ],
+      "usage": {
+        "promptTokens": 1106,
+        "completionTokens": 18
+      }
+    }
+  ],
+  "results": [
+    {
+      "sport": "futbol",
+      "id": "espn-761660",
+      "teams": [
+        "Chicago Fire FC",
+        "Vancouver Whitecaps"
+      ],
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/761660",
+      "dataFetchedAt": "2026-10-06T03:57:55.694Z",
+      "aiConfirmed": true,
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-06T03:58:04.096Z",
+      "analysisMode": "fact-selection",
+      "sampleSize": null,
+      "probabilities": {
+        "homeWin": 28.6143438962542,
+        "draw": 22.547489045607104,
+        "awayWin": 48.83816705813868,
+        "bttsYes": 63.351746526312446,
+        "over05": 96.1225792168278,
+        "over15": 83.52096167151811,
+        "over25": 63.04333316038997,
+        "over35": 40.85923560666778,
+        "over45": 22.834656344268453,
+        "under05": 3.877420783172198,
+        "bttsNo": 36.648253473687554,
+        "under15": 16.47903832848189,
+        "under25": 36.95666683961003,
+        "under35": 59.14076439333222,
+        "under45": 77.16534365573155,
+        "cornerOver95": null,
+        "confidence": null,
+        "predictedScore": "1 - 1"
+      },
+      "selectedSourceFacts": [
+        "Chicago Fire FC vs Vancouver Whitecaps. Torneo: MLS. Estado: SCHEDULED. Inicio: 2026-10-07T00:30Z.",
+        "Chicago Fire FC (Local): 26 PJ, 46 GF, 38 GC. Registros: Posición #5, (42 pts), valla invicta 10%, 4.6 córners/p, 1.8 amarillas/p.",
+        "Vancouver Whitecaps (Visitante): 26 PJ, 59 GF, 26 GC. Registros: Posición #1, (50 pts), valla invicta 50%, 7.3 córners/p, 1.7 amarillas/p.",
+        "Estimación Poisson: Chicago Fire FC 28.6%, Empate 22.5%, Vancouver Whitecaps 48.8%.",
+        "Media de goles Poisson (no xG observado): Chicago Fire FC 1.4 goles vs Vancouver Whitecaps 1.9 goles.",
+        "Historial directo H2H (5 partidos oficiales recientes): Vancouver Whitecaps 1 - 3 Chicago Fire FC; Chicago Fire FC 0 - 1 Vancouver Whitecaps; Vancouver Whitecaps 1 - 3 Chicago Fire FC; Chicago Fire FC 0 - 2 Vancouver Whitecaps; Chicago Fire FC 1 - 1 Vancouver Whitecaps."
+      ],
+      "freshProviderCalls": 1
+    },
+    {
+      "sport": "beisbol",
+      "id": "mlb-mlb-849819",
+      "teams": [
+        "Atlanta Braves",
+        "Los Angeles Dodgers"
+      ],
+      "sourceUrl": "https://www.mlb.com/gameday/849819",
+      "dataFetchedAt": "2026-10-06T03:58:05.482Z",
+      "aiConfirmed": true,
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-06T03:58:07.838Z",
+      "analysisMode": "fact-selection",
+      "sampleSize": {
+        "home": 20,
+        "away": 20
+      },
+      "probabilities": {
+        "home": 43.2,
+        "away": 56.8
+      },
+      "selectedSourceFacts": [
+        "Atlanta Braves vs Los Angeles Dodgers. MLB. Inicio: 2026-10-06T22:00:00Z. Estado: SCHEDULED.",
+        "Registros de MLB Stats API: https://www.mlb.com/gameday/849819. Consulta: 2026-10-06T03:58:05.482Z.",
+        "Ganador previo: Atlanta Braves 43.2%, Los Angeles Dodgers 56.8%.",
+        "Muestra anterior al encuentro: Atlanta Braves 20 partidos; Los Angeles Dodgers 20 partidos.",
+        "Total esperado de carreras basado en las medias anotadas y recibidas de los últimos 20 resultados completos (mínimo 5 por equipo; incluyen extra innings si los hubo). El reparto entre equipos se ajusta a una fuerza relativa tipo Elo calculada con resultados previos del mismo torneo: punto inicial neutral 1500, escala 400 y actualización 24 por partido. Son parámetros matemáticos, no rankings oficiales. Totales por equipo y combinado del partido: Poisson sobre esas medias ajustadas, incluidos extra innings presentes en los resultados. Primer inning y total de innings 1 a 5 usan exclusivamente carreras observadas en esos innings, con mínimo 5 registros por equipo; sin esos registros se muestra N/D. ¿Habrá extra innings?: frecuencia de partidos que excedieron la duración reglamentaria publicada por el proveedor, con mínimo 5 registros verificables por equipo, de la misma duración que el encuentro y sin contar dos veces un enfrentamiento común. Suavizado matemático de Jeffreys (0.5 añadido al numerador y 1 al denominador); esos valores no son partidos observados. Sin duración reglamentaria o innings completos comprobables, N/D. No incorpora lanzadores ni alineaciones. Ganador aproximado condicionando la distribución Poisson a un resultado decisivo; no simula extra innings.",
+        "Probabilidades previas, sin validación prospectiva. No se verificaron alineaciones, lesiones ni noticias. No son garantías ni probabilidades ajustadas al marcador en vivo."
+      ],
+      "freshProviderCalls": 1
+    },
+    {
+      "sport": "tenis",
+      "id": "espn-tennis-wta-185224",
+      "teams": [
+        "Elena Pridankina",
+        "Anna Blinkova"
+      ],
+      "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261006",
+      "dataFetchedAt": "2026-10-06T03:58:08.006Z",
+      "aiConfirmed": true,
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-06T03:58:15.469Z",
+      "analysisMode": "fact-selection",
+      "sampleSize": {
+        "home": 20,
+        "away": 20
+      },
+      "probabilities": {
+        "home": 48.1,
+        "away": 51.9
+      },
+      "selectedSourceFacts": [
+        "Elena Pridankina vs Anna Blinkova. WTA · Samsun Open. Inicio: 2026-10-06T04:00Z. Estado: SCHEDULED.",
+        "Ganador previo: Elena Pridankina 48.1%, Anna Blinkova 51.9%.",
+        "Muestra anterior al encuentro: Elena Pridankina 20 partidos; Anna Blinkova 20 partidos.",
+        "Ganador por fuerza relativa tipo Elo con resultados previos del mismo circuito (mínimo 5 partidos y 5 sets verificados por jugador). Inicialización neutral 1500, escala 400 y actualización 24: parámetros matemáticos, no rankings oficiales. Probabilidad por set inferida del ganador. Partido al mejor de 3 sets. Los sets se suponen independientes y con la misma probabilidad: primer y segundo set comparten estimación. Gana un set significa al menos uno; se supone que el partido se completa.",
+        "Probabilidades previas, sin validación prospectiva. No se verificaron alineaciones, lesiones ni noticias. No son garantías ni probabilidades ajustadas al marcador en vivo.",
+        "Primer set: Elena Pridankina 48.7%, Anna Blinkova 51.3%. Segundo set: Elena Pridankina 48.7%, Anna Blinkova 51.3%. Al menos un set: Elena Pridankina Sí 73.7%, No 26.3%; Anna Blinkova Sí 76.3%, No 23.7%. Mejor de 3 sets."
+      ],
+      "freshProviderCalls": 1
+    },
+    {
+      "sport": "basquetbol",
+      "id": "espn-nba_preseason-401901820",
+      "teams": [
+        "Charlotte Hornets",
+        "Brooklyn Nets"
+      ],
+      "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401901820",
+      "dataFetchedAt": "2026-10-06T03:58:16.397Z",
+      "aiConfirmed": true,
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-06T03:58:18.431Z",
+      "analysisMode": "fact-selection",
+      "sampleSize": {
+        "home": 10,
+        "away": 8
+      },
+      "probabilities": {
+        "home": 60.4,
+        "away": 39.6
+      },
+      "selectedSourceFacts": [
+        "Charlotte Hornets vs Brooklyn Nets. Pretemporada NBA. Inicio: 2026-10-06T23:00Z. Estado: SCHEDULED.",
+        "Ganador previo: Charlotte Hornets 60.4%, Brooklyn Nets 39.6%.",
+        "Muestra anterior al encuentro: Charlotte Hornets 10 partidos; Brooklyn Nets 8 partidos.",
+        "Hándicaps estimados con una distribución normal del margen, calculada sobre los últimos 20 resultados disponibles de la misma competición (mínimo 5 por equipo). Incluyen prórroga cuando está incluida en el resultado oficial. Ganador: probabilidad implícita en las dos cuotas publicadas, sin margen de la casa. La distribución de hándicaps se centra en ese ganador y conserva la dispersión histórica.",
+        "Probabilidades previas, sin validación prospectiva. No se verificaron alineaciones, lesiones ni noticias. No son garantías ni probabilidades ajustadas al marcador en vivo.",
+        "Resultados anteriores de Charlotte Hornets, más antiguo a más reciente: 2025-10-05T21:00Z · Oklahoma City Thunder · 114–135 (L); 2025-10-10T00:00Z · Oklahoma City Thunder · 116–122 (L); 2025-10-12T00:30Z · Dallas Mavericks · 120–116 (W); 2025-10-15T23:00Z · Memphis Grizzlies · 145–116 (W); 2025-10-17T23:30Z · New York Knicks · 108–113 (L)."
+      ],
+      "freshProviderCalls": 1
+    }
+  ],
+  "limits": "Actual HTTP replies from the configured provider, not cached AI. AI reviews and prioritizes a catalog of verified facts; probabilities and selections are calculated statistically. This does not verify future predictive accuracy or the provider internal model implementation."
+}

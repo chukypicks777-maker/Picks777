@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Sparkles, Square, RotateCw, CheckCircle2, Cpu, ShieldCheck } from 'lucide-react';
 import { sounds } from '../utils/audioEffects';
-import { isMatchAnalyzed, getBatchAnalyzedStatus, setCachedAnalysis, removeCachedAnalysis } from '../utils/analysisCache';
+import { isMatchAnalyzed, getBatchAnalyzedStatus, setCachedAnalysis, computeMatchFingerprint } from '../utils/analysisCache';
 import { getStoredAiConfig } from '../utils/aiSettings';
 import { PROVIDER_PRESETS } from '../constants/aiProviders';
+import { isUpcomingFixture } from '../utils/fixtureEligibility.js';
 
 const sessionAttemptedMatchIds = new Set();
+const attemptFingerprints = new WeakMap();
+function attemptFingerprint(match) {
+  if (!attemptFingerprints.has(match)) attemptFingerprints.set(match, computeMatchFingerprint(match));
+  return attemptFingerprints.get(match);
+}
 
 export default function AutonomousAiBar({
   matches = [],
@@ -14,6 +20,7 @@ export default function AutonomousAiBar({
   onToast = null,
   isOwner = false,
   sport = 'futbol',
+  sessionKey = '',
   onAnalyzing = null,
   externalBusy = false
 }) {
@@ -42,17 +49,18 @@ export default function AutonomousAiBar({
     matchesRef.current = matches;
   }, [matches]);
   const attemptedMatchIdsRef = useRef(sessionAttemptedMatchIds);
+  const attemptKey = useCallback(match => `${sessionKey}:${sport}:${attemptFingerprint(match)}`, [sessionKey, sport]);
 
   // Derive counts using getBatchAnalyzedStatus without synchronous setState inside effects
   const { analyzedCount, totalCount, pendingCount, isAllAnalyzed } = useMemo(() => {
     void analysisVersion;
-    return getBatchAnalyzedStatus(matches);
+    return getBatchAnalyzedStatus(matches.filter(match => isUpcomingFixture(match)));
   }, [matches, analysisVersion]);
 
   // Stable match IDs key to prevent unnecessary effect triggers on background feed polling
   const matchIdsKey = useMemo(() => {
     if (!Array.isArray(matches) || matches.length === 0) return '';
-    return matches.map(m => m?.id).filter(Boolean).join(',');
+    return matches.filter(m => m?.id).map(attemptFingerprint).join(',');
   }, [matches]);
 
   const progressPercent = totalCount > 0 ? Math.round((analyzedCount / totalCount) * 100) : 0;
@@ -68,11 +76,11 @@ export default function AutonomousAiBar({
   const executeAnalysisQueue = useCallback(async (forceAll = false) => {
     if (!isOwner || runningRef.current) return;
     if (externalBusy) return;
-    const currentMatches = matchesRef.current;
+    const currentMatches = matchesRef.current.filter(match => isUpcomingFixture(match));
     if (!Array.isArray(currentMatches) || currentMatches.length === 0) return;
 
     if (forceAll) {
-      attemptedMatchIdsRef.current.clear();
+      currentMatches.forEach(match => attemptedMatchIdsRef.current.delete(attemptKey(match)));
     }
 
     runningRef.current = true;
@@ -82,7 +90,7 @@ export default function AutonomousAiBar({
 
     const targets = forceAll
       ? [...currentMatches]
-      : currentMatches.filter(m => m?.id && !isMatchAnalyzed(m.id, m) && !attemptedMatchIdsRef.current.has(m.id));
+      : currentMatches.filter(m => m?.id && !isMatchAnalyzed(m.id, m) && !attemptedMatchIdsRef.current.has(attemptKey(m)));
 
     if (targets.length === 0) {
       setIsRunning(false);
@@ -115,17 +123,15 @@ export default function AutonomousAiBar({
       if (stopRequested.current) break;
 
       const curMatch = targets[i];
-      attemptedMatchIdsRef.current.add(curMatch.id);
+      const key = attemptKey(curMatch);
+      attemptedMatchIdsRef.current.add(key);
+      if (attemptedMatchIdsRef.current.size > 4000) attemptedMatchIdsRef.current.delete(attemptedMatchIdsRef.current.values().next().value);
       const matchTitle = `${curMatch.homeTeam?.name || 'Local'} vs ${curMatch.awayTeam?.name || 'Visitante'}`;
       setCurrentMatchTitle(matchTitle);
       onAnalyzing?.(curMatch.id);
-      window.dispatchEvent(new CustomEvent('ai-analyzing-match', { detail: { matchId: curMatch.id } }));
+      if (sport === 'futbol') window.dispatchEvent(new CustomEvent('ai-analyzing-match', { detail: { matchId: curMatch.id } }));
 
       try {
-        if (forceAll) {
-          removeCachedAnalysis(curMatch.id);
-        }
-
         const controller = new AbortController();
         requestController.current = controller;
         const timeout = setTimeout(() => controller.abort(), 55000);
@@ -153,7 +159,7 @@ export default function AutonomousAiBar({
         }
 
         const data = await res.json().catch(() => null);
-        if (!mounted.current || controller.signal.aborted) break;
+        if (!mounted.current || controller.signal.aborted) { attemptedMatchIdsRef.current.delete(key); break; }
         if (res.ok && data?.success && data.report) {
           if (data.report.aiAvailable) aiCompleted++; else statisticalCompleted++;
           const finalMatch = {
@@ -161,18 +167,21 @@ export default function AutonomousAiBar({
             isAiAnalyzed: Boolean(data.report.aiAvailable),
             aiReport: data.report
           };
-          setCachedAnalysis(curMatch.id, finalMatch, {
+          attemptedMatchIdsRef.current.add(attemptKey(finalMatch));
+          if (sport === 'futbol') setCachedAnalysis(curMatch.id, finalMatch, {
             aiReport: data.report,
             enrichedMatch: finalMatch,
+            originalMatch: curMatch,
             model: resolvedModel
           });
 
           onMatchAnalyzed?.(curMatch.id, finalMatch, data.report, curMatch);
-          window.dispatchEvent(new CustomEvent('ai-analysis-updated', {
+          if (sport === 'futbol' && !onMatchAnalyzed) window.dispatchEvent(new CustomEvent('ai-analysis-updated', {
             detail: { matchId: curMatch.id, match: finalMatch, report: data.report }
           }));
         }
       } catch (err) {
+        if (err?.name === 'AbortError') attemptedMatchIdsRef.current.delete(key);
         if (!mounted.current) break;
         console.warn(`[AutonomousAI] Error analyzing match ${curMatch.id}:`, err?.message || err);
       }
@@ -186,7 +195,7 @@ export default function AutonomousAiBar({
       }
     }
 
-    window.dispatchEvent(new CustomEvent('ai-analyzing-match', { detail: { matchId: null } }));
+    if (sport === 'futbol') window.dispatchEvent(new CustomEvent('ai-analyzing-match', { detail: { matchId: null } }));
     onAnalyzing?.(null);
     if (!mounted.current) return;
     setIsRunning(false);
@@ -198,7 +207,7 @@ export default function AutonomousAiBar({
       sounds.playSuccess();
       onToast?.(`Revisión terminada: ${aiCompleted} informes con IA, ${statisticalCompleted} cálculos estadísticos y ${processed - aiCompleted - statisticalCompleted} solicitudes sin resultado.`);
     }
-  }, [isOwner, activeModelInfo, onMatchAnalyzed, onToast, sport, onAnalyzing, externalBusy]);
+  }, [isOwner, activeModelInfo, onMatchAnalyzed, onToast, sport, onAnalyzing, externalBusy, attemptKey]);
 
   const handleStop = () => {
     stopRequested.current = true;
@@ -215,7 +224,7 @@ export default function AutonomousAiBar({
     if (!Array.isArray(currentMatches) || currentMatches.length === 0) return;
 
     const pending = currentMatches.filter(
-      m => m?.id && !isMatchAnalyzed(m.id, m) && !attemptedMatchIdsRef.current.has(m.id)
+      m => isUpcomingFixture(m) && m?.id && !isMatchAnalyzed(m.id, m) && !attemptedMatchIdsRef.current.has(attemptKey(m))
     );
     if (pending.length === 0) return;
 
@@ -226,7 +235,7 @@ export default function AutonomousAiBar({
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [matchIdsKey, isOwner, autoRunOnLoad, activeModelInfo?.isConfigured, executeAnalysisQueue, externalBusy]);
+  }, [matchIdsKey, analysisVersion, isOwner, autoRunOnLoad, activeModelInfo?.isConfigured, executeAnalysisQueue, externalBusy, attemptKey]);
 
   if (!isOwner || !matches || matches.length === 0) return null;
 

@@ -66,6 +66,7 @@ test('sports APIs require a session, keep the women feed separate, filter league
   try {
     assert.equal((await request('/api/sports/basquetbol')).status, 401);
     assert.equal((await request('/api/sports/basquetbol/unknown')).status, 401);
+    assert.equal((await request('/api/sports/tenis/details', '', { ids: ['unknown'] })).status, 401);
     assert.equal((await request('/api/sports/tenis/unknown/ai-analysis', '', { forceRefresh: true })).status, 401);
     assert.equal(providerCalls, 0);
     const login = await request('/api/auth/verify-code', '', { code: 'SportsApiTestOwner', username: 'Owner' });
@@ -105,6 +106,14 @@ test('sports APIs require a session, keep the women feed separate, filter league
     const tennisDetail = await (await request(`/api/sports/tenis/${tennisMatch.id}?league=atp`, cookie)).json();
     assert.ok(tennisDetail.match.analysis.sampleSize.home >= 5);
     assert.ok(tennisDetail.match.analysis.winner.home > 0);
+    for (const ids of [[], ['a', 'a'], Array.from({ length: 13 }, (_, i) => String(i)), [null], ['a'.repeat(121)]])
+      assert.equal((await request('/api/sports/tenis/details', cookie, { ids })).status, 400);
+    assert.equal((await request('/api/sports/tenis/details', cookie, { ids: [tennisMatch.id], league: 'fake' })).status, 400);
+    const batch = await (await request('/api/sports/tenis/details', cookie, { ids: [tennisMatch.id, 'browser-invented'], match: { probabilities: { home: 99 } } })).json();
+    assert.equal(batch.matches.length, 1);
+    assert.deepEqual(batch.matches[0].analysis, tennisDetail.match.analysis);
+    assert.deepEqual(batch.unavailableIds, ['browser-invented']);
+    assert.equal(aiCalls, 0, 'Background statistics never start paid AI calls');
     assert.equal(tennisDetail.match.analysis.firstSet.home + tennisDetail.match.analysis.firstSet.away, 100);
     const regular = await storage.upsertGoogleUser({ googleId: 'sports-regular-fixture', email: 'regular@example.invalid', name: 'Cliente de prueba', deviceId: 'sports-device' });
     let regularCookie;

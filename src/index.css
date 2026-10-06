@@ -1,4 +1,5 @@
-@import "tailwindcss";
+@import "tailwindcss" source("./");
+@source "../index.html";
 
 .picks-dialog {
   width: min(56rem, calc(100vw - 1.5rem));

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { sounds } from '../utils/audioEffects';
 
-export default function TiltCard({ children, className = '', maxTilt = 8, scale = 1.015, onClick, ...rest }) {
+export default function TiltCard({ children, className = '', maxTilt = 8, scale = 1.015, onClick, style, ...rest }) {
   const cardRef = useRef(null);
   const [transform, setTransform] = useState('');
   const [glarePos, setGlarePos] = useState({ x: 50, y: 50, opacity: 0 });
@@ -42,7 +42,7 @@ export default function TiltCard({ children, className = '', maxTilt = 8, scale 
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
-      style={{ transform }}
+      style={{ ...style, transform }}
       className={`tilt-card-inner relative overflow-hidden transition-all duration-200 cursor-pointer ${className}`}
       {...rest}
     >

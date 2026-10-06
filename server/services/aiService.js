@@ -396,7 +396,7 @@ export async function generateGroundedAiReport(match, facts, baseline, options =
         const remaining = deadline - Date.now();
         if (remaining < 1000) break;
         try {
-          const raw = await executeAiChatCompletion({
+          const requestOptions = {
             ...config,
             model: candidate,
             systemPrompt,
@@ -408,10 +408,23 @@ No escribas análisis libre, no calcules probabilidades ni selecciones y no agre
             maxTokens: 4000,
             temperature: 0.3,
             timeoutMs: Math.min(20000, remaining)
-          });
+          };
+          let raw = await executeAiChatCompletion(requestOptions);
+          let candidateParsed = raw ? extractJsonFromAiResponse(raw) : null;
+          const initialIds = candidateParsed?.factIds ?? candidateParsed?.fact_ids ?? candidateParsed?.facts ??
+            candidateParsed?.analysis?.factIds ?? candidateParsed?.analysis?.fact_ids ?? candidateParsed?.analysis?.facts;
+          // A provider sometimes copies the whole catalog. Ask it to choose a
+          // bounded selection again; never truncate that copy and call it AI.
+          if (Array.isArray(initialIds) && initialIds.length > 6 && initialIds.length <= facts.length
+            && initialIds.every(id => typeof id === 'string' && validIdsList.includes(id.trim())) && deadline - Date.now() >= 1000) {
+            raw = await executeAiChatCompletion({ ...requestOptions,
+              userPrompt: `${requestOptions.userPrompt}\n\nCorrección estricta: la respuesta anterior incluyó demasiados IDs. Vuelve a revisar el encuentro y escoge EXACTAMENTE ${Math.min(4, facts.length)} IDs distintos de los hechos más relevantes, incluyendo incertidumbres. No copies el catálogo completo. Devuelve solo JSON con la propiedad factIds y esa selección.`,
+              timeoutMs: Math.min(20000, deadline - Date.now())
+            });
+            candidateParsed = extractJsonFromAiResponse(raw);
+          }
 
           if (raw) {
-            const candidateParsed = extractJsonFromAiResponse(raw);
             if (candidateParsed && typeof candidateParsed === 'object') {
               let rawIds = candidateParsed.factIds ?? candidateParsed.fact_ids ?? candidateParsed.facts ??
                 candidateParsed.analysis?.factIds ?? candidateParsed.analysis?.fact_ids ?? candidateParsed.analysis?.facts;

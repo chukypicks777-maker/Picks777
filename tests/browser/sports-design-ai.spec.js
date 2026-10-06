@@ -25,7 +25,10 @@ async function setup(page, { sport = 'tenis', owner = false, auto = false } = {}
     if (path.startsWith('/api/sports/')) {
       const sportId = path.split('/')[3], source = fixtures[sportId] || [];
       const id = path.split('/')[4];
-      if (id) {
+      if (id === 'details') {
+        const ids = request.postDataJSON().ids;
+        data = { success: true, matches: source.filter(match => ids.includes(match.id)).map(match => ({ ...match, aiReport: reports.get(match.id) || null, isAiAnalyzed: reports.has(match.id) })) };
+      } else if (id) {
         const match = source.find(match => match.id === id);
         if (path.endsWith('/ai-analysis')) {
           const report = { aiAvailable: true, dataGrounded: true, modelUsed: 'modelo-de-prueba', generatedAt: new Date(now).toISOString(), probabilities: match.analysis.winner, tacticalKeypoints: ['Hecho verificado de la muestra aislada.'] };

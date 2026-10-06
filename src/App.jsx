@@ -23,7 +23,7 @@ import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
 import { getMatchSafetyScore, getBestBankerPick, getContextualPick } from './utils/mathProbabilities';
 import { EMPTY_PARLAY, parlayTicketReducer } from './utils/parlayTicket.js';
 
-import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnalyzedModelName, mergeFreshMatch } from './utils/analysisCache';
+import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnalyzedModelName, mergeFreshMatch, mergeAnalyzedMatch } from './utils/analysisCache';
 import { useSession } from './auth/useSession';
 import { sessionRequest } from './auth/sessionClient';
 import { identityProvider } from './auth/providers';
@@ -95,7 +95,6 @@ export default function App() {
   const [expiredParlayNotice, setExpiredParlayNotice] = useState(null);
   const visibleToast = toastMessage || (parlayTicket !== expiredParlayNotice ? parlayTicket.notice : '');
   const [currentEpoch, setCurrentEpoch] = useState(() => Date.now());
-  const [analyzedMatchesMap, setAnalyzedMatchesMap] = useState({});
   const [currentAnalyzingMatchId, setCurrentAnalyzingMatchId] = useState(null);
 
   const showUpgradeModalRef = useRef(showUpgradeModal);
@@ -230,18 +229,9 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const handleMatchAnalyzed = useCallback((matchId, enrichedMatch, aiReport) => {
-    const isAiSuccess = Boolean(aiReport?.aiAvailable);
-    setAnalyzedMatchesMap(prev => ({
-      ...prev,
-      [matchId]: {
-        isAnalyzed: isAiSuccess,
-        modelUsed: aiReport?.modelUsed || null,
-        report: aiReport
-      }
-    }));
-    setMatches(prev => prev.map(m => m.id === matchId ? { ...m, ...(enrichedMatch || {}), isAiAnalyzed: isAiSuccess, aiReport } : m));
-    setSelectedMatch(prev => prev?.id === matchId ? { ...prev, ...(enrichedMatch || {}), isAiAnalyzed: isAiSuccess, aiReport } : prev);
+  const handleMatchAnalyzed = useCallback((matchId, enrichedMatch, aiReport, original = null) => {
+    setMatches(prev => prev.map(m => m.id === matchId ? mergeAnalyzedMatch(m, enrichedMatch, aiReport, original) : m));
+    setSelectedMatch(prev => prev?.id === matchId ? mergeAnalyzedMatch(prev, enrichedMatch, aiReport, original) : prev);
   }, []);
 
   useEffect(() => {
@@ -512,16 +502,16 @@ export default function App() {
     } catch { showToast('No se pudo cerrar la sesión. Comprueba la conexión e inténtalo otra vez.'); }
   };
 
-  const handleAddToParlay = (legOrLegs) => {
+  const handleAddToParlay = useCallback((legOrLegs) => {
     dispatchParlay({ type: 'add', legs: Array.isArray(legOrLegs) ? legOrLegs : [legOrLegs] });
     setShowParlayDrawer(true);
-  };
+  }, []);
 
-  const handleToggleParlay = (rawLeg) => {
+  const handleToggleParlay = useCallback((rawLeg) => {
     sounds.playAddParlay();
     dispatchParlay({ type: 'toggle', leg: rawLeg });
     setShowParlayDrawer(true);
-  };
+  }, []);
 
   const handleRemoveParlayLeg = (leg) => {
     dispatchParlay({ type: 'remove', leg });
@@ -874,6 +864,7 @@ export default function App() {
           {/* Autonomous AI Match Analysis Bar - Exclusivo para Owner */}
           {isOwner && !loadingMatches && filteredMatches.length > 0 && (
             <AutonomousAiBar
+              sessionKey={auth?.user?.id || auth?.user?.uid || ''}
               matches={filteredMatches}
               onMatchAnalyzed={handleMatchAnalyzed}
               onToast={showToast}
@@ -958,9 +949,9 @@ export default function App() {
                   isLocked={(marketFilter === 'safe' || marketFilter === 'boost') && !isVipUser && idx >= 3}
                   onUnlockVip={openUpgradeModal}
                   marketFilter={marketFilter}
-                  isAiAnalyzed={analyzedMatchesMap[m.id]?.isAnalyzed ?? analyzedStatusFromBatch[m.id]?.isAnalyzed ?? isMatchAnalyzed(m.id, m)}
+                  isAiAnalyzed={analyzedStatusFromBatch[m.id]?.isAnalyzed ?? isMatchAnalyzed(m.id, m)}
                   isAnalyzing={currentAnalyzingMatchId === m.id}
-                  aiModelUsed={analyzedMatchesMap[m.id]?.modelUsed || analyzedStatusFromBatch[m.id]?.modelUsed || getAnalyzedModelName(m.id, m)}
+                  aiModelUsed={analyzedStatusFromBatch[m.id]?.modelUsed || getAnalyzedModelName(m.id, m)}
                 />
               ))}
             </div>

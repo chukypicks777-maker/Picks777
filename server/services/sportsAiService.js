@@ -45,6 +45,8 @@ export async function generateAiSportsReport(match, options = {}) {
     analysisSections: { dataVerification: facts.find(fact => fact.id === 'sample').text, verdict: pick ? `${pick.selection}: ${pick.probability}% estimado.` : 'Sin datos suficientes para un ganador.' },
     narrativeAnalysis: facts.map(fact => fact.text).join('\n\n'), aiStatus: 'Cálculo estadístico disponible; proveedor de IA sin configurar.',
     limitations: facts.find(fact => fact.id === 'limits').text };
-  const ttl = match.status === 'LIVE' || Date.parse(match.kickoff) <= Date.now() ? 30 : 300;
+  // Retain completed work. The key includes the entire statistical input, so a
+  // new result, participant, quote or sample retrieves a different report.
+  const ttl = match.status === 'LIVE' || match.status === 'SCHEDULED' && Date.parse(match.kickoff) <= Date.now() ? 30 : 86400;
   return cachedData(sportsReportKey(match), ttl, () => generateGroundedAiReport(match, facts, baseline, options), { forceRefresh: Boolean(options.forceRefresh) });
 }

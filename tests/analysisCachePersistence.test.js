@@ -10,22 +10,26 @@ import {
 } from '../src/utils/analysisCache.js';
 import { cachedData, clearCachePattern } from '../server/services/dataCache.js';
 
-test('report cache expires within five minutes and live reports within thirty seconds', () => {
-  assert.equal(getMatchCacheTtlMs('SCHEDULED', { aiAvailable: true }), 300000);
+test('completed scheduled reports survive long queues while live reports expire within thirty seconds', () => {
+  assert.equal(getMatchCacheTtlMs('SCHEDULED', { aiAvailable: true }), 86400000);
   assert.equal(getMatchCacheTtlMs('FINISHED', { aiAvailable: true }), 3600000);
   assert.equal(getMatchCacheTtlMs('LIVE', { aiAvailable: true }), 30000);
   assert.equal(getMatchCacheTtlMs('SCHEDULED', { aiAvailable: false }), 60000);
   assert.equal(getMatchCacheTtlMs({ status: 'SCHEDULED', kickoff: new Date(Date.now() - 3600000).toISOString() }, { aiAvailable: true }), 30000);
 });
 
-test('a scheduled report is preserved briefly and expires before stale hours of analysis accumulate', () => {
+test('a scheduled report survives a long queue, invalidates changed facts and has bounded retention', () => {
   clearAllAnalysisCache();
   const match = { id: 'freshness-test', status: 'SCHEDULED', kickoff: new Date(Date.now() + 86400000).toISOString() };
   setCachedAnalysis(match.id, match, { aiReport: { aiAvailable: true } });
   const entry = getCachedAnalysis(match.id, match);
   entry.timestamp = Date.now() - 240000;
   assert.ok(getCachedAnalysis(match.id, match));
-  entry.timestamp = Date.now() - 360000;
+  entry.timestamp = Date.now() - 12 * 3600000;
+  assert.ok(getCachedAnalysis(match.id, match));
+  assert.equal(getCachedAnalysis(match.id, { ...match, kickoff: new Date(Date.now() + 86400001).toISOString() }), null);
+  setCachedAnalysis(match.id, match, { aiReport: { aiAvailable: true } });
+  getCachedAnalysis(match.id, match).timestamp = Date.now() - 86400001;
   assert.equal(getCachedAnalysis(match.id, match), null);
 });
 

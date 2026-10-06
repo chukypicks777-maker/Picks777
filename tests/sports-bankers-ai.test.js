@@ -9,6 +9,7 @@ import { computeMatchFingerprint } from '../src/utils/analysisCache.js';
 import { parseTennisEvents } from '../server/services/sportsDataService.js';
 import { storage } from '../server/storage.js';
 import { clearCachePattern } from '../server/services/dataCache.js';
+import { generateGroundedAiReport } from '../server/services/aiService.js';
 
 const now = Date.now();
 function match(id, probability = 70) {
@@ -71,6 +72,39 @@ test('sports AI uses the configured provider, rejects fabricated numbers and sha
     assert.equal(invalid.aiAvailable, false); assert.equal(invalid.modelUsed, null);
     assert.deepEqual(invalid.probabilities, { home: 70, away: 30 });
   } finally { clearCachePattern('ai:sports-report:v1:'); storage.file = oldFile; await rm(directory, { recursive: true, force: true }); }
+});
+
+test('a copied fact catalog triggers one real re-selection request and is never silently accepted as AI analysis', async t => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'picks-ai-reselection-')), oldFile = storage.file;
+  storage.file = path.join(directory, 'access.json');
+  const facts = Array.from({ length: 8 }, (_, i) => ({ id: `fact-${i}`, text: `Registro aislado ${i}.` }));
+  const baseline = { aiAvailable: false, modelUsed: null, probabilities: { home: 60, away: 40 }, facts: facts.map(fact => fact.text) };
+  const selected = ['fact-7', 'fact-3', 'fact-5', 'fact-1'], calls = [];
+  let repeatInvalid = false;
+  t.mock.method(globalThis, 'fetch', async (_url, options) => {
+    const request = JSON.parse(options.body); calls.push(request);
+    const factIds = repeatInvalid || calls.length === 1 ? facts.map(fact => fact.id) : selected;
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ factIds }) } }] }));
+  });
+  try {
+    await storage.updateAiConfig({ provider: 'custom', baseUrl: 'https://vyceai.com/v1', apiKey: 'isolated-test-key', selectedModel: 'test-reselection-model' });
+    const report = await generateGroundedAiReport(match('repair'), facts, baseline, { forceRefresh: true });
+    assert.equal(calls.length, 2);
+    assert.deepEqual(calls.map(call => call.model), ['test-reselection-model', 'test-reselection-model']);
+    assert.match(calls[1].messages.at(-1).content, /Corrección estricta/);
+    assert.equal(report.aiAvailable, true);
+    assert.deepEqual(report.tacticalKeypoints, selected.map(id => facts.find(fact => fact.id === id).text));
+    assert.deepEqual(report.probabilities, baseline.probabilities);
+    repeatInvalid = true; calls.length = 0;
+    const rejected = await generateGroundedAiReport(match('still-invalid'), facts, baseline, { forceRefresh: true });
+    assert.equal(rejected.aiAvailable, false, 'Repeatedly returning the whole catalog must not become a completed AI report');
+    assert.equal(rejected.modelUsed, null);
+    assert.deepEqual(rejected.probabilities, baseline.probabilities);
+  } finally {
+    storage.file = oldFile;
+    assert.equal(path.dirname(path.resolve(directory)), path.resolve(os.tmpdir()));
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test('tennis identity preserves published portraits and uses the real country flag when the provider omits a photo', () => {

@@ -9,11 +9,11 @@ import TeamForm from './TeamForm';
 
 const statuses = { LIVE: 'EN VIVO', FINISHED: 'FINALIZADO', SCHEDULED: 'PROGRAMADO', POSTPONED: 'POSPUESTO', CANCELLED: 'CANCELADO', SUSPENDED: 'SUSPENDIDO', UNKNOWN: 'SIN CONFIRMAR' };
 
-export default function SportMatchCard({ match, oddsFormat, onOpen, isOwner, onRetryAi, analyzing = false, aiBusy = false, bankerRank = null }) {
+function SportMatchCard({ match, oddsFormat, onOpen, isOwner, onRetryAi, analyzing = false, aiBusy = false, bankerRank = null }) {
   const a = match.analysis || {}, pick = sportWinnerPick(match), report = match.aiReport;
   const aiVerified = report?.aiAvailable === true && report?.dataGrounded === true;
   return <article data-match-id={match.id} aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`}
-    style={bankerRank === 1 ? { borderColor: 'rgba(251, 191, 36, 0.4)' } : undefined}
+    style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 450px', ...(bankerRank === 1 ? { borderColor: 'rgba(251, 191, 36, 0.4)' } : {}) }}
     className={`relative terminal-card min-w-0 text-xs rounded-xl p-4 flex flex-col border hover:border-sky-500/40 focus-within:ring-1 focus-within:ring-sky-400/50 ${bankerRank === 1 ? 'border-amber-400/40' : 'border-white/10'}`}>
     <div className="flex items-center justify-between gap-2 text-[11px] mb-3 pb-2.5 border-b border-white/5">
       <span className="min-w-0 truncate text-slate-300 font-semibold">{match.leagueFlag} {match.leagueName}</span>
@@ -51,3 +51,4 @@ export default function SportMatchCard({ match, oddsFormat, onOpen, isOwner, onR
     </div>
   </article>;
 }
+export default React.memo(SportMatchCard);

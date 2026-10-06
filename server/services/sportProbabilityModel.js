@@ -12,14 +12,43 @@ const historical = (match, games, now) => [...new Map(games.map(game => [game.id
   && Date.parse(game.kickoff) < Math.min(Date.parse(match.kickoff), now)
   && game.leagueId === match.leagueId);
 
+const indexedHistories = new WeakMap();
+function historyScope(match, games) {
+  let index = indexedHistories.get(games);
+  if (!index) {
+    index = new Map();
+    indexedHistories.set(games, index);
+  }
+  const key = `${match.sport}:${match.sport === 'tenis' ? match.tour : match.leagueId}`;
+  if (!index.has(key)) {
+    const previous = [...new Map(games.map(game => [game.id, game])).values()].filter(game => game.status === 'FINISHED' && !game.retired
+      && (match.sport === 'tenis' ? game.tour === match.tour : game.leagueId === match.leagueId)
+      && Number.isFinite(Date.parse(game.kickoff))
+      && ['home', 'away'].every(side => Number.isInteger(game.finalScore?.[side]) && game.finalScore[side] >= 0))
+      .sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff) || a.id.localeCompare(b.id));
+    const teams = new Map();
+    for (const game of previous) for (const side of ['home', 'away']) {
+      const id = String(game[`${side}Team`]?.id);
+      if (!teams.has(id)) teams.set(id, []);
+      teams.get(id).push(game);
+    }
+    index.set(key, { previous, teams, positions: new Map(previous.map((game, i) => [game.id, i])), snapshots: new Map() });
+  }
+  return index.get(key);
+}
+
 // Neutral rating is a mathematical prior, not an observed ranking.
 export function relativeResultStrength(match, games = [], now = Date.now()) {
-  const cutoff = Math.min(Date.parse(match.kickoff), now), ratings = new Map(), samples = new Map();
-  const previous = [...new Map(games.map(game => [game.id, game])).values()].filter(game => game.id !== match.id && game.status === 'FINISHED'
-    && Date.parse(game.kickoff) < cutoff && !game.retired && (match.sport === 'tenis' ? game.tour === match.tour : game.leagueId === match.leagueId)
-    && ['home', 'away'].every(side => Number.isInteger(game.finalScore?.[side]) && game.finalScore[side] >= 0))
-    .sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff) || a.id.localeCompare(b.id));
-  for (const game of previous) {
+  const cutoff = Math.min(Date.parse(match.kickoff), now), scope = historyScope(match, games);
+  let low = 0, high = scope.previous.length;
+  while (low < high) { const mid = (low + high) >>> 1; if (Date.parse(scope.previous[mid].kickoff) < cutoff) low = mid + 1; else high = mid; }
+  const excluded = scope.positions.get(match.id);
+  const snapshotKey = excluded !== undefined && excluded < low ? `${low}:${match.id}` : low;
+  let snapshot = scope.snapshots.get(snapshotKey);
+  if (!snapshot) {
+    const ratings = new Map(), samples = new Map();
+    for (const game of scope.previous.slice(0, low)) {
+    if (game.id === match.id) continue;
     const h = game.homeTeam?.id, a = game.awayTeam?.id;
     if (!h || !a || h === a) continue;
     const hr = ratings.get(h) || 1500, ar = ratings.get(a) || 1500;
@@ -28,7 +57,13 @@ export function relativeResultStrength(match, games = [], now = Date.now()) {
     const adjustment = 24 * (actual - expected);
     ratings.set(h, hr + adjustment); ratings.set(a, ar - adjustment);
     samples.set(h, (samples.get(h) || 0) + 1); samples.set(a, (samples.get(a) || 0) + 1);
+    }
+    snapshot = { ratings, samples };
+    // Upcoming fixtures share one cutoff; bound historical replay snapshots.
+    if (scope.snapshots.size >= 32) scope.snapshots.delete(scope.snapshots.keys().next().value);
+    scope.snapshots.set(snapshotKey, snapshot);
   }
+  const { ratings, samples } = snapshot;
   const home = match.homeTeam?.id, away = match.awayTeam?.id;
   const sampleSize = { home: samples.get(home) || 0, away: samples.get(away) || 0 };
   return { probability: sampleSize.home >= 5 && sampleSize.away >= 5 ? 1 / (1 + 10 ** (((ratings.get(away) || 1500) - (ratings.get(home) || 1500)) / 400)) : null, sampleSize };
@@ -206,9 +241,8 @@ export function seriesWinProbability(setProbability, maxSets = 3) {
 function setSample(match, games, side, now) {
   const id = String(match[`${side}Team`]?.id);
   // ATP/WTA history also includes Grand Slams, but never the other tour or doubles.
-  const previous = games.filter(game => game.id !== match.id && game.status === 'FINISHED' && game.tour === match.tour
-    && !game.retired && Date.parse(game.kickoff) < Math.min(Date.parse(match.kickoff), now))
-    .sort((a, b) => Date.parse(b.kickoff) - Date.parse(a.kickoff));
+  const previous = (historyScope(match, games).teams.get(id) || []).filter(game => game.id !== match.id
+    && Date.parse(game.kickoff) < Math.min(Date.parse(match.kickoff), now)).slice().reverse();
   let won = 0, played = 0, matches = 0;
   for (const game of previous) {
     const own = String(game.homeTeam?.id) === id ? 'home' : String(game.awayTeam?.id) === id ? 'away' : null;

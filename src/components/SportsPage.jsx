@@ -7,12 +7,14 @@ import SportMatchAnalysis from './SportMatchAnalysis';
 import SportMatchCard from './SportMatchCard';
 import AutonomousAiBar from './AutonomousAiBar';
 import useSportsFeed from '../hooks/useSportsFeed.js';
+import useSportsHydration from '../hooks/useSportsHydration.js';
 import { readSportDetail, saveSportDetail, sportMatchVersion, requestSports, mergeSportDetail } from '../utils/sportsClient.js';
-import { setCachedAnalysis, computeMatchFingerprint } from '../utils/analysisCache.js';
+import { computeMatchFingerprint } from '../utils/analysisCache.js';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
 import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
 
-const day = value => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(value));
+const dayFormatter = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+const day = value => dayFormatter.format(new Date(value));
 const emptyMatches = [];
 
 export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat = 'decimal', currency = 'USD', isOwner = false, activeModelInfo = null, onToast, onSessionExpired }) {
@@ -28,9 +30,10 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
   const modalAiAttempts = useRef(new Set()), aiJobRef = useRef(null);
   useEffect(() => { aiJobRef.current = manualAiId || queueAiId; }, [manualAiId, queueAiId]);
   const manualAiRequest = useRef(null);
-  const { feed, pending, patchMatch } = useSportsFeed({ sport, enabled, sessionKey, revision, onSessionExpired });
+  const { feed, pending, patchMatch, patchMatches } = useSportsFeed({ sport, enabled, sessionKey, revision, onSessionExpired });
+  const hydration = useSportsHydration({ sport, enabled, sessionKey, revision, matches: feed.matches, patchMatches, onSessionExpired });
   const loading = pending.length > 0;
-  const feedRef = useRef(feed), expiredRef = useRef(onSessionExpired), cardGridRef = useRef(null), displayMatchesRef = useRef(emptyMatches);
+  const feedRef = useRef(feed), expiredRef = useRef(onSessionExpired), displayMatchesRef = useRef(emptyMatches);
   const detailController = useRef(null), detailRequests = useRef(new Map());
   useEffect(() => { feedRef.current = feed; expiredRef.current = onSessionExpired; }, [feed, onSessionExpired]);
   const reload = useCallback(() => setRevision(value => value + 1), []);
@@ -55,12 +58,11 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
 
   const handleAiAnalyzed = useCallback((id, detail, report, original) => {
     if (!original) return;
-    saveSportDetail(sessionKey, sport, original, detail);
-    applyDetail(original, detail);
+    applyDetail(original, saveSportDetail(sessionKey, sport, original, detail));
   }, [sessionKey, sport, applyDetail]);
 
   const retryAi = useCallback(async match => {
-    if (!isOwner || !enabled || manualAiRequest.current || queueAiId) return;
+    if (!isOwner || !enabled || manualAiRequest.current || aiJobRef.current) return;
     const controller = new AbortController(); manualAiRequest.current = controller;
     setManualAiId(match.id); setAiError('');
     try {
@@ -71,13 +73,12 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
       if (response.status === 401 || response.status === 403 && result.trialExpired) { expiredRef.current?.(result); return; }
       if (!response.ok || !result.success || result.match?.id !== match.id || !result.report) throw new Error(result.message || 'No se pudo consultar la IA.');
       const detail = result.match;
-      setCachedAnalysis(match.id, detail, { aiReport: result.report, enrichedMatch: detail, model: result.report.modelUsed });
       handleAiAnalyzed(match.id, detail, result.report, match);
       if (!result.report.aiAvailable) setAiError(result.report.aiStatus || 'La IA no devolvió un informe verificable.');
       onToast?.(result.report.aiAvailable ? 'Informe de IA verificado y actualizado.' : 'Se conserva el cálculo estadístico; la IA no devolvió un informe verificable.');
     } catch (error) { if (!controller.signal.aborted) setAiError(error.message); }
     finally { if (manualAiRequest.current === controller) { manualAiRequest.current = null; setManualAiId(null); } }
-  }, [sport, isOwner, enabled, queueAiId, handleAiAnalyzed, onToast]);
+  }, [sport, isOwner, enabled, handleAiAnalyzed, onToast]);
 
   useEffect(() => {
     if (!enabled || category !== 'bankers') return;
@@ -118,9 +119,9 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
       if (controller.signal.aborted) return null;
       if (response.status === 401 || response.status === 403 && result.trialExpired) { expiredRef.current?.(result); return null; }
       if (!response.ok || !result.success || result.match?.id !== original.id) throw new Error(result.message || 'No se pudo actualizar el análisis.');
-      saveSportDetail(sessionKey, sport, original, result.match);
-      applyDetail(original, result.match);
-      return result.match;
+      const saved = saveSportDetail(sessionKey, sport, original, result.match);
+      applyDetail(original, saved);
+      return saved;
     })();
     requests.set(key, task);
     try { return await task; } finally { requests.delete(key); }
@@ -155,7 +156,6 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
         if (response.status === 401 || response.status === 403 && result.trialExpired) { expiredRef.current?.(result); return; }
         if (!response.ok) throw new Error(result.message || 'No se pudo consultar el informe de IA.');
         if (result.success && result.report && result.match?.id === detail.id) {
-          setCachedAnalysis(detail.id, result.match, { aiReport: result.report, enrichedMatch: result.match, model: result.report.modelUsed });
           handleAiAnalyzed(detail.id, result.match, result.report, detail);
         }
       } catch (cause) {
@@ -169,44 +169,22 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
     return () => { active = false; modalController.abort(); scopeController?.signal.removeEventListener('abort', abortModal); clearInterval(timer); };
   }, [selected, enabled, fetchDetail, revision, sport, handleAiAnalyzed]);
 
-  const counts = Object.fromEntries(leagues.map(item => [item.id, item.id === 'all' ? feed.matches.length : feed.matches.filter(match => match.leagueId === item.id).length]));
+  const counts = useMemo(() => {
+    const result = Object.fromEntries(leagues.map(item => [item.id, 0]));
+    for (const match of feed.matches) { result.all++; result[match.leagueId] = (result[match.leagueId] || 0) + 1; }
+    return result;
+  }, [leagues, feed.matches]);
   const now = new Date(), tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
-  const filteredMatches = feed.matches.filter(match => (league === 'all' || match.leagueId === league)
-    && (filter === 'all' || (['LIVE', 'FINISHED'].includes(filter) ? match.status === filter : day(match.kickoff) === day(filter === 'today' ? now : tomorrow)))
-    && (!search.trim() || `${match.homeTeam.name} ${match.awayTeam.name} ${match.tournamentName || ''}`.toLowerCase().includes(search.trim().toLowerCase())));
+  const todayKey = day(now), tomorrowKey = day(tomorrow);
+  const filteredMatches = useMemo(() => feed.matches.filter(match => (league === 'all' || match.leagueId === league)
+    && (filter === 'all' || (['LIVE', 'FINISHED'].includes(filter) ? match.status === filter : day(match.kickoff) === (filter === 'today' ? todayKey : tomorrowKey)))
+    && (!search.trim() || `${match.homeTeam.name} ${match.awayTeam.name} ${match.tournamentName || ''}`.toLowerCase().includes(search.trim().toLowerCase()))), [feed.matches, league, filter, search, todayKey, tomorrowKey]);
   const matches = category === 'bankers' ? bankerFeed?.rankingScope === rankingScope ? bankerFeed.matches : emptyMatches : filteredMatches;
   useEffect(() => { displayMatchesRef.current = matches; }, [matches]);
   const coverage = feed.coverage.filter(item => league === 'all' || item.leagueId === league);
   const missing = coverage.filter(item => item.status === 'unavailable' || item.status === 'degraded');
   const error = !loading && feed.coverage.length > 0 && feed.coverage.every(item => item.status === 'unavailable') ? feed.coverage.find(item => item.error)?.error || 'No se pudo consultar el calendario. Revisa la conexión y reintenta.' : '';
   const selectedMatch = bankerFeed?.matches.find(match => match.id === selected) || feed.matches.find(match => match.id === selected);
-  const cardVersions = matches.map(match => `${sportMatchVersion(match)}:${Boolean(match.detailLoadedAt)}`).join('|');
-
-  useEffect(() => {
-    if (!enabled) return;
-    let active = true, running = 0;
-    const queue = [], seen = new Set();
-    const candidates = displayMatchesRef.current;
-    const pump = () => {
-      while (active && running < 2 && queue.length) {
-        const match = queue.shift();
-        running++;
-        fetchDetail(match).catch(() => {}).finally(() => { running--; pump(); });
-      }
-    };
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        const id = entry.target.dataset.matchId;
-        if (!entry.isIntersecting || seen.has(id)) continue;
-        seen.add(id);
-        const match = candidates.find(item => item.id === id);
-        if (match && (sport !== 'beisbol' || match.leagueId === 'mlb')) queue.push(match);
-      }
-      pump();
-    }, { rootMargin: '150px' });
-    cardGridRef.current?.querySelectorAll('[data-match-id]').forEach(card => observer.observe(card));
-    return () => { active = false; observer.disconnect(); };
-  }, [cardVersions, enabled, sport, fetchDetail, revision]);
 
   return <section role="tabpanel" id={`sport-panel-${sport}`} aria-labelledby={`sport-${sport}`} className="space-y-5 pb-6">
     <header className="flex items-start justify-between gap-4 py-2">
@@ -225,7 +203,7 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
       <label className="relative flex-1"><span className="sr-only">Buscar {sport === 'tenis' ? 'jugador o torneo' : 'equipo'}</span><Search className="absolute left-3 top-3 text-slate-500" size={16} /><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder={sport === 'tenis' ? 'Buscar jugador o torneo…' : 'Buscar equipo…'} className="w-full min-h-11 pl-9 pr-3 rounded-xl border border-white/10 bg-[#121620] text-sm" /></label>
     </div>
     <div className="flex items-center gap-2 font-mono text-xs overflow-x-auto no-scrollbar" aria-label="Categoría de pronósticos"><span className="text-slate-500 shrink-0">Categoría:</span>{[['all', 'Todos los Mercados'], ['bankers', 'Banqueros']].map(([value, name]) => <button key={value} type="button" aria-pressed={category === value} onClick={() => { setCategory(value); setSelected(null); }} className={`shrink-0 inline-flex gap-1.5 items-center min-h-11 px-3 rounded-lg border cursor-pointer transition-colors ${category === value ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold' : 'bg-[#121824] border-white/10 text-slate-400 hover:text-white'}`}>{value === 'bankers' && <Crown size={13} />}{name}</button>)}</div>
-    {isOwner && enabled && matches.length > 0 && <AutonomousAiBar sport={sport} matches={matches.filter(match => match.status === 'SCHEDULED' && Date.parse(match.kickoff) > now.getTime())} onMatchAnalyzed={handleAiAnalyzed} activeModelInfo={activeModelInfo} onToast={onToast} isOwner={isOwner} onAnalyzing={setQueueAiId} externalBusy={Boolean(manualAiId)} />}
+    {isOwner && enabled && matches.length > 0 && <AutonomousAiBar sport={sport} sessionKey={sessionKey} matches={matches} onMatchAnalyzed={handleAiAnalyzed} activeModelInfo={activeModelInfo} onToast={onToast} isOwner={isOwner} onAnalyzing={setQueueAiId} externalBusy={Boolean(manualAiId)} />}
     <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><h2 className="text-sm sm:text-base font-bold">{category === 'bankers' ? 'Top 10 Banqueros · Ganadores' : 'Partidos & Pronósticos Cuantitativos'}</h2><span className="text-[10px] font-mono text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 rounded-full">{matches.length} encuentros</span></div><p className="text-[10px] font-mono text-slate-500">Formato: <strong className="text-slate-300">{oddsFormat === 'american' ? 'AMERICANO' : oddsFormat === 'fractional' ? 'FRACCIONARIO' : 'DECIMAL'}</strong> · Moneda: <strong className="text-slate-300">{currency}</strong></p></div>
     {category === 'bankers' && <p className="text-[11px] text-slate-400">Ganadores próximos de mayor a menor probabilidad estimada. Solo se incluyen encuentros con datos suficientes; hasta 10 selecciones.{bankerFeed?.ranking && ` ${bankerFeed.ranking.examined} encuentros revisados, ${bankerFeed.ranking.available} con ganador estimable.`}</p>}
     {missing.length > 0 && !error && <p role="status" className="text-xs text-amber-300 bg-amber-500/5 border border-amber-500/20 rounded-xl p-3">Cobertura limitada: {missing.map(item => item.name).join(', ')}. Algunos calendarios o datos no están disponibles. <button type="button" onClick={reload} className="underline cursor-pointer">Reintentar</button></p>}
@@ -234,7 +212,9 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
     {aiError && isOwner && <p role="alert" className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-300">{aiError}</p>}
     {loading && <p role="status" className="flex gap-2 items-center text-xs text-sky-300"><RefreshCw size={13} className="animate-spin shrink-0" />Consultando encuentros y estadísticas{sport === 'tenis' ? '…' : ` · ${pending.map(id => SPORT_LEAGUES[sport].find(league => league.id === id)?.name).join(', ')}`}</p>}
     {bankerLoading && category === 'bankers' && <p role="status" className="flex gap-2 items-center text-xs text-sky-300"><RefreshCw size={13} className="animate-spin" />Calculando el Top 10 con los registros de todos los encuentros próximos…</p>}
-    {!matches.length ? (!(category === 'bankers' ? bankerLoading : loading) && <div role="status" className="py-16 px-4 text-center rounded-2xl border border-white/10 bg-[#0d121c]"><p className="font-semibold">Sin encuentros disponibles para este filtro</p><p className="text-xs text-slate-500 mt-2">{category === 'bankers' ? 'No hay ganadores próximos con datos suficientes en esta selección.' : 'Los partidos aparecerán cuando la competición tenga un calendario publicado.'}</p></div>) : <div ref={cardGridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {hydration.pending > 0 && <p role="status" className="text-[11px] text-sky-300">Consultando estadísticas en segundo plano · {hydration.pending} pendientes</p>}
+    {hydration.failed > 0 && <p role="status" className="text-xs text-amber-300">No se pudo completar el historial de {hydration.failed} encuentros. <button type="button" onClick={reload} className="underline cursor-pointer">Reintentar estadísticas</button></p>}
+    {!matches.length ? (!(category === 'bankers' ? bankerLoading : loading) && <div role="status" className="py-16 px-4 text-center rounded-2xl border border-white/10 bg-[#0d121c]"><p className="font-semibold">Sin encuentros disponibles para este filtro</p><p className="text-xs text-slate-500 mt-2">{category === 'bankers' ? 'No hay ganadores próximos con datos suficientes en esta selección.' : 'Los partidos aparecerán cuando la competición tenga un calendario publicado.'}</p></div>) : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {matches.map(match => <SportMatchCard key={match.id} match={match} oddsFormat={oddsFormat} onOpen={setSelected} isOwner={isOwner} onRetryAi={retryAi} analyzing={manualAiId === match.id || queueAiId === match.id} aiBusy={Boolean(manualAiId || queueAiId)} bankerRank={category === 'bankers' ? match.bankerRank : null} />)}
     </div>}
     <p className="text-[11px] text-slate-500 leading-relaxed">Momio teórico: calculado desde la probabilidad; no es una oferta de la casa. N/D indica falta de datos. Precisión predictiva sin validar. Horarios en tu zona local y consulta automática cada minuto; el proveedor puede publicar con retraso.{sport === 'beisbol' && ' NPB y KBO no tienen marcador en vivo verificado.'}</p>

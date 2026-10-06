@@ -11,7 +11,7 @@ import NumberCounter from './NumberCounter';
 import { getBestBankerPick, getEffectiveOdds, getContextualPick, fillPoissonGoalLadder, getCoherentPredictedScore } from '../utils/mathProbabilities';
 import { isMatchAnalyzed, getAnalyzedModelName, getCachedAnalysis } from '../utils/analysisCache';
 
-export default function MatchCard({ 
+function MatchCard({
   match, 
   onOpenModal, 
   onAddToParlay, 
@@ -109,7 +109,8 @@ export default function MatchCard({
   const winnerQuotes = { home: marketQuote(match.odds?.homeWin, homeProb), draw: marketQuote(match.odds?.draw, drawProb), away: marketQuote(match.odds?.awayWin, awayProb) };
 
   return (
-    <TiltCard 
+    <TiltCard
+      style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 450px' }}
       maxTilt={6} 
       scale={1.018}
       role="button"
@@ -548,3 +549,4 @@ export default function MatchCard({
     </TiltCard>
   );
 }
+export default React.memo(MatchCard);
