@@ -10,6 +10,7 @@ import useSportsFeed from '../hooks/useSportsFeed.js';
 import useSportsHydration from '../hooks/useSportsHydration.js';
 import { readSportDetail, saveSportDetail, sportMatchVersion, requestSports, mergeSportDetail } from '../utils/sportsClient.js';
 import { computeMatchFingerprint } from '../utils/analysisCache.js';
+import { sportWinnerPick } from '../utils/sportPicks.js';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
 import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
 
@@ -17,7 +18,7 @@ const dayFormatter = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 
 const day = value => dayFormatter.format(new Date(value));
 const emptyMatches = [];
 
-export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat = 'decimal', currency = 'USD', isOwner = false, activeModelInfo = null, onToast, onSessionExpired }) {
+export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat = 'decimal', currency = 'USD', isOwner = false, activeModelInfo = null, onToast, onSessionExpired, onToggleParlay, parlayLegs = emptyMatches }) {
   const activeSport = SPORTS.find(item => item.id === sport);
   const socialLinks = useSocialLinks();
   const leagues = useMemo(() => [{ id: 'all', name: sport === 'tenis' ? 'Todos los torneos' : 'Todas las Ligas', flag: '🌍' }, ...SPORT_LEAGUES[sport]], [sport]);
@@ -185,6 +186,7 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
   const missing = coverage.filter(item => item.status === 'unavailable' || item.status === 'degraded');
   const error = !loading && feed.coverage.length > 0 && feed.coverage.every(item => item.status === 'unavailable') ? feed.coverage.find(item => item.error)?.error || 'No se pudo consultar el calendario. Revisa la conexión y reintenta.' : '';
   const selectedMatch = bankerFeed?.matches.find(match => match.id === selected) || feed.matches.find(match => match.id === selected);
+  const parlaySelections = useMemo(() => new Map(parlayLegs.map(leg => [String(leg.matchId), leg.selection])), [parlayLegs]);
 
   return <section role="tabpanel" id={`sport-panel-${sport}`} aria-labelledby={`sport-${sport}`} className="space-y-5 pb-6">
     <header className="flex items-start justify-between gap-4 py-2">
@@ -203,7 +205,7 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
       <label className="relative flex-1"><span className="sr-only">Buscar {sport === 'tenis' ? 'jugador o torneo' : 'equipo'}</span><Search className="absolute left-3 top-3 text-slate-500" size={16} /><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder={sport === 'tenis' ? 'Buscar jugador o torneo…' : 'Buscar equipo…'} className="w-full min-h-11 pl-9 pr-3 rounded-xl border border-white/10 bg-[#121620] text-sm" /></label>
     </div>
     <div className="flex items-center gap-2 font-mono text-xs overflow-x-auto no-scrollbar" aria-label="Categoría de pronósticos"><span className="text-slate-500 shrink-0">Categoría:</span>{[['all', 'Todos los Mercados'], ['bankers', 'Banqueros']].map(([value, name]) => <button key={value} type="button" aria-pressed={category === value} onClick={() => { setCategory(value); setSelected(null); }} className={`shrink-0 inline-flex gap-1.5 items-center min-h-11 px-3 rounded-lg border cursor-pointer transition-colors ${category === value ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold' : 'bg-[#121824] border-white/10 text-slate-400 hover:text-white'}`}>{value === 'bankers' && <Crown size={13} />}{name}</button>)}</div>
-    {isOwner && enabled && matches.length > 0 && <AutonomousAiBar sport={sport} sessionKey={sessionKey} matches={matches} onMatchAnalyzed={handleAiAnalyzed} activeModelInfo={activeModelInfo} onToast={onToast} isOwner={isOwner} onAnalyzing={setQueueAiId} externalBusy={Boolean(manualAiId)} />}
+    {enabled && feed.matches.length > 0 && <AutonomousAiBar sport={sport} sessionKey={sessionKey} matches={feed.matches} onMatchAnalyzed={handleAiAnalyzed} activeModelInfo={activeModelInfo} onToast={onToast} onSessionExpired={onSessionExpired} isOwner={isOwner} onAnalyzing={setQueueAiId} externalBusy={Boolean(manualAiId || modalAiLoading)} />}
     <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><h2 className="text-sm sm:text-base font-bold">{category === 'bankers' ? 'Top 10 Banqueros · Ganadores' : 'Partidos & Pronósticos Cuantitativos'}</h2><span className="text-[10px] font-mono text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 rounded-full">{matches.length} encuentros</span></div><p className="text-[10px] font-mono text-slate-500">Formato: <strong className="text-slate-300">{oddsFormat === 'american' ? 'AMERICANO' : oddsFormat === 'fractional' ? 'FRACCIONARIO' : 'DECIMAL'}</strong> · Moneda: <strong className="text-slate-300">{currency}</strong></p></div>
     {category === 'bankers' && <p className="text-[11px] text-slate-400">Ganadores próximos de mayor a menor probabilidad estimada. Solo se incluyen encuentros con datos suficientes; hasta 10 selecciones.{bankerFeed?.ranking && ` ${bankerFeed.ranking.examined} encuentros revisados, ${bankerFeed.ranking.available} con ganador estimable.`}</p>}
     {missing.length > 0 && !error && <p role="status" className="text-xs text-amber-300 bg-amber-500/5 border border-amber-500/20 rounded-xl p-3">Cobertura limitada: {missing.map(item => item.name).join(', ')}. Algunos calendarios o datos no están disponibles. <button type="button" onClick={reload} className="underline cursor-pointer">Reintentar</button></p>}
@@ -215,7 +217,7 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
     {hydration.pending > 0 && <p role="status" className="text-[11px] text-sky-300">Consultando estadísticas en segundo plano · {hydration.pending} pendientes</p>}
     {hydration.failed > 0 && <p role="status" className="text-xs text-amber-300">No se pudo completar el historial de {hydration.failed} encuentros. <button type="button" onClick={reload} className="underline cursor-pointer">Reintentar estadísticas</button></p>}
     {!matches.length ? (!(category === 'bankers' ? bankerLoading : loading) && <div role="status" className="py-16 px-4 text-center rounded-2xl border border-white/10 bg-[#0d121c]"><p className="font-semibold">Sin encuentros disponibles para este filtro</p><p className="text-xs text-slate-500 mt-2">{category === 'bankers' ? 'No hay ganadores próximos con datos suficientes en esta selección.' : 'Los partidos aparecerán cuando la competición tenga un calendario publicado.'}</p></div>) : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {matches.map(match => <SportMatchCard key={match.id} match={match} oddsFormat={oddsFormat} onOpen={setSelected} isOwner={isOwner} onRetryAi={retryAi} analyzing={manualAiId === match.id || queueAiId === match.id} aiBusy={Boolean(manualAiId || queueAiId)} bankerRank={category === 'bankers' ? match.bankerRank : null} />)}
+      {matches.map(match => { const pick = sportWinnerPick(match); return <SportMatchCard key={match.id} match={match} oddsFormat={oddsFormat} onOpen={setSelected} onToggleParlay={onToggleParlay} isInParlay={Boolean(pick && parlaySelections.get(String(match.id)) === pick.selection)} analyzing={manualAiId === match.id || queueAiId === match.id} bankerRank={category === 'bankers' ? match.bankerRank : null} />; })}
     </div>}
     <p className="text-[11px] text-slate-500 leading-relaxed">Momio teórico: calculado desde la probabilidad; no es una oferta de la casa. N/D indica falta de datos. Precisión predictiva sin validar. Horarios en tu zona local y consulta automática cada minuto; el proveedor puede publicar con retraso.{sport === 'beisbol' && ' NPB y KBO no tienen marcador en vivo verificado.'}</p>
     {selectedMatch && <SportMatchAnalysis match={selectedMatch} oddsFormat={oddsFormat} loading={detailLoading} error={detailError} isOwner={isOwner} onRetryAi={() => retryAi(selectedMatch)} aiLoading={Boolean(manualAiId || queueAiId || modalAiLoading)} onClose={() => { setSelected(null); setDetailError(''); setDetailLoading(false); setModalAiLoading(false); }} />}

@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 
 const origin = 'https://picks777.vercel.app';
+const output = process.argv[2] || 'artifacts/sports-production-verification-2026-10-05.json';
 const checks = [];
 async function read(path, init = {}) {
   const response = await fetch(origin + path, { ...init, redirect: 'error', signal: AbortSignal.timeout(30000),
@@ -30,7 +31,7 @@ const html = responses.find(result => result.path === '/').text;
 const asset = html.match(/src="([^"]+\.js)"/)?.[1];
 if (asset) {
   const { response, text } = await read(asset);
-  const markers = ['sport-panel-', 'femenil', 'beisbol', 'tenis', 'basquetbol', 'Primer inning', 'KBO', 'Top 10 Banqueros', 'HECHOS PRIORIZADOS POR IA', 'picks777-sport-details-v1', 'Reintentar estadísticas'];
+  const markers = ['sport-panel-', 'femenil', 'beisbol', 'tenis', 'basquetbol', 'Primer inning', 'KBO', 'Top 10 Banqueros', 'HECHOS PRIORIZADOS POR IA', 'picks777-sport-details-v1', 'Reintentar estadísticas', 'Al Parlay'];
   const digest = createHash('sha256').update(text).digest('hex');
   let localAssetMatches = false;
   let localAsset = null;
@@ -61,10 +62,14 @@ const activeModel = await read('/api/settings/active-model');
 const metadata = JSON.parse(activeModel.text);
 checks.push({ path: 'configured-ai-metadata', status: activeModel.response.status, model: metadata.selectedModel,
   pass: activeModel.response.status === 200 && metadata.success === true && metadata.isConfigured === true && !('apiKey' in metadata) });
+const footballAi = await read('/api/matches/unauthorized-test/ai-analysis', { method: 'POST',
+  headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ forceRefresh: true }) });
+checks.push({ path: 'football:anonymous-ai-denied', status: footballAi.response.status,
+  pass: footballAi.response.status === 401 && JSON.parse(footballAi.text).success === false });
 const report = { checkedAt: new Date().toISOString(), origin, localCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
   pass: checks.every(check => check.pass), checks,
   limitation: 'Anonymous production checks only. Authenticated expiry, deletion and VIP tests run against isolated fixtures, not production users.' };
 await fs.mkdir('artifacts', { recursive: true });
-await fs.writeFile('artifacts/sports-production-verification-2026-10-05.json', JSON.stringify(report, null, 2));
+await fs.writeFile(output, JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report, null, 2));
 if (!report.pass) process.exitCode = 1;

@@ -11,7 +11,7 @@ const fixtures = Object.fromEntries(['beisbol', 'tenis', 'basquetbol'].map(sport
     analysis: { winner: { home: probability, away: 100 - probability }, firstSet: { home: 60, away: 40 }, secondSet: { home: 60, away: 40 }, winsSet: { home: { yes: 84, no: 16 }, away: { yes: 64, no: 36 } }, sampleSize: { home: 8, away: 10 }, available: true, method: 'Método de prueba aislado.' } };
 })]));
 
-async function setup(page, { sport = 'tenis', owner = false, auto = false } = {}) {
+async function setup(page, { sport = 'tenis', owner = false, auto = false, configured = auto } = {}) {
   await page.setViewportSize({ width: 360, height: 800 });
   await page.addInitScript(({ auto }) => { localStorage.setItem('picks777_auto_ai_pref', String(auto)); localStorage.setItem('oddsFormat', 'american'); }, { auto });
   await page.route(/^https:\/\//, route => route.abort());
@@ -21,7 +21,7 @@ async function setup(page, { sport = 'tenis', owner = false, auto = false } = {}
     const request = route.request(), url = new URL(request.url()), path = url.pathname;
     let data = { success: true };
     if (path.startsWith('/api/auth/')) data = { success: true, valid: true, role: owner ? 'owner' : 'vip_user', isAdmin: owner, user: { id: `design-${owner ? 'owner' : 'vip'}`, name: 'Cliente aislado', plan: owner ? 'Owner' : 'VIP' } };
-    if (path === '/api/settings/active-model') data = { success: true, isConfigured: auto, selectedModel: 'modelo-de-prueba', modelName: 'IA de prueba' };
+    if (path === '/api/settings/active-model') data = { success: true, isConfigured: configured, selectedModel: 'modelo-de-prueba', modelName: 'IA de prueba' };
     if (path.startsWith('/api/sports/')) {
       const sportId = path.split('/')[3], source = fixtures[sportId] || [];
       const id = path.split('/')[4];
@@ -93,6 +93,11 @@ test('compact cards render images, winner picks and three markets on desktop and
 test('only the Owner has retry controls; a real request updates confirmed AI state and preserves probabilities', async ({ page }) => {
   await setup(page, { owner: true });
   const card = page.getByRole('article').first();
+  await expect(card.getByRole('button', { name: 'Reintentar con IA', exact: true })).toHaveCount(0);
+  await expect(card.getByRole('button', { name: 'Al Parlay', exact: true })).toBeVisible();
+  await card.getByRole('button', { name: 'Ver análisis y mercados' }).click();
+  const report = page.getByRole('dialog').getByRole('region', { name: 'Informe con IA' });
+  await expect(report).toContainText('Hecho verificado de la muestra aislada.');
   let release;
   const waiting = new Promise(resolve => { release = resolve; });
   await page.route('**/api/sports/tenis/*/ai-analysis?*', async route => {
@@ -100,13 +105,11 @@ test('only the Owner has retry controls; a real request updates confirmed AI sta
     const match = fixtures.tenis[0], report = { aiAvailable: true, dataGrounded: true, modelUsed: 'modelo-confirmado', generatedAt: new Date(now).toISOString(), tacticalKeypoints: ['Dato real de la muestra de prueba.'] };
     await route.fulfill({ json: { success: true, match: { ...match, aiReport: report, isAiAnalyzed: true }, report } });
   });
-  await card.getByRole('button', { name: 'Reintentar con IA', exact: true }).click();
+  await report.getByRole('button', { name: 'Reintentar con IA', exact: true }).click();
   await expect(card.getByRole('status')).toContainText('CONSULTANDO IA');
   release();
   await expect(card).toContainText('HECHOS PRIORIZADOS POR IA');
   await expect(card).toContainText('modelo-confirmado'); await expect(card).toContainText('52%');
-  await card.getByRole('button', { name: 'Ver análisis y mercados' }).click();
-  const report = page.getByRole('dialog').getByRole('region', { name: 'Informe con IA' });
   await expect(report).toContainText('Dato real de la muestra de prueba.');
   await expect(report.getByRole('button', { name: 'Reintentar con IA' })).toBeVisible();
   await page.keyboard.press('Escape');
@@ -127,4 +130,92 @@ test('Owner analysis starts automatically with the configured model and leaves n
   const tennisCalls = requests.filter(url => url.includes('/sports/tenis/')).length;
   await expect(page.getByRole('article').first()).toContainText('HECHOS PRIORIZADOS POR IA', { timeout: 15000 });
   expect(requests.filter(url => url.includes('/sports/tenis/')).length).toBe(tennisCalls);
+});
+
+test('all sports add and remove winners in one parlay without opening the match dialog', async ({ page }) => {
+  await setup(page, { sport: 'beisbol', owner: true });
+  for (const [sport, tab] of [['beisbol', 'Béisbol'], ['tenis', 'Tenis'], ['basquetbol', 'Básquetbol']]) {
+    await page.getByRole('tab', { name: tab, exact: true }).click();
+    const card = page.locator(`article[data-match-id="${sport}-design-0"]`);
+    await card.getByRole('button', { name: 'Al Parlay', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const ticket = page.getByRole('region', { name: 'Boleto de parlay' });
+    await expect(ticket).toContainText('Equipo A 0 gana');
+    await expect(ticket.getByText('Teórico', { exact: true })).toHaveCount(sport === 'beisbol' ? 1 : sport === 'tenis' ? 2 : 3);
+    await ticket.getByRole('button', { name: 'Cerrar parlay', exact: true }).click();
+    await expect(card.getByRole('button', { name: 'En Parlay', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: /Ver Parlay Ticket/ })).toBeVisible();
+  }
+  await page.getByRole('tab', { name: 'Béisbol', exact: true }).click();
+  const baseball = page.locator('article[data-match-id="beisbol-design-0"]');
+  await baseball.getByRole('button', { name: 'En Parlay', exact: true }).click();
+  const ticket = page.getByRole('region', { name: 'Boleto de parlay' });
+  await expect(ticket.getByText('Teórico', { exact: true })).toHaveCount(2);
+  await ticket.getByRole('button', { name: 'Cerrar parlay', exact: true }).click();
+  await expect(baseball.getByRole('button', { name: 'Al Parlay', exact: true })).toHaveAttribute('aria-pressed', 'false');
+});
+
+for (const sport of ['beisbol', 'tenis', 'basquetbol']) {
+  test(`${sport} analyzes automatically for a member with no Owner panel, independent of filters, and retains reports on reload`, async ({ page }) => {
+    const calls = [];
+    page.on('request', request => { if (request.url().includes('/ai-analysis')) calls.push({ url: request.url(), body: request.postDataJSON() }); });
+    await setup(page, { sport, owner: false, auto: false, configured: true });
+    await expect(page.getByText('Análisis Autónomo con IA', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Analizar Partidos con IA|Reintentar con IA|Detener Análisis/ })).toHaveCount(0);
+    await page.getByRole('searchbox').fill('Equipo A 12');
+    await expect(page.getByRole('article')).toHaveCount(1);
+    await expect(page.getByRole('article')).toContainText('HECHOS PRIORIZADOS POR IA', { timeout: 30000 });
+    expect(calls).toHaveLength(13);
+    expect(new Set(calls.map(call => new URL(call.url).pathname)).size).toBe(13);
+    expect(calls.every(call => Object.keys(call.body).length === 0)).toBe(true);
+    await expect(page.getByRole('article').getByRole('button', { name: 'Al Parlay', exact: true })).toBeEnabled();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('article').first()).toContainText('HECHOS PRIORIZADOS POR IA', { timeout: 15000 });
+    await page.getByRole('article').first().getByRole('button', { name: 'Al Parlay', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Boleto de parlay' })).toContainText('Equipo A 0 gana');
+    expect(calls).toHaveLength(13);
+    await test.info().attach('member-automatic-analysis', { body: JSON.stringify({ sport, reports: calls.length, ownerControls: false, requestBodies: calls.map(call => call.body) }), contentType: 'application/json' });
+  });
+}
+
+test('member automatic analysis waits for Retry-After and retries the same pending game', async ({ page }) => {
+  const times = [];
+  await setup(page, { owner: false, auto: false, configured: true });
+  await page.route('**/api/sports/tenis/tenis-design-0/ai-analysis?*', async route => {
+    times.push(Date.now());
+    if (times.length === 1) return route.fulfill({ status: 429, headers: { 'Retry-After': '4' }, json: { success: false, retryAfter: 4 } });
+    const match = fixtures.tenis[0], report = { aiAvailable: true, dataGrounded: true, modelUsed: 'modelo-de-prueba' };
+    await route.fulfill({ json: { success: true, match: { ...match, aiReport: report, isAiAnalyzed: true }, report } });
+  });
+  await expect(page.getByRole('article').first()).toContainText('HECHOS PRIORIZADOS POR IA', { timeout: 20000 });
+  expect(times).toHaveLength(2); expect(times[1] - times[0]).toBeGreaterThanOrEqual(4000);
+});
+
+test('football also analyzes automatically for a member and sends no Owner-only overrides', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('picks777_auto_ai_pref', 'false'));
+  await page.route(/^https:\/\//, route => route.abort());
+  const calls = [];
+  const source = [0, 1].map(i => ({ ...fixtures.basquetbol[i], id: `football-auto-${i}`, sport: 'futbol', leagueId: 'mls', leagueName: 'MLS',
+    probabilities: { homeWin: 60, draw: 20, awayWin: 20, over15: 70 }, analysis: undefined }));
+  await page.route('**/api/**', async route => {
+    const request = route.request(), path = new URL(request.url()).pathname;
+    let data = { success: true };
+    if (path.startsWith('/api/auth/')) data = { success: true, valid: true, role: 'vip_user', user: { id: 'football-auto-vip', plan: 'VIP', name: 'Cliente aislado' } };
+    if (path === '/api/settings/active-model') data = { success: true, isConfigured: true, selectedModel: 'modelo-de-prueba' };
+    if (path.startsWith('/api/matches')) {
+      const match = source.find(match => path.includes(`/${match.id}`));
+      data = { success: true, matches: source, match };
+      if (path.endsWith('/ai-analysis')) {
+        calls.push(request.postDataJSON());
+        const report = { aiAvailable: true, dataGrounded: true, modelUsed: 'modelo-de-prueba' };
+        data = { success: true, match: { ...match, aiReport: report, isAiAnalyzed: true }, report };
+      }
+    }
+    await route.fulfill({ json: data });
+  });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByText('HECHOS PRIORIZADOS POR IA', { exact: true })).toHaveCount(2, { timeout: 15000 });
+  expect(calls).toEqual([{}, {}]);
+  await expect(page.getByText('Análisis Autónomo con IA', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Analizar Partidos con IA|Re-analizar Todos|Detener Análisis/ })).toHaveCount(0);
 });

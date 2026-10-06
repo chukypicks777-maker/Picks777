@@ -229,7 +229,7 @@ test('MatchDetailModal and mobile.css enforce mobile close button, sticky header
   );
 });
 
-test('AutonomousAiBar and App enforce strict Owner-only visibility and session loop locks', () => {
+test('AutonomousAiBar keeps Owner controls hidden and retains session loop locks', () => {
   const barPath = path.resolve('src/components/AutonomousAiBar.jsx');
   const barContent = readFileSync(barPath, 'utf8');
 
@@ -245,25 +245,8 @@ test('AutonomousAiBar and App enforce strict Owner-only visibility and session l
     'AutonomousAiBar must return null for non-owners'
   );
 
-  // Must guard executeAnalysisQueue for isOwner
-  assert.ok(
-    barContent.includes('if (!isOwner || runningRef.current) return;'),
-    'AutonomousAiBar queue execution must abort immediately if not owner'
-  );
-
-  // Must guard auto-trigger effect for isOwner
-  assert.ok(
-    barContent.includes('if (!isOwner || activeModelInfo?.isConfigured !== true || !autoRunOnLoad || runningRef.current) return;'),
-    'AutonomousAiBar auto-run effect must abort immediately if not owner'
-  );
-
-  // App.jsx must only render AutonomousAiBar for isOwner
-  const appPath = path.resolve('src/App.jsx');
-  const appContent = readFileSync(appPath, 'utf8');
-  assert.ok(
-    appContent.includes('{isOwner && !loadingMatches && filteredMatches.length > 0 && ('),
-    'App.jsx must restrict AutonomousAiBar rendering exclusively to isOwner'
-  );
+  // Automatic member execution and server permissions are exercised through
+  // the browser/API suites; they must no longer depend on Owner visibility.
 });
 
 test('MatchDetailModal restricts retry and regeneration buttons exclusively to Owner', () => {

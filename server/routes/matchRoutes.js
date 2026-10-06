@@ -2,6 +2,7 @@ import express from 'express';
 import { getFootballFeed, LEAGUES, getLeagueStandings, enrichMatchWithRealData } from '../services/footballDataService.js';
 import { generateAiMatchReport } from '../services/aiService.js';
 import { rateLimit } from '../rateLimit.js';
+import { requireAdmin } from '../session.js';
 const router = express.Router();
 router.get('/leagues', async (req, res) => {
   const sport = req.query.sport === 'femenil' ? 'femenil' : 'futbol';
@@ -151,7 +152,10 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error consultando detalles del partido.' });
   }
 });
-router.post('/:id/ai-analysis', rateLimit('ai'), async (req, res) => {
+router.post('/:id/ai-analysis', (req, res, next) => {
+  if (req.query.force === '1' || req.body?.forceRefresh || req.query.model || req.body?.model || req.body?.aiConfig) return requireAdmin(req, res, next);
+  next();
+}, rateLimit('ai'), async (req, res) => {
   const deadline = Date.now() + 50000;
   try {
     const sport = req.params.id.startsWith('espn-femenil-') ? 'femenil' : 'futbol';

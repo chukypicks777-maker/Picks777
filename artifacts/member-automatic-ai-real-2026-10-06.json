@@ -1,0 +1,138 @@
+{
+  "startedAt": "2026-10-06T05:12:30.558Z",
+  "finishedAt": "2026-10-06T05:13:14.337Z",
+  "pass": true,
+  "requests": [
+    {
+      "sport": "futbol",
+      "httpStatus": 200,
+      "latencyMs": 13343,
+      "requestedAt": "2026-10-06T05:12:44.300Z"
+    },
+    {
+      "sport": "beisbol",
+      "httpStatus": 200,
+      "latencyMs": 1748,
+      "requestedAt": "2026-10-06T05:13:00.073Z"
+    },
+    {
+      "sport": "tenis",
+      "httpStatus": 200,
+      "latencyMs": 3071,
+      "requestedAt": "2026-10-06T05:13:05.206Z"
+    },
+    {
+      "sport": "basquetbol",
+      "httpStatus": 200,
+      "latencyMs": 3536,
+      "requestedAt": "2026-10-06T05:13:10.383Z"
+    }
+  ],
+  "checks": [
+    {
+      "sport": "futbol",
+      "id": "espn-761660",
+      "teams": [
+        "Chicago Fire FC",
+        "Vancouver Whitecaps"
+      ],
+      "kickoff": "2026-10-07T00:30Z",
+      "source": "ESPN",
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/761660",
+      "fetchedAt": "2026-10-06T05:12:37.643Z",
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-06T05:12:57.646Z",
+      "aiConfirmed": true,
+      "probabilities": {
+        "homeWin": 28.6143438962542,
+        "draw": 22.547489045607104,
+        "awayWin": 48.83816705813868,
+        "bttsYes": 63.351746526312446,
+        "over05": 96.1225792168278,
+        "over15": 83.52096167151811,
+        "over25": 63.04333316038997,
+        "over35": 40.85923560666778,
+        "over45": 22.834656344268453,
+        "under05": 3.877420783172198,
+        "bttsNo": 36.648253473687554,
+        "under15": 16.47903832848189,
+        "under25": 36.95666683961003,
+        "under35": 59.14076439333222,
+        "under45": 77.16534365573155,
+        "cornerOver95": null,
+        "confidence": null,
+        "predictedScore": "1 - 1"
+      },
+      "normalMemberStatus": 200,
+      "ownerOverridesDenied": true,
+      "cachedRequestReused": true
+    },
+    {
+      "sport": "beisbol",
+      "id": "mlb-mlb-849819",
+      "teams": [
+        "Atlanta Braves",
+        "Los Angeles Dodgers"
+      ],
+      "kickoff": "2026-10-06T22:00:00Z",
+      "source": "MLB Stats API",
+      "sourceUrl": "https://www.mlb.com/gameday/849819",
+      "fetchedAt": "2026-10-06T05:12:59.198Z",
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-06T05:13:01.823Z",
+      "aiConfirmed": true,
+      "probabilities": {
+        "home": 43.2,
+        "away": 56.8
+      },
+      "normalMemberStatus": 200,
+      "ownerOverridesDenied": true,
+      "cachedRequestReused": true
+    },
+    {
+      "sport": "tenis",
+      "id": "espn-tennis-atp-186317",
+      "teams": [
+        "Te Rigele",
+        "Ilia Simakin"
+      ],
+      "kickoff": "2026-10-06T05:30Z",
+      "source": "ESPN",
+      "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261006",
+      "fetchedAt": "2026-10-06T05:13:02.037Z",
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-06T05:13:08.279Z",
+      "aiConfirmed": true,
+      "probabilities": {
+        "home": null,
+        "away": null
+      },
+      "normalMemberStatus": 200,
+      "ownerOverridesDenied": true,
+      "cachedRequestReused": true
+    },
+    {
+      "sport": "basquetbol",
+      "id": "espn-nba_preseason-401901820",
+      "teams": [
+        "Charlotte Hornets",
+        "Brooklyn Nets"
+      ],
+      "kickoff": "2026-10-06T23:00Z",
+      "source": "ESPN",
+      "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401901820",
+      "fetchedAt": "2026-10-06T05:13:09.306Z",
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-06T05:13:13.921Z",
+      "aiConfirmed": true,
+      "probabilities": {
+        "home": 60.4,
+        "away": 39.6
+      },
+      "normalMemberStatus": 200,
+      "ownerOverridesDenied": true,
+      "cachedRequestReused": true
+    }
+  ],
+  "limitation": "Real sports data and AI provider; local authenticated member with isolated storage. Predictive accuracy is not established by a successful AI response."
+}

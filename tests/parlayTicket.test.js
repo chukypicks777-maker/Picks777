@@ -5,6 +5,7 @@ import { calculateParlay } from '../src/utils/parlayCalculation.js';
 import { calculateParlay as serverCalculateParlay } from '../server/services/parlayEngine.js';
 import { getEffectiveOdds } from '../src/utils/mathProbabilities.js';
 import { formatOdds } from '../src/utils/oddsFormatter.js';
+import { sportParlayLeg } from '../src/utils/sportPicks.js';
 
 const pick = (id, odds = 2, selection = 'Gana local') => ({ matchId: id, odds, selection, probability: 60 });
 const add = (state, ...legs) => parlayTicketReducer(state, { type: 'add', legs });
@@ -91,4 +92,27 @@ test('invalid legs and invalid amounts never yield a fake neutral multiplier or 
   }
   for (const stake of [NaN, Infinity, -1, 1000001]) assert.throws(() => calculateParlay([pick('a')], stake));
   assert.equal(calculateParlay([pick('a')], 0).potentialPayout, 0);
+});
+
+test('sports winners share the football ticket while preserving published and theoretical quotes', () => {
+  const now = Date.now(), source = (sport, winner, odds = {}) => ({ id: `${sport}-winner`, sport, status: 'SCHEDULED', kickoff: new Date(now + 3600000).toISOString(),
+    leagueName: sport, homeTeam: { id: 'a', name: 'Equipo A' }, awayTeam: { id: 'b', name: 'Equipo B' }, analysis: { winner }, odds });
+  const baseball = sportParlayLeg(source('beisbol', { home: 70, away: 30 }, { homeWin: 1.95 }), now);
+  const tennis = sportParlayLeg(source('tenis', { home: 33.3, away: 66.7 }), now);
+  const basketball = sportParlayLeg(source('basquetbol', { home: 60, away: 40 }, { homeWin: 2.05 }), now);
+  const ticket = add(EMPTY_PARLAY, pick('football', 1.87), baseball, tennis, basketball);
+  assert.equal(ticket.legs.length, 4);
+  assert.equal(baseball.odds, 1.95); assert.equal(baseball.oddsKind, 'published');
+  assert.equal(tennis.selection, 'Equipo B gana'); assert.equal(tennis.odds, 100 / 66.7); assert.equal(tennis.oddsKind, 'theoretical');
+  assert.equal(basketball.matchTitle, 'Equipo A vs Equipo B'); assert.equal(basketball.market, 'Ganador');
+  assert.equal(calculateParlay(ticket.legs, 100).totalDecimalOdds, 1.87 * 1.95 * (100 / 66.7) * 2.05);
+  assert.equal(parlayTicketReducer(ticket, { type: 'toggle', leg: tennis }).legs.length, 3);
+});
+
+test('sports never create parlay selections from missing forecasts, unknown rivals or expired games', () => {
+  const now = Date.now(), match = { id: 'future', sport: 'tenis', status: 'SCHEDULED', kickoff: new Date(now + 3600000).toISOString(),
+    homeTeam: { id: 'a', name: 'Jugador A' }, awayTeam: { id: 'b', name: 'Jugador B' }, analysis: { winner: { home: 60, away: 40 } } };
+  for (const changes of [{ analysis: {} }, { analysis: { winner: { home: null, away: 40 } } }, { status: 'LIVE' }, { status: 'FINISHED' },
+    { kickoff: new Date(now - 1).toISOString() }, { kickoff: 'invalid' }, { retired: true }, { awayTeam: { id: '0', name: 'TBD' } },
+    { analysis: { winner: { home: 100, away: 0 } } }]) assert.equal(sportParlayLeg({ ...match, ...changes }, now), null);
 });

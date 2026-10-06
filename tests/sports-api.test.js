@@ -120,6 +120,11 @@ test('sports APIs require a session, keep the women feed separate, filter league
     setSession({ cookie: (name, value) => { regularCookie = `${name}=${value}`; } }, { role: 'trial_user', userId: regular.id, expires: Date.now() + 3600000 });
     const aiPath = `/api/sports/tenis/${tennisMatch.id}/ai-analysis?league=atp`;
     assert.equal((await request(aiPath, regularCookie, { forceRefresh: true })).status, 403, 'A hidden owner button must also be protected by the server');
+    for (const body of [{ forceRefresh: true }, { model: 'client-override' }, { aiConfig: { apiKey: 'client-key' } }]) {
+      assert.equal((await request(aiPath, regularCookie, body)).status, 403);
+      assert.equal((await request(`/api/matches/${men.matches[0].id}/ai-analysis`, regularCookie, body)).status, 403, 'Football must enforce the same Owner-only controls as the other sports');
+    }
+    assert.equal((await request(`/api/matches/${men.matches[0].id}/ai-analysis?model=client-override`, regularCookie, {})).status, 403);
     assert.equal(aiCalls, 0);
     await storage.updateAiConfig({ provider: 'custom', baseUrl: 'https://vyceai.com/v1', apiKey: 'sports-api-test-key', selectedModel: 'sports-fixture-model' });
     const generated = await (await request(aiPath, cookie, { forceRefresh: true, match: { homeTeam: { name: 'Browser invented team' } } })).json();

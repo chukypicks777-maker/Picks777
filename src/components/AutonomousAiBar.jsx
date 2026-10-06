@@ -18,6 +18,7 @@ export default function AutonomousAiBar({
   onMatchAnalyzed,
   activeModelInfo = null,
   onToast = null,
+  onSessionExpired = null,
   isOwner = false,
   sport = 'futbol',
   sessionKey = '',
@@ -27,6 +28,7 @@ export default function AutonomousAiBar({
   const [isRunning, setIsRunning] = useState(false);
   const [currentMatchTitle, setCurrentMatchTitle] = useState('');
   const [analysisVersion, setAnalysisVersion] = useState(0);
+  const [retryUntil, setRetryUntil] = useState(0);
   const [autoRunOnLoad, setAutoRunOnLoad] = useState(() => {
     try {
       const saved = localStorage.getItem('picks777_auto_ai_pref');
@@ -37,6 +39,8 @@ export default function AutonomousAiBar({
   });
 
   const stopRequested = useRef(false);
+  const pausedByOwner = useRef(false);
+  const sessionExpired = useRef(false);
   const runningRef = useRef(false);
   const mounted = useRef(true);
   const requestController = useRef(null);
@@ -67,6 +71,7 @@ export default function AutonomousAiBar({
 
   const toggleAutoPref = () => {
     const next = !autoRunOnLoad;
+    if (next) pausedByOwner.current = false;
     setAutoRunOnLoad(next);
     try {
       localStorage.setItem('picks777_auto_ai_pref', String(next));
@@ -74,8 +79,8 @@ export default function AutonomousAiBar({
   };
 
   const executeAnalysisQueue = useCallback(async (forceAll = false) => {
-    if (!isOwner || runningRef.current) return;
-    if (externalBusy) return;
+    if ((forceAll && !isOwner) || runningRef.current || sessionExpired.current) return;
+    if (externalBusy || Date.now() < retryUntil) return;
     const currentMatches = matchesRef.current.filter(match => isUpcomingFixture(match));
     if (!Array.isArray(currentMatches) || currentMatches.length === 0) return;
 
@@ -85,8 +90,9 @@ export default function AutonomousAiBar({
 
     runningRef.current = true;
     stopRequested.current = false;
+    pausedByOwner.current = false;
     setIsRunning(true);
-    sounds.playRadarScan();
+    if (isOwner) sounds.playRadarScan();
 
     const targets = forceAll
       ? [...currentMatches]
@@ -95,7 +101,7 @@ export default function AutonomousAiBar({
     if (targets.length === 0) {
       setIsRunning(false);
       runningRef.current = false;
-      onToast?.('Todos los partidos ya cuentan con análisis IA confirmado.');
+      if (isOwner) onToast?.('Todos los partidos ya cuentan con análisis IA confirmado.');
       return;
     }
 
@@ -103,7 +109,7 @@ export default function AutonomousAiBar({
     let aiCompleted = 0;
     let statisticalCompleted = 0;
 
-    const storedAi = getStoredAiConfig();
+    const storedAi = isOwner ? getStoredAiConfig() : null;
     let resolvedProvider = storedAi?.provider || 'custom';
     if (resolvedProvider === 'openrouter') resolvedProvider = 'custom';
     const defaultUrl = PROVIDER_PRESETS[resolvedProvider]?.defaultBaseUrl || 'https://vyceai.com/v1';
@@ -122,7 +128,9 @@ export default function AutonomousAiBar({
     for (let i = 0; i < targets.length; i++) {
       if (stopRequested.current) break;
 
-      const curMatch = targets[i];
+      const curMatch = matchesRef.current.find(match => match.id === targets[i].id);
+      if (!isUpcomingFixture(curMatch)) continue;
+      if (!forceAll && isMatchAnalyzed(curMatch.id, curMatch)) continue;
       const key = attemptKey(curMatch);
       attemptedMatchIdsRef.current.add(key);
       if (attemptedMatchIdsRef.current.size > 4000) attemptedMatchIdsRef.current.delete(attemptedMatchIdsRef.current.values().next().value);
@@ -141,25 +149,30 @@ export default function AutonomousAiBar({
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
           signal: controller.signal,
-          body: JSON.stringify({
+          body: JSON.stringify(isOwner ? {
             forceRefresh: forceAll,
             model: resolvedModel,
             aiConfig: aiConfigPayload
-          })
+          } : {})
         }); } finally { clearTimeout(timeout); }
 
+        const data = await res.json().catch(() => null);
+        if (!mounted.current || controller.signal.aborted) { attemptedMatchIdsRef.current.delete(key); break; }
         if (res.status === 401 || res.status === 403) {
-          onToast?.('Sesión expirada o no autorizada. Inicia sesión nuevamente.');
+          sessionExpired.current = true;
+          if (res.status === 401 || data?.trialExpired) onSessionExpired?.(data);
+          if (isOwner) onToast?.('Sesión expirada o no autorizada. Inicia sesión nuevamente.');
           break;
         }
 
         if (res.status === 429) {
-          onToast?.('Límite de solicitudes alcanzado. Pausando análisis autónomo.');
+          attemptedMatchIdsRef.current.delete(key);
+          const seconds = Number(res.headers.get('Retry-After') || data?.retryAfter);
+          setRetryUntil(Date.now() + (Number.isFinite(seconds) && seconds > 0 ? Math.min(seconds, 604800) : 60) * 1000);
+          if (isOwner) onToast?.('Límite de solicitudes alcanzado. El análisis continuará al terminar la espera indicada por el servidor.');
           break;
         }
 
-        const data = await res.json().catch(() => null);
-        if (!mounted.current || controller.signal.aborted) { attemptedMatchIdsRef.current.delete(key); break; }
         if (res.ok && data?.success && data.report) {
           if (data.report.aiAvailable) aiCompleted++; else statisticalCompleted++;
           const finalMatch = {
@@ -172,7 +185,7 @@ export default function AutonomousAiBar({
             aiReport: data.report,
             enrichedMatch: finalMatch,
             originalMatch: curMatch,
-            model: resolvedModel
+            model: data.report.modelUsed
           });
 
           onMatchAnalyzed?.(curMatch.id, finalMatch, data.report, curMatch);
@@ -203,22 +216,31 @@ export default function AutonomousAiBar({
     setCurrentMatchTitle('');
     setAnalysisVersion(v => v + 1);
 
-    if (!stopRequested.current) {
+    if (!stopRequested.current && isOwner) {
       sounds.playSuccess();
       onToast?.(`Revisión terminada: ${aiCompleted} informes con IA, ${statisticalCompleted} cálculos estadísticos y ${processed - aiCompleted - statisticalCompleted} solicitudes sin resultado.`);
     }
-  }, [isOwner, activeModelInfo, onMatchAnalyzed, onToast, sport, onAnalyzing, externalBusy, attemptKey]);
+  }, [isOwner, activeModelInfo, onMatchAnalyzed, onToast, onSessionExpired, sport, onAnalyzing, externalBusy, attemptKey, retryUntil]);
 
   const handleStop = () => {
+    pausedByOwner.current = true;
     stopRequested.current = true;
     requestController.current?.abort();
     sounds.playClick();
     onToast?.('Pausando análisis autónomo...');
   };
 
-  // Autonomous trigger on load: ONLY for Owner, using stable ID key and attempted match lock to prevent loops
   useEffect(() => {
-    if (!isOwner || activeModelInfo?.isConfigured !== true || !autoRunOnLoad || runningRef.current) return;
+    if (!retryUntil) return;
+    const timer = setTimeout(() => setRetryUntil(0), Math.max(0, retryUntil - Date.now()));
+    return () => clearTimeout(timer);
+  }, [retryUntil]);
+
+  // Members use the server's configured model automatically. Only Owner can pause,
+  // force regeneration or override provider settings; the UI is not the worker.
+  useEffect(() => {
+    const autoEnabled = !isOwner || autoRunOnLoad;
+    if (activeModelInfo?.isConfigured !== true || !autoEnabled || runningRef.current || pausedByOwner.current || sessionExpired.current || Date.now() < retryUntil) return;
     if (externalBusy) return;
     const currentMatches = matchesRef.current;
     if (!Array.isArray(currentMatches) || currentMatches.length === 0) return;
@@ -229,13 +251,13 @@ export default function AutonomousAiBar({
     if (pending.length === 0) return;
 
     const timer = setTimeout(() => {
-      if (!runningRef.current && autoRunOnLoad && isOwner) {
+      if (!runningRef.current && autoEnabled && !pausedByOwner.current) {
         executeAnalysisQueue(false);
       }
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [matchIdsKey, analysisVersion, isOwner, autoRunOnLoad, activeModelInfo?.isConfigured, executeAnalysisQueue, externalBusy, attemptKey]);
+  }, [matchIdsKey, analysisVersion, isOwner, autoRunOnLoad, activeModelInfo?.isConfigured, executeAnalysisQueue, externalBusy, attemptKey, retryUntil]);
 
   if (!isOwner || !matches || matches.length === 0) return null;
 
@@ -305,7 +327,7 @@ export default function AutonomousAiBar({
               </span>
             ) : (
               <span className="text-slate-400">
-                {pendingCount} {pendingCount === 1 ? 'partido pendiente' : 'partidos pendientes'} de análisis autónomo en esta selección.
+                {pendingCount} {pendingCount === 1 ? 'partido pendiente' : 'partidos pendientes'} de análisis autónomo en el calendario de este deporte.
               </span>
             )}
           </span>
@@ -341,7 +363,7 @@ export default function AutonomousAiBar({
             <>
               <button
                 onClick={() => executeAnalysisQueue(false)}
-                disabled={isAllAnalyzed || externalBusy}
+                disabled={isAllAnalyzed || externalBusy || retryUntil > 0}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center space-x-1.5 transition active:scale-95 cursor-pointer ${
                   isAllAnalyzed
                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 opacity-70 cursor-default'
@@ -356,7 +378,7 @@ export default function AutonomousAiBar({
 
               <button
                 onClick={() => executeAnalysisQueue(true)}
-                disabled={externalBusy}
+                disabled={externalBusy || retryUntil > 0}
                 title="Forzar un nuevo análisis en vivo para todos los partidos con estadísticas actualizadas"
                 className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 rounded-xl text-xs font-mono flex items-center space-x-1.5 transition cursor-pointer active:scale-95"
               >

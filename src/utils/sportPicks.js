@@ -1,4 +1,5 @@
 import { marketQuote } from './oddsFormatter.js';
+import { isUpcomingFixture } from './fixtureEligibility.js';
 
 export function sportWinnerPick(match) {
   const winner = match?.analysis?.winner;
@@ -9,6 +10,14 @@ export function sportWinnerPick(match) {
   if (!team?.id || !team.name) return null;
   const quote = marketQuote(match.odds?.[`${side}Win`], winner[side]);
   return { side, teamId: team.id, teamName: team.name, selection: `${team.name} gana`, market: 'Ganador', probability: winner[side], odds: quote.odds, oddsKind: quote.kind, oddsLabel: quote.label };
+}
+
+export function sportParlayLeg(match, now = Date.now()) {
+  if (!match?.id || !isUpcomingFixture(match, now) || match.retired) return null;
+  const pick = sportWinnerPick(match);
+  if (!pick || !Number.isFinite(pick.odds) || pick.odds <= 1 || pick.odds > 1000) return null;
+  return { ...pick, matchId: match.id, sport: match.sport, league: match.leagueName,
+    matchTitle: `${match.homeTeam.name} vs ${match.awayTeam.name}`, kickoff: match.kickoff };
 }
 
 export function rankSportWinners(matches, now = Date.now(), limit = 10) {

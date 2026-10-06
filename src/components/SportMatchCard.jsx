@@ -1,7 +1,7 @@
 import React from 'react';
-import { Clock, Eye, Sparkles, RotateCw, CheckCircle2, Zap, Trophy } from 'lucide-react';
+import { Clock, Eye, Sparkles, RotateCw, CheckCircle2, Zap, Trophy, Plus } from 'lucide-react';
 import { formatMatchSchedule } from '../utils/matchSchedule.js';
-import { sportWinnerPick, sportCardMarkets } from '../utils/sportPicks.js';
+import { sportWinnerPick, sportCardMarkets, sportParlayLeg } from '../utils/sportPicks.js';
 import { formatOdds } from '../utils/oddsFormatter.js';
 import { MarketValue, Probability, WinnerBar } from './SportMatchAnalysis';
 import SportIdentity from './SportIdentity';
@@ -9,8 +9,9 @@ import TeamForm from './TeamForm';
 
 const statuses = { LIVE: 'EN VIVO', FINISHED: 'FINALIZADO', SCHEDULED: 'PROGRAMADO', POSTPONED: 'POSPUESTO', CANCELLED: 'CANCELADO', SUSPENDED: 'SUSPENDIDO', UNKNOWN: 'SIN CONFIRMAR' };
 
-function SportMatchCard({ match, oddsFormat, onOpen, isOwner, onRetryAi, analyzing = false, aiBusy = false, bankerRank = null }) {
+function SportMatchCard({ match, oddsFormat, onOpen, onToggleParlay, isInParlay = false, analyzing = false, bankerRank = null }) {
   const a = match.analysis || {}, pick = sportWinnerPick(match), report = match.aiReport;
+  const leg = sportParlayLeg(match);
   const aiVerified = report?.aiAvailable === true && report?.dataGrounded === true;
   return <article data-match-id={match.id} aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`}
     style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 450px', ...(bankerRank === 1 ? { borderColor: 'rgba(251, 191, 36, 0.4)' } : {}) }}
@@ -45,8 +46,8 @@ function SportMatchCard({ match, oddsFormat, onOpen, isOwner, onRetryAi, analyzi
     {match.venue && <p className="text-[10px] text-slate-500 truncate mb-2" title={match.venue}>{match.venue}</p>}
     {match.oddsProvider && <p className="text-[9px] text-slate-500 mb-2">Momios publicados · {match.oddsProvider}</p>}
     {match.liveSupported === false && <p className="text-[9px] text-amber-300 mb-2">Calendario oficial · Sin marcador en vivo verificado</p>}
-    <div className={`mt-auto pt-2 border-t border-white/5 grid gap-2 ${isOwner ? 'grid-cols-2' : 'grid-cols-1'}`}>
-      {isOwner && <button type="button" disabled={analyzing || aiBusy} onClick={() => onRetryAi(match)} className="relative z-20 min-h-10 px-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"><RotateCw size={12} className={analyzing ? 'animate-spin' : ''} />Reintentar con IA</button>}
+    <div className="mt-auto pt-2 border-t border-white/5 grid grid-cols-2 gap-2">
+      <button type="button" aria-pressed={isInParlay} disabled={!leg || !onToggleParlay} title={leg ? `${isInParlay ? 'Quitar' : 'Agregar'} ${leg.selection} ${isInParlay ? 'del' : 'al'} parlay` : 'Se requiere un encuentro próximo con ganador y momio disponibles'} onClick={() => { const currentLeg = sportParlayLeg(match); if (currentLeg) onToggleParlay?.(currentLeg); }} className={`relative z-20 min-h-10 px-2 rounded-lg border text-[11px] font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${isInParlay ? 'border-emerald-400/60 bg-emerald-500/25 text-emerald-200 hover:bg-rose-500/20' : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'}`}>{isInParlay ? <CheckCircle2 size={12} /> : <Plus size={12} />}{isInParlay ? 'En Parlay' : 'Al Parlay'}</button>
       <button type="button" onClick={() => onOpen(match.id)} className="min-h-10 px-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-[11px] font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"><span aria-hidden="true" className="absolute inset-0 z-10 rounded-xl" /><Eye size={13} />Ver análisis y mercados</button>
     </div>
   </article>;

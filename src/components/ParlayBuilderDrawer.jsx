@@ -50,7 +50,7 @@ export default function ParlayBuilderDrawer({
     if (!calculation || !legs.length) return;
     sounds.playClick();
     const summary = `🏆 DEPORTEPICKS PRO — TICKET DE PARLAY 🏆\n\n` +
-      legs.map((l, i) => `${i + 1}. [${l.league}] ${l.matchTitle}\n   👉 Selección: ${l.selection} @ ${formatOdds(l.odds, oddsFormat)}${l.probability != null ? ` (${Math.round(l.probability)}% prob)` : ''}`).join('\n\n') +
+      legs.map((l, i) => `${i + 1}. [${l.league}] ${l.matchTitle}\n   👉 Selección: ${l.selection} @ ${formatOdds(l.odds, oddsFormat)}${l.oddsLabel ? ` · ${l.oddsLabel}` : ''}${l.probability != null ? ` (${Math.round(l.probability)}% prob)` : ''}`).join('\n\n') +
       `\n\n📊 Cuota Total: ${formatOdds(totalDecimalOdds, oddsFormat)}\n💰 Monto: ${formatCurrency(stake, currency)}\n💵 Retorno: ${formatCurrency(potentialPayout, currency)}\n⚠️ Todos los eventos deben cumplirse.`;
 
     setCopyError('');
@@ -163,9 +163,9 @@ export default function ParlayBuilderDrawer({
                     </div>
 
                     <div className="flex items-center space-x-2 shrink-0">
-                      <span aria-label={`Momio de ${leg.matchTitle}`} className="px-1.5 py-0.5 bg-[#182030] rounded text-[11px] font-bold text-emerald-400 border border-emerald-500/20">
+                      <div className="flex flex-col items-end gap-0.5"><span aria-label={`Momio de ${leg.matchTitle}`} className="px-1.5 py-0.5 bg-[#182030] rounded text-[11px] font-bold text-emerald-400 border border-emerald-500/20">
                         {formatOdds(leg.odds, oddsFormat)}
-                      </span>
+                      </span>{leg.oddsLabel && <span className="text-[9px] text-slate-500">{leg.oddsLabel}</span>}</div>
                       <button
                         type="button" aria-label={`Quitar ${leg.selection} de ${leg.matchTitle}`}
                         onClick={() => { sounds.playClick(); onRemoveLeg(leg); }}

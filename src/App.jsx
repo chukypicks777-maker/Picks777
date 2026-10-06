@@ -710,7 +710,7 @@ export default function App() {
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
 
         {!isFootball ? (
-          <SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} sessionKey={auth?.user?.id || auth?.user?.uid || ''} oddsFormat={oddsFormat} currency={currency} isOwner={isOwner} activeModelInfo={activeAiModel} onToast={showToast} onSessionExpired={handleSportsSessionExpired} />
+          <SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} sessionKey={auth?.user?.id || auth?.user?.uid || ''} oddsFormat={oddsFormat} currency={currency} isOwner={isOwner} activeModelInfo={activeAiModel} onToast={showToast} onSessionExpired={handleSportsSessionExpired} onToggleParlay={handleToggleParlay} parlayLegs={parlayLegs} />
         ) : (
         <div role="tabpanel" id={`sport-panel-${selectedSport}`} aria-labelledby={`sport-${selectedSport}`}>
 
@@ -861,13 +861,14 @@ export default function App() {
             </div>
           )}
 
-          {/* Autonomous AI Match Analysis Bar - Exclusivo para Owner */}
-          {isOwner && !loadingMatches && filteredMatches.length > 0 && (
+          {/* Background processing for members; controls remain exclusive to Owner. */}
+          {auth?.valid && !auth?.trialExpired && matches.length > 0 && (
             <AutonomousAiBar
               sessionKey={auth?.user?.id || auth?.user?.uid || ''}
-              matches={filteredMatches}
+              matches={matches}
               onMatchAnalyzed={handleMatchAnalyzed}
               onToast={showToast}
+              onSessionExpired={handleSportsSessionExpired}
               isOwner={isOwner}
               activeModelInfo={activeAiModel}
             />
@@ -967,7 +968,7 @@ export default function App() {
       </main>
 
       {/* Floating Parlay Drawer Launcher */}
-      {isFootball && !showParlayDrawer && parlayLegs.length > 0 && (
+      {!showParlayDrawer && parlayLegs.length > 0 && (
         <button
           onClick={() => { sounds.playClick(); setShowParlayDrawer(true); }}
           className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] right-3 sm:bottom-6 sm:right-6 z-[65] px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.7)] border border-emerald-400/40 flex items-center space-x-2 cursor-pointer text-xs font-mono transition-all backdrop-blur-md"
