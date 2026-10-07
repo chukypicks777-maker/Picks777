@@ -13,7 +13,8 @@ export function Probability({ value }) {
 
 export function MarketValue({ value, publishedOdds, oddsFormat = 'decimal', showTheoretical = false }) {
   const quote = marketQuote(publishedOdds, showTheoretical ? value : null);
-  return <span className="inline-flex flex-col items-end gap-0.5 shrink-0"><Probability value={value} /><span className="text-[10px] sm:text-[11px] text-sky-300 font-mono tabular-nums whitespace-nowrap">{quote.kind === 'unavailable' ? 'Sin cuota publicada' : `${quote.kind === 'theoretical' ? 'Precio del modelo' : 'Momio'} ${formatOdds(quote.odds, oddsFormat)}`}</span>{quote.kind !== 'unavailable' && <span className="text-[9px] text-slate-500">{quote.kind === 'theoretical' ? 'No ofrecido por una casa' : quote.label}</span>}</span>;
+  // "Sin cuota publicada" may wrap so it never pushes a neighbouring column off screen.
+  return <span className="inline-flex flex-col items-end gap-0.5 min-w-0"><Probability value={value} /><span className={`text-[10px] sm:text-[11px] text-sky-300 font-mono tabular-nums text-right leading-tight ${quote.kind === 'unavailable' ? 'whitespace-normal' : 'whitespace-nowrap'}`}>{quote.kind === 'unavailable' ? 'Sin cuota publicada' : `${quote.kind === 'theoretical' ? 'Precio del modelo' : 'Momio'} ${formatOdds(quote.odds, oddsFormat)}`}</span>{quote.kind !== 'unavailable' && <span className="text-[9px] text-slate-500">{quote.kind === 'theoretical' ? 'No ofrecido por una casa' : quote.label}</span>}</span>;
 }
 
 export function WinnerBar({ values }) {
@@ -35,10 +36,14 @@ function Outcomes({ title, values, home, away, draw = false, odds = {}, oddsForm
 function RunTable({ title, lines = [], oddsFormat }) {
   return <section className="rounded-xl border border-white/10 overflow-hidden bg-[#111a28]" aria-label={title}>
     <h3 className="p-4 text-sm font-bold border-b border-white/10">{title}</h3>
-    <table className="w-full text-xs sm:text-sm">
-      <thead className="text-slate-400 bg-white/[0.03]"><tr><th scope="col" className="p-3 text-left">Carreras</th><th scope="col" className="p-3 text-right">Over</th><th scope="col" className="p-3 text-right">Under</th></tr></thead>
-      <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="p-3 text-left font-mono font-semibold text-slate-300">{row.line}</th><td className="p-3 text-right"><MarketValue value={row.over} oddsFormat={oddsFormat} /></td><td className="p-3 text-right"><MarketValue value={row.under} oddsFormat={oddsFormat} /></td></tr>)}</tbody>
-    </table>
+    {/* Fits the screen; on very narrow screens the table can also be swiped sideways. */}
+    <div className="overflow-x-auto overscroll-x-contain">
+      <table className="w-full table-fixed text-xs sm:text-sm">
+        <colgroup><col className="w-[4.25rem]" /><col /><col /></colgroup>
+        <thead className="text-slate-400 bg-white/[0.03]"><tr><th scope="col" className="px-2 py-2.5 sm:p-3 text-left">Carreras</th><th scope="col" className="px-2 py-2.5 sm:p-3 text-right">Over</th><th scope="col" className="px-2 py-2.5 sm:p-3 text-right">Under</th></tr></thead>
+        <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="px-2 py-2.5 sm:p-3 text-left font-mono font-semibold text-slate-300">{row.line}</th><td className="px-2 py-2.5 sm:p-3 text-right"><MarketValue value={row.over} oddsFormat={oddsFormat} /></td><td className="px-2 py-2.5 sm:p-3 text-right"><MarketValue value={row.under} oddsFormat={oddsFormat} /></td></tr>)}</tbody>
+      </table>
+    </div>
   </section>;
 }
 
@@ -52,9 +57,11 @@ function BinaryMarket({ title, values, oddsFormat }) {
 function HandicapTable({ title, lines = [], oddsFormat }) {
   return <section className="rounded-xl border border-white/10 overflow-hidden bg-[#111a28]" aria-label={title}>
     <h3 className="p-4 text-sm font-bold border-b border-white/10 break-words">{title}</h3>
-    <table className="w-full text-sm"><thead className="text-slate-400 bg-white/[0.03]"><tr><th scope="col" className="p-3 text-left">Hándicap</th><th scope="col" className="p-3 text-right">Probabilidad / Momio</th></tr></thead>
-      <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="p-3 text-left font-mono font-semibold text-slate-300">{row.line > 0 ? '+' : ''}{row.line}</th><td className="p-3 text-right"><MarketValue value={row.probability} oddsFormat={oddsFormat} /></td></tr>)}</tbody>
-    </table>
+    <div className="overflow-x-auto overscroll-x-contain">
+      <table className="w-full text-xs sm:text-sm"><thead className="text-slate-400 bg-white/[0.03]"><tr><th scope="col" className="px-2 py-2.5 sm:p-3 text-left">Hándicap</th><th scope="col" className="px-2 py-2.5 sm:p-3 text-right">Probabilidad / Momio</th></tr></thead>
+        <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="px-2 py-2.5 sm:p-3 text-left font-mono font-semibold text-slate-300">{row.line > 0 ? '+' : ''}{row.line}</th><td className="px-2 py-2.5 sm:p-3 text-right"><MarketValue value={row.probability} oddsFormat={oddsFormat} /></td></tr>)}</tbody>
+      </table>
+    </div>
   </section>;
 }
 

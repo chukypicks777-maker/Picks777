@@ -23,6 +23,6 @@ export default function Modal({ title, onClose, children }) {
       <h2 id={id} className="text-lg font-bold">{title}</h2>
       {onClose && <button type="button" className="min-w-11 min-h-11 rounded-xl border border-white/10 inline-flex items-center justify-center shrink-0 text-slate-400 hover:text-white hover:bg-white/5 cursor-pointer" aria-label="Cerrar ventana" onClick={onClose}><X size={18} /></button>}
     </header>
-    <div className="p-5 sm:p-7">{children}</div>
+    <div className="p-3 sm:p-7">{children}</div>
   </dialog>;
 }

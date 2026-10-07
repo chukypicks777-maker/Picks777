@@ -369,3 +369,30 @@ test('femenil actualiza su calendario con los filtros activos y retira datos cua
   await expect(page.getByRole('alert')).toContainText('Proveedor femenil no disponible');
   await expect(page.getByText('Feed de datos en vivo sincronizado.', { exact: true })).toHaveCount(0);
 });
+
+// Every Over/Under and handicap column stays readable on phones, tablets and desktop.
+for (const width of [320, 360, 390, 768, 1280]) {
+  test(`las tablas de mercados muestran Over y Under completos a ${width}px`, async ({ page }) => {
+    for (const [sport, regions] of [['beisbol', ['Carreras · LA Dodgers', 'Totales extra innings']], ['basquetbol', ['Hándicap · Boston Celtics']]]) {
+      await setup(page, `/${sport}`);
+      await page.setViewportSize({ width, height: 900 });
+      await page.getByRole('tabpanel').getByRole('article').first().getByRole('button', { name: 'Ver análisis y mercados' }).click();
+      const dialog = page.getByRole('dialog', { name: 'Análisis del encuentro' });
+      for (const name of regions) {
+        const region = dialog.getByRole('region', { name, exact: true });
+        await expect(region).toContainText('%');
+        await region.scrollIntoViewIfNeeded();
+        const fits = await region.evaluate(section => {
+          const box = section.getBoundingClientRect(), table = section.querySelector('table');
+          const cells = [...section.querySelectorAll('tr > *:last-child')].map(cell => cell.getBoundingClientRect());
+          return { tableFits: table.scrollWidth <= section.clientWidth + 1, cellsInside: cells.every(cell => cell.right <= box.right + 1 && cell.left >= box.left - 1) };
+        });
+        expect(fits, `${sport} ${name}`).toEqual({ tableFits: true, cellsInside: true });
+        await expect(region).toContainText(sport === 'beisbol' ? 'Under' : 'Probabilidad');
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await page.screenshot({ path: `artifacts/mobile/${sport}-markets-${width}-${test.info().project.name}.png` });
+      await page.keyboard.press('Escape');
+    }
+  });
+}
