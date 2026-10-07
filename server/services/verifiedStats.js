@@ -5,6 +5,20 @@ import { poissonModel } from './probabilityModel.js';
 
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 const MIN_SAMPLE = 5;
+// A historical statistic needs scores and the reported boxscore, not articles,
+// commentary, images or videos from the provider's complete match page.
+export function compactHistoricalSummary(data) {
+  return {
+    header: { competitions: (data.header?.competitions || []).map(comp => ({
+      id: comp.id, date: comp.date, status: { type: { completed: comp.status?.type?.completed } },
+      competitors: (comp.competitors || []).map(team => ({ id: team.id, score: team.score,
+        linescores: team.linescores?.map(score => ({ value: score.value, displayValue: score.displayValue })) }))
+    })) },
+    boxscore: { teams: (data.boxscore?.teams || []).map(team => ({ team: { id: team.team?.id },
+      statistics: team.statistics?.map(stat => ({ name: stat.name, value: stat.value, displayValue: stat.displayValue }))
+    })) }
+  };
+}
 export function readHistoricalSummary(data, teamId, cutoff) {
   const comp = data.header?.competitions?.[0];
   if (!comp?.status?.type?.completed || !(Date.parse(comp.date) < cutoff)) return null;
@@ -97,7 +111,8 @@ async function history(match, teamId, options = {}) {
     for (let i = 0; i < events.length; i += 4) {
       rows.push(...await Promise.all(events.slice(i, i + 4).map(async e => {
         try {
-          const data = await cachedData(`historical-summary:v1:${leagueCode}:${e.id}`, 21600, () => fetchJson(`${BASE}/${leagueCode}/summary?event=${e.id}`), { forceRefresh });
+          const data = await cachedData(`historical-summary:v2:${leagueCode}:${e.id}`, 21600,
+            async () => compactHistoricalSummary(await fetchJson(`${BASE}/${leagueCode}/summary?event=${e.id}`)), { forceRefresh });
           const row = readHistoricalSummary(data, teamId, cutoff);
           return row ? { ...row, leagueCode } : null;
         } catch { return null; }

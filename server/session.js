@@ -33,14 +33,13 @@ export function readSession(req) {
 export async function currentSession(req) {
   const session = readSession(req);
   if (!session) return null;
-  if (await storage.isSessionRevoked(sessionIdentifier(session))) return null;
-
+  const access = await storage.getSessionAccess(sessionIdentifier(session), session.userId);
+  if (access.revoked) return null;
   if (session.role === 'owner' && session.ownerVersion !== ownerVersion()) return null;
   if (session.userId) {
-    const user = await storage.getUser(session.userId);
+    const { user, code } = access;
     if (!user) return null;
     if (session.role === 'owner' && !isOwnerUser(user)) return null;
-    const code = user.vipCode ? await storage.getCode(user.vipCode) : null;
     return { ...session, ...entitlement(user, code), ownerVersion: isOwnerUser(user) ? ownerVersion() : undefined };
   }
   // Legacy code-only VIP cookies never grant account-bound access.

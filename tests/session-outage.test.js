@@ -9,9 +9,9 @@ const { setSession, ownerVersion } = await import('../server/session.js');
 
 test('session storage outages report 503 without revoking or clearing the cookie; recovery restores access', async t => {
   let unavailable = true;
-  t.mock.method(storage, 'isSessionRevoked', async () => {
+  t.mock.method(storage, 'getSessionAccess', async () => {
     if (unavailable) throw new Error('Fixture outage');
-    return false;
+    return { revoked: false };
   });
   let cookie;
   setSession({ cookie: (name, value) => { cookie = name + '=' + value; } }, { role: 'owner', ownerVersion: ownerVersion(), expires: Date.now() + 3600000 });

@@ -47,12 +47,13 @@ export function parseMlbGame(game, league, fetchedAt = new Date().toISOString())
 
 export async function getMlbLeague(league, today) {
   const url = `${MLB_BASE}/schedule?sportId=${league.sportId}${league.leagueId ? `&leagueId=${league.leagueId}` : ''}&startDate=${shiftDay(today, -45)}&endDate=${shiftDay(today, 7)}&hydrate=linescore`;
-  const data = await cachedData(`sports:baseball:v2:${league.id}:${today}`, 60, async () => {
+  const data = await cachedData(`sports:baseball:v3:${league.id}:${today}`, 60, async () => {
     const schedule = await fetchJson(url);
     if (!Array.isArray(schedule.dates)) throw new Error('Formato de calendario no reconocido.');
-    return { schedule, fetchedAt: new Date().toISOString() };
+    const fetchedAt = new Date().toISOString();
+    return { matches: schedule.dates.flatMap(day => day.games || []).map(game => parseMlbGame(game, league, fetchedAt)).filter(Boolean), fetchedAt };
   });
-  return { matches: data.schedule.dates.flatMap(day => day.games || []).map(game => parseMlbGame(game, league, data.fetchedAt)).filter(Boolean), fetchedAt: data.fetchedAt, source: 'MLB Stats API' };
+  return { ...data, source: 'MLB Stats API' };
 }
 
 export function parseNpbSchedule(html, league, day, fetchedAt = new Date().toISOString()) {

@@ -1,10 +1,30 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { positiveInteger, redisConfiguration } from '../config.js';
+import { encodeCache, decodeCache } from './cacheCodec.js';
 
 // Shared REST Redis cache; never used as an authorization cache.
 const memory = new Map();
 const pending = new Map();
+const reading = new Map();
+const absent = new Map();
+const MAX_MEMORY_BYTES = 32 * 1024 * 1024;
+let memoryBytes = 0;
+function forget(key) {
+  const entry = memory.get(key);
+  if (entry) memoryBytes -= entry.bytes;
+  memory.delete(key);
+}
+function remember(key, envelope, bytes) {
+  forget(key);
+  absent.delete(key);
+  if (bytes > MAX_MEMORY_BYTES) return;
+  for (const [oldKey, entry] of memory) if (entry.expires <= Date.now()) forget(oldKey);
+  while (memory.size >= 250 || memoryBytes + bytes > MAX_MEMORY_BYTES) forget(memory.keys().next().value);
+  memory.set(key, { ...envelope, bytes });
+  memoryBytes += bytes;
+}
 export const redisConfigured = () => redisConfiguration().configured;
 
 const defaultAiCacheFile = () => (process.env.VERCEL ? path.join('/tmp', 'ai-cache.json') : path.resolve('server/data/ai-cache.json'));
@@ -61,10 +81,26 @@ export async function redisCommand(...command) {
     body: JSON.stringify(command),
     signal: AbortSignal.timeout(positiveInteger('REDIS_TIMEOUT_MS', 2000, 3000))
   });
-  if (!response.ok) throw new Error('El almacenamiento persistente no responde.');
-  const data = await response.json();
+  const data = await response.json().catch(() => null);
+  if (typeof data?.error === 'string' && data.error.startsWith('NOSCRIPT')) {
+    const error = new Error('Script de almacenamiento pendiente de cargar.');
+    error.code = 'NOSCRIPT';
+    throw error;
+  }
+  if (!response.ok || !data) throw new Error('El almacenamiento persistente no responde.');
   if (data.error) throw new Error('Error del almacenamiento persistente.');
   return data.result;
+}
+
+// Scripts are cached by Redis across application instances. Routine reads send
+// a 40-byte digest; a cache flush reloads the body once without stale access.
+export async function redisEval(script, keyCount, ...args) {
+  const digest = createHash('sha1').update(script).digest('hex');
+  try { return await redisCommand('EVALSHA', digest, keyCount, ...args); }
+  catch (error) {
+    if (error.code !== 'NOSCRIPT') throw error;
+    return redisCommand('EVAL', script, keyCount, ...args);
+  }
 }
 
 export async function cachedData(key, ttlSeconds, loader, options = {}) {
@@ -83,9 +119,9 @@ export async function cachedData(key, ttlSeconds, loader, options = {}) {
         try {
           const stored = await redisCommand('GET', `picks:v2:cache:${key}`);
           if (stored) {
-            const envelope = JSON.parse(stored);
+            const { envelope, bytes } = await decodeCache(stored);
             if (envelope.expires > Date.now()) {
-              memory.set(key, envelope);
+              remember(key, envelope, bytes);
               return envelope.value;
             }
           }
@@ -96,7 +132,7 @@ export async function cachedData(key, ttlSeconds, loader, options = {}) {
         await loadAiFileCache();
         const diskEnvelope = aiFileCacheMap.get(key);
         if (diskEnvelope && diskEnvelope.expires > Date.now()) {
-          memory.set(key, diskEnvelope);
+          remember(key, diskEnvelope, Buffer.byteLength(JSON.stringify(diskEnvelope)));
           return diskEnvelope.value;
         }
       }
@@ -105,10 +141,11 @@ export async function cachedData(key, ttlSeconds, loader, options = {}) {
     const value = await loader();
     const effectiveTtl = (value && value.aiAvailable === false) ? 60 : ttlSeconds;
     const envelope = { value, expires: Date.now() + effectiveTtl * 1000 };
+    const encoded = await encodeCache(envelope);
 
-    if (redisConfigured()) {
+    if (redisConfigured() && encoded.stored !== null) {
       try {
-        await redisCommand('SET', `picks:v2:cache:${key}`, JSON.stringify(envelope), 'EX', effectiveTtl);
+        await redisCommand('SET', `picks:v2:cache:${key}`, encoded.stored, 'EX', effectiveTtl);
       } catch {}
     }
 
@@ -116,8 +153,7 @@ export async function cachedData(key, ttlSeconds, loader, options = {}) {
       await saveAiFileCache(key, envelope);
     }
 
-    if (memory.size >= 250) memory.delete(memory.keys().next().value);
-    memory.set(key, envelope);
+    remember(key, envelope, encoded.bytes);
     return value;
   })();
 
@@ -130,19 +166,35 @@ export async function cachedData(key, ttlSeconds, loader, options = {}) {
 export async function readCachedData(key) {
   const local = memory.get(key);
   if (local?.expires > Date.now()) return structuredClone(local.value);
-  if (redisConfigured()) {
-    try {
-      const stored = await redisCommand('GET', `picks:v2:cache:${key}`);
-      const envelope = stored ? JSON.parse(stored) : null;
-      if (envelope?.expires > Date.now()) { memory.set(key, envelope); return structuredClone(envelope.value); }
-    } catch { /* An unavailable cache does not authorize new AI work. */ }
-  }
-  if (key.startsWith('ai:')) {
-    await loadAiFileCache();
-    const entry = aiFileCacheMap.get(key);
-    if (entry?.expires > Date.now()) return structuredClone(entry.value);
-  }
-  return null;
+  if (absent.get(key) > Date.now()) return null;
+  if (reading.has(key)) return structuredClone(await reading.get(key));
+  const task = (async () => {
+    let confirmedMissing = !redisConfigured();
+    if (redisConfigured()) {
+      try {
+        const stored = await redisCommand('GET', `picks:v2:cache:${key}`);
+        if (stored) {
+          const { envelope, bytes } = await decodeCache(stored);
+          if (envelope.expires > Date.now()) { remember(key, envelope, bytes); return envelope.value; }
+        }
+        confirmedMissing = true;
+      } catch { /* An unavailable cache does not authorize new AI work. */ }
+    }
+    if (key.startsWith('ai:')) {
+      await loadAiFileCache();
+      const entry = aiFileCacheMap.get(key);
+      if (entry?.expires > Date.now()) { remember(key, entry, Buffer.byteLength(JSON.stringify(entry))); return entry.value; }
+    }
+    // Only successful misses, briefly. Authentication never uses this cache.
+    if (confirmedMissing) {
+      if (absent.size >= 500) absent.delete(absent.keys().next().value);
+      absent.set(key, Date.now() + 15000);
+    }
+    return null;
+  })();
+  reading.set(key, task);
+  try { return structuredClone(await task); }
+  finally { reading.delete(key); }
 }
 
 export async function fetchJson(url) {
@@ -153,8 +205,9 @@ export async function fetchJson(url) {
 
 export function clearCachePattern(prefix) {
   for (const key of memory.keys()) {
-    if (key.startsWith(prefix) || key.includes(prefix)) memory.delete(key);
+    if (key.startsWith(prefix) || key.includes(prefix)) forget(key);
   }
+  for (const key of absent.keys()) if (key.startsWith(prefix) || key.includes(prefix)) absent.delete(key);
   if (prefix.includes('ai:') || prefix.startsWith('ai:')) {
     if (prefix === 'ai:' || prefix === 'ai') {
       aiFileCacheMap.clear();

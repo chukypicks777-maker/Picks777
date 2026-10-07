@@ -1,0 +1,3 @@
+
+> proyecto-picks-apuesta@1.1.3 lint
+> oxlint

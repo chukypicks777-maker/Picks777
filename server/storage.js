@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
-import { redisConfigured, redisCommand } from './services/dataCache.js';
+import { redisConfigured, redisCommand, redisEval } from './services/dataCache.js';
 import { CONFIG, ownerGoogleEmail } from './config.js';
 import { entitlement } from './entitlements.js';
 import { SOCIAL_LINKS } from '../src/constants/socials.js';
 import { validateSocialLinks } from './socialSettings.js';
+import { ACCESS_READ_SCRIPT, selectAccess, normalizeAccessRead } from './storageReads.js';
 const KEY = 'picks:v2:access';
 const clean = code => String(code || '').trim().toUpperCase();
 const initial = () => ({ codes: [], users: [], aiConfig: null });
@@ -54,6 +55,12 @@ export class StorageManager {
     }
   }
   async load() { const raw = await this.loadRaw(); return raw ? JSON.parse(raw) : initial(); }
+  async read(kind, query = '', userId = '') {
+    if (!redisConfigured()) return selectAccess(await this.load(), kind, query, userId);
+    const result = JSON.parse(await redisEval(ACCESS_READ_SCRIPT, 1, KEY, kind, query, userId));
+    return normalizeAccessRead(kind, result);
+  }
+  async getSessionAccess(sessionId, userId = '') { return this.read('session', sessionId, userId); }
   async transaction(change) {
     if (redisConfigured()) {
       for (let attempt = 0; attempt < 12; attempt++) {
@@ -77,8 +84,8 @@ export class StorageManager {
     this.queue = operation.catch(() => {});
     return operation;
   }
-  async getCodes() { return (await this.load()).codes.filter(c => !c.deletedAt); }
-  async getCode(code) { return (await this.getCodes()).find(c => c.code === clean(code)); }
+  async getCodes() { return this.read('codes'); }
+  async getCode(code) { return this.read('code', clean(code)); }
   entry(code, durationDays, label) {
     if (!/^[A-Z0-9-]{6,64}$/.test(clean(code))) throw new Error('Usa de 6 a 64 letras, números o guiones.');
     if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 1000) throw new Error('La duración debe ser de 1 a 1000 días.');
@@ -119,7 +126,7 @@ export class StorageManager {
     });
   }
   async revokeCode(code) { return this.transaction(db => { const c = db.codes.find(c => c.code === clean(code)); if (c) { c.revoked = true; c.expiresAt = new Date().toISOString(); } return Boolean(c); }); }
-  async getUsers() { return (await this.load()).users || []; }
+  async getUsers() { return this.read('users'); }
   async deleteUserData(userId) {
     return this.transaction(db => {
       const user = (db.users || []).find(item => item.id === userId);
@@ -139,11 +146,9 @@ export class StorageManager {
       db.revokedSessions[id] = expires;
     });
   }
-  async isSessionRevoked(id) { return Boolean((await this.load()).revokedSessions?.[id]); }
+  async isSessionRevoked(id) { return this.read('revoked', id); }
   async getUser(idOrEmailOrGoogleId) {
-    const users = await this.getUsers();
-    const query = String(idOrEmailOrGoogleId || '').trim().toLowerCase();
-    return users.find(u => u.id === idOrEmailOrGoogleId || u.googleId === idOrEmailOrGoogleId || (u.email && u.email.toLowerCase() === query));
+    return this.read('user', String(idOrEmailOrGoogleId || '').trim());
   }
   async upsertGoogleUser({ googleId, email, name, picture, deviceId }) {
     const cleanEmail = String(email || '').trim().toLowerCase();
@@ -234,7 +239,7 @@ export class StorageManager {
     });
   }
   async getAiConfig() {
-    const data = await this.load();
+    const data = await this.read('ai');
     if (data.aiConfig) {
       const cfg = { ...data.aiConfig };
       if (cfg.provider === 'openrouter') cfg.provider = 'custom';
@@ -264,8 +269,8 @@ export class StorageManager {
     return null;
   }
   async getSocialSettings() {
-    const data = await this.load();
-    return { promoImageVisible: true, ...(data.socialSettings || { links: SOCIAL_LINKS, revision: 0, updatedAt: null }) };
+    const settings = await this.read('social');
+    return { promoImageVisible: true, ...(settings || { links: SOCIAL_LINKS, revision: 0, updatedAt: null }) };
   }
   async updateSocialSettings(links, revision) {
     const validated = validateSocialLinks(links);

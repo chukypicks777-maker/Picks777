@@ -1,0 +1,46 @@
+{
+  "checkedAt": "2026-10-07T05:27:58.586Z",
+  "samples": [
+    {
+      "name": "Football scoreboard: compression",
+      "sourceUrl": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates=20250921&limit=100",
+      "originalBytes": 32189,
+      "compactBytes": 32189,
+      "redisWritePlusReadBeforeBytes": 74094,
+      "redisWritePlusReadAfterBytes": 13058,
+      "reductionPercent": 82.38,
+      "lossless": true
+    },
+    {
+      "name": "Football historical summary: selection and compression",
+      "sourceUrl": "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/summary?event=740644",
+      "originalBytes": 405300,
+      "compactBytes": 2840,
+      "redisWritePlusReadBeforeBytes": 914262,
+      "redisWritePlusReadAfterBytes": 6844,
+      "reductionPercent": 99.25,
+      "lossless": true
+    },
+    {
+      "name": "MLB schedule: normalized fixtures and compression",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=2026-09-20&endDate=2026-10-07&hydrate=linescore",
+      "originalBytes": 556638,
+      "compactBytes": 137702,
+      "redisWritePlusReadBeforeBytes": 1293576,
+      "redisWritePlusReadAfterBytes": 27074,
+      "reductionPercent": 97.91,
+      "lossless": true
+    }
+  ],
+  "sessionFixture": {
+    "accounts": 5,
+    "realUsers": false,
+    "beforeReads": 3,
+    "afterReads": 1,
+    "steadyStateBeforeBytes": 6381,
+    "steadyStateAfterBytes": 554,
+    "reductionPercent": 91.32,
+    "note": "Isolated five-account VIP fixture. First use or SCRIPT FLUSH reloads the Lua body once."
+  },
+  "conclusion": "Measured payload savings on these provider samples and a synthetic five-account fixture, not a monthly traffic forecast. Production Redis is suspended and was not accessed."
+}
