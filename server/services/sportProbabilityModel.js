@@ -42,6 +42,19 @@ function historyScope(match, games) {
   return index.get(key);
 }
 
+// Dynamic K: new players move fast, established ratings settle (FiveThirtyEight
+// tennis form). ESPN 2025-26 walk-forward beat the fixed K = 24.
+export const eloK = matches => 250 / ((matches || 0) + 5) ** 0.4;
+// Logit shrinkage selected on matches before October 2025, checked afterwards:
+// raw Elo favourites were too extreme for players with short ESPN histories.
+export const TENNIS_CALIBRATION = { atp: 0.7, wta: 0.8 };
+export const calibrateTennis = (probability, tour) => {
+  if (!Number.isFinite(probability)) return null;
+  const p = Math.min(0.99, Math.max(0.01, probability)), c = TENNIS_CALIBRATION[tour] ?? 0.75;
+  return 1 / (1 + Math.exp(-c * Math.log(p / (1 - p))));
+};
+export const eloProbability = (home, away) => 1 / (1 + 10 ** ((away - home) / 400));
+
 // Neutral rating is a mathematical prior, not an observed ranking.
 export function relativeResultStrength(match, games = [], now = Date.now()) {
   const cutoff = Math.min(Date.parse(match.kickoff), now), scope = historyScope(match, games);
@@ -59,8 +72,7 @@ export function relativeResultStrength(match, games = [], now = Date.now()) {
     const hr = ratings.get(h) || 1500, ar = ratings.get(a) || 1500;
     const expected = 1 / (1 + 10 ** ((ar - hr) / 400));
     const actual = game.finalScore.home > game.finalScore.away ? 1 : game.finalScore.home < game.finalScore.away ? 0 : 0.5;
-    const adjustment = 24 * (actual - expected);
-    ratings.set(h, hr + adjustment); ratings.set(a, ar - adjustment);
+    ratings.set(h, hr + eloK(samples.get(h)) * (actual - expected)); ratings.set(a, ar - eloK(samples.get(a)) * (actual - expected));
     samples.set(h, (samples.get(h) || 0) + 1); samples.set(a, (samples.get(a) || 0) + 1);
     }
     snapshot = { ratings, samples };
@@ -278,14 +290,29 @@ function setSample(match, games, side, now) {
   return { won, played, matches };
 }
 
-export function tennisAnalysis(match, games = [], now = Date.now()) {
-  const home = setSample(match, games, 'home', now), away = setSample(match, games, 'away', now);
+// Stored ratings only describe fixtures that started after they were built;
+// older results would otherwise be forecast with their own outcome included.
+function ratingSample(match, ratings, side) {
+  const entry = ratings.players[String(match[`${side}Team`]?.id)];
+  return entry ? { rating: entry[0], count: entry[1], won: entry[2], played: entry[3], matches: entry[4] } : { rating: 1500, count: 0, won: 0, played: 0, matches: 0 };
+}
+
+export function tennisAnalysis(match, games = [], now = Date.now(), ratings = null) {
+  const stored = ratings?.tour === match.tour && Date.parse(match.kickoff) >= ratings.asOf ? ratings : null;
+  let home, away, strength;
+  if (stored) {
+    const h = ratingSample(match, stored, 'home'), a = ratingSample(match, stored, 'away');
+    home = h; away = a;
+    strength = { probability: h.count >= 5 && a.count >= 5 ? eloProbability(h.rating, a.rating) : null, sampleSize: { home: h.count, away: a.count } };
+  } else {
+    home = setSample(match, games, 'home', now); away = setSample(match, games, 'away', now);
+    strength = relativeResultStrength(match, games, now);
+  }
   const oddsWinner = marketWinner(match.odds);
-  const strength = relativeResultStrength(match, games, now);
   const ready = strength.probability !== null && home.matches >= 5 && away.matches >= 5 && home.played >= 5 && away.played >= 5;
   let setChance = null;
   const maxSets = match.maxSets === 5 ? 5 : 3;
-  const matchChance = oddsWinner ?? (ready ? strength.probability : null);
+  const matchChance = oddsWinner ?? (ready ? calibrateTennis(strength.probability, match.tour) : null);
   if (matchChance !== null) {
     let low = 0, high = 1;
     for (let i = 0; i < 60; i++) { const mid = (low + high) / 2; if (seriesWinProbability(mid, maxSets) < matchChance) low = mid; else high = mid; }
@@ -299,15 +326,15 @@ export function tennisAnalysis(match, games = [], now = Date.now()) {
     winsSet: { home: yesNo(setChance === null ? null : 1 - (1 - setChance) ** needed), away: yesNo(setChance === null ? null : 1 - setChance ** needed) },
     maxSets, sampleSize: { home: home.matches, away: away.matches }, setSampleSize: { home: home.played, away: away.played },
     probabilitySource: oddsWinner !== null ? 'published-odds' : 'experimental-model',
-    method: (oddsWinner !== null ? 'Ganador implícito en las dos cuotas publicadas, sin margen; probabilidad por set inferida de ese ganador.' : 'Ganador por fuerza relativa tipo Elo con resultados previos del mismo circuito (mínimo 5 partidos y 5 sets verificados por jugador). Inicialización neutral 1500, escala 400 y actualización 24: parámetros matemáticos, no rankings oficiales. Probabilidad por set inferida del ganador.')
+    method: (oddsWinner !== null ? 'Ganador implícito en las dos cuotas publicadas, sin margen; probabilidad por set inferida de ese ganador.' : 'Ganador por fuerza relativa tipo Elo con resultados reales previos del mismo circuito en ESPN (hasta dos años; mínimo 5 partidos y 5 sets verificados por jugador). Actualización dinámica según partidos jugados y calibración que modera los favoritos; parámetros elegidos con resultados anteriores a octubre de 2025 y comprobados después. No son rankings oficiales. Probabilidad por set inferida del ganador.')
       + ` Partido al mejor de ${maxSets} sets. Los sets se suponen independientes y con la misma probabilidad: primer y segundo set comparten estimación. Gana un set significa al menos uno; se supone que el partido se completa.`,
     notice: setChance !== null ? 'Estimaciones previas al partido; no incorporan cambios durante el encuentro. Precisión predictiva sin validación prospectiva.' : 'Faltan cuotas completas o al menos 5 partidos y 5 sets verificados por jugador.'
   };
 }
 
-export function analyzeSportMatch(match, games = [], now = Date.now()) {
+export function analyzeSportMatch(match, games = [], now = Date.now(), { tennisRatings = null } = {}) {
   const model = match.sport === 'beisbol' ? baseballAnalysis : match.sport === 'tenis' ? tennisAnalysis : basketballAnalysis;
-  const analysis = model(match, games, now);
+  const analysis = model(match, games, now, match.sport === 'tenis' ? tennisRatings?.[match.tour] : undefined);
   if (!['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status)) return model({ ...match, odds: {}, kickoff: 'invalid' }, [], now);
   return analysis;
 }

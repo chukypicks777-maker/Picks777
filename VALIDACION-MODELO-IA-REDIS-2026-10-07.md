@@ -125,3 +125,18 @@ Rendimiento percibido:
 - Córners y tarjetas no se pudieron comparar con cuotas de casas (ESPN no las publica); su validación es contra resultados reales.
 - La calibración por tramos del pick se midió en cinco ligas europeas; en Liga MX y MLS se comprobó la mejora relativa, con muestras más pequeñas.
 - Tras desplegar, hay que reactivar la base de Upstash (si sigue suspendida) y vigilar su consumo durante unos días.
+
+## 9. Tenis (actualización)
+
+ESPN no publica cuotas de tenis (0 de 385 partidos revisados, tampoco en su API interna). Sin cuotas, el ganador sale del modelo propio, y una casa puede diferir varios puntos: las casas usan resultados de Challenger, lesiones y superficie que ESPN no entrega.
+
+Mejora del modelo con resultados reales de ESPN (`scripts/backtest/experiment-tennis.mjs`; parámetros elegidos antes de octubre de 2025 y medidos después):
+
+| Circuito | Partidos | Acierto antes → ahora | Log-loss antes → ahora |
+|---|---:|---|---|
+| ATP | 3 202 | 61,6 % → 63,9 % | 0,646 → 0,632 |
+| WTA | 5 358 | 60,2 % → 63,9 % | 0,654 → 0,628 |
+
+Cambios: Elo de dos años con actualización dinámica y calibración que modera favoritos extremos. Se guarda un rating compacto por jugador (pocos KB), renovado cada 6 horas en segundo plano; la app ya no descarga 20-25 MB de historial al abrir partidos de tenis.
+
+**Cuotas reales opcionales (The Odds API).** Para mostrar el momio y la probabilidad sin margen de una casa real en tenis, crear una clave gratuita en https://the-odds-api.com y añadirla en Vercel como variable `ODDS_API_KEY` (Production), luego volver a desplegar. Sin clave no se hace ninguna consulta. Se prefiere Pinnacle; si no cotiza, otra casa con ambos jugadores. Solo se asigna una cuota cuando ambos nombres y la fecha identifican un único evento. El plan gratuito tiene 500 créditos al mes: la app refresca cada 6 horas (`ODDS_API_REFRESH_MINUTES` permite otro intervalo, entre 30 y 1440) y deja de consultar si quedan menos de 5 créditos.

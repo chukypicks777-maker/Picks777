@@ -76,8 +76,9 @@ function replay(match, games, now) {
   for (const game of previous) {
     const h = game.homeTeam.id, a = game.awayTeam.id;
     const hr = ratings.get(h) || 1500, ar = ratings.get(a) || 1500;
-    const adjustment = 24 * ((game.finalScore.home > game.finalScore.away ? 1 : game.finalScore.home < game.finalScore.away ? 0 : 0.5) - 1 / (1 + 10 ** ((ar - hr) / 400)));
-    ratings.set(h, hr + adjustment); ratings.set(a, ar - adjustment);
+    // Dynamic K (250 / (matches + 5)^0.4), as validated on ESPN results.
+    const surprise = (game.finalScore.home > game.finalScore.away ? 1 : game.finalScore.home < game.finalScore.away ? 0 : 0.5) - 1 / (1 + 10 ** ((ar - hr) / 400));
+    ratings.set(h, hr + 250 / ((samples.get(h) || 0) + 5) ** 0.4 * surprise); ratings.set(a, ar - 250 / ((samples.get(a) || 0) + 5) ** 0.4 * surprise);
     samples.set(h, (samples.get(h) || 0) + 1); samples.set(a, (samples.get(a) || 0) + 1);
   }
   const sampleSize = { home: samples.get(match.homeTeam.id) || 0, away: samples.get(match.awayTeam.id) || 0 };
