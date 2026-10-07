@@ -18,7 +18,7 @@ test('an isolated winner price does not manufacture a winner distribution', () =
   assert.equal(model.probabilities.awayWin, null);
 });
 test('stopped or unknown matches cannot produce actionable banker picks', () => {
-  for (const status of ['SUSPENDED', 'POSTPONED', 'CANCELLED', 'ABANDONED', 'DELAYED', 'UNKNOWN']) {
+  for (const status of ['LIVE', 'FINISHED', 'SUSPENDED', 'POSTPONED', 'CANCELLED', 'ABANDONED', 'DELAYED', 'UNKNOWN']) {
     assert.equal(buildPick({ status, probabilities: { homeWin: 60, draw: 25, awayWin: 15 } }), null);
   }
 });

@@ -3,6 +3,7 @@ import React from 'react';
 import { isStoreApp } from '../auth/platform.js';
 import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles, Lock, Crown, RotateCw } from 'lucide-react';
 import { formatOdds, marketQuote } from '../utils/oddsFormatter';
+import { footballProbabilityLabel } from '../utils/marketProbability.js';
 import { formatMatchSchedule } from '../utils/matchSchedule.js';
 import { sounds } from '../utils/audioEffects';
 import { isSameMatch } from '../utils/parlayTicket.js';
@@ -59,6 +60,7 @@ function MatchCard({
 
   // Derivación matemática Poisson cuando existen estadísticas de temporada (mínimo 5 partidos)
   const seasonPoisson = (() => {
+    if (match.goalMarketsConflict) return null;
     if (Number.isFinite(homeGP) && homeGP >= 5 && Number.isFinite(awayGP) && awayGP >= 5 &&
         Number.isFinite(home.goalsFor) && home.goalsFor >= 0 && Number.isFinite(home.goalsAgainst) && home.goalsAgainst >= 0 &&
         Number.isFinite(away.goalsFor) && away.goalsFor >= 0 && Number.isFinite(away.goalsAgainst) && away.goalsAgainst >= 0) {
@@ -106,7 +108,7 @@ function MatchCard({
   const isLegInParlay = Boolean(parlayLegs?.some(
     l => isSameMatch(l.matchId, match.id) && l.selection === activePick?.selection
   ));
-  const winnerQuotes = { home: marketQuote(match.odds?.homeWin, homeProb), draw: marketQuote(match.odds?.draw, drawProb), away: marketQuote(match.odds?.awayWin, awayProb) };
+  const winnerQuotes = { home: marketQuote(match.odds?.homeWin, null), draw: marketQuote(match.odds?.draw, null), away: marketQuote(match.odds?.awayWin, null) };
 
   return (
     <TiltCard
@@ -303,6 +305,7 @@ function MatchCard({
 
           {/* Win Probabilities Bar (1 X 2) con Cuotas de Mercado */}
           <div className="mb-3">
+            <p className="text-[9px] text-sky-300 mb-1">1X2 · {footballProbabilityLabel(match)}</p>
             <div className="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
               <span>
                 1: <strong><NumberCounter value={homeProb} suffix="%" /></strong>
@@ -385,8 +388,8 @@ function MatchCard({
                   <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
                   <span>{displayProb == null ? 'N/D' : `${displayProb}% Prob. estimada`}</span>
                   {bankerPick?.probability != null && (
-                    <span className="text-slate-400 font-normal ml-0.5" title="Probabilidad matemática Poisson">
-                      ({bankerPick.probability}% Poisson)
+                    <span className="text-slate-400 font-normal ml-0.5" title={footballProbabilityLabel(match, bankerPick.key)}>
+                      ({bankerPick.probability}% estimado)
                     </span>
                   )}
                 </span>
@@ -405,11 +408,12 @@ function MatchCard({
               </span>
             </div>
 
+            <p className="mt-1 text-[9px] text-slate-400 leading-snug">{footballProbabilityLabel(match, activePick?.key)}</p>
             {/* If analyzed and bankerPick exists with a different selection or complementary math info, show Banker Math Base */}
             {analyzed && bankerPick && bankerPick.selection && bankerPick.selection !== displayPick && (
               <div className="mt-1.5 pt-1.5 border-t border-white/5 flex items-center justify-between text-[10px] font-mono">
                 <span className="text-slate-400 flex items-center space-x-1 truncate">
-                  <span className="text-sky-400 font-bold">Base Poisson:</span>
+                  <span className="text-sky-400 font-bold">Base cuantitativa:</span>
                   <span className="text-slate-300 truncate">{bankerPick.selection}</span>
                 </span>
                 <span className="text-sky-300 font-bold shrink-0 ml-1">

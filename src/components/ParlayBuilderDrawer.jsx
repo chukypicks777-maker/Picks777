@@ -37,6 +37,7 @@ export default function ParlayBuilderDrawer({
   try { calculation = calculateParlay(legs, stake); }
   catch (error) { calculationError = error.message; }
   const { totalDecimalOdds, potentialPayout, netProfit } = calculation || {};
+  const theoretical = legs.some(leg => leg.oddsKind === 'theoretical');
 
   const startNewTicket = () => {
     onClearAll();
@@ -51,7 +52,7 @@ export default function ParlayBuilderDrawer({
     sounds.playClick();
     const summary = `🏆 DEPORTEPICKS PRO — TICKET DE PARLAY 🏆\n\n` +
       legs.map((l, i) => `${i + 1}. [${l.league}] ${l.matchTitle}\n   👉 Selección: ${l.selection} @ ${formatOdds(l.odds, oddsFormat)}${l.oddsLabel ? ` · ${l.oddsLabel}` : ''}${l.probability != null ? ` (${Math.round(l.probability)}% prob)` : ''}`).join('\n\n') +
-      `\n\n📊 Cuota Total: ${formatOdds(totalDecimalOdds, oddsFormat)}\n💰 Monto: ${formatCurrency(stake, currency)}\n💵 Retorno: ${formatCurrency(potentialPayout, currency)}\n⚠️ Todos los eventos deben cumplirse.`;
+      `\n\n📊 Cuota Total: ${formatOdds(totalDecimalOdds, oddsFormat)}\n💰 Monto: ${formatCurrency(stake, currency)}\n💵 Retorno hipotético: ${formatCurrency(potentialPayout, currency)}\n${theoretical ? 'Incluye precios teóricos del modelo; no son ofertas de una casa.\n' : ''}⚠️ Todos los eventos deben cumplirse. Es una simulación, no una apuesta colocada.`;
 
     setCopyError('');
     try {
@@ -127,6 +128,7 @@ export default function ParlayBuilderDrawer({
             </div>
 
             {/* Legs List */}
+            {theoretical && <p className="text-[11px] text-amber-300 mb-3">Incluye precios teóricos del modelo. El retorno es una simulación; estas cuotas no son ofertas de una casa de apuestas.</p>}
             {legs.length === 0 ? (
               <div className="text-center py-6 border border-dashed border-white/10 rounded-xl bg-[#0b0f17]">
                 <Layers className="w-6 h-6 text-slate-600 mx-auto mb-1.5" />

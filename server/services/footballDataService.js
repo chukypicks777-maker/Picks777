@@ -1,6 +1,6 @@
 import { enrichHistoricalStats } from './verifiedStats.js';
 import { cachedData, fetchJson } from './dataCache.js';
-import { poissonModel, deriveCalibratedPoissonModel, buildPick } from './probabilityModel.js';
+import { applyFootballForecast } from './probabilityModel.js';
 import { hasReportedStatistics } from './espnParsing.js';
 
 export const LEAGUES = [
@@ -32,6 +32,21 @@ const form = value => typeof value === 'string' ? [...value].filter(v => ['W', '
 export function americanToDecimal(value) {
   const n = numberOrNull(value);
   return n && Math.abs(n) >= 100 ? (n > 0 ? 1 + n / 100 : 1 + 100 / Math.abs(n)) : null;
+}
+
+export function parseFootballOdds(snapshot) {
+  const odds = { homeWin: null, draw: null, awayWin: null, over25: null, under25: null, bttsYes: null, bttsNo: null, over95Corners: null };
+  const modern = ['home', 'draw', 'away'].some(side => snapshot?.moneyline?.[side]?.close != null);
+  for (const [key, side] of [['homeWin', 'home'], ['draw', 'draw'], ['awayWin', 'away']]) {
+    odds[key] = americanToDecimal(modern ? snapshot?.moneyline?.[side]?.close?.odds
+      : side === 'draw' ? snapshot?.drawOdds?.moneyLine : snapshot?.[`${side}TeamOdds`]?.moneyLine);
+  }
+  const totals = ['over', 'under'].map(side => snapshot?.total?.[side]?.close);
+  if (totals[0]?.line === 'o2.5' && totals[1]?.line === 'u2.5') {
+    odds.over25 = americanToDecimal(totals[0].odds);
+    odds.under25 = americanToDecimal(totals[1].odds);
+  }
+  return odds;
 }
 
 function flattenStandings(node, group = '') {
@@ -82,14 +97,7 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
     };
   };
   const oddsData = comp.odds?.[0];
-  const odds = { homeWin: null, draw: null, awayWin: null, over25: null, under25: null, bttsYes: null, bttsNo: null, over95Corners: null };
-  for (const [key, side] of [['homeWin', 'home'], ['draw', 'draw'], ['awayWin', 'away']]) {
-    odds[key] = americanToDecimal(oddsData?.moneyline?.[side]?.close?.odds ?? oddsData?.[`${side}TeamOdds`]?.moneyLine ?? (side === 'draw' ? oddsData?.drawOdds?.moneyLine : null));
-  }
-  for (const side of ['over', 'under']) {
-    const total = oddsData?.total?.[side]?.close;
-    if (total?.line === `${side === 'over' ? 'o' : 'u'}2.5`) odds[`${side}25`] = americanToDecimal(total.odds);
-  }
+  const odds = parseFootballOdds(oddsData);
   const match = {
     id: `espn-${league.sport === 'femenil' ? 'femenil-' : ''}${event.id}`, sport: league.sport || 'futbol', espnEventId: String(event.id), espnCode: league.espnCode,
     homeTeamId: String(hc.team.id), awayTeamId: String(ac.team.id),
@@ -103,38 +111,10 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
     source: 'ESPN', sourceUrl: `https://www.espn.com/soccer/match/_/gameId/${event.id}`,
     fetchedAt, providerUpdatedAt: null, h2h: [], recentMatches: [], realBoxscore: null
   };
-  match.model = status === 'SCHEDULED' ? poissonModel(match.homeTeam, match.awayTeam) : null;
-  if (match.model) {
-    match.probabilities = match.model.probabilities;
-    match.probabilities.predictedScore = match.model.predictedScore;
-  } else if (status === 'SCHEDULED') {
-    const invH = odds.homeWin ? 1 / odds.homeWin : 0;
-    const invD = odds.draw ? 1 / odds.draw : 0;
-    const invA = odds.awayWin ? 1 / odds.awayWin : 0;
-    const tot = invH > 0 && invD > 0 && invA > 0 ? invH + invD + invA : 0;
-    const over25P = odds.over25 && odds.under25 ? ((1 / odds.over25) / (1 / odds.over25 + 1 / odds.under25)) * 100 : null;
-    const rawProbs = {
-      homeWin: tot > 0 ? (invH / tot) * 100 : null,
-      draw: tot > 0 ? (invD / tot) * 100 : null,
-      awayWin: tot > 0 ? (invA / tot) * 100 : null,
-      over25: over25P,
-      under25: over25P != null ? 100 - over25P : null,
-      bttsYes: null,
-      bttsNo: null
-    };
-    const calibrated = deriveCalibratedPoissonModel(rawProbs, match.homeTeam, match.awayTeam, odds);
-    if (calibrated) {
-      match.model = calibrated;
-      match.probabilities = calibrated.probabilities;
-      match.probabilities.predictedScore = calibrated.predictedScore;
-    } else {
-      match.probabilities = rawProbs;
-    }
-  } else {
-    match.probabilities = {};
-  }
-  match.aiPick = buildPick(match);
-  return match;
+  match.model = null;
+  match.probabilities = {};
+  match.aiPick = null;
+  return applyFootballForecast(match);
 }
 
 function getScoreboardDates() {
@@ -278,18 +258,7 @@ export function parseSummaryDetails(data, match) {
 export async function enrichMatchWithRealData(match, options = {}) {
   const forceRefresh = Boolean(options?.forceRefresh);
   match = await enrichHistoricalStats(match, { forceRefresh });
-  if ((!match.model || forceRefresh) && match.status !== 'POSTPONED' && match.status !== 'CANCELLED') {
-    let computed = poissonModel(match.homeTeam, match.awayTeam);
-    if (!computed && (match.probabilities?.over25 || match.odds?.over25 || (match.odds?.homeWin && match.odds?.awayWin) || (match.homeTeam?.gamesPlayed > 0 && match.awayTeam?.gamesPlayed > 0))) {
-      computed = deriveCalibratedPoissonModel(match.probabilities, match.homeTeam, match.awayTeam, match.odds);
-    }
-    if (computed) {
-      match.model = computed;
-      match.probabilities = computed.probabilities;
-      match.probabilities.predictedScore = computed.predictedScore;
-      match.aiPick = buildPick(match);
-    }
-  }
+  match = applyFootballForecast(match);
   try {
     const details = await cachedData(`summary:v2:${match.id}:${match.status}`, match.status === 'LIVE' ? 60 : 600, async () => {
       const url = `${BASE}/${match.espnCode}/summary?event=${match.espnEventId}`;
@@ -332,21 +301,7 @@ export async function enrichMatchWithRealData(match, options = {}) {
 
     let updatedOdds = match.odds;
     const compOdds = headerComp?.odds?.[0];
-    if (compOdds) {
-      const odds = { ...(match.odds || {}) };
-      for (const [key, side] of [['homeWin', 'home'], ['draw', 'draw'], ['awayWin', 'away']]) {
-        const val = americanToDecimal(compOdds.moneyline?.[side]?.close?.odds ?? compOdds[`${side}TeamOdds`]?.moneyLine ?? (side === 'draw' ? compOdds.drawOdds?.moneyLine : null));
-        if (val) odds[key] = val;
-      }
-      for (const side of ['over', 'under']) {
-        const total = compOdds.total?.[side]?.close;
-        if (total?.line === `${side === 'over' ? 'o' : 'u'}2.5`) {
-          const val = americanToDecimal(total.odds);
-          if (val) odds[`${side}25`] = val;
-        }
-      }
-      updatedOdds = odds;
-    }
+    if (compOdds) updatedOdds = parseFootballOdds(compOdds);
 
     const deriveClean = events => {
       if (!Array.isArray(events) || events.length === 0) return null;
@@ -371,6 +326,8 @@ export async function enrichMatchWithRealData(match, options = {}) {
     const enriched = {
       ...match,
       odds: updatedOdds,
+      oddsProvider: compOdds ? compOdds.provider?.name || null : match.oddsProvider,
+      oddsFetchedAt: compOdds ? details.fetchedAt : match.oddsFetchedAt,
       homeTeam: { ...match.homeTeam, cleanSheetRate: homeClean },
       awayTeam: { ...match.awayTeam, cleanSheetRate: awayClean },
       status: updatedStatus,
@@ -384,19 +341,7 @@ export async function enrichMatchWithRealData(match, options = {}) {
       detailsSourceUrl: details.sourceUrl,
       detailsAvailable: true
     };
-    if ((forceRefresh || !enriched.model) && updatedStatus !== 'POSTPONED' && updatedStatus !== 'CANCELLED') {
-      let computed = poissonModel(enriched.homeTeam, enriched.awayTeam);
-      if (!computed && (enriched.probabilities?.over25 || enriched.odds?.over25 || (enriched.odds?.homeWin && enriched.odds?.awayWin))) {
-        computed = deriveCalibratedPoissonModel(enriched.probabilities, enriched.homeTeam, enriched.awayTeam, enriched.odds);
-      }
-      if (computed) {
-        enriched.model = computed;
-        enriched.probabilities = computed.probabilities;
-        enriched.probabilities.predictedScore = computed.predictedScore;
-      }
-    }
-    enriched.aiPick = buildPick(enriched);
-    return enriched;
+    return applyFootballForecast(enriched);
   } catch {
     return { ...match, detailsAvailable: false, detailsError: 'El proveedor no entrega detalles en este momento.' };
   }

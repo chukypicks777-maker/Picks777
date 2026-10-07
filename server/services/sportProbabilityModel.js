@@ -1,5 +1,6 @@
 import { roundDistribution, totalLines, validNumber, poissonProbability } from '../../src/utils/probability.js';
 import { countForecast, countLines, combinedCount, countResult } from './baseballCountModel.js';
+import { noVigMarket } from '../../src/utils/marketProbability.js';
 
 import { SPORT_MODEL_VERSION } from '../../src/utils/sportModelVersion.js';
 export { SPORT_MODEL_VERSION };
@@ -138,10 +139,14 @@ export function baseballAnalysis(match, games = [], now = Date.now()) {
   const homeRate = full.home?.mean ?? null, awayRate = full.away?.mean ?? null;
   const regulation = countResult(full.home, full.away);
   const decisive = regulation.home != null ? regulation.home + regulation.away : 0;
+  const threeWay = match.allowsDraw ? noVigMarket(match.odds, ['homeWin', 'draw', 'awayWin']) : null;
   const oddsWinner = match.allowsDraw ? null : marketWinner(match.odds);
   // A tie in the scoring distribution is not a tie after extra innings.
-  const drawChance = ready && match.allowsDraw ? ([...home, ...away].filter(game => game.own === game.against).length + 1) / (home.length + away.length + 3) : 0;
-  const winner = oddsWinner !== null ? pair(oddsWinner) : decisive > 0 ? (match.allowsDraw
+  const drawGames = [...new Map([...home, ...away].map(game => [game.id, game])).values()];
+  const drawCount = drawGames.filter(game => game.own === game.against).length;
+  const drawChance = ready && match.allowsDraw ? (drawCount + 0.5) / (drawGames.length + 1) : 0;
+  const winner = threeWay ? roundDistribution({ home: threeWay.probabilities.homeWin, draw: threeWay.probabilities.draw, away: threeWay.probabilities.awayWin }, 1)
+    : oddsWinner !== null ? pair(oddsWinner) : decisive > 0 ? (match.allowsDraw
     ? roundDistribution({ home: regulation.home / decisive * (1 - drawChance) * 100, draw: drawChance * 100, away: regulation.away / decisive * (1 - drawChance) * 100 }, 1)
     : pair(regulation.home / decisive)) : (match.allowsDraw ? { home: null, draw: null, away: null } : pair(null));
   const periodSample = (sample, count) => sample.flatMap(game => {
@@ -165,7 +170,9 @@ export function baseballAnalysis(match, games = [], now = Date.now()) {
   return {
     kind: 'baseball', available: winner.home !== null, winner, form: { home: recentForm(home), away: recentForm(away) },
     modelVersion: SPORT_MODEL_VERSION,
-    probabilitySource: oddsWinner !== null ? 'published-odds' : 'experimental-model',
+    probabilitySource: threeWay || oddsWinner !== null ? 'published-odds' : 'experimental-model',
+    winnerMarket: match.allowsDraw ? 'three-way' : 'two-way',
+    drawSampleSize: match.allowsDraw ? { uniqueGames: drawGames.length, draws: drawCount } : null,
     expectedRuns: { home: homeRate, away: awayRate },
     scoresRun: { home: yesNo(full.home ? 1 - full.home.mass[0] : null), away: yesNo(full.away ? 1 - full.away.mass[0] : null) },
     teamRuns: { home: countLines(full.home, RUN_LINES), away: countLines(full.away, RUN_LINES) },
@@ -180,7 +187,7 @@ export function baseballAnalysis(match, games = [], now = Date.now()) {
     inningSampleSize: { first: first.sampleSize, five: five.sampleSize },
     records: { home: home.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })), away: away.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })) },
     method: 'Carreras: binomial negativa con medias anotadas y recibidas de los últimos 20 resultados completos, mínimo 5 por equipo. Conserva la variación observada (como mínimo la de Poisson) y añade incertidumbre por estimar medias con muestras finitas. Totales combinados por convolución de ambos equipos bajo independencia; incluye extra innings de los resultados completos. Primer inning y primeros cinco innings usan solo carreras verificadas de esos periodos. Una muestra de ceros indica N/D, no un Under de 100%. Los totales históricos se calculan por separado del ganador de mercado, sin alterar carreras para imitar Elo. ¿Habrá extra innings?: frecuencia de encuentros de la misma duración reglamentaria, mínimo 5 por equipo, sin duplicados, con suavizado de Jeffreys (0.5 añadido al numerador y 1 al denominador). Sin metadata comprobable, N/D. No incorpora lanzadores ni alineaciones.'
-      + (oddsWinner !== null ? ' Ganador: probabilidad implícita en ambas cuotas publicadas de la misma casa, normalizada para retirar el margen.' : match.allowsDraw ? ' Ganador histórico: distribución de carreras condicionada a resultado decisivo; empate final por frecuencia suavizada.' : ' Ganador histórico: distribución de carreras condicionada a resultado decisivo; no simula extra innings.'),
+      + (threeWay || oddsWinner !== null ? ' Ganador: mercado completo de la misma casa, normalizado para retirar el margen.' : match.allowsDraw ? ' Ganador histórico de tres resultados: distribución de carreras condicionada a resultado decisivo; empate final por frecuencia de partidos únicos, con suavizado de Jeffreys (0.5 añadido al numerador y 1 al denominador). No equivale a moneyline de dos resultados.' : ' Ganador histórico: distribución de carreras condicionada a resultado decisivo; no simula extra innings.'),
     notice: ready ? 'Probabilidades estimadas antes del partido; no se recalculan según el marcador en vivo.' : 'Faltan al menos 5 partidos finalizados por equipo con carreras verificadas.'
   };
 }

@@ -18,7 +18,8 @@ export function normalizeParlayLeg(raw) {
   const probability = raw?.probability == null ? null : Number(raw.probability);
   if (!matchId || !selection || !Number.isFinite(odds) || odds <= 1 || odds > 1000 ||
       (probability != null && (!Number.isFinite(probability) || probability < 0 || probability > 100))) return null;
-  return { ...raw, matchId, selection, odds, probability };
+  const oddsKind = raw.oddsKind || (raw.odds == null ? 'theoretical' : 'published');
+  return { ...raw, matchId, selection, odds, probability, oddsKind };
 }
 
 export const EMPTY_PARLAY = { legs: [], notice: '' };

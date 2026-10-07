@@ -296,8 +296,8 @@ test('MatchCard preserves quantitative statistics, banker picks, and defines mod
 
   // Banker Poisson base must be displayed when complementary to AI verdict
   assert.ok(
-    cardContent.includes('Base Poisson:'),
-    'MatchCard must display Base Poisson comparison when bankerPick differs from AI pick'
+    cardContent.includes('Base cuantitativa:'),
+    'MatchCard must display the quantitative comparison when bankerPick differs from AI pick'
   );
   assert.ok(
     cardContent.includes('Base estadística:'),

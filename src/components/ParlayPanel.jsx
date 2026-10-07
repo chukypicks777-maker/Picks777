@@ -15,6 +15,7 @@ export default function ParlayPanel({ onClose, legs, onRemoveLeg, onClearAll, on
   try { calculation = calculateParlay(legs, stake === '' ? NaN : Number(stake)); }
   catch (e) { error = e.message; }
   const outdated = legs.some(l => !Number.isFinite(Date.parse(l.oddsFetchedAt)) || now - Date.parse(l.oddsFetchedAt) >= 120000);
+  const theoretical = legs.some(leg => leg.oddsKind === 'theoretical');
   async function copy() {
     try {
       await navigator.clipboard.writeText(legs.map(l => `${l.matchTitle}: ${l.selection} (${formatOdds(l.odds, oddsFormat)})`).join('\n') + `\nRetorno hipotético: ${formatCurrency(calculation.potentialPayout, currency)}\nCuotas informativas. No es una apuesta colocada ni una garantía.`);
@@ -28,6 +29,7 @@ export default function ParlayPanel({ onClose, legs, onRemoveLeg, onClearAll, on
   }
   return <Modal title="Simulador de combinadas" onClose={onClose}>
     <p className="notice mb-5">No hay una combinada segura. Si una selección pierde, puedes perder todo el importe. Las cuotas se multiplican suponiendo independencia entre partidos.</p>
+    {theoretical && <p className="notice mb-4">Incluye precios teóricos del modelo. El retorno es una simulación y no corresponde a una oferta de una casa de apuestas.</p>}
     <button className="control mb-5" disabled={loading} onClick={loadDaily}>{loading ? 'Consultando…' : 'Consultar selecciones del modelo'}</button>
     <div className="space-y-3">{legs.map(leg => <article className="metric" key={leg.matchId}><div className="flex justify-between items-start gap-4"><div><h3 className="font-semibold">{leg.matchTitle}</h3><p className="text-sky-200 my-2">{leg.selection} · {formatOdds(leg.odds, oddsFormat)}</p><p className="text-xs text-slate-500">Consulta de cuota: {dateTime(leg.oddsFetchedAt)}</p></div><button className="control" aria-label={`Quitar ${leg.selection}`} onClick={() => onRemoveLeg(leg)}>Quitar</button></div></article>)}</div>
     {!legs.length && <p className="metric text-slate-400">Añade una selección desde un partido con cuota publicada.</p>}

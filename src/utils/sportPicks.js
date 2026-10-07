@@ -8,7 +8,9 @@ export function sportWinnerPick(match) {
   const side = winner.home >= winner.away ? 'home' : 'away';
   const team = match[`${side}Team`];
   if (!team?.id || !team.name) return null;
-  const quote = marketQuote(match.odds?.[`${side}Win`], winner[side]);
+  // A two-way price cannot be attached to an unconditional three-way forecast.
+  const compatible = !match.allowsDraw || Number(match.odds?.draw) > 1;
+  const quote = marketQuote(compatible ? match.odds?.[`${side}Win`] : null, winner[side]);
   return { side, teamId: team.id, teamName: team.name, selection: `${team.name} gana`, market: 'Ganador', probability: winner[side], odds: quote.odds, oddsKind: quote.kind, oddsLabel: quote.label };
 }
 

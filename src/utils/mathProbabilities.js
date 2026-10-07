@@ -1,5 +1,6 @@
 import { validNumber, parseNumeric, percent, complement, totalLines, poissonProbability, poissonCumulative } from './probability.js';
 import { parseDecimalOdds } from './oddsFormatter.js';
+import { footballProbabilityLabel, footballProbabilitySource } from './marketProbability.js';
 export { poissonProbability, poissonCumulative };
 const probabilityValue = value => { const n = parseNumeric(value); return n !== null && n >= 0 && n <= 100 ? n : null; };
 export function calculateCornerProbabilities(avgCorners) {
@@ -85,7 +86,7 @@ export function calculateDifferential(home, away, match = {}) {
   };
 }
 export function getTop3Opportunities(match) {
-  if (!match || ['POSTPONED', 'CANCELLED', 'SUSPENDED', 'ABANDONED', 'DELAYED', 'UNKNOWN'].includes(match.status)) return [];
+  if (!match || ['LIVE', 'FINISHED', 'POSTPONED', 'CANCELLED', 'SUSPENDED', 'ABANDONED', 'DELAYED', 'UNKNOWN'].includes(match.status)) return [];
   const p = { ...(match.model?.probabilities || match.probabilities || {}) };
 
   const parseOddsNum = val => {
@@ -126,7 +127,9 @@ export function getTop3Opportunities(match) {
     candidates.push({ key, selection, market, category, probability: rounded, safetyScore: rounded,
       odds,
       estimatedOdds,
-      rationale: `Probabilidad estimada de ${rounded}% para ${selection.toLowerCase()}. ${match.model ? 'Modelo Poisson sobre goles registrados.' : 'Probabilidad implícita en las cuotas publicadas.'}`,
+      probabilitySource: footballProbabilitySource(match, key.startsWith('dc') ? 'homeWin' : key),
+      oddsKind: odds != null ? 'published' : 'theoretical',
+      rationale: `Probabilidad estimada de ${rounded}% para ${selection.toLowerCase()}. ${footballProbabilityLabel(match, key.startsWith('dc') ? 'homeWin' : key)}.`,
       matchId: match.id, matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visitante'}`, league: match.leagueName });
   };
   const home = match.homeTeam?.shortName || match.homeTeam?.name || 'Local', away = match.awayTeam?.shortName || match.awayTeam?.name || 'Visitante';
@@ -161,7 +164,9 @@ export function getTop3Opportunities(match) {
       const rawOdds = parseOddsNum(match.aiPick.odds);
       const estOdds = parseOddsNum(match.aiPick.estimatedOdds) || Number(Math.max(1.01, 100 / prob).toFixed(2));
       const aiCandidate = {
-        key: 'aiPick',
+        key: match.aiPick.key || 'aiPick',
+        probabilitySource: match.aiPick.probabilitySource,
+        oddsKind: rawOdds ? 'published' : 'theoretical',
         selection: match.aiPick.selection,
         market: match.aiPick.market || 'Pronóstico IA',
         category: 'ai',
@@ -194,6 +199,7 @@ export function getTop3Opportunities(match) {
   return selected;
 }
 export function deriveSeasonPoisson(match) {
+  if (match?.goalMarketsConflict) return null;
   if (!match) return null;
   const home = match.homeTeam || {};
   const away = match.awayTeam || {};
@@ -230,7 +236,7 @@ export function deriveSeasonPoisson(match) {
 }
 
 export function getContextualPick(match, marketFilter = 'all') {
-  if (!match || ['POSTPONED', 'CANCELLED', 'SUSPENDED', 'ABANDONED', 'DELAYED', 'UNKNOWN'].includes(match.status)) return null;
+  if (!match || ['LIVE', 'FINISHED', 'POSTPONED', 'CANCELLED', 'SUSPENDED', 'ABANDONED', 'DELAYED', 'UNKNOWN'].includes(match.status)) return null;
 
   const parseOddsNum = val => {
     const n = parseDecimalOdds(val);
@@ -264,7 +270,7 @@ export function getContextualPick(match, marketFilter = 'all') {
     }
   }
 
-  const buildCandidate = (key, selection, market, category, rawProb, rawOdds, defaultRationale) => {
+  const buildCandidate = (key, selection, market, category, rawProb, rawOdds) => {
     const prob = percent(rawProb);
     if (prob === null || prob <= 0) return null;
     const odds = parseOddsNum(rawOdds);
@@ -278,7 +284,9 @@ export function getContextualPick(match, marketFilter = 'all') {
       safetyScore: prob,
       odds,
       estimatedOdds,
-      rationale: defaultRationale || `Probabilidad estimada de ${prob}% para ${selection.toLowerCase()}.`,
+      probabilitySource: footballProbabilitySource(match, key),
+      oddsKind: odds != null ? 'published' : 'theoretical',
+      rationale: `Probabilidad estimada de ${prob}% para ${selection.toLowerCase()}. ${footballProbabilityLabel(match, key)}.`,
       matchId: match.id,
       matchTitle,
       league: match.leagueName
@@ -355,6 +363,7 @@ export function solvePoissonLambdaFromUnder25(probUnder25Decimal) {
 }
 
 export function fillPoissonGoalLadder(probabilities = {}, odds = {}) {
+  if (probabilities.goalMarketsConflict) return probabilities;
   const p = { ...probabilities };
   let prob25 = probabilityValue(p.over25);
   if (prob25 === null && odds?.over25 && odds?.under25) {
@@ -400,6 +409,7 @@ export function fillPoissonGoalLadder(probabilities = {}, odds = {}) {
 }
 
 export function derivePoissonScoreFromMatch(match) {
+  if (match?.goalMarketsConflict) return 'N/D';
   if (!match) return null;
   const p = match.model?.probabilities || match.probabilities || match.aiReport?.probabilities || {};
   let prob25 = probabilityValue(p.over25);

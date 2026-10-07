@@ -21,6 +21,7 @@ async function loadComponent(relativePath, filename, extraReplaces = {}) {
     .replaceAll('"../utils/audioEffects"', JSON.stringify(import.meta.resolve('../src/utils/audioEffects.js')))
     .replaceAll('"../utils/probability"', JSON.stringify(import.meta.resolve('../src/utils/probability.js')))
     .replaceAll('"../utils/matchSchedule.js"', JSON.stringify(import.meta.resolve('../src/utils/matchSchedule.js')))
+    .replaceAll('"../utils/marketProbability.js"', JSON.stringify(import.meta.resolve('../src/utils/marketProbability.js')))
     .replaceAll('"../utils/mathProbabilities"', JSON.stringify(import.meta.resolve('../src/utils/mathProbabilities.js')));
   for (const [key, val] of Object.entries(extraReplaces)) {
     modCode = modCode.replaceAll(key, val);
@@ -75,7 +76,7 @@ test('ticker never invents a 0–0 score or announces an empty feed as live', ()
   assert.doesNotMatch(onlyResults, /Parlay Banquero|cuotas disponibles|Pronóstico Acertado|Pick IA/);
 });
 
-test('football cards and spotlight retain published 1X2 prices, label theory, and show dates for all statuses', () => {
+test('football cards and spotlight retain published 1X2 prices, avoid unquoted winner prices, and show dates for all statuses', () => {
   const match = { id: 'quotes-and-date', kickoff: '2026-10-05T21:00:00Z', homeTeam: { name: 'Equipo A' }, awayTeam: { name: 'Equipo B' },
     probabilities: { homeWin: 50, draw: 30, awayWin: 20 }, odds: { homeWin: 1.8, draw: 3.5, awayWin: 4.5 } };
   for (const Component of [MatchCard, HeroFeaturedMatch]) {
@@ -86,7 +87,8 @@ test('football cards and spotlight retain published 1X2 prices, label theory, an
       assert.match(html, /Publicado/);
     }
     const theoretical = renderToStaticMarkup(React.createElement(Component, { match: { ...match, status: 'SCHEDULED', odds: {} }, oddsFormat: 'american' }));
-    assert.match(theoretical, /Teórico/); assert.match(theoretical, /\+400/);
+    assert.match(theoretical, /N\/D/); assert.doesNotMatch(theoretical, /\+400/);
+    assert.match(theoretical, /Sin calibración de aciertos/);
   }
 });
 

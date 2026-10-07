@@ -1,6 +1,7 @@
 import HalfGoalsSection from './HalfGoalsSection';
 import VerifiedPicks from './VerifiedPicks';
 import { scoreSimulation, displayNumber } from '../utils/probability';
+import { footballProbabilityLabel } from '../utils/marketProbability.js';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   X, 
@@ -652,7 +653,7 @@ export default function MatchDetailModal({
                         {loadingAi
                           ? `Conectando con ${activeModelInfo.selectedModel || 'deepseek-v4.1'} • Cruzando probabilidades Poisson y métricas de temporada...`
                           : aiReport?.aiAvailable
-                            ? `Motor: ${aiReport.modelUsed || activeModelInfo.selectedModel || 'deepseek-v4.1'} • La IA ordena registros; las probabilidades las calcula el modelo estadístico.`
+                            ? `Motor: ${aiReport.modelUsed || activeModelInfo.selectedModel || 'deepseek-v4.1'} • La IA ordena registros; las probabilidades proceden del mercado o del modelo indicado.`
                             : (aiReport?.aiStatus || 'Pronóstico calculado mediante modelo matemático Poisson sobre estadísticas de temporada.')}
                       </p>
                     </div>
@@ -681,6 +682,9 @@ export default function MatchDetailModal({
 
               <p className="text-[11px] text-slate-400 leading-relaxed">Fuente: <a href={m.detailsSourceUrl || m.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-sky-300 underline">{m.source || 'ESPN'}</a> · Consultado {m.detailsFetchedAt || m.fetchedAt ? new Date(m.detailsFetchedAt || m.fetchedAt).toLocaleString('es') : 'N/D'}. Estimación previa al partido; precisión sin validación prospectiva. La consulta no confirma cuándo actualizó el proveedor.</p>
 
+              <p className="text-xs text-sky-300">1X2 · {footballProbabilityLabel(m)}. Las cuotas reflejan una estimación del mercado, no una tasa de aciertos comprobada.</p>
+              {m.goalMarketsConflict && <p className="text-xs text-amber-300">Las cuotas de goles no admiten este modelo Poisson independiente. Se muestran solo los mercados publicados; no hay una escala de goles ni marcador estimado compatibles.</p>}
+              {m.model?.statisticalProbabilities && <p className="text-[11px] text-slate-400">Modelo Poisson por separado: local {displayNumber(m.model.statisticalProbabilities.homeWin)}%, empate {displayNumber(m.model.statisticalProbabilities.draw)}%, visita {displayNumber(m.model.statisticalProbabilities.awayWin)}%. Muestra: {m.model.sampleSize?.home ?? 'N/D'} / {m.model.sampleSize?.away ?? 'N/D'} partidos. No incorpora ventaja de local, fuerza de rivales, lesiones ni alineaciones; sin calibración de aciertos. El marcador estimado pertenece a este modelo.</p>}
               <VerifiedPicks 
                 match={m} 
                 onAddToParlay={onAddToParlay} 

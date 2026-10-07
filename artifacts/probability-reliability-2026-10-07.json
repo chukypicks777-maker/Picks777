@@ -1,0 +1,623 @@
+{
+  "checkedAt": "2026-10-07T06:50:05.324Z",
+  "football": [
+    {
+      "league": "fr.1",
+      "source": "https://raw.githubusercontent.com/openfootball/football.json/master/2025-26/fr.1.json",
+      "license": "CC0 / public domain",
+      "sha256": "3e9403445dd96f4bb7f740de22d4ea7e3ea7d640777a12eab621ae4d4dbf3bc7",
+      "finishedMatches": 282,
+      "period": [
+        "2025-08-15",
+        "2026-05-17"
+      ],
+      "winner": {
+        "forecasts": 237,
+        "hits": 123,
+        "misses": 114,
+        "accuracy": 0.51899,
+        "brierMulticlassSum": 0.59928,
+        "logLoss": 1.00276,
+        "reliability": [
+          {
+            "range": "40-50",
+            "n": 127,
+            "meanPredicted": 0.44579,
+            "observed": 0.47244
+          },
+          {
+            "range": "60-70",
+            "n": 14,
+            "meanPredicted": 0.64399,
+            "observed": 0.71429
+          },
+          {
+            "range": "30-40",
+            "n": 28,
+            "meanPredicted": 0.38779,
+            "observed": 0.39286
+          },
+          {
+            "range": "50-60",
+            "n": 67,
+            "meanPredicted": 0.54273,
+            "observed": 0.62687
+          },
+          {
+            "range": "70-80",
+            "n": 1,
+            "meanPredicted": 0.72787,
+            "observed": 0
+          }
+        ]
+      },
+      "goals15": {
+        "forecasts": 237,
+        "hits": 194,
+        "misses": 43,
+        "accuracy": 0.81857,
+        "brierMulticlassSum": 0.30571,
+        "logLoss": 0.48705,
+        "reliability": [
+          {
+            "range": "70-80",
+            "n": 91,
+            "meanPredicted": 0.76944,
+            "observed": 0.8022
+          },
+          {
+            "range": "90-100",
+            "n": 1,
+            "meanPredicted": 0.90081,
+            "observed": 1
+          },
+          {
+            "range": "60-70",
+            "n": 7,
+            "meanPredicted": 0.66545,
+            "observed": 1
+          },
+          {
+            "range": "80-90",
+            "n": 138,
+            "meanPredicted": 0.83037,
+            "observed": 0.81884
+          }
+        ]
+      },
+      "alwaysHome": {
+        "hits": 111,
+        "forecasts": 237,
+        "accuracy": 0.46835
+      }
+    },
+    {
+      "league": "en.1",
+      "source": "https://raw.githubusercontent.com/openfootball/football.json/master/2025-26/en.1.json",
+      "license": "CC0 / public domain",
+      "sha256": "d6070bdf731546ccf97767f062e8af4bd26dd309dee69f6092025bf9c78f43c1",
+      "finishedMatches": 353,
+      "period": [
+        "2025-08-15",
+        "2026-05-24"
+      ],
+      "winner": {
+        "forecasts": 298,
+        "hits": 146,
+        "misses": 152,
+        "accuracy": 0.48993,
+        "brierMulticlassSum": 0.61407,
+        "logLoss": 1.02337,
+        "reliability": [
+          {
+            "range": "40-50",
+            "n": 162,
+            "meanPredicted": 0.44453,
+            "observed": 0.46914
+          },
+          {
+            "range": "50-60",
+            "n": 65,
+            "meanPredicted": 0.53656,
+            "observed": 0.53846
+          },
+          {
+            "range": "70-80",
+            "n": 2,
+            "meanPredicted": 0.73079,
+            "observed": 0.5
+          },
+          {
+            "range": "60-70",
+            "n": 15,
+            "meanPredicted": 0.63193,
+            "observed": 0.86667
+          },
+          {
+            "range": "30-40",
+            "n": 54,
+            "meanPredicted": 0.3885,
+            "observed": 0.38889
+          }
+        ]
+      },
+      "goals15": {
+        "forecasts": 298,
+        "hits": 255,
+        "misses": 43,
+        "accuracy": 0.8557,
+        "brierMulticlassSum": 0.25543,
+        "logLoss": 0.42575,
+        "reliability": [
+          {
+            "range": "80-90",
+            "n": 128,
+            "meanPredicted": 0.82136,
+            "observed": 0.875
+          },
+          {
+            "range": "70-80",
+            "n": 168,
+            "meanPredicted": 0.76995,
+            "observed": 0.83929
+          },
+          {
+            "range": "60-70",
+            "n": 2,
+            "meanPredicted": 0.66774,
+            "observed": 1
+          }
+        ]
+      },
+      "alwaysHome": {
+        "hits": 133,
+        "forecasts": 298,
+        "accuracy": 0.44631
+      }
+    },
+    {
+      "league": "de.1",
+      "source": "https://raw.githubusercontent.com/openfootball/football.json/master/2025-26/de.1.json",
+      "license": "CC0 / public domain",
+      "sha256": "17d0999db6281e6365823acdbce41a4f01dd469eac63e1f897e4e47c02906672",
+      "finishedMatches": 294,
+      "period": [
+        "2025-08-22",
+        "2026-05-16"
+      ],
+      "winner": {
+        "forecasts": 247,
+        "hits": 138,
+        "misses": 109,
+        "accuracy": 0.5587,
+        "brierMulticlassSum": 0.59029,
+        "logLoss": 0.99134,
+        "reliability": [
+          {
+            "range": "40-50",
+            "n": 119,
+            "meanPredicted": 0.44335,
+            "observed": 0.47899
+          },
+          {
+            "range": "50-60",
+            "n": 72,
+            "meanPredicted": 0.53767,
+            "observed": 0.52778
+          },
+          {
+            "range": "60-70",
+            "n": 16,
+            "meanPredicted": 0.6433,
+            "observed": 0.875
+          },
+          {
+            "range": "30-40",
+            "n": 25,
+            "meanPredicted": 0.39237,
+            "observed": 0.76
+          },
+          {
+            "range": "80-90",
+            "n": 1,
+            "meanPredicted": 0.84398,
+            "observed": 1
+          },
+          {
+            "range": "70-80",
+            "n": 14,
+            "meanPredicted": 0.74795,
+            "observed": 0.64286
+          }
+        ]
+      },
+      "goals15": {
+        "forecasts": 247,
+        "hits": 214,
+        "misses": 33,
+        "accuracy": 0.8664,
+        "brierMulticlassSum": 0.2378,
+        "logLoss": 0.40457,
+        "reliability": [
+          {
+            "range": "90-100",
+            "n": 21,
+            "meanPredicted": 0.91325,
+            "observed": 0.85714
+          },
+          {
+            "range": "70-80",
+            "n": 16,
+            "meanPredicted": 0.77496,
+            "observed": 0.875
+          },
+          {
+            "range": "80-90",
+            "n": 210,
+            "meanPredicted": 0.84482,
+            "observed": 0.86667
+          }
+        ]
+      },
+      "alwaysHome": {
+        "hits": 113,
+        "forecasts": 247,
+        "accuracy": 0.45749
+      }
+    },
+    {
+      "league": "es.1",
+      "source": "https://raw.githubusercontent.com/openfootball/football.json/master/2025-26/es.1.json",
+      "license": "CC0 / public domain",
+      "sha256": "b40397d8e62c640138548d57a1a9f76150549213d2a07fcbbb90ed0eabc6ccea",
+      "finishedMatches": 365,
+      "period": [
+        "2025-08-15",
+        "2026-05-24"
+      ],
+      "winner": {
+        "forecasts": 314,
+        "hits": 155,
+        "misses": 159,
+        "accuracy": 0.49363,
+        "brierMulticlassSum": 0.60908,
+        "logLoss": 1.01777,
+        "reliability": [
+          {
+            "range": "60-70",
+            "n": 15,
+            "meanPredicted": 0.62636,
+            "observed": 0.66667
+          },
+          {
+            "range": "40-50",
+            "n": 140,
+            "meanPredicted": 0.44576,
+            "observed": 0.48571
+          },
+          {
+            "range": "50-60",
+            "n": 72,
+            "meanPredicted": 0.54467,
+            "observed": 0.61111
+          },
+          {
+            "range": "30-40",
+            "n": 84,
+            "meanPredicted": 0.38215,
+            "observed": 0.35714
+          },
+          {
+            "range": "80-90",
+            "n": 1,
+            "meanPredicted": 0.81966,
+            "observed": 1
+          },
+          {
+            "range": "70-80",
+            "n": 2,
+            "meanPredicted": 0.72086,
+            "observed": 1
+          }
+        ]
+      },
+      "goals15": {
+        "forecasts": 314,
+        "hits": 254,
+        "misses": 60,
+        "accuracy": 0.80892,
+        "brierMulticlassSum": 0.3108,
+        "logLoss": 0.48884,
+        "reliability": [
+          {
+            "range": "70-80",
+            "n": 214,
+            "meanPredicted": 0.75668,
+            "observed": 0.80374
+          },
+          {
+            "range": "80-90",
+            "n": 59,
+            "meanPredicted": 0.82028,
+            "observed": 0.84746
+          },
+          {
+            "range": "60-70",
+            "n": 39,
+            "meanPredicted": 0.66774,
+            "observed": 0.76923
+          },
+          {
+            "range": "50-60",
+            "n": 2,
+            "meanPredicted": 0.5725,
+            "observed": 1
+          }
+        ]
+      },
+      "alwaysHome": {
+        "hits": 161,
+        "forecasts": 314,
+        "accuracy": 0.51274
+      }
+    },
+    {
+      "league": "it.1",
+      "source": "https://raw.githubusercontent.com/openfootball/football.json/master/2025-26/it.1.json",
+      "license": "CC0 / public domain",
+      "sha256": "28f7773dea86345aeb0cbb4aff2f90231033f7ed855219e70fdd1cf45d4d7e7f",
+      "finishedMatches": 344,
+      "period": [
+        "2025-08-23",
+        "2026-05-24"
+      ],
+      "winner": {
+        "forecasts": 290,
+        "hits": 168,
+        "misses": 122,
+        "accuracy": 0.57931,
+        "brierMulticlassSum": 0.58182,
+        "logLoss": 0.97674,
+        "reliability": [
+          {
+            "range": "40-50",
+            "n": 143,
+            "meanPredicted": 0.44888,
+            "observed": 0.55245
+          },
+          {
+            "range": "60-70",
+            "n": 13,
+            "meanPredicted": 0.63541,
+            "observed": 0.61538
+          },
+          {
+            "range": "50-60",
+            "n": 82,
+            "meanPredicted": 0.54897,
+            "observed": 0.69512
+          },
+          {
+            "range": "30-40",
+            "n": 52,
+            "meanPredicted": 0.38199,
+            "observed": 0.46154
+          }
+        ]
+      },
+      "goals15": {
+        "forecasts": 290,
+        "hits": 224,
+        "misses": 66,
+        "accuracy": 0.77241,
+        "brierMulticlassSum": 0.35985,
+        "logLoss": 0.54713,
+        "reliability": [
+          {
+            "range": "60-70",
+            "n": 45,
+            "meanPredicted": 0.66471,
+            "observed": 0.75556
+          },
+          {
+            "range": "80-90",
+            "n": 26,
+            "meanPredicted": 0.81643,
+            "observed": 0.69231
+          },
+          {
+            "range": "70-80",
+            "n": 218,
+            "meanPredicted": 0.74814,
+            "observed": 0.7844
+          },
+          {
+            "range": "50-60",
+            "n": 1,
+            "meanPredicted": 0.50286,
+            "observed": 1
+          }
+        ]
+      },
+      "alwaysHome": {
+        "hits": 124,
+        "forecasts": 290,
+        "accuracy": 0.42759
+      }
+    }
+  ],
+  "baseball": [
+    {
+      "leagueId": "kbo",
+      "coverage": [
+        {
+          "leagueId": "kbo",
+          "name": "KBO",
+          "source": "KBO oficial",
+          "status": "available",
+          "fetchedAt": "2026-10-07T06:50:10.440Z"
+        }
+      ],
+      "finishedMatches": 128,
+      "period": [
+        "2026-09-01T09:30:00.000Z",
+        "2026-10-06T09:30:00.000Z"
+      ],
+      "winner": {
+        "forecasts": 102,
+        "hits": 61,
+        "misses": 41,
+        "accuracy": 0.59804,
+        "brierMulticlassSum": 0.52847,
+        "logLoss": 0.81754,
+        "reliability": [
+          {
+            "range": "50-60",
+            "n": 65,
+            "meanPredicted": 0.54602,
+            "observed": 0.64615
+          },
+          {
+            "range": "60-70",
+            "n": 24,
+            "meanPredicted": 0.63608,
+            "observed": 0.5
+          },
+          {
+            "range": "40-50",
+            "n": 11,
+            "meanPredicted": 0.49082,
+            "observed": 0.63636
+          },
+          {
+            "range": "70-80",
+            "n": 2,
+            "meanPredicted": 0.7775,
+            "observed": 0
+          }
+        ]
+      },
+      "total95": {
+        "forecasts": 102,
+        "hits": 44,
+        "misses": 58,
+        "accuracy": 0.43137,
+        "brierMulticlassSum": 0.54746,
+        "logLoss": 0.7524,
+        "reliability": [
+          {
+            "range": "50-60",
+            "n": 64,
+            "meanPredicted": 0.54723,
+            "observed": 0.35938
+          },
+          {
+            "range": "60-70",
+            "n": 24,
+            "meanPredicted": 0.6475,
+            "observed": 0.58333
+          },
+          {
+            "range": "80-90",
+            "n": 2,
+            "meanPredicted": 0.8445,
+            "observed": 0
+          },
+          {
+            "range": "70-80",
+            "n": 11,
+            "meanPredicted": 0.73564,
+            "observed": 0.63636
+          },
+          {
+            "range": "90-100",
+            "n": 1,
+            "meanPredicted": 0.907,
+            "observed": 0
+          }
+        ]
+      }
+    },
+    {
+      "leagueId": "mlb",
+      "coverage": [
+        {
+          "leagueId": "mlb",
+          "name": "MLB",
+          "source": "MLB Stats API",
+          "status": "available",
+          "fetchedAt": "2026-10-07T06:50:11.752Z"
+        }
+      ],
+      "finishedMatches": 499,
+      "period": [
+        "2026-08-23T17:35:00Z",
+        "2026-10-07T01:30:00Z"
+      ],
+      "winner": {
+        "forecasts": 421,
+        "hits": 219,
+        "misses": 202,
+        "accuracy": 0.52019,
+        "brierMulticlassSum": 0.50829,
+        "logLoss": 0.70236,
+        "reliability": [
+          {
+            "range": "70-80",
+            "n": 5,
+            "meanPredicted": 0.7276,
+            "observed": 0
+          },
+          {
+            "range": "50-60",
+            "n": 318,
+            "meanPredicted": 0.54523,
+            "observed": 0.51887
+          },
+          {
+            "range": "60-70",
+            "n": 98,
+            "meanPredicted": 0.63447,
+            "observed": 0.55102
+          }
+        ]
+      },
+      "total95": {
+        "forecasts": 421,
+        "hits": 247,
+        "misses": 174,
+        "accuracy": 0.5867,
+        "brierMulticlassSum": 0.48552,
+        "logLoss": 0.67893,
+        "reliability": [
+          {
+            "range": "70-80",
+            "n": 42,
+            "meanPredicted": 0.73764,
+            "observed": 0.64286
+          },
+          {
+            "range": "80-90",
+            "n": 3,
+            "meanPredicted": 0.82567,
+            "observed": 0.66667
+          },
+          {
+            "range": "50-60",
+            "n": 227,
+            "meanPredicted": 0.55319,
+            "observed": 0.56828
+          },
+          {
+            "range": "60-70",
+            "n": 149,
+            "meanPredicted": 0.63984,
+            "observed": 0.59732
+          }
+        ]
+      }
+    }
+  ],
+  "methodology": "Retrospective walk-forward. Football: all earlier dates in that season; minimum 5 games per team, exact current independent Poisson baseline. Baseball: preceding dates, last 20 results, minimum 5 per team. No fitting or selecting model parameters on these evaluation samples. Multiclass Brier is the sum across outcomes, not the mean.",
+  "limitations": "No timestamped historical bookmaker quotes, pitchers, lineups or xG in these datasets. Cannot establish superiority to bookmakers or prospective profits. Reconstructed statistics may differ from historical provider snapshots. Baseball is a short available window. Goal hit rate must be assessed with reliability, not treated as calibrated confidence. Current market baseline is not evaluated retrospectively."
+}

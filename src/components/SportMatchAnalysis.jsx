@@ -11,9 +11,9 @@ export function Probability({ value }) {
   return <span className={`font-mono font-bold tabular-nums ${available ? 'text-emerald-300' : 'text-slate-500'}`}>{available ? `${Number(value.toFixed(1))}%` : 'N/D'}</span>;
 }
 
-export function MarketValue({ value, publishedOdds, oddsFormat = 'decimal' }) {
-  const quote = marketQuote(publishedOdds, value);
-  return <span className="inline-flex flex-col items-end gap-0.5 shrink-0"><Probability value={value} /><span className="text-[10px] sm:text-[11px] text-sky-300 font-mono tabular-nums whitespace-nowrap">Momio {formatOdds(quote.odds, oddsFormat)}</span>{quote.kind !== 'unavailable' && <span className="text-[9px] text-slate-500">{quote.label}</span>}</span>;
+export function MarketValue({ value, publishedOdds, oddsFormat = 'decimal', showTheoretical = false }) {
+  const quote = marketQuote(publishedOdds, showTheoretical ? value : null);
+  return <span className="inline-flex flex-col items-end gap-0.5 shrink-0"><Probability value={value} /><span className="text-[10px] sm:text-[11px] text-sky-300 font-mono tabular-nums whitespace-nowrap">{quote.kind === 'unavailable' ? 'Sin cuota publicada' : `${quote.kind === 'theoretical' ? 'Precio del modelo' : 'Momio'} ${formatOdds(quote.odds, oddsFormat)}`}</span>{quote.kind !== 'unavailable' && <span className="text-[9px] text-slate-500">{quote.kind === 'theoretical' ? 'No ofrecido por una casa' : quote.label}</span>}</span>;
 }
 
 export function WinnerBar({ values }) {
@@ -26,7 +26,7 @@ function Outcomes({ title, values, home, away, draw = false, odds = {}, oddsForm
   return <section className="rounded-xl border border-white/10 bg-[#111a28] p-4 space-y-3" aria-label={title}>
     <h3 className="text-sm font-bold text-white">{title}</h3>
     {[[home, values?.home, odds.homeWin], ...(draw ? [['Empate', values?.draw, odds.draw]] : []), [away, values?.away, odds.awayWin]].map(([name, value, quote], index) => <div key={index} className="flex items-center justify-between gap-4 text-sm">
-      <span className="min-w-0 break-words text-slate-300">{name}</span><MarketValue value={value} publishedOdds={quote} oddsFormat={oddsFormat} />
+      <span className="min-w-0 break-words text-slate-300">{name}</span><MarketValue value={value} publishedOdds={draw && !(Number(odds.draw) > 1) ? null : quote} oddsFormat={oddsFormat} showTheoretical />
     </div>)}
     <WinnerBar values={values} />
   </section>;

@@ -1,0 +1,545 @@
+{
+  "match": {
+    "allowsDraw": true,
+    "analysis": {
+      "available": true,
+      "countDiagnostics": {
+        "five": {
+          "away": null,
+          "home": null
+        },
+        "full": {
+          "away": {
+            "mean": 4.625,
+            "shape": 3.4139650872817957,
+            "variance": 10.890625
+          },
+          "home": {
+            "mean": 5.875,
+            "shape": 4.149907254699556,
+            "variance": 14.19220394736842
+          }
+        }
+      },
+      "expectedRuns": {
+        "away": 4.625,
+        "home": 5.875
+      },
+      "extraInnings": {
+        "no": null,
+        "yes": null
+      },
+      "extraInningsSampleSize": {
+        "away": 0,
+        "extraGames": 0,
+        "home": 0,
+        "uniqueGames": 0
+      },
+      "firstFive": [
+        {
+          "line": 1.5,
+          "over": null,
+          "under": null
+        },
+        {
+          "line": 2.5,
+          "over": null,
+          "under": null
+        },
+        {
+          "line": 3.5,
+          "over": null,
+          "under": null
+        },
+        {
+          "line": 4.5,
+          "over": null,
+          "under": null
+        },
+        {
+          "line": 5.5,
+          "over": null,
+          "under": null
+        }
+      ],
+      "firstInning": {
+        "away": null,
+        "draw": null,
+        "home": null
+      },
+      "form": {
+        "away": [
+          {
+            "against": 2,
+            "date": "2026-10-01T09:30:00.000Z",
+            "id": "kbo-2026-10-01-SAMSUNG-HANWHA-2",
+            "opponent": "HANWHA",
+            "own": 3,
+            "result": "W",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "against": 4,
+            "date": "2026-10-03T05:00:00.000Z",
+            "id": "kbo-2026-10-03-SAMSUNG-DOOSAN-6",
+            "opponent": "DOOSAN",
+            "own": 6,
+            "result": "W",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "against": 12,
+            "date": "2026-10-04T05:00:00.000Z",
+            "id": "kbo-2026-10-04-SAMSUNG-DOOSAN-11",
+            "opponent": "DOOSAN",
+            "own": 0,
+            "result": "L",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "against": 7,
+            "date": "2026-10-05T05:00:00.000Z",
+            "id": "kbo-2026-10-05-SAMSUNG-DOOSAN-16",
+            "opponent": "DOOSAN",
+            "own": 5,
+            "result": "L",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "against": 4,
+            "date": "2026-10-06T09:30:00.000Z",
+            "id": "kbo-2026-10-06-KIA-SAMSUNG-22",
+            "opponent": "KIA",
+            "own": 5,
+            "result": "W",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          }
+        ],
+        "home": [
+          {
+            "against": 5,
+            "date": "2026-10-01T09:30:00.000Z",
+            "id": "kbo-2026-10-01-KIA-KT-4",
+            "opponent": "KIA",
+            "own": 7,
+            "result": "W",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "against": 0,
+            "date": "2026-10-03T05:00:00.000Z",
+            "id": "kbo-2026-10-03-KT-LOTTE-7",
+            "opponent": "LOTTE",
+            "own": 5,
+            "result": "W",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "against": 2,
+            "date": "2026-10-04T08:00:00.000Z",
+            "id": "kbo-2026-10-04-KT-LOTTE-12",
+            "opponent": "LOTTE",
+            "own": 2,
+            "result": "D",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "against": 0,
+            "date": "2026-10-05T05:00:00.000Z",
+            "id": "kbo-2026-10-05-KT-LOTTE-17",
+            "opponent": "LOTTE",
+            "own": 9,
+            "result": "W",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "against": 1,
+            "date": "2026-10-06T09:30:00.000Z",
+            "id": "kbo-2026-10-06-KIWOOM-KT-24",
+            "opponent": "KIWOOM",
+            "own": 10,
+            "result": "W",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          }
+        ]
+      },
+      "inningSampleSize": {
+        "first": {
+          "away": 0,
+          "home": 0
+        },
+        "five": {
+          "away": 0,
+          "home": 0
+        }
+      },
+      "kind": "baseball",
+      "method": "Carreras: binomial negativa con medias anotadas y recibidas de los últimos 20 resultados completos, mínimo 5 por equipo. Conserva la variación observada (como mínimo la de Poisson) y añade incertidumbre por estimar medias con muestras finitas. Totales combinados por convolución de ambos equipos bajo independencia; incluye extra innings de los resultados completos. Primer inning y primeros cinco innings usan solo carreras verificadas de esos periodos. Una muestra de ceros indica N/D, no un Under de 100%. Los totales históricos se calculan por separado del ganador de mercado, sin alterar carreras para imitar Elo. ¿Habrá extra innings?: frecuencia de encuentros de la misma duración reglamentaria, mínimo 5 por equipo, sin duplicados, con suavizado de Jeffreys (0.5 añadido al numerador y 1 al denominador). Sin metadata comprobable, N/D. No incorpora lanzadores ni alineaciones. Ganador histórico: distribución de carreras condicionada a resultado decisivo; empate final por frecuencia suavizada.",
+      "modelVersion": "2026-10-06-count-v2",
+      "notice": "Probabilidades estimadas antes del partido; no se recalculan según el marcador en vivo.",
+      "probabilitySource": "experimental-model",
+      "records": {
+        "away": [
+          {
+            "date": "2026-10-06T09:30:00.000Z",
+            "id": "kbo-2026-10-06-KIA-SAMSUNG-22",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-10-05T05:00:00.000Z",
+            "id": "kbo-2026-10-05-SAMSUNG-DOOSAN-16",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-10-04T05:00:00.000Z",
+            "id": "kbo-2026-10-04-SAMSUNG-DOOSAN-11",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-10-03T05:00:00.000Z",
+            "id": "kbo-2026-10-03-SAMSUNG-DOOSAN-6",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-10-01T09:30:00.000Z",
+            "id": "kbo-2026-10-01-SAMSUNG-HANWHA-2",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-30T09:30:00.000Z",
+            "id": "kbo-2026-09-30-SAMSUNG-HANWHA-105",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-29T09:30:00.000Z",
+            "id": "kbo-2026-09-29-SAMSUNG-HANWHA-100",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-24T08:00:00.000Z",
+            "id": "kbo-2026-09-24-SSG-SAMSUNG-87",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-22T09:30:00.000Z",
+            "id": "kbo-2026-09-22-SAMSUNG-NC-79",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-20T05:00:00.000Z",
+            "id": "kbo-2026-09-20-LOTTE-SAMSUNG-75",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-19T08:00:00.000Z",
+            "id": "kbo-2026-09-19-LOTTE-SAMSUNG-71",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-18T09:30:00.000Z",
+            "id": "kbo-2026-09-18-HANWHA-SAMSUNG-69",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-16T09:30:00.000Z",
+            "id": "kbo-2026-09-16-DOOSAN-SAMSUNG-60",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-15T09:30:00.000Z",
+            "id": "kbo-2026-09-15-SAMSUNG-LOTTE-56",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-13T08:00:00.000Z",
+            "id": "kbo-2026-09-13-SAMSUNG-LG-53",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-12T08:00:00.000Z",
+            "id": "kbo-2026-09-12-SAMSUNG-LG-49",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-11T09:30:00.000Z",
+            "id": "kbo-2026-09-11-SAMSUNG-KIWOOM-44",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-09T09:30:00.000Z",
+            "id": "kbo-2026-09-09-SAMSUNG-KT-37",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-08T09:30:00.000Z",
+            "id": "kbo-2026-09-08-SAMSUNG-KIA-32",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-06T08:00:00.000Z",
+            "id": "kbo-2026-09-06-LG-SAMSUNG-26",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          }
+        ],
+        "home": [
+          {
+            "date": "2026-10-06T09:30:00.000Z",
+            "id": "kbo-2026-10-06-KIWOOM-KT-24",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-10-05T05:00:00.000Z",
+            "id": "kbo-2026-10-05-KT-LOTTE-17",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-10-04T08:00:00.000Z",
+            "id": "kbo-2026-10-04-KT-LOTTE-12",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-10-03T05:00:00.000Z",
+            "id": "kbo-2026-10-03-KT-LOTTE-7",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-10-01T09:30:00.000Z",
+            "id": "kbo-2026-10-01-KIA-KT-4",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-30T09:30:00.000Z",
+            "id": "kbo-2026-09-30-KIA-KT-108",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-29T09:30:00.000Z",
+            "id": "kbo-2026-09-29-KIA-KT-103",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-27T08:00:00.000Z",
+            "id": "kbo-2026-09-27-DOOSAN-KT-95",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-26T08:00:00.000Z",
+            "id": "kbo-2026-09-26-KT-KIWOOM-93",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-24T08:00:00.000Z",
+            "id": "kbo-2026-09-24-KT-NC-88",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-23T09:30:00.000Z",
+            "id": "kbo-2026-09-23-KT-NC-84",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-22T09:30:00.000Z",
+            "id": "kbo-2026-09-22-SSG-KT-80",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-20T05:00:00.000Z",
+            "id": "kbo-2026-09-20-KT-DOOSAN-77",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-19T08:00:00.000Z",
+            "id": "kbo-2026-09-19-KT-DOOSAN-72",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-18T09:30:00.000Z",
+            "id": "kbo-2026-09-18-KT-LG-68",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-16T09:30:00.000Z",
+            "id": "kbo-2026-09-16-HANWHA-KT-63",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-15T09:30:00.000Z",
+            "id": "kbo-2026-09-15-HANWHA-KT-59",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-13T08:00:00.000Z",
+            "id": "kbo-2026-09-13-KT-LOTTE-55",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-12T08:00:00.000Z",
+            "id": "kbo-2026-09-12-KT-KIA-50",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          },
+          {
+            "date": "2026-09-11T09:30:00.000Z",
+            "id": "kbo-2026-09-11-LOTTE-KT-45",
+            "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx"
+          }
+        ]
+      },
+      "sampleSize": {
+        "away": 20,
+        "home": 20
+      },
+      "scoresRun": {
+        "away": {
+          "no": 5.4,
+          "yes": 94.6
+        },
+        "home": {
+          "no": 2.6,
+          "yes": 97.4
+        }
+      },
+      "teamRuns": {
+        "away": [
+          {
+            "line": 1.5,
+            "over": 84.1,
+            "under": 15.9
+          },
+          {
+            "line": 2.5,
+            "over": 70.7,
+            "under": 29.3
+          },
+          {
+            "line": 3.5,
+            "over": 56.8,
+            "under": 43.2
+          },
+          {
+            "line": 4.5,
+            "over": 43.9,
+            "under": 56.1
+          },
+          {
+            "line": 5.5,
+            "over": 33,
+            "under": 67
+          }
+        ],
+        "home": [
+          {
+            "line": 1.5,
+            "over": 91.2,
+            "under": 8.8
+          },
+          {
+            "line": 2.5,
+            "over": 81.7,
+            "under": 18.3
+          },
+          {
+            "line": 3.5,
+            "over": 70.4,
+            "under": 29.6
+          },
+          {
+            "line": 4.5,
+            "over": 58.5,
+            "under": 41.5
+          },
+          {
+            "line": 5.5,
+            "over": 47.2,
+            "under": 52.8
+          }
+        ]
+      },
+      "totalRuns": [
+        {
+          "line": 1.5,
+          "over": 99.3,
+          "under": 0.7
+        },
+        {
+          "line": 2.5,
+          "over": 97.7,
+          "under": 2.3
+        },
+        {
+          "line": 3.5,
+          "over": 94.9,
+          "under": 5.1
+        },
+        {
+          "line": 4.5,
+          "over": 90.6,
+          "under": 9.4
+        },
+        {
+          "line": 5.5,
+          "over": 84.9,
+          "under": 15.1
+        },
+        {
+          "line": 6.5,
+          "over": 77.8,
+          "under": 22.2
+        },
+        {
+          "line": 7.5,
+          "over": 69.9,
+          "under": 30.1
+        },
+        {
+          "line": 8.5,
+          "over": 61.5,
+          "under": 38.5
+        },
+        {
+          "line": 9.5,
+          "over": 53.1,
+          "under": 46.9
+        }
+      ],
+      "winner": {
+        "away": 36.2,
+        "draw": 7,
+        "home": 56.8
+      }
+    },
+    "awayTeam": {
+      "id": "kbo-samsung",
+      "name": "SAMSUNG",
+      "shortName": "SAMSUNG"
+    },
+    "fetchedAt": "2026-10-07T06:35:24.031Z",
+    "finalScore": {
+      "away": null,
+      "home": null
+    },
+    "homeTeam": {
+      "id": "kbo-kt",
+      "name": "KT",
+      "shortName": "KT"
+    },
+    "id": "kbo-2026-10-07-KT-SAMSUNG-28",
+    "kickoff": "2026-10-07T09:30:00.000Z",
+    "leagueFlag": "🇰🇷",
+    "leagueId": "kbo",
+    "leagueName": "KBO",
+    "liveScore": {
+      "away": null,
+      "home": null
+    },
+    "liveSupported": false,
+    "odds": {},
+    "source": "KBO oficial",
+    "sourceUrl": "https://eng.koreabaseball.com/Schedule/dailyschedule.aspx",
+    "sport": "beisbol",
+    "status": "SCHEDULED",
+    "statusDetail": "Programado",
+    "timeTBD": false,
+    "venue": "SUWON"
+  },
+  "success": true
+}

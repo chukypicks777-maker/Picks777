@@ -6,6 +6,7 @@
  * estado, minuto o modelo) o si el usuario solicita regeneración manual vía "Reintentar / Regenerar con IA".
  */
 
+import { SPORT_MODEL_VERSION } from './sportModelVersion.js';
 const memoryCache = new Map();
 const STORAGE_PREFIX = 'picks777_ai_cache_v8';
 const SESSION_STORAGE_KEY = 'picks777_analysis_cache_v5';
@@ -59,6 +60,7 @@ export function computeMatchFingerprint(m) {
   if (!m) return '';
   const p = m.probabilities || m.model?.probabilities || {};
   return [
+    SPORT_MODEL_VERSION,
     m.id || '',
     m.status || '',
     m.kickoff || '',

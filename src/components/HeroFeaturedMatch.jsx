@@ -2,6 +2,7 @@ import { percent, roundDistribution } from '../utils/probability';
 import React, { useState } from 'react';
 import { Plus, Eye, Clock, Zap, Target, CheckCircle2 } from 'lucide-react';
 import { formatOdds, marketQuote } from '../utils/oddsFormatter';
+import { footballProbabilityLabel } from '../utils/marketProbability.js';
 import { formatMatchSchedule } from '../utils/matchSchedule.js';
 import { sounds } from '../utils/audioEffects';
 import { isSameMatch } from '../utils/parlayTicket.js';
@@ -35,7 +36,7 @@ export default function HeroFeaturedMatch({
   const homeProb = percent(outcomes.homeWin);
   const drawProb = percent(outcomes.draw);
   const awayProb = percent(outcomes.awayWin);
-  const winnerQuotes = { home: marketQuote(match.odds?.homeWin, homeProb), draw: marketQuote(match.odds?.draw, drawProb), away: marketQuote(match.odds?.awayWin, awayProb) };
+  const winnerQuotes = { home: marketQuote(match.odds?.homeWin, null), draw: marketQuote(match.odds?.draw, null), away: marketQuote(match.odds?.awayWin, null) };
 
   return (
     <div className="mb-8">
@@ -202,6 +203,7 @@ export default function HeroFeaturedMatch({
 
                 {/* Segmented Probabilities Bar with Counters */}
                 <div className="mt-3 sm:mt-4 space-y-1.5">
+                  <p className="text-[10px] text-sky-300">1X2 · {footballProbabilityLabel(match)}</p>
                   <div className="grid grid-cols-3 gap-2 text-[11px] sm:text-xs font-mono text-slate-300">
                     <span>
                       Local: <strong><NumberCounter value={homeProb} suffix="%" /></strong>
@@ -248,6 +250,7 @@ export default function HeroFeaturedMatch({
                 </div>
 
                 <div className="space-y-3 pt-3 border-t border-white/5">
+                  <p className="text-[10px] text-slate-400">{footballProbabilityLabel(match, match.aiPick?.key)}</p>
                   <div className="flex items-center justify-between text-xs font-mono">
                     <span className="text-slate-400">{match.aiPick?.odds ? 'Cuota publicada:' : 'Cuota teórica:'}</span>
                     <span className="text-sky-300 font-bold text-sm">

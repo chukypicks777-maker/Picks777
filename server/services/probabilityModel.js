@@ -1,4 +1,48 @@
 import { getBestBankerPick } from '../../src/utils/mathProbabilities.js';
+import { noVigMarket } from '../../src/utils/marketProbability.js';
+import { SPORT_MODEL_VERSION } from '../../src/utils/sportModelVersion.js';
+
+export function applyFootballForecast(match) {
+  if (match.status !== 'SCHEDULED') {
+    // A detail refresh can cross kickoff. Current/live odds and standings cannot
+    // reconstruct an archived pregame prediction or reuse its stale AI selection.
+    return Object.assign(match, { model: null, probabilities: {}, probabilitySources: {},
+      probabilitySource: 'unavailable', aiPick: null, marketOverround: null, modelVersion: SPORT_MODEL_VERSION });
+  }
+  const statistical = poissonModel(match.homeTeam, match.awayTeam);
+  const winner = noVigMarket(match.odds, ['homeWin', 'draw', 'awayWin']);
+  const total = noVigMarket(match.odds, ['over25', 'under25']);
+  const btts = noVigMarket(match.odds, ['bttsYes', 'bttsNo']);
+  const market = { ...winner?.probabilities, ...total?.probabilities, ...btts?.probabilities };
+  const pricedGoals = total ? deriveCalibratedPoissonModel(market, match.homeTeam, match.awayTeam, match.odds) : null;
+  const model = pricedGoals || statistical || deriveCalibratedPoissonModel(market, match.homeTeam, match.awayTeam, match.odds);
+  const goalMarketsConflict = Boolean(total && !pricedGoals);
+  const probabilities = { homeWin: null, draw: null, awayWin: null, over25: null, under25: null, bttsYes: null, bttsNo: null,
+    ...model?.probabilities,
+    ...(!winner && statistical ? Object.fromEntries(['homeWin', 'draw', 'awayWin'].map(key => [key, statistical.probabilities[key]])) : {}), ...market };
+  if (goalMarketsConflict) {
+    for (const key of Object.keys(probabilities)) if (/^(over|under|btts)/.test(key) && market[key] == null) probabilities[key] = null;
+    probabilities.goalMarketsConflict = true;
+  }
+  const probabilitySources = Object.fromEntries(Object.keys(probabilities).map(key =>
+    [key, market[key] != null ? 'published-odds' : probabilities[key] == null ? 'unavailable'
+      : pricedGoals && !['homeWin', 'draw', 'awayWin'].includes(key) ? 'market-derived-model' : 'experimental-model']));
+  // Never re-fit a quoted 1X2 market through an approximate goal distribution.
+  match.model = model ? { ...model, statisticalProbabilities: statistical ? { ...statistical.probabilities } : null,
+    statisticalSampleSize: statistical?.sampleSize || null,
+    ...(goalMarketsConflict ? { predictedScore: null, scoreDistribution: [], expectedGoals: { home: null, away: null },
+      limitations: 'Las cuotas publicadas de goles no admiten este modelo Poisson independiente. Solo se muestran mercados completos; no se inventan líneas ni marcadores.' } : {}),
+    probabilities, probabilitySources, modelVersion: SPORT_MODEL_VERSION } : null;
+  match.probabilities = { ...probabilities, ...(match.model ? { predictedScore: match.model.predictedScore } : {}) };
+  match.goalMarketsConflict = goalMarketsConflict;
+  match.probabilitySources = probabilitySources;
+  match.probabilitySource = winner ? 'published-odds' : model ? 'experimental-model' : 'unavailable';
+  match.marketOverround = winner?.overround ?? null;
+  match.modelVersion = SPORT_MODEL_VERSION;
+  match.aiPick = null;
+  match.aiPick = buildPick(match);
+  return match;
+}
 
 // Baseline independent Poisson model. Not xG, Dixon-Coles, or calibrated accuracy.
 export function poissonModel(home, away, minGames = 5) {
@@ -62,7 +106,7 @@ export function poissonModel(home, away, minGames = 5) {
     method: 'Poisson independiente sobre goles de temporada',
     sampleSize: { home: homeGP, away: awayGP },
     expectedGoals: { home: lambda, away: mu },
-    limitations: 'Proyección matemática basada en la distribución de Poisson y medias históricas oficiales.'
+    limitations: 'Modelo experimental sin calibración de aciertos. Medias de temporada bajo independencia; no incorpora ventaja de local, fuerza de los rivales, alineaciones ni lesiones. Muestras pequeñas pueden producir porcentajes extremos. El marcador más probable es solo un escenario, no el resultado esperado ni una garantía.'
   };
 }
 
@@ -207,7 +251,7 @@ export function deriveCalibratedPoissonModel(rawProbs = {}, home = {}, away = {}
 }
 
 export function buildPick(match) {
-  if (!match || ['POSTPONED', 'CANCELLED', 'SUSPENDED', 'ABANDONED', 'DELAYED', 'UNKNOWN'].includes(match.status)) return null;
+  if (!match || ['LIVE', 'FINISHED', 'POSTPONED', 'CANCELLED', 'SUSPENDED', 'ABANDONED', 'DELAYED', 'UNKNOWN'].includes(match.status)) return null;
   const probs = match.model?.probabilities || match.probabilities;
   if (!probs || !Object.keys(probs).length || (probs.homeWin == null && probs.awayWin == null)) return null;
 
@@ -217,6 +261,9 @@ export function buildPick(match) {
   const odds = banker.odds ?? banker.estimatedOdds ?? (banker.probability > 0 ? Number(Math.max(1.01, 100 / banker.probability).toFixed(2)) : null);
 
   return {
+    key: banker.key,
+    probabilitySource: banker.probabilitySource,
+    oddsKind: banker.oddsKind,
     market: banker.market || 'Doble Oportunidad',
     selection: banker.selection,
     odds: banker.odds ?? null,

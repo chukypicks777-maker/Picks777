@@ -5,7 +5,8 @@ import { CONFIG } from '../config.js';
 import { storage } from '../storage.js';
 import { cachedData } from './dataCache.js';
 import { getTop3Opportunities } from '../../src/utils/mathProbabilities.js';
-import { poissonModel, deriveCalibratedPoissonModel, buildPick } from './probabilityModel.js';
+import { applyFootballForecast } from './probabilityModel.js';
+import { footballProbabilityLabel } from '../../src/utils/marketProbability.js';
 
 import { fetchProviderModels, executeAiChatCompletion } from './aiProviderClient.js';
 export { fetchProviderModels, executeAiChatCompletion, testAiConnection } from './aiProviderClient.js';
@@ -185,20 +186,7 @@ export function extractJsonFromAiResponse(raw) {
 
 export async function generateAiMatchReport(match, options = {}) {
   const deadline = options.deadline ?? Date.now() + 45000;
-  let activeMatch = match;
-  if (!activeMatch.model && activeMatch.status !== 'POSTPONED' && activeMatch.status !== 'CANCELLED') {
-    const computed = poissonModel(activeMatch.homeTeam, activeMatch.awayTeam) ||
-      deriveCalibratedPoissonModel(activeMatch.probabilities, activeMatch.homeTeam, activeMatch.awayTeam, activeMatch.odds);
-    if (computed) {
-      activeMatch = {
-        ...activeMatch,
-        model: computed,
-        probabilities: { ...computed.probabilities },
-        aiPick: activeMatch.aiPick || buildPick({ ...activeMatch, model: computed })
-      };
-    }
-  }
-  match = activeMatch;
+  match = applyFootballForecast({ ...match });
   const p = match.model?.probabilities || match.probabilities || {};
   const fmt = n => Number.isFinite(n) ? Number(n.toFixed(1)) : 'N/D';
   const homePos = match.homeTeam?.position ?? match.homeTeam?.rank;
@@ -232,11 +220,14 @@ export async function generateAiMatchReport(match, options = {}) {
     const extra = [pInfo, ptsInfo, cRate, corners, cards].filter(Boolean).join(', ');
     facts.push({ id: side, text: `${tName} (${side === 'home' ? 'Local' : 'Visitante'}): ${gpInfo}, ${gF} GF, ${gA} GC. ${extra ? `Registros: ${extra}.` : ''}` });
   }
+  if ([p.homeWin, p.draw, p.awayWin].every(Number.isFinite)) {
+    facts.push({ id: 'result', text: `${footballProbabilityLabel(match)}: ${homeName} ${fmt(p.homeWin)}%, Empate ${fmt(p.draw)}%, ${awayName} ${fmt(p.awayWin)}%. Referencia previa al partido, sin garantía.` });
+  }
   if (match.model) {
-    facts.push({ id: 'result', text: `Estimación Poisson: ${homeName} ${fmt(p.homeWin)}%, Empate ${fmt(p.draw)}%, ${awayName} ${fmt(p.awayWin)}%.` });
-    facts.push({ id: 'expectedGoals', text: `Media de goles Poisson (no xG observado): ${homeName} ${fmt(match.model.expectedGoals?.home)} goles vs ${awayName} ${fmt(match.model.expectedGoals?.away)} goles.` });
-    facts.push({ id: 'goals', text: `Goles totales: Más de 1.5 ${fmt(p.over15)}%, Menos de 1.5 ${fmt(p.under15)}%; Más de 2.5 ${fmt(p.over25)}%, Menos de 2.5 ${fmt(p.under25)}%; Más de 3.5 ${fmt(p.over35)}%, Menos de 3.5 ${fmt(p.under35)}%. Ambos anotan: Sí ${fmt(p.bttsYes)}%, No ${fmt(p.bttsNo)}%.` });
-    facts.push({ id: 'score', text: `Marcador individual más probable: ${match.model.predictedScore} (${fmt(match.model.scoreDistribution?.[0]?.probability)}%). Escenario de máxima probabilidad del modelo Poisson.` });
+    if (Number.isFinite(match.model.expectedGoals?.home) && Number.isFinite(match.model.expectedGoals?.away)) facts.push({ id: 'expectedGoals', text: `Media de goles Poisson (no xG observado): ${homeName} ${fmt(match.model.expectedGoals.home)} goles vs ${awayName} ${fmt(match.model.expectedGoals.away)} goles.` });
+    facts.push({ id: 'goals', text: `Goles totales: Más de 1.5 ${fmt(p.over15)}%, Menos de 1.5 ${fmt(p.under15)}% (${footballProbabilityLabel(match, 'over15')}); Más de 2.5 ${fmt(p.over25)}%, Menos de 2.5 ${fmt(p.under25)}% (${footballProbabilityLabel(match, 'over25')}); Más de 3.5 ${fmt(p.over35)}%, Menos de 3.5 ${fmt(p.under35)}%. Ambos anotan: Sí ${fmt(p.bttsYes)}%, No ${fmt(p.bttsNo)}% (${footballProbabilityLabel(match, 'bttsYes')}).` });
+    if (match.model.predictedScore) facts.push({ id: 'score', text: `Marcador individual más probable: ${match.model.predictedScore} (${fmt(match.model.scoreDistribution?.[0]?.probability)}%). Escenario de máxima probabilidad del modelo Poisson.` });
+    if (match.goalMarketsConflict) facts.push({ id: 'modelConflict', text: match.model.limitations });
     facts.push({ id: 'sample', text: `Muestra de temporada: ${match.model.sampleSize?.home ?? 'N/D'} partidos (local) y ${match.model.sampleSize?.away ?? 'N/D'} partidos (visitante).` });
   } else facts.push({ id: 'missing', text: 'Sin muestra suficiente para un pronóstico Poisson previo al partido.' });
 
@@ -270,7 +261,7 @@ export async function generateAiMatchReport(match, options = {}) {
     if (oddsParts.length > 0) {
       facts.push({
         id: 'odds',
-        text: `Cuotas oficiales de apuestas en el mercado: ${oddsParts.join(', ')}. Proveedor: ${match.oddsProvider || 'Oficial'}.`
+        text: `Cuotas publicadas: ${oddsParts.join(', ')}. Proveedor: ${match.oddsProvider || 'No identificado'}. Consulta: ${match.oddsFetchedAt || 'N/D'}; confirmar vigencia en la casa.`
       });
     }
   }
@@ -498,7 +489,7 @@ No escribas análisis libre, no calcules probabilidades ni selecciones y no agre
         tacticalKeypoints: keypoints.length ? keypoints : [facts[0].text],
         analysisSections,
         narrativeAnalysis: finalNarrative,
-        aiStatus: `Hechos priorizados por IA (${usedModel}); cifras y conclusiones calculadas por el modelo estadístico. Sin calibración histórica de aciertos.`
+        aiStatus: `Hechos priorizados por IA (${usedModel}); cifras del mercado sin margen o del modelo estadístico, según la fuente indicada. La IA no recalcula probabilidades. Sin calibración prospectiva de aciertos.`
       };
     } catch (err) {
       console.error('[aiService] Error generating or validating AI match report:', err?.message || err);
