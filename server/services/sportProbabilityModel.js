@@ -1,4 +1,8 @@
 import { roundDistribution, totalLines, validNumber, poissonProbability } from '../../src/utils/probability.js';
+import { countForecast, countLines, combinedCount, countResult } from './baseballCountModel.js';
+
+import { SPORT_MODEL_VERSION } from '../../src/utils/sportModelVersion.js';
+export { SPORT_MODEL_VERSION };
 
 export const RUN_LINES = [1.5, 2.5, 3.5, 4.5, 5.5];
 export const TOTAL_RUN_LINES = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5];
@@ -126,37 +130,31 @@ export function poissonResult(homeRate, awayRate) {
 export function baseballAnalysis(match, games = [], now = Date.now()) {
   const home = teamSample(match, games, 'home', now), away = teamSample(match, games, 'away', now);
   const ready = home.length >= 5 && away.length >= 5;
-  let homeRate = ready ? (mean(home.map(g => g.own)) + mean(away.map(g => g.against))) / 2 : null;
-  let awayRate = ready ? (mean(away.map(g => g.own)) + mean(home.map(g => g.against))) / 2 : null;
-  const strength = relativeResultStrength(match, games, now);
-  if (ready && strength.probability !== null && homeRate + awayRate > 0 && homeRate + awayRate <= 40) {
-    // Keep scoring totals and the winner on the same decisive-score distribution.
-    const total = homeRate + awayRate;
-    let low = 0, high = total;
-    for (let i = 0; i < 24; i++) {
-      const mid = (low + high) / 2, result = poissonResult(mid, total - mid);
-      const decisiveChance = result.home / (result.home + result.away);
-      if (decisiveChance < strength.probability) low = mid; else high = mid;
-    }
-    homeRate = (low + high) / 2; awayRate = total - homeRate;
-  }
-  const regulation = poissonResult(homeRate, awayRate);
+  const forecasts = (h, a) => {
+    const ids = new Set(h.map(game => game.id)), common = a.filter(game => ids.has(game.id)).length;
+    return { home: countForecast(h.map(g => g.own), a.map(g => g.against), common), away: countForecast(a.map(g => g.own), h.map(g => g.against), common) };
+  };
+  const full = forecasts(home, away);
+  const homeRate = full.home?.mean ?? null, awayRate = full.away?.mean ?? null;
+  const regulation = countResult(full.home, full.away);
   const decisive = regulation.home != null ? regulation.home + regulation.away : 0;
-  // A tie after Poisson regulation is not a tie at the end of extra innings.
+  const oddsWinner = match.allowsDraw ? null : marketWinner(match.odds);
+  // A tie in the scoring distribution is not a tie after extra innings.
   const drawChance = ready && match.allowsDraw ? ([...home, ...away].filter(game => game.own === game.against).length + 1) / (home.length + away.length + 3) : 0;
-  const winner = decisive > 0 ? (match.allowsDraw
+  const winner = oddsWinner !== null ? pair(oddsWinner) : decisive > 0 ? (match.allowsDraw
     ? roundDistribution({ home: regulation.home / decisive * (1 - drawChance) * 100, draw: drawChance * 100, away: regulation.away / decisive * (1 - drawChance) * 100 }, 1)
     : pair(regulation.home / decisive)) : (match.allowsDraw ? { home: null, draw: null, away: null } : pair(null));
   const periodSample = (sample, count) => sample.flatMap(game => {
-    const innings = Array.from({ length: count }, (_, i) => (game.inningScores || []).find(inning => inning.num === i + 1));
+    // Corrupt or duplicated period scores must not produce confident picks.
+    if (!Array.isArray(game.inningScores) || new Set(game.inningScores.map(inning => inning.num)).size !== game.inningScores.length) return [];
+    const innings = Array.from({ length: count }, (_, i) => game.inningScores.find(inning => inning.num === i + 1));
     if (!innings.every(inning => inning && ['home', 'away'].every(side => Number.isInteger(inning[side]) && inning[side] >= 0))) return [];
+    if (['home', 'away'].some(side => innings.reduce((sum, inning) => sum + inning[side], 0) > game.finalScore[side])) return [];
     return [{ ...game, own: innings.reduce((sum, inning) => sum + inning[game.ownSide], 0), against: innings.reduce((sum, inning) => sum + inning[game.ownSide === 'home' ? 'away' : 'home'], 0) }];
   });
   const periodRates = count => {
     const h = periodSample(home, count), a = periodSample(away, count);
-    return { home: h.length >= 5 && a.length >= 5 ? (mean(h.map(game => game.own)) + mean(a.map(game => game.against))) / 2 : null,
-      away: h.length >= 5 && a.length >= 5 ? (mean(a.map(game => game.own)) + mean(h.map(game => game.against))) / 2 : null,
-      sampleSize: { home: h.length, away: a.length } };
+    return { ...forecasts(h, a), sampleSize: { home: h.length, away: a.length } };
   };
   const first = periodRates(1), five = periodRates(5);
   const extraSample = sample => [...new Map(sample.filter(game => game.scheduledInnings === match.scheduledInnings && observedExtraInnings(game) !== null).map(game => [game.id, game])).values()];
@@ -165,20 +163,24 @@ export function baseballAnalysis(match, games = [], now = Date.now()) {
   const extraCount = extraGames.filter(game => observedExtraInnings(game)).length;
   const extraReady = Number.isInteger(match.scheduledInnings) && match.scheduledInnings > 0 && extraHome.length >= 5 && extraAway.length >= 5;
   return {
-    kind: 'baseball', available: ready, winner, form: { home: recentForm(home), away: recentForm(away) },
+    kind: 'baseball', available: winner.home !== null, winner, form: { home: recentForm(home), away: recentForm(away) },
+    modelVersion: SPORT_MODEL_VERSION,
+    probabilitySource: oddsWinner !== null ? 'published-odds' : 'experimental-model',
     expectedRuns: { home: homeRate, away: awayRate },
-    scoresRun: { home: yesNo(homeRate === null ? null : 1 - Math.exp(-homeRate)), away: yesNo(awayRate === null ? null : 1 - Math.exp(-awayRate)) },
-    teamRuns: { home: runLadder(homeRate), away: runLadder(awayRate) },
-    totalRuns: runLadder(homeRate !== null && awayRate !== null ? homeRate + awayRate : null, TOTAL_RUN_LINES),
+    scoresRun: { home: yesNo(full.home ? 1 - full.home.mass[0] : null), away: yesNo(full.away ? 1 - full.away.mass[0] : null) },
+    teamRuns: { home: countLines(full.home, RUN_LINES), away: countLines(full.away, RUN_LINES) },
+    totalRuns: countLines(combinedCount(full.home, full.away), TOTAL_RUN_LINES),
     extraInnings: yesNo(extraReady ? (extraCount + 0.5) / (extraGames.length + 1) : null),
     extraInningsSampleSize: { home: extraHome.length, away: extraAway.length, uniqueGames: extraGames.length, extraGames: extraCount },
-    firstInning: poissonResult(first.home, first.away),
-    firstFive: runLadder(five.home !== null && five.away !== null ? five.home + five.away : null),
+    firstInning: countResult(first.home, first.away),
+    firstFive: countLines(combinedCount(five.home, five.away), RUN_LINES),
+    countDiagnostics: { full: Object.fromEntries(['home', 'away'].map(side => [side, full[side] ? { mean: full[side].mean, variance: full[side].variance, shape: full[side].shape } : null])),
+      five: Object.fromEntries(['home', 'away'].map(side => [side, five[side] ? { mean: five[side].mean, variance: five[side].variance, shape: five[side].shape } : null])) },
     sampleSize: { home: home.length, away: away.length },
     inningSampleSize: { first: first.sampleSize, five: five.sampleSize },
     records: { home: home.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })), away: away.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })) },
-    method: 'Total esperado de carreras basado en las medias anotadas y recibidas de los últimos 20 resultados completos (mínimo 5 por equipo; incluyen extra innings si los hubo). El reparto entre equipos se ajusta a una fuerza relativa tipo Elo calculada con resultados previos del mismo torneo: punto inicial neutral 1500, escala 400 y actualización 24 por partido. Son parámetros matemáticos, no rankings oficiales. Totales por equipo y combinado del partido: Poisson sobre esas medias ajustadas, incluidos extra innings presentes en los resultados. Primer inning y total de innings 1 a 5 usan exclusivamente carreras observadas en esos innings, con mínimo 5 registros por equipo; sin esos registros se muestra N/D. ¿Habrá extra innings?: frecuencia de partidos que excedieron la duración reglamentaria publicada por el proveedor, con mínimo 5 registros verificables por equipo, de la misma duración que el encuentro y sin contar dos veces un enfrentamiento común. Suavizado matemático de Jeffreys (0.5 añadido al numerador y 1 al denominador); esos valores no son partidos observados. Sin duración reglamentaria o innings completos comprobables, N/D. No incorpora lanzadores ni alineaciones.'
-      + (match.allowsDraw ? ' Empate final estimado con la frecuencia observada, suavizada con un registro por resultado; la masa decisiva se reparte según Poisson.' : ' Ganador aproximado condicionando la distribución Poisson a un resultado decisivo; no simula extra innings.'),
+    method: 'Carreras: binomial negativa con medias anotadas y recibidas de los últimos 20 resultados completos, mínimo 5 por equipo. Conserva la variación observada (como mínimo la de Poisson) y añade incertidumbre por estimar medias con muestras finitas. Totales combinados por convolución de ambos equipos bajo independencia; incluye extra innings de los resultados completos. Primer inning y primeros cinco innings usan solo carreras verificadas de esos periodos. Una muestra de ceros indica N/D, no un Under de 100%. Los totales históricos se calculan por separado del ganador de mercado, sin alterar carreras para imitar Elo. ¿Habrá extra innings?: frecuencia de encuentros de la misma duración reglamentaria, mínimo 5 por equipo, sin duplicados, con suavizado de Jeffreys (0.5 añadido al numerador y 1 al denominador). Sin metadata comprobable, N/D. No incorpora lanzadores ni alineaciones.'
+      + (oddsWinner !== null ? ' Ganador: probabilidad implícita en ambas cuotas publicadas de la misma casa, normalizada para retirar el margen.' : match.allowsDraw ? ' Ganador histórico: distribución de carreras condicionada a resultado decisivo; empate final por frecuencia suavizada.' : ' Ganador histórico: distribución de carreras condicionada a resultado decisivo; no simula extra innings.'),
     notice: ready ? 'Probabilidades estimadas antes del partido; no se recalculan según el marcador en vivo.' : 'Faltan al menos 5 partidos finalizados por equipo con carreras verificadas.'
   };
 }
@@ -218,6 +220,8 @@ export function basketballAnalysis(match, games = [], now = Date.now()) {
   }))]));
   return {
     kind: 'basketball', available: winner.home !== null, winner, handicaps, form: { home: recentForm(home), away: recentForm(away) },
+    modelVersion: SPORT_MODEL_VERSION,
+    probabilitySource: oddsWinner !== null ? 'published-odds' : 'experimental-model',
     sampleSize: { home: home.length, away: away.length },
     records: { home: home.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })), away: away.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })) },
     method: 'Hándicaps estimados con una distribución normal del margen, calculada sobre los últimos 20 resultados disponibles de la misma competición (mínimo 5 por equipo). Incluyen prórroga cuando está incluida en el resultado oficial.'
@@ -274,6 +278,7 @@ export function tennisAnalysis(match, games = [], now = Date.now()) {
   const needed = (maxSets + 1) / 2;
   return {
     kind: 'tennis', available: setChance !== null, winner: pair(oddsWinner ?? (setChance === null ? null : seriesWinProbability(setChance, maxSets))),
+    modelVersion: SPORT_MODEL_VERSION,
     firstSet: pair(setChance), secondSet: pair(setChance),
     winsSet: { home: yesNo(setChance === null ? null : 1 - (1 - setChance) ** needed), away: yesNo(setChance === null ? null : 1 - setChance ** needed) },
     maxSets, sampleSize: { home: home.matches, away: away.matches }, setSampleSize: { home: home.played, away: away.played },

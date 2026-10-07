@@ -1,0 +1,332 @@
+{
+  "startedAt": "2026-10-07T01:32:03.760Z",
+  "finishedAt": "2026-10-07T01:32:29.857Z",
+  "pass": true,
+  "configuredProvider": "custom",
+  "configuredModel": "deepseek-v4.1",
+  "requests": [
+    {
+      "sport": "futbol",
+      "requestedAt": "2026-10-07T01:32:11.368Z",
+      "requestedModel": "deepseek-v4.1",
+      "catalogSize": 15,
+      "catalogIds": [
+        "fixture",
+        "source",
+        "home",
+        "away",
+        "result",
+        "expectedGoals",
+        "goals",
+        "score",
+        "sample",
+        "h2h",
+        "standings",
+        "form",
+        "odds",
+        "recent_home",
+        "recent_away"
+      ],
+      "promptSha256": "b24b0a3abb659682a4bca83dd4ed4e2286f52049c873e1559ca4502baf97424e",
+      "httpStatus": 200,
+      "latencyMs": 2141,
+      "responseSha256": "6337abd1e6f58a426ccddb34adbe1ec34527be17f534290da3cf0071a7674ee1",
+      "responseModel": "deepseek-v4.1",
+      "returnedFactIds": [
+        "fixture",
+        "home",
+        "away",
+        "result",
+        "expectedGoals",
+        "goals",
+        "score",
+        "h2h",
+        "standings",
+        "form"
+      ],
+      "usage": {
+        "promptTokens": 1042,
+        "completionTokens": 29
+      }
+    },
+    {
+      "sport": "futbol",
+      "requestedAt": "2026-10-07T01:32:13.513Z",
+      "requestedModel": "deepseek-v4.1",
+      "catalogSize": 15,
+      "catalogIds": [
+        "fixture",
+        "source",
+        "home",
+        "away",
+        "result",
+        "expectedGoals",
+        "goals",
+        "score",
+        "sample",
+        "h2h",
+        "standings",
+        "form",
+        "odds",
+        "recent_home",
+        "recent_away"
+      ],
+      "promptSha256": "aec4e68a2162c55764d38f48aa870b4d153965ac139f013628c7c7bd7f966652",
+      "httpStatus": 200,
+      "latencyMs": 1543,
+      "responseSha256": "666404c6c9e3bfd05cb631d5152410f2b43f03f0434052ac5233f67c852118b8",
+      "responseModel": "deepseek-v4.1",
+      "returnedFactIds": [
+        "fixture",
+        "home",
+        "away",
+        "result"
+      ],
+      "usage": {
+        "promptTokens": 1118,
+        "completionTokens": 13
+      }
+    },
+    {
+      "sport": "beisbol",
+      "requestedAt": "2026-10-07T01:32:17.809Z",
+      "requestedModel": "deepseek-v4.1",
+      "catalogSize": 13,
+      "catalogIds": [
+        "fixture",
+        "source",
+        "winner",
+        "sample",
+        "method",
+        "limits",
+        "form_home",
+        "runs_home",
+        "form_away",
+        "runs_away",
+        "first_inning",
+        "first_five",
+        "extra"
+      ],
+      "promptSha256": "4ef79be5b6a160363ea7c612d666f3fff5433a233b0edf2c7b20f764f19223e5",
+      "httpStatus": 200,
+      "latencyMs": 2552,
+      "responseSha256": "c8a06908ca99c448fae4cf83f4bdd6b4ffb4044382923dc0599cf7bf147c2147",
+      "responseModel": "deepseek-v4.1",
+      "returnedFactIds": [
+        "fixture",
+        "winner",
+        "form_home",
+        "form_away",
+        "first_inning",
+        "extra"
+      ],
+      "usage": {
+        "promptTokens": 1373,
+        "completionTokens": 22
+      }
+    },
+    {
+      "sport": "tenis",
+      "requestedAt": "2026-10-07T01:32:24.655Z",
+      "requestedModel": "deepseek-v4.1",
+      "catalogSize": 7,
+      "catalogIds": [
+        "fixture",
+        "source",
+        "winner",
+        "sample",
+        "method",
+        "limits",
+        "sets"
+      ],
+      "promptSha256": "b597dbe5de088e875268bc9f1b63ebfdb3fa5cc065e423ffe3e5de8320952089",
+      "httpStatus": 200,
+      "latencyMs": 1597,
+      "responseSha256": "bc8bbe25f8596c06b0502c69c9c6bf6c1caf5b5f289579364abb24b9999d1e23",
+      "responseModel": "deepseek-v4.1",
+      "returnedFactIds": [
+        "fixture",
+        "method",
+        "limits",
+        "sample",
+        "winner",
+        "sets"
+      ],
+      "usage": {
+        "promptTokens": 648,
+        "completionTokens": 17
+      }
+    },
+    {
+      "sport": "basquetbol",
+      "requestedAt": "2026-10-07T01:32:28.548Z",
+      "requestedModel": "deepseek-v4.1",
+      "catalogSize": 10,
+      "catalogIds": [
+        "fixture",
+        "source",
+        "winner",
+        "sample",
+        "method",
+        "limits",
+        "form_home",
+        "handicap_home",
+        "form_away",
+        "handicap_away"
+      ],
+      "promptSha256": "b2f8220f0aa33ddd1d2b6b33f3802a582b2c626a1640429fe3e36dd164f7fc8f",
+      "httpStatus": 200,
+      "latencyMs": 1297,
+      "responseSha256": "ec9cc83e0f2ba9334daae58670f3ae93065d0f8e751288f6b635bd3426766856",
+      "responseModel": "deepseek-v4.1",
+      "returnedFactIds": [
+        "fixture",
+        "winner",
+        "handicap_home",
+        "handicap_away",
+        "limits"
+      ],
+      "usage": {
+        "promptTokens": 1118,
+        "completionTokens": 20
+      }
+    }
+  ],
+  "results": [
+    {
+      "sport": "futbol",
+      "id": "espn-761845",
+      "teams": [
+        "Toronto FC",
+        "CF Montréal"
+      ],
+      "sourceUrl": "https://www.espn.com/soccer/match/_/gameId/761845",
+      "dataFetchedAt": "2026-10-07T01:32:05.091Z",
+      "aiConfirmed": true,
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-07T01:32:15.057Z",
+      "analysisMode": "fact-selection",
+      "sampleSize": null,
+      "probabilities": {
+        "homeWin": 41.63223355749712,
+        "draw": 22.97573839683035,
+        "awayWin": 35.39202804567264,
+        "bttsYes": 65.11520449526091,
+        "over05": 96.29799749914825,
+        "over15": 84.09510036671104,
+        "over25": 63.9829180558423,
+        "over35": 41.88434736859157,
+        "over45": 23.67348819113482,
+        "under05": 3.702002500851748,
+        "bttsNo": 34.88479550473909,
+        "under15": 15.904899633288963,
+        "under25": 36.0170819441577,
+        "under35": 58.11565263140843,
+        "under45": 76.32651180886518,
+        "cornerOver95": null,
+        "confidence": null,
+        "predictedScore": "1 - 1"
+      },
+      "selectedSourceFacts": [
+        "Toronto FC vs CF Montréal. Torneo: MLS. Estado: SCHEDULED. Inicio: 2026-10-10T17:00Z.",
+        "Toronto FC (Local): 27 PJ, 39 GF, 51 GC. Registros: Posición #13, (29 pts), valla invicta 0%, 3.6 córners/p, 1.7 amarillas/p.",
+        "CF Montréal (Visitante): 27 PJ, 34 GF, 54 GC. Registros: Posición #15, (24 pts), valla invicta 0%, 4.8 córners/p, 2.1 amarillas/p.",
+        "Estimación Poisson: Toronto FC 41.6%, Empate 23%, CF Montréal 35.4%."
+      ],
+      "freshProviderCalls": 2
+    },
+    {
+      "sport": "beisbol",
+      "id": "mlb-mlb-849833",
+      "teams": [
+        "Chicago White Sox",
+        "Cleveland Guardians"
+      ],
+      "sourceUrl": "https://www.mlb.com/gameday/849833",
+      "dataFetchedAt": "2026-10-07T01:32:16.671Z",
+      "aiConfirmed": true,
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-07T01:32:20.363Z",
+      "analysisMode": "fact-selection",
+      "sampleSize": {
+        "home": 20,
+        "away": 20
+      },
+      "probabilities": {
+        "home": 52.2,
+        "away": 47.8
+      },
+      "selectedSourceFacts": [
+        "Chicago White Sox vs Cleveland Guardians. MLB. Inicio: 2026-10-07T20:00:00Z. Estado: SCHEDULED.",
+        "Ganador previo: Chicago White Sox 52.2%, Cleveland Guardians 47.8%.",
+        "Resultados anteriores de Chicago White Sox, más antiguo a más reciente: 2026-09-27T19:10:00Z · Colorado Rockies · 4–2 (W); 2026-09-29T21:00:00Z · Houston Astros · 6–3 (W); 2026-09-30T21:00:00Z · Houston Astros · 7–3 (W); 2026-10-03T17:00:00Z · Cleveland Guardians · 3–0 (W); 2026-10-05T21:00:00Z · Cleveland Guardians · 4–3 (W).",
+        "Resultados anteriores de Cleveland Guardians, más antiguo a más reciente: 2026-09-25T23:40:00Z · Kansas City Royals · 12–9 (W); 2026-09-26T23:10:00Z · Kansas City Royals · 11–5 (W); 2026-09-27T19:10:00Z · Kansas City Royals · 2–3 (L); 2026-10-03T17:00:00Z · Chicago White Sox · 0–3 (L); 2026-10-05T21:00:00Z · Chicago White Sox · 3–4 (L).",
+        "Primer inning: Chicago White Sox 29.8%, empate 41.7%, Cleveland Guardians 28.5%.",
+        "Extra innings: Sí 1.4%, No 98.6%. Muestra verificada: 35 encuentros."
+      ],
+      "freshProviderCalls": 1
+    },
+    {
+      "sport": "tenis",
+      "id": "espn-tennis-wta-185289",
+      "teams": [
+        "Darya Astakhova",
+        "Renata Zarazua"
+      ],
+      "sourceUrl": "https://www.espn.com/tennis/scoreboard/_/date/20261007",
+      "dataFetchedAt": "2026-10-07T01:32:20.467Z",
+      "aiConfirmed": true,
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-07T01:32:26.255Z",
+      "analysisMode": "fact-selection",
+      "sampleSize": {
+        "home": 4,
+        "away": 8
+      },
+      "probabilities": {
+        "home": null,
+        "away": null
+      },
+      "selectedSourceFacts": [
+        "Darya Astakhova vs Renata Zarazua. WTA · Suzhou Open. Inicio: 2026-10-07T02:00Z. Estado: SCHEDULED.",
+        "Ganador por fuerza relativa tipo Elo con resultados previos del mismo circuito (mínimo 5 partidos y 5 sets verificados por jugador). Inicialización neutral 1500, escala 400 y actualización 24: parámetros matemáticos, no rankings oficiales. Probabilidad por set inferida del ganador. Partido al mejor de 3 sets. Los sets se suponen independientes y con la misma probabilidad: primer y segundo set comparten estimación. Gana un set significa al menos uno; se supone que el partido se completa.",
+        "Probabilidades previas, sin validación prospectiva. No se verificaron alineaciones, lesiones ni noticias. No son garantías ni probabilidades ajustadas al marcador en vivo.",
+        "Muestra anterior al encuentro: Darya Astakhova 4 partidos; Renata Zarazua 8 partidos.",
+        "Ganador previo: Darya Astakhova N/D, Renata Zarazua N/D.",
+        "Primer set: Darya Astakhova N/D, Renata Zarazua N/D. Segundo set: Darya Astakhova N/D, Renata Zarazua N/D. Al menos un set: Darya Astakhova Sí N/D, No N/D; Renata Zarazua Sí N/D, No N/D. Mejor de 3 sets."
+      ],
+      "freshProviderCalls": 1
+    },
+    {
+      "sport": "basquetbol",
+      "id": "espn-nba_preseason-401898390",
+      "teams": [
+        "Golden State Warriors",
+        "Los Angeles Lakers"
+      ],
+      "sourceUrl": "https://www.espn.com/nba/game/_/gameId/401898390",
+      "dataFetchedAt": "2026-10-07T01:32:26.508Z",
+      "aiConfirmed": true,
+      "modelUsed": "deepseek-v4.1",
+      "analyzedAt": "2026-10-07T01:32:29.849Z",
+      "analysisMode": "fact-selection",
+      "sampleSize": {
+        "home": 12,
+        "away": 13
+      },
+      "probabilities": {
+        "home": 70,
+        "away": 30
+      },
+      "selectedSourceFacts": [
+        "Golden State Warriors vs Los Angeles Lakers. Pretemporada NBA. Inicio: 2026-10-07T02:00Z. Estado: SCHEDULED.",
+        "Ganador previo: Golden State Warriors 70%, Los Angeles Lakers 30%.",
+        "Hándicaps de Golden State Warriors: +1.5: 72.7%; +2.5: 74.5%; +3.5: 76.1%; +4.5: 77.8%; +5.5: 79.3%; +6.5: 80.8%; +7.5: 82.2%; -1.5: 67.2%; -2.5: 65.3%; -3.5: 63.3%; -4.5: 61.3%; -5.5: 59.2%; -6.5: 57.1%.",
+        "Hándicaps de Los Angeles Lakers: +1.5: 32.8%; +2.5: 34.7%; +3.5: 36.7%; +4.5: 38.7%; +5.5: 40.8%; +6.5: 42.9%; +7.5: 45%; -1.5: 27.3%; -2.5: 25.5%; -3.5: 23.9%; -4.5: 22.2%; -5.5: 20.7%; -6.5: 19.2%.",
+        "Probabilidades previas, sin validación prospectiva. No se verificaron alineaciones, lesiones ni noticias. No son garantías ni probabilidades ajustadas al marcador en vivo."
+      ],
+      "freshProviderCalls": 1
+    }
+  ],
+  "limits": "Actual HTTP replies from the configured provider, not cached AI. AI reviews and prioritizes a catalog of verified facts; probabilities and selections are calculated statistically. This does not verify future predictive accuracy or the provider internal model implementation."
+}

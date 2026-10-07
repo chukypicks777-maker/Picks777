@@ -228,6 +228,33 @@ test('todos los deportes muestran fecha, hora y momios en el formato elegido; la
   }
 });
 
+test('las cuotas de la captura mantienen al favorito y la línea F5 queda visible en una tarjeta móvil', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('oddsFormat', 'american'));
+  const match = fixture('beisbol', 'mlb', 'San Diego Padres', 'Milwaukee Brewers');
+  match.odds = { homeWin: 1 + 100 / 138, awayWin: 2.14 };
+  const games = Array.from({ length: 12 }, (_, i) => ({ ...match, id: `dispersion-${i}`, status: 'FINISHED', kickoff: new Date(now - (i + 1) * 86400000).toISOString(),
+    finalScore: { home: i % 2 ? 9 : 1, away: i % 3 ? 2 : 13 },
+    inningScores: Array.from({ length: 9 }, (_, k) => ({ num: k + 1, home: k === 2 ? (i % 2 ? 9 : 1) : 0, away: k === 0 ? (i % 3 ? 2 : 13) : 0 })) }));
+  match.analysis = baseballAnalysis(match, games, now);
+  await setup(page, '/beisbol');
+  await page.route('**/api/sports/beisbol**', route => route.fulfill({ json: { success: true, match, matches: [match], coverage: [{ leagueId: 'mlb', name: 'MLB', status: 'available' }] } }));
+  await page.reload();
+  await page.setViewportSize({ width: 320, height: 740 });
+  const card = page.getByRole('tabpanel').getByRole('article').first();
+  await expect(card).toContainText('55.4%');
+  await expect(card).toContainText('44.6%');
+  await expect(card).toContainText('Momio -138');
+  await expect(card).toContainText('Momio +114');
+  await expect(card).toContainText('Ganador · Mercado sin margen');
+  await expect(card.getByRole('region', { name: 'Pick ganador' })).toContainText('San Diego Padres gana');
+  await expect(card.getByText('Innings 1–5 · Over 2.5', { exact: true })).toBeVisible();
+  expect(match.analysis.firstFive.find(row => row.line === 2.5).over).toBeLessThan(94);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await card.screenshot({ path: `artifacts/mobile/probability-fix-${test.info().project.name}.png` });
+  await card.getByRole('button', { name: 'Ver análisis y mercados' }).click();
+  await expect(page.getByRole('dialog')).toContainText('Ganador: probabilidad implícita del mercado, sin margen de la casa.');
+});
+
 test('las ligas rápidas aparecen durante una consulta lenta y cambiar el formato o la visibilidad no cancela la carga', async ({ page }) => {
   await setup(page, '/tenis');
   let release, npbCalls = 0, mlbCalls = 0;

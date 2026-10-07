@@ -2,7 +2,7 @@ import { SPORT_LEAGUES } from '../../src/constants/leagues.js';
 import { cachedData, fetchJson } from './dataCache.js';
 import { americanToDecimal, numberOrNull } from './footballDataService.js';
 import { getMlbLeague, getNpbLeague, getKboLeague, enrichNpbInnings } from './baseballDataService.js';
-import { analyzeSportMatch } from './sportProbabilityModel.js';
+import { analyzeSportMatch, SPORT_MODEL_VERSION } from './sportProbabilityModel.js';
 import { readSportsAiReport } from './sportsAiService.js';
 import { rankSportWinners } from '../../src/utils/sportPicks.js';
 import { isKnownFixture } from '../../src/utils/fixtureEligibility.js';
@@ -15,8 +15,11 @@ export function espnSportStatus(status) {
 }
 export function oddsFor(comp) {
   const data = comp.odds?.[0];
+  // Both prices must come from the same snapshot. Mixing one modern quote
+  // with the other team's legacy quote can manufacture a false favourite.
+  const hasClose = ['home', 'away'].some(side => data?.moneyline?.[side]?.close?.odds != null);
   return {
-    odds: Object.fromEntries(['home', 'away'].map(side => [`${side}Win`, americanToDecimal(data?.moneyline?.[side]?.close?.odds ?? data?.[`${side}TeamOdds`]?.moneyLine)])),
+    odds: Object.fromEntries(['home', 'away'].map(side => [`${side}Win`, americanToDecimal(hasClose ? data?.moneyline?.[side]?.close?.odds : data?.[`${side}TeamOdds`]?.moneyLine)])),
     oddsProvider: data?.provider?.name || null
   };
 }
@@ -152,7 +155,7 @@ export async function getSportsMatch(sport, id, options = {}) {
 
 async function hydrateSportsMatch(sport, match, today, options = {}, history = null) {
   const version = JSON.stringify([match.status, match.kickoff, match.homeTeam, match.awayTeam, match.liveScore, match.odds]);
-  const detail = await cachedData(`sports:detail:v4:${sport}:${match.leagueId}:${match.id}:${today}:${version}`, 60,
+  const detail = await cachedData(`sports:detail:v5:${SPORT_MODEL_VERSION}:${sport}:${match.leagueId}:${match.id}:${today}:${version}`, 60,
     async () => loadSportsMatch(sport, match.id, match, history), { forceRefresh: Boolean(options.forceRefresh) });
   const report = await readSportsAiReport(detail);
   return { ...detail, aiReport: report, isAiAnalyzed: Boolean(report?.aiAvailable) };
@@ -197,7 +200,9 @@ async function loadSportsMatch(sport, id, match, sharedHistory = null) {
       // ESPN's MLB calendar uses the Eastern day, rather than the UTC start date.
       const espnDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(match.kickoff));
       const result = await espnScoreboard('baseball/mlb', `dates=${espnDay.replaceAll('-', '')}&limit=100`);
-      return { ...match, ...publishedMlbOdds(match, result.data, result.fetchedAt) };
+      const quoted = { ...match, ...publishedMlbOdds(match, result.data, result.fetchedAt) };
+      const { games } = await getSportsHistory(sport, Date.now(), { leagueId: 'mlb' });
+      return { ...quoted, analysis: analyzeSportMatch(quoted, games) };
     } catch { return match; }
   }
   if (sport === 'tenis') {
@@ -281,6 +286,23 @@ async function getBaseball(today, now, options = {}) {
     try {
       const loader = league.provider === 'npb' ? getNpbLeague : league.provider === 'kbo' ? getKboLeague : getMlbLeague;
       const result = await loader(league, ['npb', 'kbo'].includes(league.id) ? asiaDay : today);
+      if (league.id === 'mlb') {
+        const dateFor = match => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(match.kickoff)).replaceAll('-', '');
+        const visible = result.matches.filter(match => ['SCHEDULED', 'LIVE'].includes(match.status) && Date.parse(match.kickoff) >= now - 72 * 3600000 && Date.parse(match.kickoff) <= now + 8 * 86400000);
+        const dates = [...new Set(visible.map(dateFor))];
+        const snapshots = new Map();
+        // Calendar, ranking and detail must all use the same published winner.
+        const responses = await Promise.allSettled(dates.map(async date => {
+          const quotes = await espnScoreboard('baseball/mlb', `dates=${date}&limit=100`);
+          return { date, quotes };
+        }));
+        for (const response of responses) if (response.status === 'fulfilled') snapshots.set(response.value.date, response.value.quotes);
+        const ids = new Set(visible.map(match => match.id));
+        result.matches = result.matches.map(match => {
+          const snapshot = ids.has(match.id) ? snapshots.get(dateFor(match)) : null;
+          return snapshot ? { ...match, ...publishedMlbOdds(match, snapshot.data, snapshot.fetchedAt) } : match;
+        });
+      }
       return { matches: result.matches, coverage: [{ leagueId: league.id, name: league.name, source: result.source, status: result.degraded ? 'degraded' : 'available', fetchedAt: result.fetchedAt }] };
     } catch { return { matches: [], coverage: [{ leagueId: league.id, name: league.name, source: league.provider === 'npb' ? 'NPB oficial' : league.provider === 'kbo' ? 'KBO oficial' : 'MLB Stats API', status: 'unavailable', fetchedAt: null }] }; }
   }));
@@ -298,7 +320,7 @@ export async function getSportsHistory(sport, now = Date.now(), options = {}) {
 export async function getSportsBankerCandidates(sport, options = {}) {
   if (!Object.hasOwn(SPORT_LEAGUES, sport)) throw new Error('Deporte no válido.');
   const now = Date.now(), today = new Date(now).toISOString().slice(0, 10);
-  return cachedData(`sports:banker-pool:v1:${sport}:${options.leagueId || 'all'}:${today}`, 60, async () => {
+  return cachedData(`sports:banker-pool:v2:${SPORT_MODEL_VERSION}:${sport}:${options.leagueId || 'all'}:${today}`, 60, async () => {
     const { games, coverage } = await getSportsHistory(sport, now, { ...options, calendarOnly: sport !== 'tenis' });
     if (coverage.every(league => league.status === 'unavailable')) throw new Error('Calendarios no disponibles para calcular Banqueros.');
     const candidates = games.filter(match => match.status === 'SCHEDULED' && Date.parse(match.kickoff) > now && Date.parse(match.kickoff) <= now + 8 * 86400000
@@ -326,7 +348,7 @@ export async function getSportsFeed(sport, options = {}) {
   if (options.leagueId && !SPORT_LEAGUES[sport].some(league => league.id === options.leagueId)) throw new Error('Liga no válida.');
   const now = options.now ?? Date.now();
   const today = new Date(now).toISOString().slice(0, 10);
-  return cachedData(`sports:feed:v4:${sport}:${today}:${options.leagueId || 'all'}:${options.calendarOnly ? 'calendar' : 'full'}`, 15, async () => {
+  return cachedData(`sports:feed:v5:${SPORT_MODEL_VERSION}:${sport}:${today}:${options.leagueId || 'all'}:${options.calendarOnly ? 'calendar' : 'full'}`, 15, async () => {
     const { games, coverage: sourceCoverage } = await getSportsHistory(sport, now, options);
     const order = { LIVE: 0, SCHEDULED: 1, FINISHED: 2 };
     const matches = games.filter(match => {

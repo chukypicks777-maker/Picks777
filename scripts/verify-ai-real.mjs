@@ -9,7 +9,7 @@ import { getEffectiveAiConfig, generateAiMatchReport, extractJsonFromAiResponse 
 import { generateAiSportsReport } from '../server/services/sportsAiService.js';
 import { isUpcomingFixture } from '../src/utils/fixtureEligibility.js';
 
-const output = 'artifacts/ai-real-verification-2026-10-06.json';
+const output = process.argv[2] || 'artifacts/ai-real-verification-2026-10-06.json';
 const nativeFetch = globalThis.fetch, requests = [], results = [];
 const keepAlive = setInterval(() => {}, 1000);
 const startedAt = new Date().toISOString();

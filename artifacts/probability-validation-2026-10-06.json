@@ -1,0 +1,338 @@
+{
+  "checkedAt": "2026-10-07T01:05:00.206Z",
+  "source": "MLB Stats API / ESPN",
+  "historicalGames": 497,
+  "evaluatedGames": 421,
+  "methodology": "Walk-forward on the available 45-day MLB window. A match and all later starts are excluded from its input. Same expected means, comparing prior Poisson totals with negative binomial predictive totals. Lower Brier/log loss is better.",
+  "limits": "Retrospective check on one short window; not a prospective accuracy guarantee. No archived bookmaker quotes or pitcher/lineup data. Models assume independent team scoring.",
+  "metrics": {
+    "fullTotal:1.5": {
+      "forecasts": 421,
+      "currentBrier": 0.02333,
+      "previousBrier": 0.02362,
+      "currentLogLoss": 0.114026,
+      "previousLogLoss": 0.492909
+    },
+    "fullTotal:2.5": {
+      "forecasts": 421,
+      "currentBrier": 0.045763,
+      "previousBrier": 0.046645,
+      "currentLogLoss": 0.195367,
+      "previousLogLoss": 0.596679
+    },
+    "fullTotal:3.5": {
+      "forecasts": 421,
+      "currentBrier": 0.089643,
+      "previousBrier": 0.092855,
+      "currentLogLoss": 0.333477,
+      "previousLogLoss": 0.504521
+    },
+    "fullTotal:4.5": {
+      "forecasts": 421,
+      "currentBrier": 0.114797,
+      "previousBrier": 0.114701,
+      "currentLogLoss": 0.396915,
+      "previousLogLoss": 0.425131
+    },
+    "fullTotal:5.5": {
+      "forecasts": 421,
+      "currentBrier": 0.163621,
+      "previousBrier": 0.164346,
+      "currentLogLoss": 0.512838,
+      "previousLogLoss": 0.541273
+    },
+    "fullTotal:6.5": {
+      "forecasts": 421,
+      "currentBrier": 0.207874,
+      "previousBrier": 0.208842,
+      "currentLogLoss": 0.607571,
+      "previousLogLoss": 0.622221
+    },
+    "fullTotal:7.5": {
+      "forecasts": 421,
+      "currentBrier": 0.24167,
+      "previousBrier": 0.249388,
+      "currentLogLoss": 0.676939,
+      "previousLogLoss": 0.701495
+    },
+    "fullTotal:8.5": {
+      "forecasts": 421,
+      "currentBrier": 0.252272,
+      "previousBrier": 0.257612,
+      "currentLogLoss": 0.698063,
+      "previousLogLoss": 0.711689
+    },
+    "fullTotal:9.5": {
+      "forecasts": 421,
+      "currentBrier": 0.242411,
+      "previousBrier": 0.247649,
+      "currentLogLoss": 0.678186,
+      "previousLogLoss": 0.690711
+    },
+    "firstFive:1.5": {
+      "forecasts": 421,
+      "currentBrier": 0.120535,
+      "previousBrier": 0.128122,
+      "currentLogLoss": 0.409547,
+      "previousLogLoss": 0.487471
+    },
+    "firstFive:2.5": {
+      "forecasts": 421,
+      "currentBrier": 0.196718,
+      "previousBrier": 0.214691,
+      "currentLogLoss": 0.583499,
+      "previousLogLoss": 0.664226
+    },
+    "firstFive:3.5": {
+      "forecasts": 421,
+      "currentBrier": 0.235491,
+      "previousBrier": 0.249629,
+      "currentLogLoss": 0.664731,
+      "previousLogLoss": 0.710288
+    },
+    "firstFive:4.5": {
+      "forecasts": 421,
+      "currentBrier": 0.253992,
+      "previousBrier": 0.263966,
+      "currentLogLoss": 0.7018,
+      "previousLogLoss": 0.727286
+    },
+    "firstFive:5.5": {
+      "forecasts": 421,
+      "currentBrier": 0.237005,
+      "previousBrier": 0.242968,
+      "currentLogLoss": 0.666264,
+      "previousLogLoss": 0.67905
+    }
+  },
+  "firstFive25Reliability": [
+    {
+      "range": "40–50",
+      "forecasts": 2,
+      "meanPredicted": 47.6,
+      "observed": 100
+    },
+    {
+      "range": "50–60",
+      "forecasts": 11,
+      "meanPredicted": 57.7,
+      "observed": 63.6
+    },
+    {
+      "range": "60–70",
+      "forecasts": 87,
+      "meanPredicted": 66.3,
+      "observed": 71.3
+    },
+    {
+      "range": "70–80",
+      "forecasts": 208,
+      "meanPredicted": 75.3,
+      "observed": 71.6
+    },
+    {
+      "range": "80–90",
+      "forecasts": 112,
+      "meanPredicted": 84,
+      "observed": 78.6
+    },
+    {
+      "range": "90–100",
+      "forecasts": 1,
+      "meanPredicted": 90.1,
+      "observed": 100
+    }
+  ],
+  "upcoming": [
+    {
+      "id": "mlb-mlb-849826",
+      "home": "San Diego Padres",
+      "away": "Milwaukee Brewers",
+      "kickoff": "2026-10-07T01:30:00Z",
+      "odds": {
+        "homeWin": 1.6944444444444444,
+        "awayWin": 2.19
+      },
+      "source": "published-odds",
+      "winner": {
+        "home": 56.4,
+        "away": 43.6
+      },
+      "firstFive": [
+        {
+          "line": 1.5,
+          "over": 91.7,
+          "under": 8.3
+        },
+        {
+          "line": 2.5,
+          "over": 82.1,
+          "under": 17.9
+        },
+        {
+          "line": 3.5,
+          "over": 70.4,
+          "under": 29.6
+        },
+        {
+          "line": 4.5,
+          "over": 58.3,
+          "under": 41.7
+        },
+        {
+          "line": 5.5,
+          "over": 46.8,
+          "under": 53.2
+        }
+      ],
+      "sample": {
+        "home": 20,
+        "away": 20
+      },
+      "modelVersion": "2026-10-06-count-v2",
+      "consistent": true
+    },
+    {
+      "id": "mlb-mlb-849833",
+      "home": "Chicago White Sox",
+      "away": "Cleveland Guardians",
+      "kickoff": "2026-10-07T20:00:00Z",
+      "odds": {
+        "homeWin": 1.8333333333333335,
+        "awayWin": 2
+      },
+      "source": "published-odds",
+      "winner": {
+        "home": 52.2,
+        "away": 47.8
+      },
+      "firstFive": [
+        {
+          "line": 1.5,
+          "over": 91.7,
+          "under": 8.3
+        },
+        {
+          "line": 2.5,
+          "over": 82,
+          "under": 18
+        },
+        {
+          "line": 3.5,
+          "over": 70,
+          "under": 30
+        },
+        {
+          "line": 4.5,
+          "over": 57.4,
+          "under": 42.6
+        },
+        {
+          "line": 5.5,
+          "over": 45.3,
+          "under": 54.7
+        }
+      ],
+      "sample": {
+        "home": 20,
+        "away": 20
+      },
+      "modelVersion": "2026-10-06-count-v2",
+      "consistent": true
+    },
+    {
+      "id": "mlb-mlb-849822",
+      "home": "Atlanta Braves",
+      "away": "Los Angeles Dodgers",
+      "kickoff": "2026-10-07T22:00:00Z",
+      "odds": {},
+      "source": "experimental-model",
+      "winner": {
+        "home": 39,
+        "away": 61
+      },
+      "firstFive": [
+        {
+          "line": 1.5,
+          "over": 78.3,
+          "under": 21.7
+        },
+        {
+          "line": 2.5,
+          "over": 62.2,
+          "under": 37.8
+        },
+        {
+          "line": 3.5,
+          "over": 47,
+          "under": 53
+        },
+        {
+          "line": 4.5,
+          "over": 34.1,
+          "under": 65.9
+        },
+        {
+          "line": 5.5,
+          "over": 24.1,
+          "under": 75.9
+        }
+      ],
+      "sample": {
+        "home": 20,
+        "away": 20
+      },
+      "modelVersion": "2026-10-06-count-v2",
+      "consistent": true
+    },
+    {
+      "id": "mlb-mlb-849838",
+      "home": "New York Yankees",
+      "away": "Tampa Bay Rays",
+      "kickoff": "2026-10-08T00:00:00Z",
+      "odds": {
+        "homeWin": 1.617283950617284,
+        "awayWin": 2.34
+      },
+      "source": "published-odds",
+      "winner": {
+        "home": 59.1,
+        "away": 40.9
+      },
+      "firstFive": [
+        {
+          "line": 1.5,
+          "over": 78.2,
+          "under": 21.8
+        },
+        {
+          "line": 2.5,
+          "over": 63.8,
+          "under": 36.2
+        },
+        {
+          "line": 3.5,
+          "over": 50.3,
+          "under": 49.7
+        },
+        {
+          "line": 4.5,
+          "over": 38.7,
+          "under": 61.3
+        },
+        {
+          "line": 5.5,
+          "over": 29.1,
+          "under": 70.9
+        }
+      ],
+      "sample": {
+        "home": 20,
+        "away": 20
+      },
+      "modelVersion": "2026-10-06-count-v2",
+      "consistent": true
+    }
+  ],
+  "allPathsConsistent": true
+}

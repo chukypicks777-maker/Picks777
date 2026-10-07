@@ -1,3 +1,5 @@
+import { SPORT_MODEL_VERSION } from './sportModelVersion.js';
+
 const feeds = new Map();
 const details = new Map();
 const TTL = 60000;
@@ -46,7 +48,7 @@ function persist(entry) {
 export async function restoreSportDetails(sessionKey, sport) {
   const db = await openDatabase();
   if (!db) return;
-  const scope = `${sessionKey}:${sport}`;
+  const scope = `${sessionKey}:${sport}:${SPORT_MODEL_VERSION}`;
   return new Promise(resolve => {
     try {
       const request = db.transaction('details').objectStore('details').index('scope').getAll(scope);
@@ -81,13 +83,13 @@ export function saveSportsCache(sessionKey, sport, feed) {
 }
 
 export function readSportDetail(sessionKey, sport, match, { allowStale = false } = {}) {
-  const entry = details.get(`${sessionKey}:${sport}:${match.id}`);
+  const entry = details.get(`${sessionKey}:${sport}:${SPORT_MODEL_VERSION}:${match.id}`);
   const limit = allowStale && match.status !== 'LIVE' && !(match.status === 'SCHEDULED' && Date.parse(match.kickoff) <= Date.now()) ? RETENTION : TTL;
   return entry && Date.now() - entry.savedAt < limit && [entry.version, entry.resultVersion].includes(sportMatchVersion(match)) ? { ...entry.match, detailLoadedAt: entry.savedAt } : null;
 }
 
 export function saveSportDetail(sessionKey, sport, original, match) {
-  const scope = `${sessionKey}:${sport}`, key = `${scope}:${match.id}`, previous = details.get(key);
+  const scope = `${sessionKey}:${sport}:${SPORT_MODEL_VERSION}`, key = `${scope}:${match.id}`, previous = details.get(key);
   const savedMatch = previous && sportMatchVersion(previous.match) === sportMatchVersion(match)
     ? mergeSportDetail(previous.match, previous.match, match) : match;
   const entry = { key, scope, match: savedMatch, version: sportMatchVersion(original), savedAt: Date.now() };

@@ -11,8 +11,8 @@ const NOW = Date.parse('2026-10-05T12:00:00Z');
 const target = (sport, leagueId = sport) => ({ id: 'target', sport, leagueId, status: 'SCHEDULED', kickoff: new Date(NOW + 3600000).toISOString(),
   homeTeam: { id: 'a', name: 'Equipo A' }, awayTeam: { id: 'b', name: 'Equipo B' }, odds: {} });
 const history = (match, ownHome = [4, 6, 2, 3, 5, 4], ownAway = [2, 1, 3, 5, 2, 1]) => ownHome.flatMap((score, i) => [
-  { ...match, id: `home-${i}`, status: 'FINISHED', kickoff: new Date(NOW - (i + 1) * 86400000).toISOString(), awayTeam: { id: 'c' }, finalScore: { home: score, away: ownAway[i] }, inningScores: Array.from({ length: 5 }, (_, j) => ({ num: j + 1, home: j === 2 ? score : 0, away: j === 0 ? 1 : 0 })) },
-  { ...match, id: `away-${i}`, status: 'FINISHED', kickoff: new Date(NOW - (i + 1) * 86400000).toISOString(), homeTeam: { id: 'd' }, finalScore: { home: score, away: ownAway[i] }, inningScores: Array.from({ length: 5 }, (_, j) => ({ num: j + 1, home: j === 2 ? score : 0, away: j === 0 ? 1 : 0 })) }
+  { ...match, id: `home-${i}`, status: 'FINISHED', kickoff: new Date(NOW - (i + 1) * 86400000).toISOString(), awayTeam: { id: 'c' }, finalScore: { home: score, away: ownAway[i] }, inningScores: Array.from({ length: 5 }, (_, j) => ({ num: j + 1, home: j === 0 ? Number(i % 3 === 0) : j === 2 ? score - Number(i % 3 === 0) : 0, away: j === 0 ? 1 : 0 })) },
+  { ...match, id: `away-${i}`, status: 'FINISHED', kickoff: new Date(NOW - (i + 1) * 86400000).toISOString(), homeTeam: { id: 'd' }, finalScore: { home: score, away: ownAway[i] }, inningScores: Array.from({ length: 5 }, (_, j) => ({ num: j + 1, home: j === 0 ? Number(i % 3 === 0) : j === 2 ? score - Number(i % 3 === 0) : 0, away: j === 0 ? 1 : 0 })) }
 ]);
 const sum = values => Object.values(values).reduce((total, value) => total + value, 0);
 

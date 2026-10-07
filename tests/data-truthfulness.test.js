@@ -57,14 +57,16 @@ test('fresh polling owns model, odds and timestamps even when cached enrichment 
   assert.equal(mergeFreshMatch({ ...fresh, probabilities: { homeWin: 51 } }).aiReport, null);
 });
 
-test('absent innings stay unavailable and verified zero innings are meaningful observations', () => {
+test('verified zero innings retain their sample without claiming deterministic future draws or unders', () => {
   const now = Date.now(), match = { id: 'inning-truth', sport: 'beisbol', leagueId: 'mlb', status: 'SCHEDULED', kickoff: new Date(now + 86400000).toISOString(), homeTeam: { id: 'h' }, awayTeam: { id: 'a' } };
   const games = Array.from({ length: 6 }, (_, i) => ({ ...match, id: `old-${i}`, status: 'FINISHED', kickoff: new Date(now - (i + 1) * 86400000).toISOString(), finalScore: { home: 4, away: 2 } }));
   assert.equal(baseballAnalysis(match, games, now).firstInning.home, null);
   assert.equal(baseballAnalysis(match, games, now).firstFive[0].over, null);
   const observed = games.map(game => ({ ...game, inningScores: Array.from({ length: 5 }, (_, i) => ({ num: i + 1, home: 0, away: 0 })) }));
-  assert.deepEqual(baseballAnalysis(match, observed, now).firstInning, { home: 0, draw: 100, away: 0 });
-  assert.equal(baseballAnalysis(match, observed, now).firstFive[0].under, 100);
+  const zeroHistory = baseballAnalysis(match, observed, now);
+  assert.deepEqual(zeroHistory.firstInning, { home: null, draw: null, away: null });
+  assert.equal(zeroHistory.firstFive[0].under, null);
+  assert.deepEqual(zeroHistory.inningSampleSize, { first: { home: 6, away: 6 }, five: { home: 6, away: 6 } });
   const incomplete = observed.map(game => ({ ...game, inningScores: game.inningScores.map(inning => ({ ...inning, home: null })) }));
   assert.equal(baseballAnalysis(match, incomplete, now).firstInning.draw, null);
 });

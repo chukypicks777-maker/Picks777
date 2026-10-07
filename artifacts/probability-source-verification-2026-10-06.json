@@ -1,0 +1,428 @@
+{
+  "checkedAt": "2026-10-07T01:33:49.226Z",
+  "pass": true,
+  "matchId": "mlb-mlb-849826",
+  "teams": [
+    "San Diego Padres",
+    "Milwaukee Brewers"
+  ],
+  "winner": {
+    "home": 56.4,
+    "away": 43.6
+  },
+  "odds": {
+    "homeWin": 1.6944444444444444,
+    "awayWin": 2.19
+  },
+  "verifiedRecords": 38,
+  "observations": [
+    {
+      "id": "mlb-mlb-823170",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823170/linescore",
+      "finalScore": {
+        "home": 6,
+        "away": 7
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823171",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823171/linescore",
+      "finalScore": {
+        "home": 4,
+        "away": 6
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823173",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823173/linescore",
+      "finalScore": {
+        "home": 5,
+        "away": 7
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823245",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823245/linescore",
+      "finalScore": {
+        "home": 10,
+        "away": 7
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823246",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823246/linescore",
+      "finalScore": {
+        "home": 9,
+        "away": 4
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823247",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823247/linescore",
+      "finalScore": {
+        "home": 7,
+        "away": 3
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823248",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823248/linescore",
+      "finalScore": {
+        "home": 4,
+        "away": 11
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823249",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823249/linescore",
+      "finalScore": {
+        "home": 7,
+        "away": 6
+      },
+      "inningsChecked": 10,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823252",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823252/linescore",
+      "finalScore": {
+        "home": 8,
+        "away": 2
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823332",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823332/linescore",
+      "finalScore": {
+        "home": 4,
+        "away": 5
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823333",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823333/linescore",
+      "finalScore": {
+        "home": 1,
+        "away": 5
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823334",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823334/linescore",
+      "finalScore": {
+        "home": 7,
+        "away": 4
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823410",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823410/linescore",
+      "finalScore": {
+        "home": 1,
+        "away": 4
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823411",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823411/linescore",
+      "finalScore": {
+        "home": 1,
+        "away": 5
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823412",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823412/linescore",
+      "finalScore": {
+        "home": 6,
+        "away": 4
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823731",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823731/linescore",
+      "finalScore": {
+        "home": 6,
+        "away": 4
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823733",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823733/linescore",
+      "finalScore": {
+        "home": 3,
+        "away": 2
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823734",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823734/linescore",
+      "finalScore": {
+        "home": 3,
+        "away": 4
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823735",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823735/linescore",
+      "finalScore": {
+        "home": 8,
+        "away": 4
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823736",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823736/linescore",
+      "finalScore": {
+        "home": 20,
+        "away": 0
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823737",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823737/linescore",
+      "finalScore": {
+        "home": 13,
+        "away": 9
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823738",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823738/linescore",
+      "finalScore": {
+        "home": 4,
+        "away": 3
+      },
+      "inningsChecked": 10,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823739",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823739/linescore",
+      "finalScore": {
+        "home": 8,
+        "away": 6
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823742",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823742/linescore",
+      "finalScore": {
+        "home": 4,
+        "away": 3
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823894",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823894/linescore",
+      "finalScore": {
+        "home": 1,
+        "away": 5
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823895",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823895/linescore",
+      "finalScore": {
+        "home": 2,
+        "away": 4
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-823897",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/823897/linescore",
+      "finalScore": {
+        "home": 7,
+        "away": 0
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-824305",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/824305/linescore",
+      "finalScore": {
+        "home": 2,
+        "away": 9
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-824306",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/824306/linescore",
+      "finalScore": {
+        "home": 3,
+        "away": 9
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-824307",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/824307/linescore",
+      "finalScore": {
+        "home": 9,
+        "away": 3
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-824308",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/824308/linescore",
+      "finalScore": {
+        "home": 7,
+        "away": 8
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-824788",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/824788/linescore",
+      "finalScore": {
+        "home": 0,
+        "away": 1
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-824789",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/824789/linescore",
+      "finalScore": {
+        "home": 0,
+        "away": 3
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-824790",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/824790/linescore",
+      "finalScore": {
+        "home": 5,
+        "away": 6
+      },
+      "inningsChecked": 10,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-849825",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/849825/linescore",
+      "finalScore": {
+        "home": 4,
+        "away": 3
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-849830",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/849830/linescore",
+      "finalScore": {
+        "home": 3,
+        "away": 2
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-849842",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/849842/linescore",
+      "finalScore": {
+        "home": 4,
+        "away": 1
+      },
+      "inningsChecked": 9,
+      "verified": true
+    },
+    {
+      "id": "mlb-mlb-849843",
+      "sourceUrl": "https://statsapi.mlb.com/api/v1/game/849843/linescore",
+      "finalScore": {
+        "home": 8,
+        "away": 0
+      },
+      "inningsChecked": 9,
+      "verified": true
+    }
+  ],
+  "firstFiveIndependentlyRecalculated": [
+    {
+      "line": 1.5,
+      "over": 91.7,
+      "under": 8.3
+    },
+    {
+      "line": 2.5,
+      "over": 82.1,
+      "under": 17.9
+    },
+    {
+      "line": 3.5,
+      "over": 70.4,
+      "under": 29.6
+    },
+    {
+      "line": 4.5,
+      "over": 58.3,
+      "under": 41.7
+    },
+    {
+      "line": 5.5,
+      "over": 46.8,
+      "under": 53.2
+    }
+  ],
+  "limitations": "Independent MLB endpoints confirm source consistency; this cannot rule out errors within MLB or establish future predictive accuracy."
+}
