@@ -1,11 +1,19 @@
 import { validNumber, parseNumeric, percent, complement, totalLines, poissonProbability, poissonCumulative } from './probability.js';
 import { parseDecimalOdds } from './oddsFormatter.js';
 import { footballProbabilityLabel, footballProbabilitySource } from './marketProbability.js';
+import { FOOTBALL_MODEL, countDistribution, countLines } from './footballModel.js';
 export { poissonProbability, poissonCumulative };
 const probabilityValue = value => { const n = parseNumeric(value); return n !== null && n >= 0 && n <= 100 ? n : null; };
+const CORNER_LINES = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5];
 export function calculateCornerProbabilities(avgCorners) {
-  const lines = totalLines(avgCorners, [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]);
+  const lines = totalLines(avgCorners, CORNER_LINES);
   return { lambda: validNumber(avgCorners) ? avgCorners : null, ...lines, over5: lines.over55, under5: lines.under55 };
+}
+// Opponent-adjusted expectation with the overdispersion measured in the backtest.
+function modelCornerProbabilities(expected, size) {
+  const raw = countLines(countDistribution(expected, size), CORNER_LINES);
+  const lines = Object.fromEntries(Object.entries(raw).map(([key, value]) => [key, Number.isFinite(value) ? Math.round(value) : null]));
+  return { ...lines, over5: lines.over55, under5: lines.under55 };
 }
 const meanGoals = (t, field, avg) => validNumber(t[avg]) ? t[avg] : validNumber(t[field]) && t.gamesPlayed > 0 ? t[field] / t.gamesPlayed : null;
 const subtract = (a, b) => Number.isFinite(a) && Number.isFinite(b) ? Number((a - b).toFixed(2)) : null;
@@ -22,7 +30,11 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, match = {})
   const avgCorners = validNumber(team.avgCorners)
     ? team.avgCorners
     : null;
-  const corners = calculateCornerProbabilities(avgCorners);
+  const side = isHome ? 'home' : 'away';
+  const expectedCorners = match.model?.corners?.expected?.[side];
+  const corners = validNumber(expectedCorners)
+    ? { lambda: avgCorners, ...modelCornerProbabilities(expectedCorners, FOOTBALL_MODEL.corners.size[side]) }
+    : calculateCornerProbabilities(avgCorners);
 
   let cleanSheetRate = percent(team.cleanSheetRate);
   if (cleanSheetRate === null && Array.isArray(match.recentMatches)) {
@@ -59,7 +71,7 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, match = {})
     avgGF, avgGC, goalDiff: subtract(team.goalsFor, team.goalsAgainst),
     ...Object.fromEntries(Object.entries(goals).map(([k, v]) => [`${k}Rate`, v])),
     bttsRate, cleanSheetRate,
-    avgCorners: corners.lambda, avgCornersConceded: team.avgCornersConceded ?? null,
+    avgCorners: corners.lambda, avgCornersConceded: team.avgCornersConceded ?? null, expectedCorners: validNumber(expectedCorners) ? expectedCorners : null,
     ...Object.fromEntries(Object.entries(corners).filter(([k]) => k !== 'lambda').map(([k, v]) => [`corner${k[0].toUpperCase()}${k.slice(1)}`, v])),
     ...Object.fromEntries(Object.entries(totalLines(cards)).map(([k, v]) => [`cards${k[0].toUpperCase()}${k.slice(1)}`, v])),
     fouls: validNumber(team.avgFouls) ? team.avgFouls : null,
@@ -72,14 +84,18 @@ export function calculateDifferential(home, away, match = {}) {
   const p = match.model?.probabilities || match.probabilities || {};
   const cornerGap = subtract(home.avgCorners, away.avgCorners);
   const over25 = percent(p.over25), under25 = complement(over25);
-  const margin = subtract(over25, under25), totalMatchCorners = sum(home.avgCorners, away.avgCorners);
+  // Rated, opponent-adjusted totals when the league model exists; otherwise
+  // the plain sum of both recorded averages.
+  const modelCorners = match.model?.corners, modelCards = match.model?.cards;
+  const margin = subtract(over25, under25), totalMatchCorners = modelCorners?.expected?.total ?? sum(home.avgCorners, away.avgCorners);
   return {
     goalDiffGap: subtract(home.goalDiff, away.goalDiff), attackDefenseHome: subtract(home.avgGF, away.avgGC),
     attackDefenseAway: subtract(away.avgGF, home.avgGC), cornerGap,
     cornerAdvantageTeam: cornerGap === null ? null : cornerGap >= 0 ? home.shortName : away.shortName,
     cornerAdvantageAbs: cornerGap === null ? null : Math.abs(cornerGap),
     cornerDifferentialText: cornerGap === null ? 'Sin datos suficientes' : `Diferencia histórica: ${cornerGap} córners/p`,
-    totalMatchCorners, matchCornersProbs: calculateCornerProbabilities(totalMatchCorners), matchCardsProbs: totalLines(sum(home.cards, away.cards)),
+    totalMatchCorners, matchCornersProbs: modelCorners?.total ? { lambda: totalMatchCorners, ...modelCorners.total } : calculateCornerProbabilities(totalMatchCorners),
+    matchCardsProbs: modelCards?.total || totalLines(sum(home.cards, away.cards)),
     over15: percent(p.over15), under15: complement(p.over15), over25, under25,
     over35: percent(p.over35), under35: complement(p.over35), overUnderMargin: margin,
     overUnderTendency: margin === null ? 'Sin datos suficientes' : margin > 0 ? 'Mayor probabilidad Over' : margin < 0 ? 'Mayor probabilidad Under' : 'Equilibrado'

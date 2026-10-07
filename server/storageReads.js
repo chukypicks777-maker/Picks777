@@ -15,13 +15,22 @@ local function codeByName(name)
     if code.code==name and (not code.deletedAt or code.deletedAt==cjson.null or code.deletedAt=='') then return code end
   end
 end
+local function withoutDevices(record)
+  local copy={}
+  for key,value in pairs(record) do if key~='devices' then copy[key]=value end end
+  return copy
+end
 if kind=='session' then
   local result={revoked=(db.revokedSessions or {})[query]~=nil}
   if not result.revoked and ARGV[3]~='' then
     local user=userById(ARGV[3])
     if user then
-      result.user=user
-      if type(user.vipCode)=='string' then result.code=codeByName(string.upper(user.vipCode)) end
+      -- Every request authorizes here: device lists are not needed for access.
+      result.user=withoutDevices(user)
+      if type(user.vipCode)=='string' then
+        local code=codeByName(string.upper(user.vipCode))
+        if code then result.code=withoutDevices(code) end
+      end
     end
   end
   return cjson.encode(result)
@@ -44,11 +53,12 @@ return redis.error_reply('unknown access projection')`;
 export function selectAccess(db, kind, query = '', userId = '') {
   const user = id => (db.users || []).find(item => item.id === id || item.googleId === id || item.email?.toLowerCase() === String(id).toLowerCase());
   const code = name => (db.codes || []).find(item => item.code === name && !item.deletedAt);
+  const withoutDevices = record => { if (!record) return record; const { devices: _devices, ...rest } = record; return rest; };
   switch (kind) {
     case 'session': {
       const revoked = Boolean(db.revokedSessions?.[query]);
       const record = !revoked && userId ? user(userId) : undefined;
-      return { revoked, user: record, code: record?.vipCode ? code(record.vipCode.toUpperCase()) : undefined };
+      return { revoked, user: withoutDevices(record), code: withoutDevices(record?.vipCode ? code(record.vipCode.toUpperCase()) : undefined) };
     }
     case 'user': return user(query);
     case 'code': return code(query);

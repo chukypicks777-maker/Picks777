@@ -1,0 +1,8358 @@
+{
+  "checkedAt": "2026-10-07T13:30:07.056Z",
+  "runtimeSeconds": 204.2,
+  "model": {
+    "version": "football-ratings-2026-10-07",
+    "goals": {
+      "supremacy": {
+        "halfLifeDays": 240,
+        "priorGames": 6
+      },
+      "total": {
+        "halfLifeDays": 540,
+        "priorGames": 24
+      },
+      "shots": {
+        "halfLifeDays": 240,
+        "priorGames": 8,
+        "supremacyWeight": 0.25,
+        "totalWeight": 0.4
+      },
+      "newcomer": {
+        "attack": 0.85,
+        "defense": 1.18
+      },
+      "rho": -0.07
+    },
+    "corners": {
+      "halfLifeDays": 365,
+      "priorGames": 32,
+      "size": {
+        "total": 76,
+        "home": 10.8,
+        "away": 10.9
+      }
+    },
+    "cards": {
+      "halfLifeDays": 120,
+      "priorGames": 16,
+      "size": {
+        "total": 106
+      }
+    },
+    "minTeamGames": 4,
+    "maxGoals": 12
+  },
+  "trainingDispersion": {
+    "cornersTotal": 76.45185171043589,
+    "cornersHome": 10.835389925074114,
+    "cornersAway": 10.869778143763662,
+    "cardsTotal": 105.88773983735908
+  },
+  "data": "football-data.co.uk (Premier League, LaLiga, Serie A, Ligue 1, Bundesliga), 2021-22 a 2026-27 parcial. Mercado visible: cuotas previas promedio. Referencia: cierre Pinnacle o promedio de cierre.",
+  "split": "Entrenamiento 2021-22 a 2023-24 (parámetros elegidos aquí); prueba 2024-25 a 2026-27.",
+  "train": {
+    "metrics": {
+      "appMarket1x2|1x2": {
+        "n": 4605,
+        "accuracy": 54.07,
+        "brier": 0.57847,
+        "logLoss": 0.97262,
+        "ece": 1.11,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 378,
+            "predicted": 7.5,
+            "observed": 6.9
+          },
+          {
+            "range": "10-20%",
+            "n": 2043,
+            "predicted": 15.8,
+            "observed": 15.1
+          },
+          {
+            "range": "20-30%",
+            "n": 5343,
+            "predicted": 25.7,
+            "observed": 24.9
+          },
+          {
+            "range": "30-40%",
+            "n": 2242,
+            "predicted": 34.4,
+            "observed": 33.9
+          },
+          {
+            "range": "40-50%",
+            "n": 1526,
+            "predicted": 44.6,
+            "observed": 45.9
+          },
+          {
+            "range": "50-60%",
+            "n": 1082,
+            "predicted": 54.9,
+            "observed": 56.8
+          },
+          {
+            "range": "60-70%",
+            "n": 705,
+            "predicted": 64.9,
+            "observed": 69.4
+          },
+          {
+            "range": "70-80%",
+            "n": 369,
+            "predicted": 74.1,
+            "observed": 72.1
+          },
+          {
+            "range": "80-90%",
+            "n": 126,
+            "predicted": 83.4,
+            "observed": 85.7
+          },
+          {
+            "range": "90-100%",
+            "n": 1,
+            "predicted": 90.8,
+            "observed": 100
+          }
+        ]
+      },
+      "appMarket1x2|btts": {
+        "n": 4605,
+        "accuracy": 54.88,
+        "brier": 0.2462,
+        "logLoss": 0.68548,
+        "ece": 2.28,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 1,
+            "predicted": 19.1,
+            "observed": 0
+          },
+          {
+            "range": "20-30%",
+            "n": 6,
+            "predicted": 26.4,
+            "observed": 16.7
+          },
+          {
+            "range": "30-40%",
+            "n": 108,
+            "predicted": 37.5,
+            "observed": 41.7
+          },
+          {
+            "range": "40-50%",
+            "n": 1116,
+            "predicted": 46.3,
+            "observed": 49.7
+          },
+          {
+            "range": "50-60%",
+            "n": 2225,
+            "predicted": 55,
+            "observed": 53.8
+          },
+          {
+            "range": "60-70%",
+            "n": 1078,
+            "predicted": 63.5,
+            "observed": 60.5
+          },
+          {
+            "range": "70-80%",
+            "n": 71,
+            "predicted": 72.6,
+            "observed": 69
+          }
+        ]
+      },
+      "appMarket1x2|over1.5": {
+        "n": 4605,
+        "accuracy": 77.11,
+        "brier": 0.1748,
+        "logLoss": 0.53302,
+        "ece": 1.5,
+        "bins": [
+          {
+            "range": "40-50%",
+            "n": 2,
+            "predicted": 46.4,
+            "observed": 100
+          },
+          {
+            "range": "50-60%",
+            "n": 54,
+            "predicted": 57.3,
+            "observed": 72.2
+          },
+          {
+            "range": "60-70%",
+            "n": 769,
+            "predicted": 66.5,
+            "observed": 68.8
+          },
+          {
+            "range": "70-80%",
+            "n": 2269,
+            "predicted": 75.3,
+            "observed": 76.5
+          },
+          {
+            "range": "80-90%",
+            "n": 1466,
+            "predicted": 83.3,
+            "observed": 82.4
+          },
+          {
+            "range": "90-100%",
+            "n": 45,
+            "predicted": 91.3,
+            "observed": 86.7
+          }
+        ]
+      },
+      "appMarket1x2|over2.5": {
+        "n": 4605,
+        "accuracy": 56.2,
+        "brier": 0.24595,
+        "logLoss": 0.68521,
+        "ece": 1.85,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 19,
+            "predicted": 26.7,
+            "observed": 36.8
+          },
+          {
+            "range": "30-40%",
+            "n": 362,
+            "predicted": 36.6,
+            "observed": 43.4
+          },
+          {
+            "range": "40-50%",
+            "n": 1397,
+            "predicted": 45.5,
+            "observed": 46.2
+          },
+          {
+            "range": "50-60%",
+            "n": 1765,
+            "predicted": 54.9,
+            "observed": 55.1
+          },
+          {
+            "range": "60-70%",
+            "n": 917,
+            "predicted": 64,
+            "observed": 60.2
+          },
+          {
+            "range": "70-80%",
+            "n": 141,
+            "predicted": 73.2,
+            "observed": 66.7
+          },
+          {
+            "range": "80-90%",
+            "n": 4,
+            "predicted": 81.4,
+            "observed": 50
+          }
+        ]
+      },
+      "appMarket1x2|over3.5": {
+        "n": 4605,
+        "accuracy": 68.95,
+        "brier": 0.20988,
+        "logLoss": 0.60978,
+        "ece": 1.53,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 3,
+            "predicted": 8.2,
+            "observed": 33.3
+          },
+          {
+            "range": "10-20%",
+            "n": 408,
+            "predicted": 17.2,
+            "observed": 21.3
+          },
+          {
+            "range": "20-30%",
+            "n": 1736,
+            "predicted": 25.3,
+            "observed": 25.1
+          },
+          {
+            "range": "30-40%",
+            "n": 1693,
+            "predicted": 34.5,
+            "observed": 34.8
+          },
+          {
+            "range": "40-50%",
+            "n": 656,
+            "predicted": 43.8,
+            "observed": 38.9
+          },
+          {
+            "range": "50-60%",
+            "n": 102,
+            "predicted": 53.7,
+            "observed": 44.1
+          },
+          {
+            "range": "60-70%",
+            "n": 7,
+            "predicted": 62.8,
+            "observed": 28.6
+          }
+        ]
+      },
+      "appMarket|1x2": {
+        "n": 4605,
+        "accuracy": 54.07,
+        "brier": 0.57847,
+        "logLoss": 0.97262,
+        "ece": 1.11,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 378,
+            "predicted": 7.5,
+            "observed": 6.9
+          },
+          {
+            "range": "10-20%",
+            "n": 2043,
+            "predicted": 15.8,
+            "observed": 15.1
+          },
+          {
+            "range": "20-30%",
+            "n": 5343,
+            "predicted": 25.7,
+            "observed": 24.9
+          },
+          {
+            "range": "30-40%",
+            "n": 2242,
+            "predicted": 34.4,
+            "observed": 33.9
+          },
+          {
+            "range": "40-50%",
+            "n": 1526,
+            "predicted": 44.6,
+            "observed": 45.9
+          },
+          {
+            "range": "50-60%",
+            "n": 1082,
+            "predicted": 54.9,
+            "observed": 56.8
+          },
+          {
+            "range": "60-70%",
+            "n": 705,
+            "predicted": 64.9,
+            "observed": 69.4
+          },
+          {
+            "range": "70-80%",
+            "n": 369,
+            "predicted": 74.1,
+            "observed": 72.1
+          },
+          {
+            "range": "80-90%",
+            "n": 126,
+            "predicted": 83.4,
+            "observed": 85.7
+          },
+          {
+            "range": "90-100%",
+            "n": 1,
+            "predicted": 90.8,
+            "observed": 100
+          }
+        ]
+      },
+      "appMarket|btts": {
+        "n": 4605,
+        "accuracy": 55.77,
+        "brier": 0.24373,
+        "logLoss": 0.68043,
+        "ece": 1.32,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 29,
+            "predicted": 38.6,
+            "observed": 44.8
+          },
+          {
+            "range": "40-50%",
+            "n": 1357,
+            "predicted": 46.9,
+            "observed": 47.5
+          },
+          {
+            "range": "50-60%",
+            "n": 2760,
+            "predicted": 54.4,
+            "observed": 55.2
+          },
+          {
+            "range": "60-70%",
+            "n": 453,
+            "predicted": 62.8,
+            "observed": 69.1
+          },
+          {
+            "range": "70-80%",
+            "n": 6,
+            "predicted": 72.5,
+            "observed": 66.7
+          }
+        ]
+      },
+      "appMarket|over1.5": {
+        "n": 4605,
+        "accuracy": 77.16,
+        "brier": 0.17154,
+        "logLoss": 0.52381,
+        "ece": 1.4,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 21,
+            "predicted": 58.3,
+            "observed": 71.4
+          },
+          {
+            "range": "60-70%",
+            "n": 702,
+            "predicted": 67,
+            "observed": 65.7
+          },
+          {
+            "range": "70-80%",
+            "n": 2640,
+            "predicted": 75.3,
+            "observed": 76.3
+          },
+          {
+            "range": "80-90%",
+            "n": 1180,
+            "predicted": 83.4,
+            "observed": 85.5
+          },
+          {
+            "range": "90-100%",
+            "n": 62,
+            "predicted": 91,
+            "observed": 88.7
+          }
+        ]
+      },
+      "appMarket|over2.5": {
+        "n": 4605,
+        "accuracy": 58.81,
+        "brier": 0.2389,
+        "logLoss": 0.67054,
+        "ece": 1.98,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 4,
+            "predicted": 28.6,
+            "observed": 50
+          },
+          {
+            "range": "30-40%",
+            "n": 274,
+            "predicted": 37.3,
+            "observed": 34.3
+          },
+          {
+            "range": "40-50%",
+            "n": 1556,
+            "predicted": 45.8,
+            "observed": 43.8
+          },
+          {
+            "range": "50-60%",
+            "n": 1872,
+            "predicted": 54.6,
+            "observed": 55.7
+          },
+          {
+            "range": "60-70%",
+            "n": 746,
+            "predicted": 63.8,
+            "observed": 67.2
+          },
+          {
+            "range": "70-80%",
+            "n": 150,
+            "predicted": 73.6,
+            "observed": 70.7
+          },
+          {
+            "range": "80-90%",
+            "n": 3,
+            "predicted": 81.6,
+            "observed": 100
+          }
+        ]
+      },
+      "appMarket|over3.5": {
+        "n": 4605,
+        "accuracy": 69.36,
+        "brier": 0.20394,
+        "logLoss": 0.59605,
+        "ece": 1.76,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 295,
+            "predicted": 17.8,
+            "observed": 18.6
+          },
+          {
+            "range": "20-30%",
+            "n": 1963,
+            "predicted": 25.5,
+            "observed": 23.3
+          },
+          {
+            "range": "30-40%",
+            "n": 1723,
+            "predicted": 34.2,
+            "observed": 34.7
+          },
+          {
+            "range": "40-50%",
+            "n": 498,
+            "predicted": 43.9,
+            "observed": 48.2
+          },
+          {
+            "range": "50-60%",
+            "n": 118,
+            "predicted": 53.9,
+            "observed": 50
+          },
+          {
+            "range": "60-70%",
+            "n": 8,
+            "predicted": 62.2,
+            "observed": 75
+          }
+        ]
+      },
+      "app|1x2": {
+        "n": 4605,
+        "accuracy": 50.16,
+        "brier": 0.60999,
+        "logLoss": 1.01937,
+        "ece": 2.04,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 22,
+            "predicted": 8.2,
+            "observed": 13.6
+          },
+          {
+            "range": "10-20%",
+            "n": 822,
+            "predicted": 17,
+            "observed": 13.5
+          },
+          {
+            "range": "20-30%",
+            "n": 6294,
+            "predicted": 25,
+            "observed": 24.1
+          },
+          {
+            "range": "30-40%",
+            "n": 2859,
+            "predicted": 34.9,
+            "observed": 32.9
+          },
+          {
+            "range": "40-50%",
+            "n": 2298,
+            "predicted": 44.6,
+            "observed": 47.5
+          },
+          {
+            "range": "50-60%",
+            "n": 1107,
+            "predicted": 54.1,
+            "observed": 58.8
+          },
+          {
+            "range": "60-70%",
+            "n": 355,
+            "predicted": 63.8,
+            "observed": 68.7
+          },
+          {
+            "range": "70-80%",
+            "n": 54,
+            "predicted": 73,
+            "observed": 74.1
+          },
+          {
+            "range": "80-90%",
+            "n": 4,
+            "predicted": 82.7,
+            "observed": 100
+          }
+        ]
+      },
+      "app|btts": {
+        "n": 4605,
+        "accuracy": 54.88,
+        "brier": 0.2462,
+        "logLoss": 0.68548,
+        "ece": 2.28,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 1,
+            "predicted": 19.1,
+            "observed": 0
+          },
+          {
+            "range": "20-30%",
+            "n": 6,
+            "predicted": 26.4,
+            "observed": 16.7
+          },
+          {
+            "range": "30-40%",
+            "n": 108,
+            "predicted": 37.5,
+            "observed": 41.7
+          },
+          {
+            "range": "40-50%",
+            "n": 1116,
+            "predicted": 46.3,
+            "observed": 49.7
+          },
+          {
+            "range": "50-60%",
+            "n": 2225,
+            "predicted": 55,
+            "observed": 53.8
+          },
+          {
+            "range": "60-70%",
+            "n": 1078,
+            "predicted": 63.5,
+            "observed": 60.5
+          },
+          {
+            "range": "70-80%",
+            "n": 71,
+            "predicted": 72.6,
+            "observed": 69
+          }
+        ]
+      },
+      "app|over1.5": {
+        "n": 4605,
+        "accuracy": 77.11,
+        "brier": 0.1748,
+        "logLoss": 0.53302,
+        "ece": 1.5,
+        "bins": [
+          {
+            "range": "40-50%",
+            "n": 2,
+            "predicted": 46.4,
+            "observed": 100
+          },
+          {
+            "range": "50-60%",
+            "n": 54,
+            "predicted": 57.3,
+            "observed": 72.2
+          },
+          {
+            "range": "60-70%",
+            "n": 769,
+            "predicted": 66.5,
+            "observed": 68.8
+          },
+          {
+            "range": "70-80%",
+            "n": 2269,
+            "predicted": 75.3,
+            "observed": 76.5
+          },
+          {
+            "range": "80-90%",
+            "n": 1466,
+            "predicted": 83.3,
+            "observed": 82.4
+          },
+          {
+            "range": "90-100%",
+            "n": 45,
+            "predicted": 91.3,
+            "observed": 86.7
+          }
+        ]
+      },
+      "app|over2.5": {
+        "n": 4605,
+        "accuracy": 56.2,
+        "brier": 0.24595,
+        "logLoss": 0.68521,
+        "ece": 1.85,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 19,
+            "predicted": 26.7,
+            "observed": 36.8
+          },
+          {
+            "range": "30-40%",
+            "n": 362,
+            "predicted": 36.6,
+            "observed": 43.4
+          },
+          {
+            "range": "40-50%",
+            "n": 1397,
+            "predicted": 45.5,
+            "observed": 46.2
+          },
+          {
+            "range": "50-60%",
+            "n": 1765,
+            "predicted": 54.9,
+            "observed": 55.1
+          },
+          {
+            "range": "60-70%",
+            "n": 917,
+            "predicted": 64,
+            "observed": 60.2
+          },
+          {
+            "range": "70-80%",
+            "n": 141,
+            "predicted": 73.2,
+            "observed": 66.7
+          },
+          {
+            "range": "80-90%",
+            "n": 4,
+            "predicted": 81.4,
+            "observed": 50
+          }
+        ]
+      },
+      "app|over3.5": {
+        "n": 4605,
+        "accuracy": 68.95,
+        "brier": 0.20988,
+        "logLoss": 0.60978,
+        "ece": 1.53,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 3,
+            "predicted": 8.2,
+            "observed": 33.3
+          },
+          {
+            "range": "10-20%",
+            "n": 408,
+            "predicted": 17.2,
+            "observed": 21.3
+          },
+          {
+            "range": "20-30%",
+            "n": 1736,
+            "predicted": 25.3,
+            "observed": 25.1
+          },
+          {
+            "range": "30-40%",
+            "n": 1693,
+            "predicted": 34.5,
+            "observed": 34.8
+          },
+          {
+            "range": "40-50%",
+            "n": 656,
+            "predicted": 43.8,
+            "observed": 38.9
+          },
+          {
+            "range": "50-60%",
+            "n": 102,
+            "predicted": 53.7,
+            "observed": 44.1
+          },
+          {
+            "range": "60-70%",
+            "n": 7,
+            "predicted": 62.8,
+            "observed": 28.6
+          }
+        ]
+      },
+      "cards.current|total2.5": {
+        "n": 4605,
+        "accuracy": 76.11,
+        "brier": 0.17667,
+        "logLoss": 0.54002,
+        "ece": 4.56,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 2,
+            "predicted": 18,
+            "observed": 50
+          },
+          {
+            "range": "20-30%",
+            "n": 5,
+            "predicted": 24.2,
+            "observed": 80
+          },
+          {
+            "range": "30-40%",
+            "n": 30,
+            "predicted": 34.6,
+            "observed": 53.3
+          },
+          {
+            "range": "40-50%",
+            "n": 114,
+            "predicted": 44.9,
+            "observed": 61.4
+          },
+          {
+            "range": "50-60%",
+            "n": 270,
+            "predicted": 54.9,
+            "observed": 65.2
+          },
+          {
+            "range": "60-70%",
+            "n": 635,
+            "predicted": 64.5,
+            "observed": 66.8
+          },
+          {
+            "range": "70-80%",
+            "n": 1341,
+            "predicted": 74.7,
+            "observed": 77.1
+          },
+          {
+            "range": "80-90%",
+            "n": 1580,
+            "predicted": 84.6,
+            "observed": 80.8
+          },
+          {
+            "range": "90-100%",
+            "n": 628,
+            "predicted": 92.6,
+            "observed": 85
+          }
+        ]
+      },
+      "cards.current|total3.5": {
+        "n": 4605,
+        "accuracy": 60.78,
+        "brier": 0.23894,
+        "logLoss": 0.67389,
+        "ece": 6.63,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 5,
+            "predicted": 7.2,
+            "observed": 60
+          },
+          {
+            "range": "10-20%",
+            "n": 32,
+            "predicted": 15.5,
+            "observed": 43.8
+          },
+          {
+            "range": "20-30%",
+            "n": 158,
+            "predicted": 25,
+            "observed": 42.4
+          },
+          {
+            "range": "30-40%",
+            "n": 337,
+            "predicted": 34.8,
+            "observed": 42.7
+          },
+          {
+            "range": "40-50%",
+            "n": 688,
+            "predicted": 44.5,
+            "observed": 50.7
+          },
+          {
+            "range": "50-60%",
+            "n": 993,
+            "predicted": 55.1,
+            "observed": 59.7
+          },
+          {
+            "range": "60-70%",
+            "n": 1080,
+            "predicted": 64.5,
+            "observed": 59.3
+          },
+          {
+            "range": "70-80%",
+            "n": 854,
+            "predicted": 74,
+            "observed": 68.3
+          },
+          {
+            "range": "80-90%",
+            "n": 412,
+            "predicted": 83.5,
+            "observed": 74
+          },
+          {
+            "range": "90-100%",
+            "n": 46,
+            "predicted": 92.1,
+            "observed": 76.1
+          }
+        ]
+      },
+      "cards.current|total4.5": {
+        "n": 4605,
+        "accuracy": 60.17,
+        "brier": 0.23734,
+        "logLoss": 0.66976,
+        "ece": 6.14,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 56,
+            "predicted": 6.3,
+            "observed": 21.4
+          },
+          {
+            "range": "10-20%",
+            "n": 365,
+            "predicted": 15,
+            "observed": 23.8
+          },
+          {
+            "range": "20-30%",
+            "n": 792,
+            "predicted": 25.2,
+            "observed": 30.9
+          },
+          {
+            "range": "30-40%",
+            "n": 980,
+            "predicted": 35,
+            "observed": 40.2
+          },
+          {
+            "range": "40-50%",
+            "n": 952,
+            "predicted": 44.9,
+            "observed": 42.1
+          },
+          {
+            "range": "50-60%",
+            "n": 829,
+            "predicted": 54.6,
+            "observed": 48.7
+          },
+          {
+            "range": "60-70%",
+            "n": 399,
+            "predicted": 64.4,
+            "observed": 55.1
+          },
+          {
+            "range": "70-80%",
+            "n": 189,
+            "predicted": 73.1,
+            "observed": 58.7
+          },
+          {
+            "range": "80-90%",
+            "n": 39,
+            "predicted": 82.9,
+            "observed": 69.2
+          },
+          {
+            "range": "90-100%",
+            "n": 4,
+            "predicted": 91.8,
+            "observed": 75
+          }
+        ]
+      },
+      "cards.current|total5.5": {
+        "n": 4605,
+        "accuracy": 73.38,
+        "brier": 0.18601,
+        "logLoss": 0.55936,
+        "ece": 4.92,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 514,
+            "predicted": 6.4,
+            "observed": 12.5
+          },
+          {
+            "range": "10-20%",
+            "n": 1107,
+            "predicted": 14.9,
+            "observed": 18.5
+          },
+          {
+            "range": "20-30%",
+            "n": 1151,
+            "predicted": 23.8,
+            "observed": 24.8
+          },
+          {
+            "range": "30-40%",
+            "n": 980,
+            "predicted": 33.7,
+            "observed": 30.9
+          },
+          {
+            "range": "40-50%",
+            "n": 525,
+            "predicted": 43.8,
+            "observed": 32.6
+          },
+          {
+            "range": "50-60%",
+            "n": 230,
+            "predicted": 54,
+            "observed": 34.8
+          },
+          {
+            "range": "60-70%",
+            "n": 75,
+            "predicted": 63.2,
+            "observed": 48
+          },
+          {
+            "range": "70-80%",
+            "n": 19,
+            "predicted": 73.2,
+            "observed": 68.4
+          },
+          {
+            "range": "80-90%",
+            "n": 4,
+            "predicted": 83.8,
+            "observed": 50
+          }
+        ]
+      },
+      "cards.new|total2.5": {
+        "n": 4605,
+        "accuracy": 76.83,
+        "brier": 0.17115,
+        "logLoss": 0.5229,
+        "ece": 1.43,
+        "bins": [
+          {
+            "range": "40-50%",
+            "n": 10,
+            "predicted": 47.8,
+            "observed": 40
+          },
+          {
+            "range": "50-60%",
+            "n": 146,
+            "predicted": 56.8,
+            "observed": 52.7
+          },
+          {
+            "range": "60-70%",
+            "n": 819,
+            "predicted": 66.1,
+            "observed": 65.4
+          },
+          {
+            "range": "70-80%",
+            "n": 1657,
+            "predicted": 75.1,
+            "observed": 76.3
+          },
+          {
+            "range": "80-90%",
+            "n": 1738,
+            "predicted": 84.8,
+            "observed": 83.3
+          },
+          {
+            "range": "90-100%",
+            "n": 235,
+            "predicted": 91.7,
+            "observed": 88.5
+          }
+        ]
+      },
+      "cards.new|total3.5": {
+        "n": 4605,
+        "accuracy": 61.74,
+        "brier": 0.22934,
+        "logLoss": 0.6506,
+        "ece": 1.29,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 19,
+            "predicted": 27.8,
+            "observed": 26.3
+          },
+          {
+            "range": "30-40%",
+            "n": 211,
+            "predicted": 36.5,
+            "observed": 33.6
+          },
+          {
+            "range": "40-50%",
+            "n": 840,
+            "predicted": 45.8,
+            "observed": 48.1
+          },
+          {
+            "range": "50-60%",
+            "n": 1319,
+            "predicted": 55,
+            "observed": 55.1
+          },
+          {
+            "range": "60-70%",
+            "n": 1205,
+            "predicted": 65.2,
+            "observed": 65.6
+          },
+          {
+            "range": "70-80%",
+            "n": 874,
+            "predicted": 74.2,
+            "observed": 71.5
+          },
+          {
+            "range": "80-90%",
+            "n": 135,
+            "predicted": 82.7,
+            "observed": 80
+          },
+          {
+            "range": "90-100%",
+            "n": 2,
+            "predicted": 90.5,
+            "observed": 100
+          }
+        ]
+      },
+      "cards.new|total4.5": {
+        "n": 4605,
+        "accuracy": 61.59,
+        "brier": 0.22907,
+        "logLoss": 0.64943,
+        "ece": 1.34,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 124,
+            "predicted": 17.4,
+            "observed": 13.7
+          },
+          {
+            "range": "20-30%",
+            "n": 823,
+            "predicted": 26,
+            "observed": 27.9
+          },
+          {
+            "range": "30-40%",
+            "n": 1335,
+            "predicted": 35,
+            "observed": 35.9
+          },
+          {
+            "range": "40-50%",
+            "n": 1074,
+            "predicted": 45,
+            "observed": 45.3
+          },
+          {
+            "range": "50-60%",
+            "n": 895,
+            "predicted": 54.5,
+            "observed": 52.8
+          },
+          {
+            "range": "60-70%",
+            "n": 318,
+            "predicted": 63.7,
+            "observed": 60.4
+          },
+          {
+            "range": "70-80%",
+            "n": 34,
+            "predicted": 73.3,
+            "observed": 73.5
+          },
+          {
+            "range": "80-90%",
+            "n": 2,
+            "predicted": 80.8,
+            "observed": 100
+          }
+        ]
+      },
+      "cards.new|total5.5": {
+        "n": 4605,
+        "accuracy": 74.81,
+        "brier": 0.1794,
+        "logLoss": 0.53994,
+        "ece": 1.14,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 157,
+            "predicted": 8.3,
+            "observed": 8.3
+          },
+          {
+            "range": "10-20%",
+            "n": 1431,
+            "predicted": 15.7,
+            "observed": 16.1
+          },
+          {
+            "range": "20-30%",
+            "n": 1423,
+            "predicted": 24.6,
+            "observed": 23.5
+          },
+          {
+            "range": "30-40%",
+            "n": 1036,
+            "predicted": 34.6,
+            "observed": 33.7
+          },
+          {
+            "range": "40-50%",
+            "n": 458,
+            "predicted": 43.8,
+            "observed": 40
+          },
+          {
+            "range": "50-60%",
+            "n": 90,
+            "predicted": 53.3,
+            "observed": 48.9
+          },
+          {
+            "range": "60-70%",
+            "n": 10,
+            "predicted": 63.2,
+            "observed": 60
+          }
+        ]
+      },
+      "close|1x2": {
+        "n": 4605,
+        "accuracy": 54.2,
+        "brier": 0.57681,
+        "logLoss": 0.97001,
+        "ece": 0.66,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 546,
+            "predicted": 7.2,
+            "observed": 7.5
+          },
+          {
+            "range": "10-20%",
+            "n": 2189,
+            "predicted": 15.7,
+            "observed": 15.9
+          },
+          {
+            "range": "20-30%",
+            "n": 4960,
+            "predicted": 25.7,
+            "observed": 25.3
+          },
+          {
+            "range": "30-40%",
+            "n": 2277,
+            "predicted": 34,
+            "observed": 33.6
+          },
+          {
+            "range": "40-50%",
+            "n": 1441,
+            "predicted": 44.8,
+            "observed": 45.5
+          },
+          {
+            "range": "50-60%",
+            "n": 1072,
+            "predicted": 55,
+            "observed": 55.9
+          },
+          {
+            "range": "60-70%",
+            "n": 708,
+            "predicted": 64.7,
+            "observed": 67.4
+          },
+          {
+            "range": "70-80%",
+            "n": 419,
+            "predicted": 74.2,
+            "observed": 72.3
+          },
+          {
+            "range": "80-90%",
+            "n": 185,
+            "predicted": 84,
+            "observed": 79.5
+          },
+          {
+            "range": "90-100%",
+            "n": 18,
+            "predicted": 91.5,
+            "observed": 94.4
+          }
+        ]
+      },
+      "close|over2.5": {
+        "n": 4605,
+        "accuracy": 58.85,
+        "brier": 0.23787,
+        "logLoss": 0.66846,
+        "ece": 1.42,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 24,
+            "predicted": 27.7,
+            "observed": 33.3
+          },
+          {
+            "range": "30-40%",
+            "n": 442,
+            "predicted": 36.4,
+            "observed": 32.4
+          },
+          {
+            "range": "40-50%",
+            "n": 1478,
+            "predicted": 45.5,
+            "observed": 46.1
+          },
+          {
+            "range": "50-60%",
+            "n": 1652,
+            "predicted": 54.5,
+            "observed": 55.2
+          },
+          {
+            "range": "60-70%",
+            "n": 750,
+            "predicted": 63.9,
+            "observed": 65.6
+          },
+          {
+            "range": "70-80%",
+            "n": 236,
+            "predicted": 72.7,
+            "observed": 76.3
+          },
+          {
+            "range": "80-90%",
+            "n": 23,
+            "predicted": 82.1,
+            "observed": 60.9
+          }
+        ]
+      },
+      "corners.current|away3.5": {
+        "n": 4605,
+        "accuracy": 56.98,
+        "brier": 0.26636,
+        "logLoss": 0.74835,
+        "ece": 14.29,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 7,
+            "predicted": 14.6,
+            "observed": 42.9
+          },
+          {
+            "range": "20-30%",
+            "n": 51,
+            "predicted": 26.1,
+            "observed": 52.9
+          },
+          {
+            "range": "30-40%",
+            "n": 140,
+            "predicted": 34.8,
+            "observed": 55
+          },
+          {
+            "range": "40-50%",
+            "n": 395,
+            "predicted": 44.7,
+            "observed": 50.1
+          },
+          {
+            "range": "50-60%",
+            "n": 647,
+            "predicted": 55.2,
+            "observed": 50.4
+          },
+          {
+            "range": "60-70%",
+            "n": 971,
+            "predicted": 64.8,
+            "observed": 54.5
+          },
+          {
+            "range": "70-80%",
+            "n": 1053,
+            "predicted": 74.6,
+            "observed": 58.6
+          },
+          {
+            "range": "80-90%",
+            "n": 1014,
+            "predicted": 84.2,
+            "observed": 63.5
+          },
+          {
+            "range": "90-100%",
+            "n": 327,
+            "predicted": 92.8,
+            "observed": 67.3
+          }
+        ]
+      },
+      "corners.current|away4.5": {
+        "n": 4605,
+        "accuracy": 53.77,
+        "brier": 0.26612,
+        "logLoss": 0.73582,
+        "ece": 13.94,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 11,
+            "predicted": 6.5,
+            "observed": 18.2
+          },
+          {
+            "range": "10-20%",
+            "n": 142,
+            "predicted": 15.4,
+            "observed": 35.2
+          },
+          {
+            "range": "20-30%",
+            "n": 435,
+            "predicted": 25.5,
+            "observed": 34.5
+          },
+          {
+            "range": "30-40%",
+            "n": 638,
+            "predicted": 35.1,
+            "observed": 34
+          },
+          {
+            "range": "40-50%",
+            "n": 808,
+            "predicted": 45,
+            "observed": 38.5
+          },
+          {
+            "range": "50-60%",
+            "n": 949,
+            "predicted": 54.9,
+            "observed": 42.5
+          },
+          {
+            "range": "60-70%",
+            "n": 740,
+            "predicted": 64.7,
+            "observed": 41.4
+          },
+          {
+            "range": "70-80%",
+            "n": 561,
+            "predicted": 73.8,
+            "observed": 51.3
+          },
+          {
+            "range": "80-90%",
+            "n": 272,
+            "predicted": 83.4,
+            "observed": 52.6
+          },
+          {
+            "range": "90-100%",
+            "n": 49,
+            "predicted": 93,
+            "observed": 65.3
+          }
+        ]
+      },
+      "corners.current|away5.5": {
+        "n": 4605,
+        "accuracy": 64.43,
+        "brier": 0.22472,
+        "logLoss": 0.64789,
+        "ece": 11.66,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 191,
+            "predicted": 6.9,
+            "observed": 24.6
+          },
+          {
+            "range": "10-20%",
+            "n": 643,
+            "predicted": 15.1,
+            "observed": 23.5
+          },
+          {
+            "range": "20-30%",
+            "n": 886,
+            "predicted": 24.2,
+            "observed": 24.4
+          },
+          {
+            "range": "30-40%",
+            "n": 957,
+            "predicted": 34,
+            "observed": 29.4
+          },
+          {
+            "range": "40-50%",
+            "n": 815,
+            "predicted": 44.1,
+            "observed": 28.7
+          },
+          {
+            "range": "50-60%",
+            "n": 572,
+            "predicted": 54.1,
+            "observed": 31.6
+          },
+          {
+            "range": "60-70%",
+            "n": 333,
+            "predicted": 64.1,
+            "observed": 36.6
+          },
+          {
+            "range": "70-80%",
+            "n": 154,
+            "predicted": 73.1,
+            "observed": 46.8
+          },
+          {
+            "range": "80-90%",
+            "n": 43,
+            "predicted": 83.5,
+            "observed": 58.1
+          },
+          {
+            "range": "90-100%",
+            "n": 11,
+            "predicted": 91.5,
+            "observed": 36.4
+          }
+        ]
+      },
+      "corners.current|home3.5": {
+        "n": 4605,
+        "accuracy": 67.86,
+        "brier": 0.21331,
+        "logLoss": 0.62095,
+        "ece": 9.04,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 1,
+            "predicted": 7,
+            "observed": 0
+          },
+          {
+            "range": "10-20%",
+            "n": 11,
+            "predicted": 15.5,
+            "observed": 63.6
+          },
+          {
+            "range": "20-30%",
+            "n": 48,
+            "predicted": 26.1,
+            "observed": 64.6
+          },
+          {
+            "range": "30-40%",
+            "n": 165,
+            "predicted": 34.9,
+            "observed": 64.8
+          },
+          {
+            "range": "40-50%",
+            "n": 424,
+            "predicted": 44.7,
+            "observed": 63.9
+          },
+          {
+            "range": "50-60%",
+            "n": 659,
+            "predicted": 55.2,
+            "observed": 67.7
+          },
+          {
+            "range": "60-70%",
+            "n": 960,
+            "predicted": 64.7,
+            "observed": 70.8
+          },
+          {
+            "range": "70-80%",
+            "n": 1092,
+            "predicted": 74.4,
+            "observed": 72.4
+          },
+          {
+            "range": "80-90%",
+            "n": 932,
+            "predicted": 84.1,
+            "observed": 76.7
+          },
+          {
+            "range": "90-100%",
+            "n": 313,
+            "predicted": 92.7,
+            "observed": 83.1
+          }
+        ]
+      },
+      "corners.current|home4.5": {
+        "n": 4605,
+        "accuracy": 56.24,
+        "brier": 0.25609,
+        "logLoss": 0.71302,
+        "ece": 10.25,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 16,
+            "predicted": 6.2,
+            "observed": 43.8
+          },
+          {
+            "range": "10-20%",
+            "n": 156,
+            "predicted": 15.7,
+            "observed": 48.1
+          },
+          {
+            "range": "20-30%",
+            "n": 474,
+            "predicted": 25.5,
+            "observed": 46.6
+          },
+          {
+            "range": "30-40%",
+            "n": 651,
+            "predicted": 35.2,
+            "observed": 51.6
+          },
+          {
+            "range": "40-50%",
+            "n": 800,
+            "predicted": 44.9,
+            "observed": 55.3
+          },
+          {
+            "range": "50-60%",
+            "n": 989,
+            "predicted": 54.8,
+            "observed": 58.2
+          },
+          {
+            "range": "60-70%",
+            "n": 716,
+            "predicted": 64.7,
+            "observed": 61.5
+          },
+          {
+            "range": "70-80%",
+            "n": 496,
+            "predicted": 73.9,
+            "observed": 67.9
+          },
+          {
+            "range": "80-90%",
+            "n": 265,
+            "predicted": 83.4,
+            "observed": 71.7
+          },
+          {
+            "range": "90-100%",
+            "n": 42,
+            "predicted": 92.9,
+            "observed": 73.8
+          }
+        ]
+      },
+      "corners.current|home5.5": {
+        "n": 4605,
+        "accuracy": 58.65,
+        "brier": 0.25581,
+        "logLoss": 0.72201,
+        "ece": 10.54,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 216,
+            "predicted": 6.9,
+            "observed": 32.9
+          },
+          {
+            "range": "10-20%",
+            "n": 668,
+            "predicted": 15,
+            "observed": 33.5
+          },
+          {
+            "range": "20-30%",
+            "n": 896,
+            "predicted": 24,
+            "observed": 40.1
+          },
+          {
+            "range": "30-40%",
+            "n": 1025,
+            "predicted": 34.1,
+            "observed": 40.9
+          },
+          {
+            "range": "40-50%",
+            "n": 793,
+            "predicted": 44.3,
+            "observed": 48
+          },
+          {
+            "range": "50-60%",
+            "n": 498,
+            "predicted": 54.1,
+            "observed": 52.4
+          },
+          {
+            "range": "60-70%",
+            "n": 320,
+            "predicted": 64.2,
+            "observed": 55.9
+          },
+          {
+            "range": "70-80%",
+            "n": 142,
+            "predicted": 73.6,
+            "observed": 59.2
+          },
+          {
+            "range": "80-90%",
+            "n": 40,
+            "predicted": 83.7,
+            "observed": 70
+          },
+          {
+            "range": "90-100%",
+            "n": 7,
+            "predicted": 92.3,
+            "observed": 71.4
+          }
+        ]
+      },
+      "corners.current|total10.5": {
+        "n": 4605,
+        "accuracy": 56.13,
+        "brier": 0.26437,
+        "logLoss": 0.74052,
+        "ece": 13.37,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 132,
+            "predicted": 6.9,
+            "observed": 36.4
+          },
+          {
+            "range": "10-20%",
+            "n": 581,
+            "predicted": 15.2,
+            "observed": 36.5
+          },
+          {
+            "range": "20-30%",
+            "n": 895,
+            "predicted": 24.9,
+            "observed": 35.6
+          },
+          {
+            "range": "30-40%",
+            "n": 913,
+            "predicted": 34.8,
+            "observed": 40.2
+          },
+          {
+            "range": "40-50%",
+            "n": 861,
+            "predicted": 44.5,
+            "observed": 39.8
+          },
+          {
+            "range": "50-60%",
+            "n": 583,
+            "predicted": 53.9,
+            "observed": 38.9
+          },
+          {
+            "range": "60-70%",
+            "n": 377,
+            "predicted": 63.9,
+            "observed": 41.9
+          },
+          {
+            "range": "70-80%",
+            "n": 177,
+            "predicted": 74,
+            "observed": 40.7
+          },
+          {
+            "range": "80-90%",
+            "n": 71,
+            "predicted": 83.2,
+            "observed": 40.8
+          },
+          {
+            "range": "90-100%",
+            "n": 15,
+            "predicted": 93.3,
+            "observed": 40
+          }
+        ]
+      },
+      "corners.current|total11.5": {
+        "n": 4605,
+        "accuracy": 67.64,
+        "brier": 0.22297,
+        "logLoss": 0.65946,
+        "ece": 11.78,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 450,
+            "predicted": 6.3,
+            "observed": 24.2
+          },
+          {
+            "range": "10-20%",
+            "n": 1038,
+            "predicted": 14.4,
+            "observed": 25.4
+          },
+          {
+            "range": "20-30%",
+            "n": 1152,
+            "predicted": 24.5,
+            "observed": 28.5
+          },
+          {
+            "range": "30-40%",
+            "n": 850,
+            "predicted": 34.1,
+            "observed": 29.4
+          },
+          {
+            "range": "40-50%",
+            "n": 579,
+            "predicted": 43.7,
+            "observed": 27.8
+          },
+          {
+            "range": "50-60%",
+            "n": 294,
+            "predicted": 54.4,
+            "observed": 28.9
+          },
+          {
+            "range": "60-70%",
+            "n": 145,
+            "predicted": 64.4,
+            "observed": 31.7
+          },
+          {
+            "range": "70-80%",
+            "n": 73,
+            "predicted": 73.3,
+            "observed": 31.5
+          },
+          {
+            "range": "80-90%",
+            "n": 18,
+            "predicted": 84,
+            "observed": 22.2
+          },
+          {
+            "range": "90-100%",
+            "n": 6,
+            "predicted": 92.7,
+            "observed": 0
+          }
+        ]
+      },
+      "corners.current|total5.5": {
+        "n": 4605,
+        "accuracy": 90.97,
+        "brier": 0.08677,
+        "logLoss": 0.34467,
+        "ece": 4.91,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 1,
+            "predicted": 35,
+            "observed": 100
+          },
+          {
+            "range": "40-50%",
+            "n": 6,
+            "predicted": 47,
+            "observed": 66.7
+          },
+          {
+            "range": "50-60%",
+            "n": 18,
+            "predicted": 54.4,
+            "observed": 94.4
+          },
+          {
+            "range": "60-70%",
+            "n": 107,
+            "predicted": 65.6,
+            "observed": 90.7
+          },
+          {
+            "range": "70-80%",
+            "n": 376,
+            "predicted": 75.4,
+            "observed": 88.8
+          },
+          {
+            "range": "80-90%",
+            "n": 1204,
+            "predicted": 85.1,
+            "observed": 90
+          },
+          {
+            "range": "90-100%",
+            "n": 2893,
+            "predicted": 94.6,
+            "observed": 91.8
+          }
+        ]
+      },
+      "corners.current|total6.5": {
+        "n": 4605,
+        "accuracy": 82.35,
+        "brier": 0.15038,
+        "logLoss": 0.50089,
+        "ece": 7.55,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 2,
+            "predicted": 24,
+            "observed": 50
+          },
+          {
+            "range": "30-40%",
+            "n": 18,
+            "predicted": 35.7,
+            "observed": 83.3
+          },
+          {
+            "range": "40-50%",
+            "n": 50,
+            "predicted": 46.7,
+            "observed": 78
+          },
+          {
+            "range": "50-60%",
+            "n": 186,
+            "predicted": 55.7,
+            "observed": 81.7
+          },
+          {
+            "range": "60-70%",
+            "n": 396,
+            "predicted": 65.3,
+            "observed": 80.6
+          },
+          {
+            "range": "70-80%",
+            "n": 956,
+            "predicted": 74.8,
+            "observed": 81.7
+          },
+          {
+            "range": "80-90%",
+            "n": 1579,
+            "predicted": 85.1,
+            "observed": 84
+          },
+          {
+            "range": "90-100%",
+            "n": 1418,
+            "predicted": 93.7,
+            "observed": 84.5
+          }
+        ]
+      },
+      "corners.current|total7.5": {
+        "n": 4605,
+        "accuracy": 69.84,
+        "brier": 0.21502,
+        "logLoss": 0.64146,
+        "ece": 10.47,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 4,
+            "predicted": 16,
+            "observed": 25
+          },
+          {
+            "range": "20-30%",
+            "n": 21,
+            "predicted": 24,
+            "observed": 76.2
+          },
+          {
+            "range": "30-40%",
+            "n": 107,
+            "predicted": 35.4,
+            "observed": 69.2
+          },
+          {
+            "range": "40-50%",
+            "n": 271,
+            "predicted": 45.5,
+            "observed": 66.1
+          },
+          {
+            "range": "50-60%",
+            "n": 500,
+            "predicted": 55.2,
+            "observed": 72.2
+          },
+          {
+            "range": "60-70%",
+            "n": 805,
+            "predicted": 64.6,
+            "observed": 72.3
+          },
+          {
+            "range": "70-80%",
+            "n": 1187,
+            "predicted": 74.5,
+            "observed": 72.9
+          },
+          {
+            "range": "80-90%",
+            "n": 1177,
+            "predicted": 84.2,
+            "observed": 74.5
+          },
+          {
+            "range": "90-100%",
+            "n": 533,
+            "predicted": 93.2,
+            "observed": 74.7
+          }
+        ]
+      },
+      "corners.current|total8.5": {
+        "n": 4605,
+        "accuracy": 57.2,
+        "brier": 0.25967,
+        "logLoss": 0.73191,
+        "ece": 12.29,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 2,
+            "predicted": 7,
+            "observed": 50
+          },
+          {
+            "range": "10-20%",
+            "n": 29,
+            "predicted": 14.7,
+            "observed": 55.2
+          },
+          {
+            "range": "20-30%",
+            "n": 152,
+            "predicted": 24.8,
+            "observed": 58.6
+          },
+          {
+            "range": "30-40%",
+            "n": 385,
+            "predicted": 35,
+            "observed": 57.7
+          },
+          {
+            "range": "40-50%",
+            "n": 630,
+            "predicted": 45.2,
+            "observed": 60.3
+          },
+          {
+            "range": "50-60%",
+            "n": 760,
+            "predicted": 54.5,
+            "observed": 61.2
+          },
+          {
+            "range": "60-70%",
+            "n": 1033,
+            "predicted": 64.4,
+            "observed": 63.6
+          },
+          {
+            "range": "70-80%",
+            "n": 925,
+            "predicted": 74.3,
+            "observed": 64.3
+          },
+          {
+            "range": "80-90%",
+            "n": 514,
+            "predicted": 84.1,
+            "observed": 60.7
+          },
+          {
+            "range": "90-100%",
+            "n": 175,
+            "predicted": 92.8,
+            "observed": 65.7
+          }
+        ]
+      },
+      "corners.current|total9.5": {
+        "n": 4605,
+        "accuracy": 51.6,
+        "brier": 0.27823,
+        "logLoss": 0.769,
+        "ece": 13.41,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 23,
+            "predicted": 7,
+            "observed": 60.9
+          },
+          {
+            "range": "10-20%",
+            "n": 189,
+            "predicted": 15.6,
+            "observed": 46
+          },
+          {
+            "range": "20-30%",
+            "n": 440,
+            "predicted": 24.6,
+            "observed": 48.4
+          },
+          {
+            "range": "30-40%",
+            "n": 760,
+            "predicted": 34.4,
+            "observed": 46.6
+          },
+          {
+            "range": "40-50%",
+            "n": 887,
+            "predicted": 44.8,
+            "observed": 50.8
+          },
+          {
+            "range": "50-60%",
+            "n": 888,
+            "predicted": 54.6,
+            "observed": 52.4
+          },
+          {
+            "range": "60-70%",
+            "n": 731,
+            "predicted": 64.2,
+            "observed": 52.5
+          },
+          {
+            "range": "70-80%",
+            "n": 426,
+            "predicted": 74.2,
+            "observed": 49.1
+          },
+          {
+            "range": "80-90%",
+            "n": 212,
+            "predicted": 83.8,
+            "observed": 51.9
+          },
+          {
+            "range": "90-100%",
+            "n": 49,
+            "predicted": 92.7,
+            "observed": 57.1
+          }
+        ]
+      },
+      "corners.new|away3.5": {
+        "n": 4605,
+        "accuracy": 60.43,
+        "brier": 0.23399,
+        "logLoss": 0.66017,
+        "ece": 2.94,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 36,
+            "predicted": 37.4,
+            "observed": 19.4
+          },
+          {
+            "range": "40-50%",
+            "n": 494,
+            "predicted": 46.6,
+            "observed": 37.9
+          },
+          {
+            "range": "50-60%",
+            "n": 1900,
+            "predicted": 55.7,
+            "observed": 52.4
+          },
+          {
+            "range": "60-70%",
+            "n": 1829,
+            "predicted": 64.2,
+            "observed": 65.2
+          },
+          {
+            "range": "70-80%",
+            "n": 333,
+            "predicted": 73.1,
+            "observed": 74.2
+          },
+          {
+            "range": "80-90%",
+            "n": 13,
+            "predicted": 81.8,
+            "observed": 92.3
+          }
+        ]
+      },
+      "corners.new|away4.5": {
+        "n": 4605,
+        "accuracy": 61.17,
+        "brier": 0.23008,
+        "logLoss": 0.65206,
+        "ece": 3.07,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 5,
+            "predicted": 18.6,
+            "observed": 40
+          },
+          {
+            "range": "20-30%",
+            "n": 230,
+            "predicted": 27.2,
+            "observed": 17.8
+          },
+          {
+            "range": "30-40%",
+            "n": 1371,
+            "predicted": 35.9,
+            "observed": 29.2
+          },
+          {
+            "range": "40-50%",
+            "n": 2095,
+            "predicted": 44.7,
+            "observed": 45.3
+          },
+          {
+            "range": "50-60%",
+            "n": 793,
+            "predicted": 53.5,
+            "observed": 54
+          },
+          {
+            "range": "60-70%",
+            "n": 106,
+            "predicted": 63.4,
+            "observed": 71.7
+          },
+          {
+            "range": "70-80%",
+            "n": 5,
+            "predicted": 71.4,
+            "observed": 100
+          }
+        ]
+      },
+      "corners.new|away5.5": {
+        "n": 4605,
+        "accuracy": 71.42,
+        "brier": 0.19631,
+        "logLoss": 0.57871,
+        "ece": 2.41,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 5,
+            "predicted": 9.6,
+            "observed": 40
+          },
+          {
+            "range": "10-20%",
+            "n": 445,
+            "predicted": 17.3,
+            "observed": 11
+          },
+          {
+            "range": "20-30%",
+            "n": 2111,
+            "predicted": 25.6,
+            "observed": 23.8
+          },
+          {
+            "range": "30-40%",
+            "n": 1674,
+            "predicted": 34.1,
+            "observed": 36.1
+          },
+          {
+            "range": "40-50%",
+            "n": 325,
+            "predicted": 43.4,
+            "observed": 44.3
+          },
+          {
+            "range": "50-60%",
+            "n": 44,
+            "predicted": 53.3,
+            "observed": 68.2
+          },
+          {
+            "range": "60-70%",
+            "n": 1,
+            "predicted": 60.7,
+            "observed": 100
+          }
+        ]
+      },
+      "corners.new|home3.5": {
+        "n": 4605,
+        "accuracy": 71.79,
+        "brier": 0.19406,
+        "logLoss": 0.57387,
+        "ece": 3.3,
+        "bins": [
+          {
+            "range": "40-50%",
+            "n": 8,
+            "predicted": 48.6,
+            "observed": 62.5
+          },
+          {
+            "range": "50-60%",
+            "n": 242,
+            "predicted": 57.2,
+            "observed": 50.4
+          },
+          {
+            "range": "60-70%",
+            "n": 1639,
+            "predicted": 66,
+            "observed": 63.3
+          },
+          {
+            "range": "70-80%",
+            "n": 2297,
+            "predicted": 74.3,
+            "observed": 77.3
+          },
+          {
+            "range": "80-90%",
+            "n": 417,
+            "predicted": 82.7,
+            "observed": 87.8
+          },
+          {
+            "range": "90-100%",
+            "n": 2,
+            "predicted": 90.7,
+            "observed": 100
+          }
+        ]
+      },
+      "corners.new|home4.5": {
+        "n": 4605,
+        "accuracy": 60.72,
+        "brier": 0.23235,
+        "logLoss": 0.65675,
+        "ece": 2.19,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 91,
+            "predicted": 37.6,
+            "observed": 26.4
+          },
+          {
+            "range": "40-50%",
+            "n": 854,
+            "predicted": 46.2,
+            "observed": 44.3
+          },
+          {
+            "range": "50-60%",
+            "n": 2113,
+            "predicted": 55.3,
+            "observed": 55.6
+          },
+          {
+            "range": "60-70%",
+            "n": 1321,
+            "predicted": 63.9,
+            "observed": 67.8
+          },
+          {
+            "range": "70-80%",
+            "n": 217,
+            "predicted": 73.4,
+            "observed": 80.2
+          },
+          {
+            "range": "80-90%",
+            "n": 9,
+            "predicted": 81.3,
+            "observed": 100
+          }
+        ]
+      },
+      "corners.new|home5.5": {
+        "n": 4605,
+        "accuracy": 60.61,
+        "brier": 0.2324,
+        "logLoss": 0.65683,
+        "ece": 3.25,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 5,
+            "predicted": 19.1,
+            "observed": 20
+          },
+          {
+            "range": "20-30%",
+            "n": 283,
+            "predicted": 27.2,
+            "observed": 21.9
+          },
+          {
+            "range": "30-40%",
+            "n": 1503,
+            "predicted": 35.8,
+            "observed": 33.5
+          },
+          {
+            "range": "40-50%",
+            "n": 1991,
+            "predicted": 44.6,
+            "observed": 46.9
+          },
+          {
+            "range": "50-60%",
+            "n": 692,
+            "predicted": 53.8,
+            "observed": 59
+          },
+          {
+            "range": "60-70%",
+            "n": 124,
+            "predicted": 63.3,
+            "observed": 76.6
+          },
+          {
+            "range": "70-80%",
+            "n": 7,
+            "predicted": 71.6,
+            "observed": 100
+          }
+        ]
+      },
+      "corners.new|total10.5": {
+        "n": 4605,
+        "accuracy": 61.67,
+        "brier": 0.23378,
+        "logLoss": 0.66013,
+        "ece": 0.43,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 447,
+            "predicted": 27.6,
+            "observed": 30.2
+          },
+          {
+            "range": "30-40%",
+            "n": 2417,
+            "predicted": 35.5,
+            "observed": 35.7
+          },
+          {
+            "range": "40-50%",
+            "n": 1499,
+            "predicted": 43.9,
+            "observed": 43.7
+          },
+          {
+            "range": "50-60%",
+            "n": 234,
+            "predicted": 52.9,
+            "observed": 53
+          },
+          {
+            "range": "60-70%",
+            "n": 8,
+            "predicted": 61.8,
+            "observed": 62.5
+          }
+        ]
+      },
+      "corners.new|total11.5": {
+        "n": 4605,
+        "accuracy": 72.38,
+        "brier": 0.19629,
+        "logLoss": 0.58041,
+        "ece": 0.61,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 333,
+            "predicted": 18.2,
+            "observed": 17.4
+          },
+          {
+            "range": "20-30%",
+            "n": 2689,
+            "predicted": 25.5,
+            "observed": 25
+          },
+          {
+            "range": "30-40%",
+            "n": 1407,
+            "predicted": 33.7,
+            "observed": 33
+          },
+          {
+            "range": "40-50%",
+            "n": 172,
+            "predicted": 42.9,
+            "observed": 43.6
+          },
+          {
+            "range": "50-60%",
+            "n": 4,
+            "predicted": 52.4,
+            "observed": 25
+          }
+        ]
+      },
+      "corners.new|total5.5": {
+        "n": 4605,
+        "accuracy": 91.03,
+        "brier": 0.08082,
+        "logLoss": 0.29702,
+        "ece": 0.49,
+        "bins": [
+          {
+            "range": "80-90%",
+            "n": 1801,
+            "predicted": 88,
+            "observed": 88
+          },
+          {
+            "range": "90-100%",
+            "n": 2804,
+            "predicted": 92.2,
+            "observed": 93
+          }
+        ]
+      },
+      "corners.new|total6.5": {
+        "n": 4605,
+        "accuracy": 83.21,
+        "brier": 0.13796,
+        "logLoss": 0.44642,
+        "ece": 0.32,
+        "bins": [
+          {
+            "range": "60-70%",
+            "n": 6,
+            "predicted": 69.2,
+            "observed": 33.3
+          },
+          {
+            "range": "70-80%",
+            "n": 983,
+            "predicted": 77.6,
+            "observed": 78.2
+          },
+          {
+            "range": "80-90%",
+            "n": 3451,
+            "predicted": 84.3,
+            "observed": 84.4
+          },
+          {
+            "range": "90-100%",
+            "n": 165,
+            "predicted": 91.1,
+            "observed": 89.1
+          }
+        ]
+      },
+      "corners.new|total7.5": {
+        "n": 4605,
+        "accuracy": 72.81,
+        "brier": 0.19498,
+        "logLoss": 0.57754,
+        "ece": 0.66,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 29,
+            "predicted": 58.3,
+            "observed": 48.3
+          },
+          {
+            "range": "60-70%",
+            "n": 1189,
+            "predicted": 66.9,
+            "observed": 66.1
+          },
+          {
+            "range": "70-80%",
+            "n": 2891,
+            "predicted": 74.6,
+            "observed": 74.1
+          },
+          {
+            "range": "80-90%",
+            "n": 495,
+            "predicted": 82.3,
+            "observed": 83
+          },
+          {
+            "range": "90-100%",
+            "n": 1,
+            "predicted": 90.5,
+            "observed": 100
+          }
+        ]
+      },
+      "corners.new|total8.5": {
+        "n": 4605,
+        "accuracy": 61.95,
+        "brier": 0.23264,
+        "logLoss": 0.65766,
+        "ece": 0.2,
+        "bins": [
+          {
+            "range": "40-50%",
+            "n": 125,
+            "predicted": 48,
+            "observed": 49.6
+          },
+          {
+            "range": "50-60%",
+            "n": 1624,
+            "predicted": 56.2,
+            "observed": 56.3
+          },
+          {
+            "range": "60-70%",
+            "n": 2366,
+            "predicted": 64.3,
+            "observed": 64.1
+          },
+          {
+            "range": "70-80%",
+            "n": 482,
+            "predicted": 72.9,
+            "observed": 72.8
+          },
+          {
+            "range": "80-90%",
+            "n": 8,
+            "predicted": 81.2,
+            "observed": 87.5
+          }
+        ]
+      },
+      "corners.new|total9.5": {
+        "n": 4605,
+        "accuracy": 55.14,
+        "brier": 0.24683,
+        "logLoss": 0.68679,
+        "ece": 0.71,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 1,
+            "predicted": 29.9,
+            "observed": 0
+          },
+          {
+            "range": "30-40%",
+            "n": 302,
+            "predicted": 37.6,
+            "observed": 40.1
+          },
+          {
+            "range": "40-50%",
+            "n": 2083,
+            "predicted": 45.8,
+            "observed": 46.1
+          },
+          {
+            "range": "50-60%",
+            "n": 1863,
+            "predicted": 54.1,
+            "observed": 54.6
+          },
+          {
+            "range": "60-70%",
+            "n": 343,
+            "predicted": 62.9,
+            "observed": 60.9
+          },
+          {
+            "range": "70-80%",
+            "n": 13,
+            "predicted": 71.5,
+            "observed": 53.8
+          }
+        ]
+      },
+      "half1.current|over0.5": {
+        "n": 4605,
+        "accuracy": 71.66,
+        "brier": 0.20109,
+        "logLoss": 0.59104,
+        "ece": 1.93,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 3,
+            "predicted": 38.7,
+            "observed": 66.7
+          },
+          {
+            "range": "40-50%",
+            "n": 27,
+            "predicted": 46.1,
+            "observed": 63
+          },
+          {
+            "range": "50-60%",
+            "n": 295,
+            "predicted": 56.2,
+            "observed": 63.1
+          },
+          {
+            "range": "60-70%",
+            "n": 1515,
+            "predicted": 65.5,
+            "observed": 68.2
+          },
+          {
+            "range": "70-80%",
+            "n": 2255,
+            "predicted": 74.1,
+            "observed": 73.2
+          },
+          {
+            "range": "80-90%",
+            "n": 504,
+            "predicted": 82.4,
+            "observed": 82.1
+          },
+          {
+            "range": "90-100%",
+            "n": 6,
+            "predicted": 91.3,
+            "observed": 100
+          }
+        ]
+      },
+      "half1.current|over1.5": {
+        "n": 4605,
+        "accuracy": 63.74,
+        "brier": 0.23105,
+        "logLoss": 0.65576,
+        "ece": 3.05,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 3,
+            "predicted": 8.7,
+            "observed": 33.3
+          },
+          {
+            "range": "10-20%",
+            "n": 121,
+            "predicted": 16.5,
+            "observed": 30.6
+          },
+          {
+            "range": "20-30%",
+            "n": 984,
+            "predicted": 25.5,
+            "observed": 31.1
+          },
+          {
+            "range": "30-40%",
+            "n": 1972,
+            "predicted": 34.5,
+            "observed": 34.9
+          },
+          {
+            "range": "40-50%",
+            "n": 1198,
+            "predicted": 43.6,
+            "observed": 39.7
+          },
+          {
+            "range": "50-60%",
+            "n": 286,
+            "predicted": 53,
+            "observed": 51.7
+          },
+          {
+            "range": "60-70%",
+            "n": 37,
+            "predicted": 62.2,
+            "observed": 37.8
+          },
+          {
+            "range": "70-80%",
+            "n": 4,
+            "predicted": 72.5,
+            "observed": 75
+          }
+        ]
+      },
+      "half1.new|over0.5": {
+        "n": 4605,
+        "accuracy": 71.83,
+        "brier": 0.19895,
+        "logLoss": 0.58597,
+        "ece": 0.41,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 49,
+            "predicted": 58.3,
+            "observed": 53.1
+          },
+          {
+            "range": "60-70%",
+            "n": 1765,
+            "predicted": 66.7,
+            "observed": 66.8
+          },
+          {
+            "range": "70-80%",
+            "n": 2516,
+            "predicted": 74,
+            "observed": 74.4
+          },
+          {
+            "range": "80-90%",
+            "n": 275,
+            "predicted": 82.4,
+            "observed": 84
+          }
+        ]
+      },
+      "half1.new|over1.5": {
+        "n": 4605,
+        "accuracy": 64.04,
+        "brier": 0.22624,
+        "logLoss": 0.64436,
+        "ece": 0.71,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 5,
+            "predicted": 19.1,
+            "observed": 20
+          },
+          {
+            "range": "20-30%",
+            "n": 796,
+            "predicted": 27.3,
+            "observed": 26.3
+          },
+          {
+            "range": "30-40%",
+            "n": 2614,
+            "predicted": 34.9,
+            "observed": 35.5
+          },
+          {
+            "range": "40-50%",
+            "n": 1019,
+            "predicted": 43.7,
+            "observed": 43.3
+          },
+          {
+            "range": "50-60%",
+            "n": 162,
+            "predicted": 53.4,
+            "observed": 55.6
+          },
+          {
+            "range": "60-70%",
+            "n": 9,
+            "predicted": 61.5,
+            "observed": 44.4
+          }
+        ]
+      },
+      "half2.current|over0.5": {
+        "n": 4605,
+        "accuracy": 79.83,
+        "brier": 0.16135,
+        "logLoss": 0.50284,
+        "ece": 2.14,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 23,
+            "predicted": 56.5,
+            "observed": 69.6
+          },
+          {
+            "range": "60-70%",
+            "n": 414,
+            "predicted": 66.3,
+            "observed": 76.3
+          },
+          {
+            "range": "70-80%",
+            "n": 2269,
+            "predicted": 75.4,
+            "observed": 77.7
+          },
+          {
+            "range": "80-90%",
+            "n": 1846,
+            "predicted": 83.1,
+            "observed": 83
+          },
+          {
+            "range": "90-100%",
+            "n": 53,
+            "predicted": 90.6,
+            "observed": 90.6
+          }
+        ]
+      },
+      "half2.current|over1.5": {
+        "n": 4605,
+        "accuracy": 55.5,
+        "brier": 0.24684,
+        "logLoss": 0.68699,
+        "ece": 2.8,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 5,
+            "predicted": 17.4,
+            "observed": 0
+          },
+          {
+            "range": "20-30%",
+            "n": 181,
+            "predicted": 26.4,
+            "observed": 33.1
+          },
+          {
+            "range": "30-40%",
+            "n": 1064,
+            "predicted": 35.5,
+            "observed": 40.4
+          },
+          {
+            "range": "40-50%",
+            "n": 1933,
+            "predicted": 44.6,
+            "observed": 45.7
+          },
+          {
+            "range": "50-60%",
+            "n": 1151,
+            "predicted": 53.6,
+            "observed": 51.3
+          },
+          {
+            "range": "60-70%",
+            "n": 258,
+            "predicted": 62.9,
+            "observed": 57
+          },
+          {
+            "range": "70-80%",
+            "n": 13,
+            "predicted": 71.6,
+            "observed": 76.9
+          }
+        ]
+      },
+      "half2.new|over0.5": {
+        "n": 4605,
+        "accuracy": 79.83,
+        "brier": 0.15882,
+        "logLoss": 0.49577,
+        "ece": 1.84,
+        "bins": [
+          {
+            "range": "60-70%",
+            "n": 162,
+            "predicted": 68.4,
+            "observed": 66.7
+          },
+          {
+            "range": "70-80%",
+            "n": 2882,
+            "predicted": 76,
+            "observed": 77.7
+          },
+          {
+            "range": "80-90%",
+            "n": 1543,
+            "predicted": 83.1,
+            "observed": 85.2
+          },
+          {
+            "range": "90-100%",
+            "n": 18,
+            "predicted": 90.9,
+            "observed": 88.9
+          }
+        ]
+      },
+      "half2.new|over1.5": {
+        "n": 4605,
+        "accuracy": 56.72,
+        "brier": 0.24363,
+        "logLoss": 0.68028,
+        "ece": 1.39,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 20,
+            "predicted": 28.5,
+            "observed": 30
+          },
+          {
+            "range": "30-40%",
+            "n": 1042,
+            "predicted": 36.8,
+            "observed": 37
+          },
+          {
+            "range": "40-50%",
+            "n": 2397,
+            "predicted": 44.7,
+            "observed": 45.6
+          },
+          {
+            "range": "50-60%",
+            "n": 982,
+            "predicted": 53.7,
+            "observed": 56
+          },
+          {
+            "range": "60-70%",
+            "n": 157,
+            "predicted": 63.3,
+            "observed": 52.2
+          },
+          {
+            "range": "70-80%",
+            "n": 7,
+            "predicted": 70.8,
+            "observed": 71.4
+          }
+        ]
+      },
+      "newMarket1x2|1x2": {
+        "n": 4605,
+        "accuracy": 54.07,
+        "brier": 0.57826,
+        "logLoss": 0.97225,
+        "ece": 0.61,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 504,
+            "predicted": 7.3,
+            "observed": 7.5
+          },
+          {
+            "range": "10-20%",
+            "n": 2125,
+            "predicted": 15.8,
+            "observed": 15.8
+          },
+          {
+            "range": "20-30%",
+            "n": 5182,
+            "predicted": 25.6,
+            "observed": 25.2
+          },
+          {
+            "range": "30-40%",
+            "n": 2131,
+            "predicted": 34.3,
+            "observed": 33.8
+          },
+          {
+            "range": "40-50%",
+            "n": 1520,
+            "predicted": 44.6,
+            "observed": 45.5
+          },
+          {
+            "range": "50-60%",
+            "n": 1051,
+            "predicted": 55,
+            "observed": 56.8
+          },
+          {
+            "range": "60-70%",
+            "n": 692,
+            "predicted": 64.8,
+            "observed": 65.8
+          },
+          {
+            "range": "70-80%",
+            "n": 423,
+            "predicted": 74,
+            "observed": 72.1
+          },
+          {
+            "range": "80-90%",
+            "n": 171,
+            "predicted": 83.8,
+            "observed": 81.9
+          },
+          {
+            "range": "90-100%",
+            "n": 16,
+            "predicted": 91.1,
+            "observed": 93.8
+          }
+        ]
+      },
+      "newMarket1x2|btts": {
+        "n": 4605,
+        "accuracy": 55.77,
+        "brier": 0.24414,
+        "logLoss": 0.68126,
+        "ece": 1.65,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 4,
+            "predicted": 29.1,
+            "observed": 0
+          },
+          {
+            "range": "30-40%",
+            "n": 94,
+            "predicted": 37.5,
+            "observed": 48.9
+          },
+          {
+            "range": "40-50%",
+            "n": 1394,
+            "predicted": 46.4,
+            "observed": 47.7
+          },
+          {
+            "range": "50-60%",
+            "n": 2601,
+            "predicted": 54.6,
+            "observed": 55.6
+          },
+          {
+            "range": "60-70%",
+            "n": 509,
+            "predicted": 62.6,
+            "observed": 66.4
+          },
+          {
+            "range": "70-80%",
+            "n": 3,
+            "predicted": 71.8,
+            "observed": 100
+          }
+        ]
+      },
+      "newMarket1x2|over1.5": {
+        "n": 4605,
+        "accuracy": 77.16,
+        "brier": 0.17155,
+        "logLoss": 0.5238,
+        "ece": 0.51,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 6,
+            "predicted": 59.1,
+            "observed": 83.3
+          },
+          {
+            "range": "60-70%",
+            "n": 517,
+            "predicted": 67.2,
+            "observed": 64.2
+          },
+          {
+            "range": "70-80%",
+            "n": 2540,
+            "predicted": 75.6,
+            "observed": 75.6
+          },
+          {
+            "range": "80-90%",
+            "n": 1467,
+            "predicted": 83.4,
+            "observed": 83.8
+          },
+          {
+            "range": "90-100%",
+            "n": 75,
+            "predicted": 91.5,
+            "observed": 90.7
+          }
+        ]
+      },
+      "newMarket1x2|over2.5": {
+        "n": 4605,
+        "accuracy": 58.33,
+        "brier": 0.23984,
+        "logLoss": 0.67249,
+        "ece": 1.27,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 245,
+            "predicted": 37.2,
+            "observed": 32.7
+          },
+          {
+            "range": "40-50%",
+            "n": 1445,
+            "predicted": 45.9,
+            "observed": 44.1
+          },
+          {
+            "range": "50-60%",
+            "n": 1961,
+            "predicted": 54.7,
+            "observed": 54.9
+          },
+          {
+            "range": "60-70%",
+            "n": 797,
+            "predicted": 63.7,
+            "observed": 65.6
+          },
+          {
+            "range": "70-80%",
+            "n": 147,
+            "predicted": 73.5,
+            "observed": 72.1
+          },
+          {
+            "range": "80-90%",
+            "n": 10,
+            "predicted": 82.7,
+            "observed": 80
+          }
+        ]
+      },
+      "newMarket1x2|over3.5": {
+        "n": 4605,
+        "accuracy": 69.27,
+        "brier": 0.20483,
+        "logLoss": 0.59811,
+        "ece": 1.31,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 263,
+            "predicted": 17.9,
+            "observed": 16.7
+          },
+          {
+            "range": "20-30%",
+            "n": 1873,
+            "predicted": 25.6,
+            "observed": 24.1
+          },
+          {
+            "range": "30-40%",
+            "n": 1812,
+            "predicted": 34.3,
+            "observed": 33.8
+          },
+          {
+            "range": "40-50%",
+            "n": 525,
+            "predicted": 43.7,
+            "observed": 46.1
+          },
+          {
+            "range": "50-60%",
+            "n": 112,
+            "predicted": 53.4,
+            "observed": 48.2
+          },
+          {
+            "range": "60-70%",
+            "n": 18,
+            "predicted": 62.3,
+            "observed": 55.6
+          },
+          {
+            "range": "70-80%",
+            "n": 2,
+            "predicted": 73.6,
+            "observed": 100
+          }
+        ]
+      },
+      "newMarket|1x2": {
+        "n": 4605,
+        "accuracy": 54.07,
+        "brier": 0.57826,
+        "logLoss": 0.97225,
+        "ece": 0.61,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 504,
+            "predicted": 7.3,
+            "observed": 7.5
+          },
+          {
+            "range": "10-20%",
+            "n": 2125,
+            "predicted": 15.8,
+            "observed": 15.8
+          },
+          {
+            "range": "20-30%",
+            "n": 5182,
+            "predicted": 25.6,
+            "observed": 25.2
+          },
+          {
+            "range": "30-40%",
+            "n": 2131,
+            "predicted": 34.3,
+            "observed": 33.8
+          },
+          {
+            "range": "40-50%",
+            "n": 1520,
+            "predicted": 44.6,
+            "observed": 45.5
+          },
+          {
+            "range": "50-60%",
+            "n": 1051,
+            "predicted": 55,
+            "observed": 56.8
+          },
+          {
+            "range": "60-70%",
+            "n": 692,
+            "predicted": 64.8,
+            "observed": 65.8
+          },
+          {
+            "range": "70-80%",
+            "n": 423,
+            "predicted": 74,
+            "observed": 72.1
+          },
+          {
+            "range": "80-90%",
+            "n": 171,
+            "predicted": 83.8,
+            "observed": 81.9
+          },
+          {
+            "range": "90-100%",
+            "n": 16,
+            "predicted": 91.1,
+            "observed": 93.8
+          }
+        ]
+      },
+      "newMarket|btts": {
+        "n": 4605,
+        "accuracy": 56.59,
+        "brier": 0.24355,
+        "logLoss": 0.68006,
+        "ece": 1.87,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 1,
+            "predicted": 28.3,
+            "observed": 0
+          },
+          {
+            "range": "30-40%",
+            "n": 119,
+            "predicted": 37.8,
+            "observed": 43.7
+          },
+          {
+            "range": "40-50%",
+            "n": 1498,
+            "predicted": 46.3,
+            "observed": 46.9
+          },
+          {
+            "range": "50-60%",
+            "n": 2442,
+            "predicted": 54.4,
+            "observed": 56.1
+          },
+          {
+            "range": "60-70%",
+            "n": 526,
+            "predicted": 63.1,
+            "observed": 68.4
+          },
+          {
+            "range": "70-80%",
+            "n": 19,
+            "predicted": 72.1,
+            "observed": 73.7
+          }
+        ]
+      },
+      "newMarket|over1.5": {
+        "n": 4605,
+        "accuracy": 77.16,
+        "brier": 0.1714,
+        "logLoss": 0.52331,
+        "ece": 0.35,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 25,
+            "predicted": 58,
+            "observed": 76
+          },
+          {
+            "range": "60-70%",
+            "n": 611,
+            "predicted": 66.9,
+            "observed": 66
+          },
+          {
+            "range": "70-80%",
+            "n": 2461,
+            "predicted": 75.4,
+            "observed": 75.5
+          },
+          {
+            "range": "80-90%",
+            "n": 1408,
+            "predicted": 83.7,
+            "observed": 83.9
+          },
+          {
+            "range": "90-100%",
+            "n": 100,
+            "predicted": 91.7,
+            "observed": 91
+          }
+        ]
+      },
+      "newMarket|over2.5": {
+        "n": 4605,
+        "accuracy": 58.83,
+        "brier": 0.23872,
+        "logLoss": 0.67019,
+        "ece": 1.53,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 10,
+            "predicted": 28.3,
+            "observed": 30
+          },
+          {
+            "range": "30-40%",
+            "n": 315,
+            "predicted": 37,
+            "observed": 33.3
+          },
+          {
+            "range": "40-50%",
+            "n": 1508,
+            "predicted": 45.7,
+            "observed": 44.4
+          },
+          {
+            "range": "50-60%",
+            "n": 1774,
+            "predicted": 54.6,
+            "observed": 55
+          },
+          {
+            "range": "60-70%",
+            "n": 783,
+            "predicted": 63.9,
+            "observed": 67
+          },
+          {
+            "range": "70-80%",
+            "n": 197,
+            "predicted": 73.7,
+            "observed": 70.6
+          },
+          {
+            "range": "80-90%",
+            "n": 18,
+            "predicted": 81.5,
+            "observed": 72.2
+          }
+        ]
+      },
+      "newMarket|over3.5": {
+        "n": 4605,
+        "accuracy": 69.4,
+        "brier": 0.20386,
+        "logLoss": 0.59585,
+        "ece": 1.26,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 350,
+            "predicted": 17.5,
+            "observed": 18
+          },
+          {
+            "range": "20-30%",
+            "n": 1891,
+            "predicted": 25.4,
+            "observed": 23.5
+          },
+          {
+            "range": "30-40%",
+            "n": 1644,
+            "predicted": 34.3,
+            "observed": 34.3
+          },
+          {
+            "range": "40-50%",
+            "n": 548,
+            "predicted": 44,
+            "observed": 46.5
+          },
+          {
+            "range": "50-60%",
+            "n": 142,
+            "predicted": 54,
+            "observed": 50
+          },
+          {
+            "range": "60-70%",
+            "n": 30,
+            "predicted": 62.8,
+            "observed": 60
+          }
+        ]
+      },
+      "new|1x2": {
+        "n": 4605,
+        "accuracy": 52.29,
+        "brier": 0.5928,
+        "logLoss": 0.99361,
+        "ece": 1.2,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 182,
+            "predicted": 7.9,
+            "observed": 6.6
+          },
+          {
+            "range": "10-20%",
+            "n": 1477,
+            "predicted": 16.2,
+            "observed": 14.5
+          },
+          {
+            "range": "20-30%",
+            "n": 6038,
+            "predicted": 25.5,
+            "observed": 24.6
+          },
+          {
+            "range": "30-40%",
+            "n": 2330,
+            "predicted": 34.7,
+            "observed": 35
+          },
+          {
+            "range": "40-50%",
+            "n": 1736,
+            "predicted": 44.8,
+            "observed": 45.8
+          },
+          {
+            "range": "50-60%",
+            "n": 1209,
+            "predicted": 54.5,
+            "observed": 56.6
+          },
+          {
+            "range": "60-70%",
+            "n": 614,
+            "predicted": 64.2,
+            "observed": 68.4
+          },
+          {
+            "range": "70-80%",
+            "n": 202,
+            "predicted": 74,
+            "observed": 77.2
+          },
+          {
+            "range": "80-90%",
+            "n": 27,
+            "predicted": 83,
+            "observed": 92.6
+          }
+        ]
+      },
+      "new|btts": {
+        "n": 4605,
+        "accuracy": 55.53,
+        "brier": 0.24514,
+        "logLoss": 0.68331,
+        "ece": 0.75,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 28,
+            "predicted": 37.4,
+            "observed": 28.6
+          },
+          {
+            "range": "40-50%",
+            "n": 1237,
+            "predicted": 46.6,
+            "observed": 48.1
+          },
+          {
+            "range": "50-60%",
+            "n": 2627,
+            "predicted": 54.9,
+            "observed": 54.7
+          },
+          {
+            "range": "60-70%",
+            "n": 705,
+            "predicted": 62.9,
+            "observed": 64
+          },
+          {
+            "range": "70-80%",
+            "n": 8,
+            "predicted": 71,
+            "observed": 75
+          }
+        ]
+      },
+      "new|over1.5": {
+        "n": 4605,
+        "accuracy": 77.16,
+        "brier": 0.1726,
+        "logLoss": 0.52679,
+        "ece": 0.46,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 1,
+            "predicted": 57.1,
+            "observed": 100
+          },
+          {
+            "range": "60-70%",
+            "n": 536,
+            "predicted": 67.2,
+            "observed": 65.9
+          },
+          {
+            "range": "70-80%",
+            "n": 2608,
+            "predicted": 75.6,
+            "observed": 75.8
+          },
+          {
+            "range": "80-90%",
+            "n": 1436,
+            "predicted": 83,
+            "observed": 83.6
+          },
+          {
+            "range": "90-100%",
+            "n": 24,
+            "predicted": 91.2,
+            "observed": 91.7
+          }
+        ]
+      },
+      "new|over2.5": {
+        "n": 4605,
+        "accuracy": 56.92,
+        "brier": 0.24242,
+        "logLoss": 0.67777,
+        "ece": 0.7,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 1,
+            "predicted": 29.3,
+            "observed": 100
+          },
+          {
+            "range": "30-40%",
+            "n": 238,
+            "predicted": 37.5,
+            "observed": 37
+          },
+          {
+            "range": "40-50%",
+            "n": 1484,
+            "predicted": 45.7,
+            "observed": 45.6
+          },
+          {
+            "range": "50-60%",
+            "n": 2085,
+            "predicted": 54.7,
+            "observed": 54.3
+          },
+          {
+            "range": "60-70%",
+            "n": 733,
+            "predicted": 63.4,
+            "observed": 65.9
+          },
+          {
+            "range": "70-80%",
+            "n": 61,
+            "predicted": 72.8,
+            "observed": 75.4
+          },
+          {
+            "range": "80-90%",
+            "n": 3,
+            "predicted": 81.3,
+            "observed": 66.7
+          }
+        ]
+      },
+      "new|over3.5": {
+        "n": 4605,
+        "accuracy": 69.27,
+        "brier": 0.20684,
+        "logLoss": 0.60286,
+        "ece": 1.23,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 268,
+            "predicted": 18.1,
+            "observed": 19.4
+          },
+          {
+            "range": "20-30%",
+            "n": 1966,
+            "predicted": 25.7,
+            "observed": 24.3
+          },
+          {
+            "range": "30-40%",
+            "n": 1874,
+            "predicted": 34.4,
+            "observed": 35
+          },
+          {
+            "range": "40-50%",
+            "n": 449,
+            "predicted": 43.3,
+            "observed": 45.9
+          },
+          {
+            "range": "50-60%",
+            "n": 44,
+            "predicted": 53.3,
+            "observed": 47.7
+          },
+          {
+            "range": "60-70%",
+            "n": 4,
+            "predicted": 63.2,
+            "observed": 75
+          }
+        ]
+      }
+    },
+    "picks": {
+      "app": {
+        "n": 4605,
+        "hitRate": 79.7,
+        "meanProbability": 80.2,
+        "bands": {
+          "70-80%": {
+            "n": 2194,
+            "hitRate": 76.5,
+            "meanProbability": 76.6
+          },
+          "80-90%": {
+            "n": 2319,
+            "hitRate": 82.5,
+            "meanProbability": 83.1
+          },
+          "90-100%": {
+            "n": 92,
+            "hitRate": 85.9,
+            "meanProbability": 91
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 2589,
+            "hitRate": 79.3,
+            "meanProbability": 80.5
+          },
+          "under35": {
+            "n": 1218,
+            "hitRate": 77.8,
+            "meanProbability": 78.7
+          },
+          "dcX2": {
+            "n": 420,
+            "hitRate": 80,
+            "meanProbability": 81.2
+          },
+          "dc1X": {
+            "n": 378,
+            "hitRate": 88.4,
+            "meanProbability": 81.3
+          }
+        }
+      },
+      "appMarket": {
+        "n": 4605,
+        "hitRate": 84.1,
+        "meanProbability": 81.2,
+        "bands": {
+          "70-80%": {
+            "n": 2030,
+            "hitRate": 80.5,
+            "meanProbability": 76.6
+          },
+          "80-90%": {
+            "n": 2154,
+            "hitRate": 85.8,
+            "meanProbability": 83.5
+          },
+          "90-100%": {
+            "n": 421,
+            "hitRate": 92.2,
+            "meanProbability": 92.2
+          }
+        },
+        "markets": {
+          "dc1X": {
+            "n": 1530,
+            "hitRate": 86.9,
+            "meanProbability": 84.8
+          },
+          "over15": {
+            "n": 1526,
+            "hitRate": 83.3,
+            "meanProbability": 79.1
+          },
+          "under35": {
+            "n": 1010,
+            "hitRate": 81.2,
+            "meanProbability": 78.2
+          },
+          "dcX2": {
+            "n": 539,
+            "hitRate": 83.7,
+            "meanProbability": 82.8
+          }
+        }
+      },
+      "appMarket1x2": {
+        "n": 4605,
+        "hitRate": 82.3,
+        "meanProbability": 82.1,
+        "bands": {
+          "70-80%": {
+            "n": 1602,
+            "hitRate": 77.3,
+            "meanProbability": 76.8
+          },
+          "80-90%": {
+            "n": 2553,
+            "hitRate": 83.8,
+            "meanProbability": 83.7
+          },
+          "90-100%": {
+            "n": 450,
+            "hitRate": 91.3,
+            "meanProbability": 92.1
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 1808,
+            "hitRate": 79,
+            "meanProbability": 80.8
+          },
+          "dc1X": {
+            "n": 1429,
+            "hitRate": 87,
+            "meanProbability": 85.3
+          },
+          "under35": {
+            "n": 879,
+            "hitRate": 80.2,
+            "meanProbability": 79
+          },
+          "dcX2": {
+            "n": 489,
+            "hitRate": 84.5,
+            "meanProbability": 83.2
+          }
+        }
+      },
+      "new": {
+        "n": 4605,
+        "hitRate": 81.9,
+        "meanProbability": 80.8,
+        "bands": {
+          "70-80%": {
+            "n": 1978,
+            "hitRate": 78.2,
+            "meanProbability": 76.9
+          },
+          "80-90%": {
+            "n": 2411,
+            "hitRate": 84,
+            "meanProbability": 83.1
+          },
+          "90-100%": {
+            "n": 216,
+            "hitRate": 93.1,
+            "meanProbability": 91.7
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 2128,
+            "hitRate": 80.1,
+            "meanProbability": 79.8
+          },
+          "dc1X": {
+            "n": 1280,
+            "hitRate": 86,
+            "meanProbability": 83.9
+          },
+          "under35": {
+            "n": 852,
+            "hitRate": 80.4,
+            "meanProbability": 78.5
+          },
+          "dcX2": {
+            "n": 345,
+            "hitRate": 81.7,
+            "meanProbability": 81.4
+          }
+        }
+      },
+      "newMarket": {
+        "n": 4605,
+        "hitRate": 84.1,
+        "meanProbability": 82,
+        "bands": {
+          "70-80%": {
+            "n": 1757,
+            "hitRate": 80.5,
+            "meanProbability": 76.9
+          },
+          "80-90%": {
+            "n": 2312,
+            "hitRate": 84.9,
+            "meanProbability": 83.5
+          },
+          "90-100%": {
+            "n": 536,
+            "hitRate": 92.2,
+            "meanProbability": 92.4
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 1652,
+            "hitRate": 83.1,
+            "meanProbability": 80
+          },
+          "dc1X": {
+            "n": 1494,
+            "hitRate": 86.7,
+            "meanProbability": 85.7
+          },
+          "under35": {
+            "n": 935,
+            "hitRate": 81.8,
+            "meanProbability": 79
+          },
+          "dcX2": {
+            "n": 524,
+            "hitRate": 83.6,
+            "meanProbability": 83.5
+          }
+        }
+      },
+      "newMarket1x2": {
+        "n": 4605,
+        "hitRate": 84,
+        "meanProbability": 81.8,
+        "bands": {
+          "70-80%": {
+            "n": 1840,
+            "hitRate": 80.2,
+            "meanProbability": 76.9
+          },
+          "80-90%": {
+            "n": 2252,
+            "hitRate": 85,
+            "meanProbability": 83.5
+          },
+          "90-100%": {
+            "n": 513,
+            "hitRate": 92.6,
+            "meanProbability": 92.5
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 1717,
+            "hitRate": 82.2,
+            "meanProbability": 79.6
+          },
+          "dc1X": {
+            "n": 1503,
+            "hitRate": 86.9,
+            "meanProbability": 85.7
+          },
+          "under35": {
+            "n": 852,
+            "hitRate": 81.9,
+            "meanProbability": 78.5
+          },
+          "dcX2": {
+            "n": 533,
+            "hitRate": 84.4,
+            "meanProbability": 83.6
+          }
+        }
+      }
+    }
+  },
+  "test": {
+    "metrics": {
+      "appMarket1x2|1x2": {
+        "n": 3041,
+        "accuracy": 53.24,
+        "brier": 0.57996,
+        "logLoss": 0.97438,
+        "ece": 0.85,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 247,
+            "predicted": 7.7,
+            "observed": 6.1
+          },
+          {
+            "range": "10-20%",
+            "n": 1335,
+            "predicted": 15.9,
+            "observed": 14.4
+          },
+          {
+            "range": "20-30%",
+            "n": 3465,
+            "predicted": 25.5,
+            "observed": 25.6
+          },
+          {
+            "range": "30-40%",
+            "n": 1577,
+            "predicted": 34.2,
+            "observed": 33.4
+          },
+          {
+            "range": "40-50%",
+            "n": 974,
+            "predicted": 44.8,
+            "observed": 46.8
+          },
+          {
+            "range": "50-60%",
+            "n": 742,
+            "predicted": 54.8,
+            "observed": 54.4
+          },
+          {
+            "range": "60-70%",
+            "n": 459,
+            "predicted": 64.8,
+            "observed": 66.2
+          },
+          {
+            "range": "70-80%",
+            "n": 252,
+            "predicted": 74.3,
+            "observed": 75.8
+          },
+          {
+            "range": "80-90%",
+            "n": 71,
+            "predicted": 83.4,
+            "observed": 90.1
+          },
+          {
+            "range": "90-100%",
+            "n": 1,
+            "predicted": 91.6,
+            "observed": 100
+          }
+        ]
+      },
+      "appMarket1x2|btts": {
+        "n": 3041,
+        "accuracy": 55.05,
+        "brier": 0.2488,
+        "logLoss": 0.69121,
+        "ece": 2.74,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 1,
+            "predicted": 19,
+            "observed": 100
+          },
+          {
+            "range": "20-30%",
+            "n": 10,
+            "predicted": 27.1,
+            "observed": 60
+          },
+          {
+            "range": "30-40%",
+            "n": 82,
+            "predicted": 37,
+            "observed": 52.4
+          },
+          {
+            "range": "40-50%",
+            "n": 678,
+            "predicted": 46.2,
+            "observed": 49
+          },
+          {
+            "range": "50-60%",
+            "n": 1547,
+            "predicted": 55,
+            "observed": 55.6
+          },
+          {
+            "range": "60-70%",
+            "n": 669,
+            "predicted": 63.4,
+            "observed": 58.6
+          },
+          {
+            "range": "70-80%",
+            "n": 52,
+            "predicted": 72.3,
+            "observed": 61.5
+          },
+          {
+            "range": "80-90%",
+            "n": 2,
+            "predicted": 82.1,
+            "observed": 50
+          }
+        ]
+      },
+      "appMarket1x2|over1.5": {
+        "n": 3041,
+        "accuracy": 76.88,
+        "brier": 0.17742,
+        "logLoss": 0.53954,
+        "ece": 2.24,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 1,
+            "predicted": 37.8,
+            "observed": 100
+          },
+          {
+            "range": "40-50%",
+            "n": 5,
+            "predicted": 45.2,
+            "observed": 80
+          },
+          {
+            "range": "50-60%",
+            "n": 55,
+            "predicted": 57,
+            "observed": 74.5
+          },
+          {
+            "range": "60-70%",
+            "n": 496,
+            "predicted": 66.4,
+            "observed": 72.4
+          },
+          {
+            "range": "70-80%",
+            "n": 1540,
+            "predicted": 75.4,
+            "observed": 75.8
+          },
+          {
+            "range": "80-90%",
+            "n": 909,
+            "predicted": 83.3,
+            "observed": 81.3
+          },
+          {
+            "range": "90-100%",
+            "n": 35,
+            "predicted": 91.5,
+            "observed": 85.7
+          }
+        ]
+      },
+      "appMarket1x2|over2.5": {
+        "n": 3041,
+        "accuracy": 54.82,
+        "brier": 0.24799,
+        "logLoss": 0.68959,
+        "ece": 3.12,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 3,
+            "predicted": 17.1,
+            "observed": 66.7
+          },
+          {
+            "range": "20-30%",
+            "n": 25,
+            "predicted": 26.9,
+            "observed": 56
+          },
+          {
+            "range": "30-40%",
+            "n": 261,
+            "predicted": 36.3,
+            "observed": 45.2
+          },
+          {
+            "range": "40-50%",
+            "n": 878,
+            "predicted": 45.6,
+            "observed": 48.5
+          },
+          {
+            "range": "50-60%",
+            "n": 1204,
+            "predicted": 54.8,
+            "observed": 54
+          },
+          {
+            "range": "60-70%",
+            "n": 571,
+            "predicted": 63.8,
+            "observed": 60.1
+          },
+          {
+            "range": "70-80%",
+            "n": 92,
+            "predicted": 73.5,
+            "observed": 66.3
+          },
+          {
+            "range": "80-90%",
+            "n": 6,
+            "predicted": 82.4,
+            "observed": 83.3
+          },
+          {
+            "range": "90-100%",
+            "n": 1,
+            "predicted": 91.2,
+            "observed": 100
+          }
+        ]
+      },
+      "appMarket1x2|over3.5": {
+        "n": 3041,
+        "accuracy": 69.02,
+        "brier": 0.20884,
+        "logLoss": 0.6081,
+        "ece": 1.54,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 9,
+            "predicted": 7.5,
+            "observed": 11.1
+          },
+          {
+            "range": "10-20%",
+            "n": 292,
+            "predicted": 16.9,
+            "observed": 22.9
+          },
+          {
+            "range": "20-30%",
+            "n": 1128,
+            "predicted": 25.4,
+            "observed": 25.5
+          },
+          {
+            "range": "30-40%",
+            "n": 1150,
+            "predicted": 34.5,
+            "observed": 33.2
+          },
+          {
+            "range": "40-50%",
+            "n": 374,
+            "predicted": 43.5,
+            "observed": 42
+          },
+          {
+            "range": "50-60%",
+            "n": 77,
+            "predicted": 53.3,
+            "observed": 46.8
+          },
+          {
+            "range": "60-70%",
+            "n": 8,
+            "predicted": 62,
+            "observed": 50
+          },
+          {
+            "range": "70-80%",
+            "n": 3,
+            "predicted": 73.7,
+            "observed": 33.3
+          }
+        ]
+      },
+      "appMarket|1x2": {
+        "n": 3041,
+        "accuracy": 53.24,
+        "brier": 0.57996,
+        "logLoss": 0.97438,
+        "ece": 0.85,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 247,
+            "predicted": 7.7,
+            "observed": 6.1
+          },
+          {
+            "range": "10-20%",
+            "n": 1335,
+            "predicted": 15.9,
+            "observed": 14.4
+          },
+          {
+            "range": "20-30%",
+            "n": 3465,
+            "predicted": 25.5,
+            "observed": 25.6
+          },
+          {
+            "range": "30-40%",
+            "n": 1577,
+            "predicted": 34.2,
+            "observed": 33.4
+          },
+          {
+            "range": "40-50%",
+            "n": 974,
+            "predicted": 44.8,
+            "observed": 46.8
+          },
+          {
+            "range": "50-60%",
+            "n": 742,
+            "predicted": 54.8,
+            "observed": 54.4
+          },
+          {
+            "range": "60-70%",
+            "n": 459,
+            "predicted": 64.8,
+            "observed": 66.2
+          },
+          {
+            "range": "70-80%",
+            "n": 252,
+            "predicted": 74.3,
+            "observed": 75.8
+          },
+          {
+            "range": "80-90%",
+            "n": 71,
+            "predicted": 83.4,
+            "observed": 90.1
+          },
+          {
+            "range": "90-100%",
+            "n": 1,
+            "predicted": 91.6,
+            "observed": 100
+          }
+        ]
+      },
+      "appMarket|btts": {
+        "n": 3041,
+        "accuracy": 55.34,
+        "brier": 0.24477,
+        "logLoss": 0.68261,
+        "ece": 1.84,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 34,
+            "predicted": 38.2,
+            "observed": 41.2
+          },
+          {
+            "range": "40-50%",
+            "n": 946,
+            "predicted": 46.6,
+            "observed": 49.5
+          },
+          {
+            "range": "50-60%",
+            "n": 1621,
+            "predicted": 54.7,
+            "observed": 55.3
+          },
+          {
+            "range": "60-70%",
+            "n": 429,
+            "predicted": 62.7,
+            "observed": 66.2
+          },
+          {
+            "range": "70-80%",
+            "n": 11,
+            "predicted": 70.8,
+            "observed": 45.5
+          }
+        ]
+      },
+      "appMarket|over1.5": {
+        "n": 3041,
+        "accuracy": 77.01,
+        "brier": 0.17273,
+        "logLoss": 0.52648,
+        "ece": 0.95,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 28,
+            "predicted": 57.9,
+            "observed": 57.1
+          },
+          {
+            "range": "60-70%",
+            "n": 522,
+            "predicted": 66.8,
+            "observed": 69.9
+          },
+          {
+            "range": "70-80%",
+            "n": 1568,
+            "predicted": 75.4,
+            "observed": 75.1
+          },
+          {
+            "range": "80-90%",
+            "n": 880,
+            "predicted": 83.7,
+            "observed": 84.5
+          },
+          {
+            "range": "90-100%",
+            "n": 43,
+            "predicted": 91.3,
+            "observed": 93
+          }
+        ]
+      },
+      "appMarket|over2.5": {
+        "n": 3041,
+        "accuracy": 58.14,
+        "brier": 0.23943,
+        "logLoss": 0.67142,
+        "ece": 0.71,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 8,
+            "predicted": 29,
+            "observed": 12.5
+          },
+          {
+            "range": "30-40%",
+            "n": 223,
+            "predicted": 36.7,
+            "observed": 39.9
+          },
+          {
+            "range": "40-50%",
+            "n": 951,
+            "predicted": 45.5,
+            "observed": 44.9
+          },
+          {
+            "range": "50-60%",
+            "n": 1141,
+            "predicted": 54.7,
+            "observed": 54.7
+          },
+          {
+            "range": "60-70%",
+            "n": 585,
+            "predicted": 63.9,
+            "observed": 64.6
+          },
+          {
+            "range": "70-80%",
+            "n": 128,
+            "predicted": 73.3,
+            "observed": 75.8
+          },
+          {
+            "range": "80-90%",
+            "n": 5,
+            "predicted": 83,
+            "observed": 80
+          }
+        ]
+      },
+      "appMarket|over3.5": {
+        "n": 3041,
+        "accuracy": 69.45,
+        "brier": 0.20368,
+        "logLoss": 0.59506,
+        "ece": 0.96,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 244,
+            "predicted": 17.3,
+            "observed": 16.8
+          },
+          {
+            "range": "20-30%",
+            "n": 1191,
+            "predicted": 25.2,
+            "observed": 23.5
+          },
+          {
+            "range": "30-40%",
+            "n": 1086,
+            "predicted": 34.4,
+            "observed": 34.8
+          },
+          {
+            "range": "40-50%",
+            "n": 411,
+            "predicted": 43.8,
+            "observed": 43.6
+          },
+          {
+            "range": "50-60%",
+            "n": 99,
+            "predicted": 53.3,
+            "observed": 51.5
+          },
+          {
+            "range": "60-70%",
+            "n": 10,
+            "predicted": 63.4,
+            "observed": 70
+          }
+        ]
+      },
+      "app|1x2": {
+        "n": 3041,
+        "accuracy": 50.41,
+        "brier": 0.60994,
+        "logLoss": 1.01887,
+        "ece": 2.16,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 17,
+            "predicted": 8,
+            "observed": 11.8
+          },
+          {
+            "range": "10-20%",
+            "n": 469,
+            "predicted": 17.3,
+            "observed": 13.2
+          },
+          {
+            "range": "20-30%",
+            "n": 4134,
+            "predicted": 25,
+            "observed": 24.1
+          },
+          {
+            "range": "30-40%",
+            "n": 2055,
+            "predicted": 34.9,
+            "observed": 32.9
+          },
+          {
+            "range": "40-50%",
+            "n": 1494,
+            "predicted": 44.6,
+            "observed": 47.6
+          },
+          {
+            "range": "50-60%",
+            "n": 759,
+            "predicted": 54.1,
+            "observed": 59.2
+          },
+          {
+            "range": "60-70%",
+            "n": 152,
+            "predicted": 63.7,
+            "observed": 73.7
+          },
+          {
+            "range": "70-80%",
+            "n": 41,
+            "predicted": 73.5,
+            "observed": 73.2
+          },
+          {
+            "range": "80-90%",
+            "n": 2,
+            "predicted": 82.4,
+            "observed": 100
+          }
+        ]
+      },
+      "app|btts": {
+        "n": 3041,
+        "accuracy": 55.05,
+        "brier": 0.2488,
+        "logLoss": 0.69121,
+        "ece": 2.74,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 1,
+            "predicted": 19,
+            "observed": 100
+          },
+          {
+            "range": "20-30%",
+            "n": 10,
+            "predicted": 27.1,
+            "observed": 60
+          },
+          {
+            "range": "30-40%",
+            "n": 82,
+            "predicted": 37,
+            "observed": 52.4
+          },
+          {
+            "range": "40-50%",
+            "n": 678,
+            "predicted": 46.2,
+            "observed": 49
+          },
+          {
+            "range": "50-60%",
+            "n": 1547,
+            "predicted": 55,
+            "observed": 55.6
+          },
+          {
+            "range": "60-70%",
+            "n": 669,
+            "predicted": 63.4,
+            "observed": 58.6
+          },
+          {
+            "range": "70-80%",
+            "n": 52,
+            "predicted": 72.3,
+            "observed": 61.5
+          },
+          {
+            "range": "80-90%",
+            "n": 2,
+            "predicted": 82.1,
+            "observed": 50
+          }
+        ]
+      },
+      "app|over1.5": {
+        "n": 3041,
+        "accuracy": 76.88,
+        "brier": 0.17742,
+        "logLoss": 0.53954,
+        "ece": 2.24,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 1,
+            "predicted": 37.8,
+            "observed": 100
+          },
+          {
+            "range": "40-50%",
+            "n": 5,
+            "predicted": 45.2,
+            "observed": 80
+          },
+          {
+            "range": "50-60%",
+            "n": 55,
+            "predicted": 57,
+            "observed": 74.5
+          },
+          {
+            "range": "60-70%",
+            "n": 496,
+            "predicted": 66.4,
+            "observed": 72.4
+          },
+          {
+            "range": "70-80%",
+            "n": 1540,
+            "predicted": 75.4,
+            "observed": 75.8
+          },
+          {
+            "range": "80-90%",
+            "n": 909,
+            "predicted": 83.3,
+            "observed": 81.3
+          },
+          {
+            "range": "90-100%",
+            "n": 35,
+            "predicted": 91.5,
+            "observed": 85.7
+          }
+        ]
+      },
+      "app|over2.5": {
+        "n": 3041,
+        "accuracy": 54.82,
+        "brier": 0.24799,
+        "logLoss": 0.68959,
+        "ece": 3.12,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 3,
+            "predicted": 17.1,
+            "observed": 66.7
+          },
+          {
+            "range": "20-30%",
+            "n": 25,
+            "predicted": 26.9,
+            "observed": 56
+          },
+          {
+            "range": "30-40%",
+            "n": 261,
+            "predicted": 36.3,
+            "observed": 45.2
+          },
+          {
+            "range": "40-50%",
+            "n": 878,
+            "predicted": 45.6,
+            "observed": 48.5
+          },
+          {
+            "range": "50-60%",
+            "n": 1204,
+            "predicted": 54.8,
+            "observed": 54
+          },
+          {
+            "range": "60-70%",
+            "n": 571,
+            "predicted": 63.8,
+            "observed": 60.1
+          },
+          {
+            "range": "70-80%",
+            "n": 92,
+            "predicted": 73.5,
+            "observed": 66.3
+          },
+          {
+            "range": "80-90%",
+            "n": 6,
+            "predicted": 82.4,
+            "observed": 83.3
+          },
+          {
+            "range": "90-100%",
+            "n": 1,
+            "predicted": 91.2,
+            "observed": 100
+          }
+        ]
+      },
+      "app|over3.5": {
+        "n": 3041,
+        "accuracy": 69.02,
+        "brier": 0.20884,
+        "logLoss": 0.6081,
+        "ece": 1.54,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 9,
+            "predicted": 7.5,
+            "observed": 11.1
+          },
+          {
+            "range": "10-20%",
+            "n": 292,
+            "predicted": 16.9,
+            "observed": 22.9
+          },
+          {
+            "range": "20-30%",
+            "n": 1128,
+            "predicted": 25.4,
+            "observed": 25.5
+          },
+          {
+            "range": "30-40%",
+            "n": 1150,
+            "predicted": 34.5,
+            "observed": 33.2
+          },
+          {
+            "range": "40-50%",
+            "n": 374,
+            "predicted": 43.5,
+            "observed": 42
+          },
+          {
+            "range": "50-60%",
+            "n": 77,
+            "predicted": 53.3,
+            "observed": 46.8
+          },
+          {
+            "range": "60-70%",
+            "n": 8,
+            "predicted": 62,
+            "observed": 50
+          },
+          {
+            "range": "70-80%",
+            "n": 3,
+            "predicted": 73.7,
+            "observed": 33.3
+          }
+        ]
+      },
+      "cards.current|total2.5": {
+        "n": 3040,
+        "accuracy": 73.06,
+        "brier": 0.19528,
+        "logLoss": 0.58161,
+        "ece": 5.63,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 9,
+            "predicted": 36.1,
+            "observed": 44.4
+          },
+          {
+            "range": "40-50%",
+            "n": 85,
+            "predicted": 45.4,
+            "observed": 70.6
+          },
+          {
+            "range": "50-60%",
+            "n": 201,
+            "predicted": 55.1,
+            "observed": 66.2
+          },
+          {
+            "range": "60-70%",
+            "n": 596,
+            "predicted": 64.4,
+            "observed": 70.8
+          },
+          {
+            "range": "70-80%",
+            "n": 1050,
+            "predicted": 74.7,
+            "observed": 73.6
+          },
+          {
+            "range": "80-90%",
+            "n": 902,
+            "predicted": 84.1,
+            "observed": 77.1
+          },
+          {
+            "range": "90-100%",
+            "n": 197,
+            "predicted": 92.3,
+            "observed": 85.3
+          }
+        ]
+      },
+      "cards.current|total3.5": {
+        "n": 3040,
+        "accuracy": 55.53,
+        "brier": 0.25295,
+        "logLoss": 0.70173,
+        "ece": 7.28,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 9,
+            "predicted": 16.8,
+            "observed": 22.2
+          },
+          {
+            "range": "20-30%",
+            "n": 114,
+            "predicted": 25.1,
+            "observed": 49.1
+          },
+          {
+            "range": "30-40%",
+            "n": 273,
+            "predicted": 35.1,
+            "observed": 51.6
+          },
+          {
+            "range": "40-50%",
+            "n": 651,
+            "predicted": 44.4,
+            "observed": 51
+          },
+          {
+            "range": "50-60%",
+            "n": 767,
+            "predicted": 55.3,
+            "observed": 55.5
+          },
+          {
+            "range": "60-70%",
+            "n": 723,
+            "predicted": 64.3,
+            "observed": 57.4
+          },
+          {
+            "range": "70-80%",
+            "n": 369,
+            "predicted": 74,
+            "observed": 64.5
+          },
+          {
+            "range": "80-90%",
+            "n": 125,
+            "predicted": 83.1,
+            "observed": 68.8
+          },
+          {
+            "range": "90-100%",
+            "n": 9,
+            "predicted": 91.2,
+            "observed": 77.8
+          }
+        ]
+      },
+      "cards.current|total4.5": {
+        "n": 3040,
+        "accuracy": 61.55,
+        "brier": 0.23641,
+        "logLoss": 0.66972,
+        "ece": 7.55,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 21,
+            "predicted": 7.4,
+            "observed": 19
+          },
+          {
+            "range": "10-20%",
+            "n": 273,
+            "predicted": 15,
+            "observed": 31.9
+          },
+          {
+            "range": "20-30%",
+            "n": 749,
+            "predicted": 25.1,
+            "observed": 30.6
+          },
+          {
+            "range": "30-40%",
+            "n": 751,
+            "predicted": 35.2,
+            "observed": 35.4
+          },
+          {
+            "range": "40-50%",
+            "n": 646,
+            "predicted": 44.5,
+            "observed": 37.5
+          },
+          {
+            "range": "50-60%",
+            "n": 397,
+            "predicted": 54.4,
+            "observed": 39.8
+          },
+          {
+            "range": "60-70%",
+            "n": 147,
+            "predicted": 64.4,
+            "observed": 48.3
+          },
+          {
+            "range": "70-80%",
+            "n": 47,
+            "predicted": 72.6,
+            "observed": 51.1
+          },
+          {
+            "range": "80-90%",
+            "n": 9,
+            "predicted": 82,
+            "observed": 66.7
+          }
+        ]
+      },
+      "cards.current|total5.5": {
+        "n": 3040,
+        "accuracy": 78.39,
+        "brier": 0.16689,
+        "logLoss": 0.51925,
+        "ece": 6.15,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 380,
+            "predicted": 6.8,
+            "observed": 15.3
+          },
+          {
+            "range": "10-20%",
+            "n": 937,
+            "predicted": 14.6,
+            "observed": 17.5
+          },
+          {
+            "range": "20-30%",
+            "n": 909,
+            "predicted": 23.6,
+            "observed": 20
+          },
+          {
+            "range": "30-40%",
+            "n": 518,
+            "predicted": 33.4,
+            "observed": 24.9
+          },
+          {
+            "range": "40-50%",
+            "n": 204,
+            "predicted": 43.7,
+            "observed": 29.9
+          },
+          {
+            "range": "50-60%",
+            "n": 74,
+            "predicted": 53.9,
+            "observed": 29.7
+          },
+          {
+            "range": "60-70%",
+            "n": 16,
+            "predicted": 64.3,
+            "observed": 37.5
+          },
+          {
+            "range": "70-80%",
+            "n": 2,
+            "predicted": 73,
+            "observed": 50
+          }
+        ]
+      },
+      "cards.new|total2.5": {
+        "n": 3040,
+        "accuracy": 74.21,
+        "brier": 0.1888,
+        "logLoss": 0.56418,
+        "ece": 1.53,
+        "bins": [
+          {
+            "range": "40-50%",
+            "n": 1,
+            "predicted": 48.9,
+            "observed": 0
+          },
+          {
+            "range": "50-60%",
+            "n": 31,
+            "predicted": 58,
+            "observed": 64.5
+          },
+          {
+            "range": "60-70%",
+            "n": 586,
+            "predicted": 66.7,
+            "observed": 66.2
+          },
+          {
+            "range": "70-80%",
+            "n": 1635,
+            "predicted": 75.2,
+            "observed": 74.2
+          },
+          {
+            "range": "80-90%",
+            "n": 761,
+            "predicted": 83.4,
+            "observed": 80.2
+          },
+          {
+            "range": "90-100%",
+            "n": 26,
+            "predicted": 91.4,
+            "observed": 92.3
+          }
+        ]
+      },
+      "cards.new|total3.5": {
+        "n": 3040,
+        "accuracy": 57.53,
+        "brier": 0.23952,
+        "logLoss": 0.67177,
+        "ece": 1.29,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 1,
+            "predicted": 27.3,
+            "observed": 0
+          },
+          {
+            "range": "30-40%",
+            "n": 59,
+            "predicted": 37.3,
+            "observed": 40.7
+          },
+          {
+            "range": "40-50%",
+            "n": 650,
+            "predicted": 46.2,
+            "observed": 47.4
+          },
+          {
+            "range": "50-60%",
+            "n": 1282,
+            "predicted": 55.2,
+            "observed": 54.3
+          },
+          {
+            "range": "60-70%",
+            "n": 844,
+            "predicted": 64.2,
+            "observed": 62.7
+          },
+          {
+            "range": "70-80%",
+            "n": 188,
+            "predicted": 73.4,
+            "observed": 71.3
+          },
+          {
+            "range": "80-90%",
+            "n": 16,
+            "predicted": 81.8,
+            "observed": 75
+          }
+        ]
+      },
+      "cards.new|total4.5": {
+        "n": 3040,
+        "accuracy": 64.8,
+        "brier": 0.22255,
+        "logLoss": 0.63608,
+        "ece": 2.23,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 21,
+            "predicted": 18.3,
+            "observed": 4.8
+          },
+          {
+            "range": "20-30%",
+            "n": 558,
+            "predicted": 26.5,
+            "observed": 23.5
+          },
+          {
+            "range": "30-40%",
+            "n": 1306,
+            "predicted": 35.1,
+            "observed": 34.1
+          },
+          {
+            "range": "40-50%",
+            "n": 856,
+            "predicted": 44.3,
+            "observed": 41.1
+          },
+          {
+            "range": "50-60%",
+            "n": 257,
+            "predicted": 53.7,
+            "observed": 51.8
+          },
+          {
+            "range": "60-70%",
+            "n": 40,
+            "predicted": 63.5,
+            "observed": 57.5
+          },
+          {
+            "range": "70-80%",
+            "n": 2,
+            "predicted": 72.1,
+            "observed": 100
+          }
+        ]
+      },
+      "cards.new|total5.5": {
+        "n": 3040,
+        "accuracy": 79.31,
+        "brier": 0.15883,
+        "logLoss": 0.49468,
+        "ece": 2.61,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 33,
+            "predicted": 8.9,
+            "observed": 6.1
+          },
+          {
+            "range": "10-20%",
+            "n": 1156,
+            "predicted": 16.2,
+            "observed": 14.4
+          },
+          {
+            "range": "20-30%",
+            "n": 1351,
+            "predicted": 24.3,
+            "observed": 22
+          },
+          {
+            "range": "30-40%",
+            "n": 422,
+            "predicted": 33.8,
+            "observed": 29.1
+          },
+          {
+            "range": "40-50%",
+            "n": 68,
+            "predicted": 43.4,
+            "observed": 48.5
+          },
+          {
+            "range": "50-60%",
+            "n": 10,
+            "predicted": 52.2,
+            "observed": 20
+          }
+        ]
+      },
+      "close|1x2": {
+        "n": 3041,
+        "accuracy": 53.9,
+        "brier": 0.57788,
+        "logLoss": 0.97135,
+        "ece": 0.71,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 370,
+            "predicted": 7.3,
+            "observed": 5.7
+          },
+          {
+            "range": "10-20%",
+            "n": 1425,
+            "predicted": 15.7,
+            "observed": 16.4
+          },
+          {
+            "range": "20-30%",
+            "n": 3201,
+            "predicted": 25.5,
+            "observed": 25.2
+          },
+          {
+            "range": "30-40%",
+            "n": 1577,
+            "predicted": 33.9,
+            "observed": 33.5
+          },
+          {
+            "range": "40-50%",
+            "n": 946,
+            "predicted": 44.6,
+            "observed": 46.2
+          },
+          {
+            "range": "50-60%",
+            "n": 734,
+            "predicted": 54.7,
+            "observed": 53.8
+          },
+          {
+            "range": "60-70%",
+            "n": 443,
+            "predicted": 64.7,
+            "observed": 63.7
+          },
+          {
+            "range": "70-80%",
+            "n": 306,
+            "predicted": 74.4,
+            "observed": 74.5
+          },
+          {
+            "range": "80-90%",
+            "n": 111,
+            "predicted": 84.1,
+            "observed": 89.2
+          },
+          {
+            "range": "90-100%",
+            "n": 10,
+            "predicted": 91.6,
+            "observed": 80
+          }
+        ]
+      },
+      "close|over2.5": {
+        "n": 3038,
+        "accuracy": 58.82,
+        "brier": 0.23794,
+        "logLoss": 0.66822,
+        "ece": 1.47,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 37,
+            "predicted": 26.9,
+            "observed": 27
+          },
+          {
+            "range": "30-40%",
+            "n": 286,
+            "predicted": 36,
+            "observed": 42.7
+          },
+          {
+            "range": "40-50%",
+            "n": 876,
+            "predicted": 45.1,
+            "observed": 43.7
+          },
+          {
+            "range": "50-60%",
+            "n": 1052,
+            "predicted": 54.7,
+            "observed": 55.1
+          },
+          {
+            "range": "60-70%",
+            "n": 583,
+            "predicted": 64.1,
+            "observed": 64.5
+          },
+          {
+            "range": "70-80%",
+            "n": 189,
+            "predicted": 73.2,
+            "observed": 70.4
+          },
+          {
+            "range": "80-90%",
+            "n": 14,
+            "predicted": 83.6,
+            "observed": 92.9
+          },
+          {
+            "range": "90-100%",
+            "n": 1,
+            "predicted": 90.2,
+            "observed": 100
+          }
+        ]
+      },
+      "corners.current|away3.5": {
+        "n": 3040,
+        "accuracy": 56.55,
+        "brier": 0.27243,
+        "logLoss": 0.76346,
+        "ece": 14.61,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 1,
+            "predicted": 5,
+            "observed": 100
+          },
+          {
+            "range": "10-20%",
+            "n": 13,
+            "predicted": 15.2,
+            "observed": 53.8
+          },
+          {
+            "range": "20-30%",
+            "n": 50,
+            "predicted": 25.6,
+            "observed": 64
+          },
+          {
+            "range": "30-40%",
+            "n": 133,
+            "predicted": 34.7,
+            "observed": 52.6
+          },
+          {
+            "range": "40-50%",
+            "n": 282,
+            "predicted": 44.6,
+            "observed": 46.1
+          },
+          {
+            "range": "50-60%",
+            "n": 453,
+            "predicted": 55.1,
+            "observed": 56.3
+          },
+          {
+            "range": "60-70%",
+            "n": 632,
+            "predicted": 64.8,
+            "observed": 53.5
+          },
+          {
+            "range": "70-80%",
+            "n": 643,
+            "predicted": 74.7,
+            "observed": 55.8
+          },
+          {
+            "range": "80-90%",
+            "n": 616,
+            "predicted": 84.3,
+            "observed": 61.9
+          },
+          {
+            "range": "90-100%",
+            "n": 217,
+            "predicted": 92.8,
+            "observed": 67.7
+          }
+        ]
+      },
+      "corners.current|away4.5": {
+        "n": 3040,
+        "accuracy": 53.55,
+        "brier": 0.26857,
+        "logLoss": 0.74456,
+        "ece": 15.34,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 20,
+            "predicted": 6.2,
+            "observed": 35
+          },
+          {
+            "range": "10-20%",
+            "n": 137,
+            "predicted": 15.4,
+            "observed": 35
+          },
+          {
+            "range": "20-30%",
+            "n": 320,
+            "predicted": 25.4,
+            "observed": 32.2
+          },
+          {
+            "range": "30-40%",
+            "n": 445,
+            "predicted": 35,
+            "observed": 40
+          },
+          {
+            "range": "40-50%",
+            "n": 523,
+            "predicted": 44.8,
+            "observed": 35.8
+          },
+          {
+            "range": "50-60%",
+            "n": 571,
+            "predicted": 54.7,
+            "observed": 39.1
+          },
+          {
+            "range": "60-70%",
+            "n": 465,
+            "predicted": 64.6,
+            "observed": 43.9
+          },
+          {
+            "range": "70-80%",
+            "n": 348,
+            "predicted": 74,
+            "observed": 48
+          },
+          {
+            "range": "80-90%",
+            "n": 184,
+            "predicted": 83.5,
+            "observed": 53.3
+          },
+          {
+            "range": "90-100%",
+            "n": 27,
+            "predicted": 93.5,
+            "observed": 51.9
+          }
+        ]
+      },
+      "corners.current|away5.5": {
+        "n": 3040,
+        "accuracy": 66.15,
+        "brier": 0.22185,
+        "logLoss": 0.64362,
+        "ece": 12.67,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 185,
+            "predicted": 6.5,
+            "observed": 23.8
+          },
+          {
+            "range": "10-20%",
+            "n": 469,
+            "predicted": 15,
+            "observed": 23.2
+          },
+          {
+            "range": "20-30%",
+            "n": 600,
+            "predicted": 24.1,
+            "observed": 24.7
+          },
+          {
+            "range": "30-40%",
+            "n": 592,
+            "predicted": 33.9,
+            "observed": 24.8
+          },
+          {
+            "range": "40-50%",
+            "n": 501,
+            "predicted": 44.2,
+            "observed": 27.9
+          },
+          {
+            "range": "50-60%",
+            "n": 334,
+            "predicted": 54.3,
+            "observed": 33.2
+          },
+          {
+            "range": "60-70%",
+            "n": 223,
+            "predicted": 63.9,
+            "observed": 39
+          },
+          {
+            "range": "70-80%",
+            "n": 107,
+            "predicted": 73.5,
+            "observed": 40.2
+          },
+          {
+            "range": "80-90%",
+            "n": 22,
+            "predicted": 84.5,
+            "observed": 36.4
+          },
+          {
+            "range": "90-100%",
+            "n": 7,
+            "predicted": 91.7,
+            "observed": 42.9
+          }
+        ]
+      },
+      "corners.current|home3.5": {
+        "n": 3040,
+        "accuracy": 66.81,
+        "brier": 0.21531,
+        "logLoss": 0.6239,
+        "ece": 7.76,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 17,
+            "predicted": 15.8,
+            "observed": 64.7
+          },
+          {
+            "range": "20-30%",
+            "n": 45,
+            "predicted": 26.3,
+            "observed": 53.3
+          },
+          {
+            "range": "30-40%",
+            "n": 120,
+            "predicted": 34.9,
+            "observed": 64.2
+          },
+          {
+            "range": "40-50%",
+            "n": 328,
+            "predicted": 44.2,
+            "observed": 60.4
+          },
+          {
+            "range": "50-60%",
+            "n": 469,
+            "predicted": 55.2,
+            "observed": 67.2
+          },
+          {
+            "range": "60-70%",
+            "n": 663,
+            "predicted": 64.7,
+            "observed": 66.5
+          },
+          {
+            "range": "70-80%",
+            "n": 623,
+            "predicted": 74.6,
+            "observed": 71.6
+          },
+          {
+            "range": "80-90%",
+            "n": 589,
+            "predicted": 84.3,
+            "observed": 80.5
+          },
+          {
+            "range": "90-100%",
+            "n": 186,
+            "predicted": 92.9,
+            "observed": 83.3
+          }
+        ]
+      },
+      "corners.current|home4.5": {
+        "n": 3040,
+        "accuracy": 56.41,
+        "brier": 0.25508,
+        "logLoss": 0.71149,
+        "ece": 9.88,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 21,
+            "predicted": 6.3,
+            "observed": 52.4
+          },
+          {
+            "range": "10-20%",
+            "n": 122,
+            "predicted": 15.5,
+            "observed": 43.4
+          },
+          {
+            "range": "20-30%",
+            "n": 366,
+            "predicted": 25.1,
+            "observed": 42.1
+          },
+          {
+            "range": "30-40%",
+            "n": 463,
+            "predicted": 35.1,
+            "observed": 53.6
+          },
+          {
+            "range": "40-50%",
+            "n": 575,
+            "predicted": 45,
+            "observed": 51.1
+          },
+          {
+            "range": "50-60%",
+            "n": 544,
+            "predicted": 54.8,
+            "observed": 56.8
+          },
+          {
+            "range": "60-70%",
+            "n": 426,
+            "predicted": 64.5,
+            "observed": 60.1
+          },
+          {
+            "range": "70-80%",
+            "n": 339,
+            "predicted": 73.9,
+            "observed": 68.1
+          },
+          {
+            "range": "80-90%",
+            "n": 157,
+            "predicted": 83.6,
+            "observed": 68.8
+          },
+          {
+            "range": "90-100%",
+            "n": 27,
+            "predicted": 92.7,
+            "observed": 88.9
+          }
+        ]
+      },
+      "corners.current|home5.5": {
+        "n": 3040,
+        "accuracy": 59.11,
+        "brier": 0.25605,
+        "logLoss": 0.72524,
+        "ece": 11.46,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 174,
+            "predicted": 6.5,
+            "observed": 31
+          },
+          {
+            "range": "10-20%",
+            "n": 518,
+            "predicted": 14.8,
+            "observed": 32.8
+          },
+          {
+            "range": "20-30%",
+            "n": 622,
+            "predicted": 24.1,
+            "observed": 39.2
+          },
+          {
+            "range": "30-40%",
+            "n": 613,
+            "predicted": 33.8,
+            "observed": 44.4
+          },
+          {
+            "range": "40-50%",
+            "n": 485,
+            "predicted": 44.3,
+            "observed": 43.7
+          },
+          {
+            "range": "50-60%",
+            "n": 309,
+            "predicted": 54.7,
+            "observed": 50.8
+          },
+          {
+            "range": "60-70%",
+            "n": 204,
+            "predicted": 63.9,
+            "observed": 52.9
+          },
+          {
+            "range": "70-80%",
+            "n": 82,
+            "predicted": 73.8,
+            "observed": 56.1
+          },
+          {
+            "range": "80-90%",
+            "n": 29,
+            "predicted": 83.2,
+            "observed": 79.3
+          },
+          {
+            "range": "90-100%",
+            "n": 4,
+            "predicted": 91.5,
+            "observed": 75
+          }
+        ]
+      },
+      "corners.current|total10.5": {
+        "n": 3040,
+        "accuracy": 59.54,
+        "brier": 0.25327,
+        "logLoss": 0.71576,
+        "ece": 12.76,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 114,
+            "predicted": 6.4,
+            "observed": 26.3
+          },
+          {
+            "range": "10-20%",
+            "n": 468,
+            "predicted": 14.8,
+            "observed": 33.3
+          },
+          {
+            "range": "20-30%",
+            "n": 675,
+            "predicted": 24.9,
+            "observed": 35.1
+          },
+          {
+            "range": "30-40%",
+            "n": 557,
+            "predicted": 34.8,
+            "observed": 38.6
+          },
+          {
+            "range": "40-50%",
+            "n": 466,
+            "predicted": 44.3,
+            "observed": 34.5
+          },
+          {
+            "range": "50-60%",
+            "n": 369,
+            "predicted": 54.5,
+            "observed": 43.4
+          },
+          {
+            "range": "60-70%",
+            "n": 238,
+            "predicted": 64.1,
+            "observed": 41.2
+          },
+          {
+            "range": "70-80%",
+            "n": 101,
+            "predicted": 73.6,
+            "observed": 45.5
+          },
+          {
+            "range": "80-90%",
+            "n": 45,
+            "predicted": 83.2,
+            "observed": 46.7
+          },
+          {
+            "range": "90-100%",
+            "n": 7,
+            "predicted": 93.7,
+            "observed": 57.1
+          }
+        ]
+      },
+      "corners.current|total11.5": {
+        "n": 3040,
+        "accuracy": 69.74,
+        "brier": 0.2134,
+        "logLoss": 0.64208,
+        "ece": 11.31,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 396,
+            "predicted": 6.2,
+            "observed": 23.7
+          },
+          {
+            "range": "10-20%",
+            "n": 774,
+            "predicted": 14.5,
+            "observed": 22.4
+          },
+          {
+            "range": "20-30%",
+            "n": 712,
+            "predicted": 24.3,
+            "observed": 28.9
+          },
+          {
+            "range": "30-40%",
+            "n": 452,
+            "predicted": 34,
+            "observed": 27
+          },
+          {
+            "range": "40-50%",
+            "n": 370,
+            "predicted": 44,
+            "observed": 27.8
+          },
+          {
+            "range": "50-60%",
+            "n": 197,
+            "predicted": 54.3,
+            "observed": 33.5
+          },
+          {
+            "range": "60-70%",
+            "n": 84,
+            "predicted": 64.1,
+            "observed": 34.5
+          },
+          {
+            "range": "70-80%",
+            "n": 45,
+            "predicted": 74.2,
+            "observed": 37.8
+          },
+          {
+            "range": "80-90%",
+            "n": 6,
+            "predicted": 83.2,
+            "observed": 0
+          },
+          {
+            "range": "90-100%",
+            "n": 4,
+            "predicted": 92.8,
+            "observed": 50
+          }
+        ]
+      },
+      "corners.current|total5.5": {
+        "n": 3040,
+        "accuracy": 88.65,
+        "brier": 0.10612,
+        "logLoss": 0.40027,
+        "ece": 5.9,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 1,
+            "predicted": 25,
+            "observed": 0
+          },
+          {
+            "range": "30-40%",
+            "n": 1,
+            "predicted": 33,
+            "observed": 100
+          },
+          {
+            "range": "40-50%",
+            "n": 7,
+            "predicted": 47.7,
+            "observed": 85.7
+          },
+          {
+            "range": "50-60%",
+            "n": 26,
+            "predicted": 55.3,
+            "observed": 96.2
+          },
+          {
+            "range": "60-70%",
+            "n": 79,
+            "predicted": 65.7,
+            "observed": 91.1
+          },
+          {
+            "range": "70-80%",
+            "n": 330,
+            "predicted": 75.2,
+            "observed": 87.3
+          },
+          {
+            "range": "80-90%",
+            "n": 881,
+            "predicted": 85.2,
+            "observed": 87.4
+          },
+          {
+            "range": "90-100%",
+            "n": 1715,
+            "predicted": 94.7,
+            "observed": 89.7
+          }
+        ]
+      },
+      "corners.current|total6.5": {
+        "n": 3040,
+        "accuracy": 80,
+        "brier": 0.16549,
+        "logLoss": 0.53693,
+        "ece": 9.02,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 1,
+            "predicted": 13,
+            "observed": 0
+          },
+          {
+            "range": "20-30%",
+            "n": 2,
+            "predicted": 24.5,
+            "observed": 100
+          },
+          {
+            "range": "30-40%",
+            "n": 23,
+            "predicted": 36.3,
+            "observed": 73.9
+          },
+          {
+            "range": "40-50%",
+            "n": 42,
+            "predicted": 46.4,
+            "observed": 78.6
+          },
+          {
+            "range": "50-60%",
+            "n": 161,
+            "predicted": 55.8,
+            "observed": 81.4
+          },
+          {
+            "range": "60-70%",
+            "n": 306,
+            "predicted": 65,
+            "observed": 78.4
+          },
+          {
+            "range": "70-80%",
+            "n": 722,
+            "predicted": 74.8,
+            "observed": 80.6
+          },
+          {
+            "range": "80-90%",
+            "n": 926,
+            "predicted": 84.9,
+            "observed": 80.6
+          },
+          {
+            "range": "90-100%",
+            "n": 857,
+            "predicted": 93.8,
+            "observed": 83.7
+          }
+        ]
+      },
+      "corners.current|total7.5": {
+        "n": 3040,
+        "accuracy": 66.45,
+        "brier": 0.2269,
+        "logLoss": 0.66475,
+        "ece": 11.74,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 1,
+            "predicted": 6,
+            "observed": 0
+          },
+          {
+            "range": "10-20%",
+            "n": 4,
+            "predicted": 16.5,
+            "observed": 75
+          },
+          {
+            "range": "20-30%",
+            "n": 30,
+            "predicted": 24.8,
+            "observed": 60
+          },
+          {
+            "range": "30-40%",
+            "n": 79,
+            "predicted": 35.4,
+            "observed": 69.6
+          },
+          {
+            "range": "40-50%",
+            "n": 238,
+            "predicted": 45.2,
+            "observed": 70.2
+          },
+          {
+            "range": "50-60%",
+            "n": 363,
+            "predicted": 55,
+            "observed": 65.8
+          },
+          {
+            "range": "60-70%",
+            "n": 608,
+            "predicted": 64.5,
+            "observed": 71.9
+          },
+          {
+            "range": "70-80%",
+            "n": 699,
+            "predicted": 74.4,
+            "observed": 72.2
+          },
+          {
+            "range": "80-90%",
+            "n": 685,
+            "predicted": 84.4,
+            "observed": 70.8
+          },
+          {
+            "range": "90-100%",
+            "n": 333,
+            "predicted": 93,
+            "observed": 73.6
+          }
+        ]
+      },
+      "corners.current|total8.5": {
+        "n": 3040,
+        "accuracy": 54.93,
+        "brier": 0.2661,
+        "logLoss": 0.74125,
+        "ece": 13.38,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 3,
+            "predicted": 5.7,
+            "observed": 33.3
+          },
+          {
+            "range": "10-20%",
+            "n": 35,
+            "predicted": 14.6,
+            "observed": 48.6
+          },
+          {
+            "range": "20-30%",
+            "n": 131,
+            "predicted": 25.1,
+            "observed": 59.5
+          },
+          {
+            "range": "30-40%",
+            "n": 312,
+            "predicted": 34.8,
+            "observed": 54.8
+          },
+          {
+            "range": "40-50%",
+            "n": 468,
+            "predicted": 45.4,
+            "observed": 59.2
+          },
+          {
+            "range": "50-60%",
+            "n": 529,
+            "predicted": 54.3,
+            "observed": 58.6
+          },
+          {
+            "range": "60-70%",
+            "n": 604,
+            "predicted": 64.5,
+            "observed": 60.8
+          },
+          {
+            "range": "70-80%",
+            "n": 517,
+            "predicted": 74.7,
+            "observed": 60.2
+          },
+          {
+            "range": "80-90%",
+            "n": 341,
+            "predicted": 83.9,
+            "observed": 63.6
+          },
+          {
+            "range": "90-100%",
+            "n": 100,
+            "predicted": 92.7,
+            "observed": 60
+          }
+        ]
+      },
+      "corners.current|total9.5": {
+        "n": 3040,
+        "accuracy": 51.61,
+        "brier": 0.27674,
+        "logLoss": 0.76235,
+        "ece": 14.27,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 29,
+            "predicted": 6.9,
+            "observed": 37.9
+          },
+          {
+            "range": "10-20%",
+            "n": 174,
+            "predicted": 15.9,
+            "observed": 43.1
+          },
+          {
+            "range": "20-30%",
+            "n": 332,
+            "predicted": 24.5,
+            "observed": 46.7
+          },
+          {
+            "range": "30-40%",
+            "n": 562,
+            "predicted": 34.4,
+            "observed": 48.4
+          },
+          {
+            "range": "40-50%",
+            "n": 577,
+            "predicted": 44.4,
+            "observed": 48.5
+          },
+          {
+            "range": "50-60%",
+            "n": 509,
+            "predicted": 54.5,
+            "observed": 47.3
+          },
+          {
+            "range": "60-70%",
+            "n": 423,
+            "predicted": 64.6,
+            "observed": 52
+          },
+          {
+            "range": "70-80%",
+            "n": 282,
+            "predicted": 74.1,
+            "observed": 52.5
+          },
+          {
+            "range": "80-90%",
+            "n": 121,
+            "predicted": 83.5,
+            "observed": 50.4
+          },
+          {
+            "range": "90-100%",
+            "n": 31,
+            "predicted": 92.3,
+            "observed": 58.1
+          }
+        ]
+      },
+      "corners.new|away3.5": {
+        "n": 3040,
+        "accuracy": 60.39,
+        "brier": 0.23516,
+        "logLoss": 0.66277,
+        "ece": 1.72,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 46,
+            "predicted": 37.9,
+            "observed": 34.8
+          },
+          {
+            "range": "40-50%",
+            "n": 552,
+            "predicted": 46.2,
+            "observed": 40.8
+          },
+          {
+            "range": "50-60%",
+            "n": 1234,
+            "predicted": 55.3,
+            "observed": 54.3
+          },
+          {
+            "range": "60-70%",
+            "n": 924,
+            "predicted": 64.2,
+            "observed": 65
+          },
+          {
+            "range": "70-80%",
+            "n": 274,
+            "predicted": 73.3,
+            "observed": 73.4
+          },
+          {
+            "range": "80-90%",
+            "n": 10,
+            "predicted": 81.3,
+            "observed": 70
+          }
+        ]
+      },
+      "corners.new|away4.5": {
+        "n": 3040,
+        "accuracy": 62.7,
+        "brier": 0.2297,
+        "logLoss": 0.6514,
+        "ece": 2.91,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 3,
+            "predicted": 18.2,
+            "observed": 33.3
+          },
+          {
+            "range": "20-30%",
+            "n": 298,
+            "predicted": 27,
+            "observed": 22.1
+          },
+          {
+            "range": "30-40%",
+            "n": 1063,
+            "predicted": 35.4,
+            "observed": 32.5
+          },
+          {
+            "range": "40-50%",
+            "n": 1117,
+            "predicted": 44.5,
+            "observed": 43.8
+          },
+          {
+            "range": "50-60%",
+            "n": 464,
+            "predicted": 54.1,
+            "observed": 59.5
+          },
+          {
+            "range": "60-70%",
+            "n": 92,
+            "predicted": 63.6,
+            "observed": 54.3
+          },
+          {
+            "range": "70-80%",
+            "n": 3,
+            "predicted": 71.7,
+            "observed": 33.3
+          }
+        ]
+      },
+      "corners.new|away5.5": {
+        "n": 3040,
+        "accuracy": 72.47,
+        "brier": 0.18972,
+        "logLoss": 0.56353,
+        "ece": 1.66,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 2,
+            "predicted": 9,
+            "observed": 0
+          },
+          {
+            "range": "10-20%",
+            "n": 521,
+            "predicted": 17,
+            "observed": 12.1
+          },
+          {
+            "range": "20-30%",
+            "n": 1378,
+            "predicted": 25.1,
+            "observed": 24.6
+          },
+          {
+            "range": "30-40%",
+            "n": 839,
+            "predicted": 34,
+            "observed": 35.6
+          },
+          {
+            "range": "40-50%",
+            "n": 257,
+            "predicted": 43.5,
+            "observed": 45.1
+          },
+          {
+            "range": "50-60%",
+            "n": 43,
+            "predicted": 52.7,
+            "observed": 53.5
+          }
+        ]
+      },
+      "corners.new|home3.5": {
+        "n": 3040,
+        "accuracy": 70.46,
+        "brier": 0.19722,
+        "logLoss": 0.58036,
+        "ece": 2.31,
+        "bins": [
+          {
+            "range": "40-50%",
+            "n": 7,
+            "predicted": 49,
+            "observed": 42.9
+          },
+          {
+            "range": "50-60%",
+            "n": 236,
+            "predicted": 56.4,
+            "observed": 45.8
+          },
+          {
+            "range": "60-70%",
+            "n": 1023,
+            "predicted": 65.8,
+            "observed": 63.6
+          },
+          {
+            "range": "70-80%",
+            "n": 1385,
+            "predicted": 74.6,
+            "observed": 75.3
+          },
+          {
+            "range": "80-90%",
+            "n": 385,
+            "predicted": 83,
+            "observed": 86.2
+          },
+          {
+            "range": "90-100%",
+            "n": 4,
+            "predicted": 90.4,
+            "observed": 100
+          }
+        ]
+      },
+      "corners.new|home4.5": {
+        "n": 3040,
+        "accuracy": 61.09,
+        "brier": 0.23267,
+        "logLoss": 0.65748,
+        "ece": 2.32,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 122,
+            "predicted": 37.2,
+            "observed": 24.6
+          },
+          {
+            "range": "40-50%",
+            "n": 587,
+            "predicted": 46.1,
+            "observed": 40.9
+          },
+          {
+            "range": "50-60%",
+            "n": 1213,
+            "predicted": 55.2,
+            "observed": 54.5
+          },
+          {
+            "range": "60-70%",
+            "n": 854,
+            "predicted": 64.1,
+            "observed": 65.1
+          },
+          {
+            "range": "70-80%",
+            "n": 256,
+            "predicted": 73,
+            "observed": 75.8
+          },
+          {
+            "range": "80-90%",
+            "n": 8,
+            "predicted": 81.9,
+            "observed": 87.5
+          }
+        ]
+      },
+      "corners.new|home5.5": {
+        "n": 3040,
+        "accuracy": 61.94,
+        "brier": 0.22928,
+        "logLoss": 0.65011,
+        "ece": 2.7,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 2,
+            "predicted": 19.1,
+            "observed": 0
+          },
+          {
+            "range": "20-30%",
+            "n": 267,
+            "predicted": 26.4,
+            "observed": 19.1
+          },
+          {
+            "range": "30-40%",
+            "n": 940,
+            "predicted": 35.5,
+            "observed": 32.6
+          },
+          {
+            "range": "40-50%",
+            "n": 1161,
+            "predicted": 44.8,
+            "observed": 45.7
+          },
+          {
+            "range": "50-60%",
+            "n": 538,
+            "predicted": 54.4,
+            "observed": 58
+          },
+          {
+            "range": "60-70%",
+            "n": 125,
+            "predicted": 63.1,
+            "observed": 66.4
+          },
+          {
+            "range": "70-80%",
+            "n": 7,
+            "predicted": 72.2,
+            "observed": 85.7
+          }
+        ]
+      },
+      "corners.new|total10.5": {
+        "n": 3040,
+        "accuracy": 62.76,
+        "brier": 0.22906,
+        "logLoss": 0.65027,
+        "ece": 1.78,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 6,
+            "predicted": 19.1,
+            "observed": 0
+          },
+          {
+            "range": "20-30%",
+            "n": 399,
+            "predicted": 27.2,
+            "observed": 28.8
+          },
+          {
+            "range": "30-40%",
+            "n": 1621,
+            "predicted": 35.3,
+            "observed": 33.7
+          },
+          {
+            "range": "40-50%",
+            "n": 838,
+            "predicted": 43.9,
+            "observed": 45.3
+          },
+          {
+            "range": "50-60%",
+            "n": 169,
+            "predicted": 53.5,
+            "observed": 48.5
+          },
+          {
+            "range": "60-70%",
+            "n": 7,
+            "predicted": 63.7,
+            "observed": 57.1
+          }
+        ]
+      },
+      "corners.new|total11.5": {
+        "n": 3040,
+        "accuracy": 73.32,
+        "brier": 0.19244,
+        "logLoss": 0.57174,
+        "ece": 0.84,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 326,
+            "predicted": 17.9,
+            "observed": 17.2
+          },
+          {
+            "range": "20-30%",
+            "n": 1790,
+            "predicted": 25.3,
+            "observed": 25
+          },
+          {
+            "range": "30-40%",
+            "n": 788,
+            "predicted": 33.7,
+            "observed": 32.6
+          },
+          {
+            "range": "40-50%",
+            "n": 129,
+            "predicted": 43.3,
+            "observed": 36.4
+          },
+          {
+            "range": "50-60%",
+            "n": 7,
+            "predicted": 53,
+            "observed": 57.1
+          }
+        ]
+      },
+      "corners.new|total5.5": {
+        "n": 3040,
+        "accuracy": 88.82,
+        "brier": 0.09901,
+        "logLoss": 0.34936,
+        "ece": 1.35,
+        "bins": [
+          {
+            "range": "70-80%",
+            "n": 6,
+            "predicted": 79.3,
+            "observed": 83.3
+          },
+          {
+            "range": "80-90%",
+            "n": 1358,
+            "predicted": 87.7,
+            "observed": 86.8
+          },
+          {
+            "range": "90-100%",
+            "n": 1676,
+            "predicted": 92.2,
+            "observed": 90.5
+          }
+        ]
+      },
+      "corners.new|total6.5": {
+        "n": 3040,
+        "accuracy": 81.18,
+        "brier": 0.15089,
+        "logLoss": 0.47779,
+        "ece": 1.4,
+        "bins": [
+          {
+            "range": "60-70%",
+            "n": 15,
+            "predicted": 68.4,
+            "observed": 46.7
+          },
+          {
+            "range": "70-80%",
+            "n": 785,
+            "predicted": 77.3,
+            "observed": 75.7
+          },
+          {
+            "range": "80-90%",
+            "n": 2117,
+            "predicted": 84.1,
+            "observed": 83
+          },
+          {
+            "range": "90-100%",
+            "n": 123,
+            "predicted": 91.4,
+            "observed": 88.6
+          }
+        ]
+      },
+      "corners.new|total7.5": {
+        "n": 3040,
+        "accuracy": 70.86,
+        "brier": 0.20409,
+        "logLoss": 0.59796,
+        "ece": 1.83,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 42,
+            "predicted": 57.4,
+            "observed": 45.2
+          },
+          {
+            "range": "60-70%",
+            "n": 919,
+            "predicted": 66.6,
+            "observed": 64.7
+          },
+          {
+            "range": "70-80%",
+            "n": 1760,
+            "predicted": 74.4,
+            "observed": 73.8
+          },
+          {
+            "range": "80-90%",
+            "n": 317,
+            "predicted": 82.7,
+            "observed": 75.7
+          },
+          {
+            "range": "90-100%",
+            "n": 2,
+            "predicted": 90.7,
+            "observed": 100
+          }
+        ]
+      },
+      "corners.new|total8.5": {
+        "n": 3040,
+        "accuracy": 60,
+        "brier": 0.23623,
+        "logLoss": 0.66524,
+        "ece": 1.66,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 1,
+            "predicted": 38.4,
+            "observed": 0
+          },
+          {
+            "range": "40-50%",
+            "n": 140,
+            "predicted": 47.4,
+            "observed": 45
+          },
+          {
+            "range": "50-60%",
+            "n": 1192,
+            "predicted": 56,
+            "observed": 53.8
+          },
+          {
+            "range": "60-70%",
+            "n": 1394,
+            "predicted": 64.2,
+            "observed": 63.9
+          },
+          {
+            "range": "70-80%",
+            "n": 306,
+            "predicted": 73.4,
+            "observed": 68.3
+          },
+          {
+            "range": "80-90%",
+            "n": 7,
+            "predicted": 82.5,
+            "observed": 71.4
+          }
+        ]
+      },
+      "corners.new|total9.5": {
+        "n": 3040,
+        "accuracy": 57.01,
+        "brier": 0.2441,
+        "logLoss": 0.68125,
+        "ece": 1.92,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 6,
+            "predicted": 28.6,
+            "observed": 0
+          },
+          {
+            "range": "30-40%",
+            "n": 306,
+            "predicted": 37.3,
+            "observed": 35
+          },
+          {
+            "range": "40-50%",
+            "n": 1402,
+            "predicted": 45.6,
+            "observed": 44.5
+          },
+          {
+            "range": "50-60%",
+            "n": 1088,
+            "predicted": 53.9,
+            "observed": 56
+          },
+          {
+            "range": "60-70%",
+            "n": 228,
+            "predicted": 63.6,
+            "observed": 58.8
+          },
+          {
+            "range": "70-80%",
+            "n": 10,
+            "predicted": 72.8,
+            "observed": 70
+          }
+        ]
+      },
+      "half1.current|over0.5": {
+        "n": 3040,
+        "accuracy": 71.22,
+        "brier": 0.20541,
+        "logLoss": 0.6009,
+        "ece": 4.07,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 2,
+            "predicted": 36,
+            "observed": 0
+          },
+          {
+            "range": "40-50%",
+            "n": 35,
+            "predicted": 46.4,
+            "observed": 65.7
+          },
+          {
+            "range": "50-60%",
+            "n": 264,
+            "predicted": 55.9,
+            "observed": 70.1
+          },
+          {
+            "range": "60-70%",
+            "n": 1036,
+            "predicted": 65.2,
+            "observed": 68.8
+          },
+          {
+            "range": "70-80%",
+            "n": 1327,
+            "predicted": 74.1,
+            "observed": 72.5
+          },
+          {
+            "range": "80-90%",
+            "n": 372,
+            "predicted": 82.7,
+            "observed": 77.4
+          },
+          {
+            "range": "90-100%",
+            "n": 4,
+            "predicted": 90.8,
+            "observed": 75
+          }
+        ]
+      },
+      "half1.current|over1.5": {
+        "n": 3040,
+        "accuracy": 64.77,
+        "brier": 0.22472,
+        "logLoss": 0.64206,
+        "ece": 4.24,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 2,
+            "predicted": 7.5,
+            "observed": 0
+          },
+          {
+            "range": "10-20%",
+            "n": 135,
+            "predicted": 16.4,
+            "observed": 28.1
+          },
+          {
+            "range": "20-30%",
+            "n": 761,
+            "predicted": 25.4,
+            "observed": 29
+          },
+          {
+            "range": "30-40%",
+            "n": 1175,
+            "predicted": 34.4,
+            "observed": 32.6
+          },
+          {
+            "range": "40-50%",
+            "n": 696,
+            "predicted": 43.7,
+            "observed": 39.2
+          },
+          {
+            "range": "50-60%",
+            "n": 244,
+            "predicted": 53.5,
+            "observed": 42.6
+          },
+          {
+            "range": "60-70%",
+            "n": 26,
+            "predicted": 62.3,
+            "observed": 38.5
+          },
+          {
+            "range": "70-80%",
+            "n": 1,
+            "predicted": 72,
+            "observed": 100
+          }
+        ]
+      },
+      "half1.new|over0.5": {
+        "n": 3040,
+        "accuracy": 71.51,
+        "brier": 0.20039,
+        "logLoss": 0.58936,
+        "ece": 1.01,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 71,
+            "predicted": 58.1,
+            "observed": 53.5
+          },
+          {
+            "range": "60-70%",
+            "n": 1146,
+            "predicted": 66.2,
+            "observed": 65.9
+          },
+          {
+            "range": "70-80%",
+            "n": 1598,
+            "predicted": 74.3,
+            "observed": 75.3
+          },
+          {
+            "range": "80-90%",
+            "n": 224,
+            "predicted": 82.5,
+            "observed": 79
+          },
+          {
+            "range": "90-100%",
+            "n": 1,
+            "predicted": 90.1,
+            "observed": 100
+          }
+        ]
+      },
+      "half1.new|over1.5": {
+        "n": 3040,
+        "accuracy": 66.15,
+        "brier": 0.21878,
+        "logLoss": 0.62845,
+        "ece": 2.44,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 8,
+            "predicted": 19,
+            "observed": 12.5
+          },
+          {
+            "range": "20-30%",
+            "n": 653,
+            "predicted": 26.9,
+            "observed": 22.4
+          },
+          {
+            "range": "30-40%",
+            "n": 1489,
+            "predicted": 35,
+            "observed": 34
+          },
+          {
+            "range": "40-50%",
+            "n": 743,
+            "predicted": 44,
+            "observed": 40.8
+          },
+          {
+            "range": "50-60%",
+            "n": 138,
+            "predicted": 53.2,
+            "observed": 49.3
+          },
+          {
+            "range": "60-70%",
+            "n": 9,
+            "predicted": 63.9,
+            "observed": 66.7
+          }
+        ]
+      },
+      "half2.current|over0.5": {
+        "n": 3040,
+        "accuracy": 80.69,
+        "brier": 0.15646,
+        "logLoss": 0.49137,
+        "ece": 3.18,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 6,
+            "predicted": 56.2,
+            "observed": 83.3
+          },
+          {
+            "range": "60-70%",
+            "n": 194,
+            "predicted": 66.8,
+            "observed": 72.7
+          },
+          {
+            "range": "70-80%",
+            "n": 1473,
+            "predicted": 75.5,
+            "observed": 80
+          },
+          {
+            "range": "80-90%",
+            "n": 1313,
+            "predicted": 83.1,
+            "observed": 82
+          },
+          {
+            "range": "90-100%",
+            "n": 54,
+            "predicted": 90.8,
+            "observed": 96.3
+          }
+        ]
+      },
+      "half2.current|over1.5": {
+        "n": 3040,
+        "accuracy": 54.11,
+        "brier": 0.24873,
+        "logLoss": 0.69096,
+        "ece": 3.6,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 2,
+            "predicted": 18,
+            "observed": 100
+          },
+          {
+            "range": "20-30%",
+            "n": 64,
+            "predicted": 26.9,
+            "observed": 32.8
+          },
+          {
+            "range": "30-40%",
+            "n": 617,
+            "predicted": 35.7,
+            "observed": 43.1
+          },
+          {
+            "range": "40-50%",
+            "n": 1324,
+            "predicted": 44.7,
+            "observed": 45.7
+          },
+          {
+            "range": "50-60%",
+            "n": 821,
+            "predicted": 53.6,
+            "observed": 49.2
+          },
+          {
+            "range": "60-70%",
+            "n": 198,
+            "predicted": 63.3,
+            "observed": 59.1
+          },
+          {
+            "range": "70-80%",
+            "n": 13,
+            "predicted": 72.2,
+            "observed": 76.9
+          },
+          {
+            "range": "80-90%",
+            "n": 1,
+            "predicted": 80,
+            "observed": 100
+          }
+        ]
+      },
+      "half2.new|over0.5": {
+        "n": 3040,
+        "accuracy": 80.69,
+        "brier": 0.15513,
+        "logLoss": 0.48772,
+        "ece": 2.23,
+        "bins": [
+          {
+            "range": "60-70%",
+            "n": 143,
+            "predicted": 67.9,
+            "observed": 72
+          },
+          {
+            "range": "70-80%",
+            "n": 1732,
+            "predicted": 76,
+            "observed": 78
+          },
+          {
+            "range": "80-90%",
+            "n": 1144,
+            "predicted": 83.3,
+            "observed": 85.6
+          },
+          {
+            "range": "90-100%",
+            "n": 21,
+            "predicted": 91.1,
+            "observed": 95.2
+          }
+        ]
+      },
+      "half2.new|over1.5": {
+        "n": 3040,
+        "accuracy": 56.68,
+        "brier": 0.24416,
+        "logLoss": 0.6814,
+        "ece": 1.37,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 29,
+            "predicted": 28.2,
+            "observed": 27.6
+          },
+          {
+            "range": "30-40%",
+            "n": 694,
+            "predicted": 36.7,
+            "observed": 40.1
+          },
+          {
+            "range": "40-50%",
+            "n": 1462,
+            "predicted": 45.1,
+            "observed": 45
+          },
+          {
+            "range": "50-60%",
+            "n": 711,
+            "predicted": 54,
+            "observed": 55.6
+          },
+          {
+            "range": "60-70%",
+            "n": 137,
+            "predicted": 63.4,
+            "observed": 59.9
+          },
+          {
+            "range": "70-80%",
+            "n": 7,
+            "predicted": 73.1,
+            "observed": 71.4
+          }
+        ]
+      },
+      "newMarket1x2|1x2": {
+        "n": 3041,
+        "accuracy": 53.24,
+        "brier": 0.57977,
+        "logLoss": 0.97393,
+        "ece": 0.96,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 349,
+            "predicted": 7.3,
+            "observed": 6.3
+          },
+          {
+            "range": "10-20%",
+            "n": 1421,
+            "predicted": 15.8,
+            "observed": 15.8
+          },
+          {
+            "range": "20-30%",
+            "n": 3334,
+            "predicted": 25.4,
+            "observed": 26.1
+          },
+          {
+            "range": "30-40%",
+            "n": 1469,
+            "predicted": 34.2,
+            "observed": 33.1
+          },
+          {
+            "range": "40-50%",
+            "n": 947,
+            "predicted": 44.7,
+            "observed": 46
+          },
+          {
+            "range": "50-60%",
+            "n": 735,
+            "predicted": 54.9,
+            "observed": 53.3
+          },
+          {
+            "range": "60-70%",
+            "n": 453,
+            "predicted": 64.7,
+            "observed": 62.5
+          },
+          {
+            "range": "70-80%",
+            "n": 287,
+            "predicted": 74.3,
+            "observed": 76.7
+          },
+          {
+            "range": "80-90%",
+            "n": 115,
+            "predicted": 83.5,
+            "observed": 85.2
+          },
+          {
+            "range": "90-100%",
+            "n": 13,
+            "predicted": 91.3,
+            "observed": 76.9
+          }
+        ]
+      },
+      "newMarket1x2|btts": {
+        "n": 3041,
+        "accuracy": 55.08,
+        "brier": 0.24532,
+        "logLoss": 0.68374,
+        "ece": 2.11,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 67,
+            "predicted": 37.6,
+            "observed": 46.3
+          },
+          {
+            "range": "40-50%",
+            "n": 971,
+            "predicted": 46.2,
+            "observed": 49.8
+          },
+          {
+            "range": "50-60%",
+            "n": 1562,
+            "predicted": 54.8,
+            "observed": 55.4
+          },
+          {
+            "range": "60-70%",
+            "n": 439,
+            "predicted": 62.5,
+            "observed": 65.4
+          },
+          {
+            "range": "70-80%",
+            "n": 2,
+            "predicted": 70.3,
+            "observed": 0
+          }
+        ]
+      },
+      "newMarket1x2|over1.5": {
+        "n": 3041,
+        "accuracy": 77.01,
+        "brier": 0.17286,
+        "logLoss": 0.52683,
+        "ece": 1.54,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 9,
+            "predicted": 58.7,
+            "observed": 55.6
+          },
+          {
+            "range": "60-70%",
+            "n": 392,
+            "predicted": 66.7,
+            "observed": 70.2
+          },
+          {
+            "range": "70-80%",
+            "n": 1515,
+            "predicted": 75.5,
+            "observed": 73.5
+          },
+          {
+            "range": "80-90%",
+            "n": 1068,
+            "predicted": 83.6,
+            "observed": 83.7
+          },
+          {
+            "range": "90-100%",
+            "n": 57,
+            "predicted": 92.1,
+            "observed": 94.7
+          }
+        ]
+      },
+      "newMarket1x2|over2.5": {
+        "n": 3041,
+        "accuracy": 58.14,
+        "brier": 0.24008,
+        "logLoss": 0.6727,
+        "ece": 0.88,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 3,
+            "predicted": 29.1,
+            "observed": 0
+          },
+          {
+            "range": "30-40%",
+            "n": 215,
+            "predicted": 36.9,
+            "observed": 40.9
+          },
+          {
+            "range": "40-50%",
+            "n": 898,
+            "predicted": 45.7,
+            "observed": 44.1
+          },
+          {
+            "range": "50-60%",
+            "n": 1201,
+            "predicted": 54.9,
+            "observed": 54.9
+          },
+          {
+            "range": "60-70%",
+            "n": 598,
+            "predicted": 63.9,
+            "observed": 63.9
+          },
+          {
+            "range": "70-80%",
+            "n": 109,
+            "predicted": 73.5,
+            "observed": 72.5
+          },
+          {
+            "range": "80-90%",
+            "n": 17,
+            "predicted": 82.6,
+            "observed": 94.1
+          }
+        ]
+      },
+      "newMarket1x2|over3.5": {
+        "n": 3041,
+        "accuracy": 69.25,
+        "brier": 0.20403,
+        "logLoss": 0.59602,
+        "ece": 1.29,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 236,
+            "predicted": 17.6,
+            "observed": 16.9
+          },
+          {
+            "range": "20-30%",
+            "n": 1138,
+            "predicted": 25.4,
+            "observed": 23.2
+          },
+          {
+            "range": "30-40%",
+            "n": 1158,
+            "predicted": 34.6,
+            "observed": 34.9
+          },
+          {
+            "range": "40-50%",
+            "n": 400,
+            "predicted": 43.9,
+            "observed": 43.3
+          },
+          {
+            "range": "50-60%",
+            "n": 83,
+            "predicted": 53.2,
+            "observed": 45.8
+          },
+          {
+            "range": "60-70%",
+            "n": 23,
+            "predicted": 63.2,
+            "observed": 65.2
+          },
+          {
+            "range": "70-80%",
+            "n": 3,
+            "predicted": 71.4,
+            "observed": 66.7
+          }
+        ]
+      },
+      "newMarket|1x2": {
+        "n": 3041,
+        "accuracy": 53.24,
+        "brier": 0.57977,
+        "logLoss": 0.97393,
+        "ece": 0.96,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 349,
+            "predicted": 7.3,
+            "observed": 6.3
+          },
+          {
+            "range": "10-20%",
+            "n": 1421,
+            "predicted": 15.8,
+            "observed": 15.8
+          },
+          {
+            "range": "20-30%",
+            "n": 3334,
+            "predicted": 25.4,
+            "observed": 26.1
+          },
+          {
+            "range": "30-40%",
+            "n": 1469,
+            "predicted": 34.2,
+            "observed": 33.1
+          },
+          {
+            "range": "40-50%",
+            "n": 947,
+            "predicted": 44.7,
+            "observed": 46
+          },
+          {
+            "range": "50-60%",
+            "n": 735,
+            "predicted": 54.9,
+            "observed": 53.3
+          },
+          {
+            "range": "60-70%",
+            "n": 453,
+            "predicted": 64.7,
+            "observed": 62.5
+          },
+          {
+            "range": "70-80%",
+            "n": 287,
+            "predicted": 74.3,
+            "observed": 76.7
+          },
+          {
+            "range": "80-90%",
+            "n": 115,
+            "predicted": 83.5,
+            "observed": 85.2
+          },
+          {
+            "range": "90-100%",
+            "n": 13,
+            "predicted": 91.3,
+            "observed": 76.9
+          }
+        ]
+      },
+      "newMarket|btts": {
+        "n": 3041,
+        "accuracy": 55.57,
+        "brier": 0.24515,
+        "logLoss": 0.68341,
+        "ece": 2.37,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 122,
+            "predicted": 37.5,
+            "observed": 45.9
+          },
+          {
+            "range": "40-50%",
+            "n": 1009,
+            "predicted": 46,
+            "observed": 49.4
+          },
+          {
+            "range": "50-60%",
+            "n": 1406,
+            "predicted": 54.8,
+            "observed": 55.4
+          },
+          {
+            "range": "60-70%",
+            "n": 482,
+            "predicted": 63.2,
+            "observed": 66.6
+          },
+          {
+            "range": "70-80%",
+            "n": 22,
+            "predicted": 72,
+            "observed": 59.1
+          }
+        ]
+      },
+      "newMarket|over1.5": {
+        "n": 3041,
+        "accuracy": 77.01,
+        "brier": 0.17273,
+        "logLoss": 0.52642,
+        "ece": 1.5,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 35,
+            "predicted": 57.4,
+            "observed": 57.1
+          },
+          {
+            "range": "60-70%",
+            "n": 483,
+            "predicted": 66.8,
+            "observed": 70.4
+          },
+          {
+            "range": "70-80%",
+            "n": 1413,
+            "predicted": 75.5,
+            "observed": 74
+          },
+          {
+            "range": "80-90%",
+            "n": 1016,
+            "predicted": 84,
+            "observed": 83.5
+          },
+          {
+            "range": "90-100%",
+            "n": 94,
+            "predicted": 91.7,
+            "observed": 93.6
+          }
+        ]
+      },
+      "newMarket|over2.5": {
+        "n": 3041,
+        "accuracy": 58.17,
+        "brier": 0.23944,
+        "logLoss": 0.67141,
+        "ece": 0.81,
+        "bins": [
+          {
+            "range": "20-30%",
+            "n": 20,
+            "predicted": 28.4,
+            "observed": 25
+          },
+          {
+            "range": "30-40%",
+            "n": 248,
+            "predicted": 36.4,
+            "observed": 40.3
+          },
+          {
+            "range": "40-50%",
+            "n": 913,
+            "predicted": 45.3,
+            "observed": 45
+          },
+          {
+            "range": "50-60%",
+            "n": 1075,
+            "predicted": 54.8,
+            "observed": 54.5
+          },
+          {
+            "range": "60-70%",
+            "n": 604,
+            "predicted": 64.3,
+            "observed": 63.7
+          },
+          {
+            "range": "70-80%",
+            "n": 167,
+            "predicted": 73.9,
+            "observed": 71.9
+          },
+          {
+            "range": "80-90%",
+            "n": 14,
+            "predicted": 83.3,
+            "observed": 92.9
+          }
+        ]
+      },
+      "newMarket|over3.5": {
+        "n": 3041,
+        "accuracy": 69.48,
+        "brier": 0.20373,
+        "logLoss": 0.59507,
+        "ece": 1.16,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 1,
+            "predicted": 9.9,
+            "observed": 0
+          },
+          {
+            "range": "10-20%",
+            "n": 282,
+            "predicted": 16.9,
+            "observed": 17.4
+          },
+          {
+            "range": "20-30%",
+            "n": 1127,
+            "predicted": 25.1,
+            "observed": 24
+          },
+          {
+            "range": "30-40%",
+            "n": 1020,
+            "predicted": 34.3,
+            "observed": 33.2
+          },
+          {
+            "range": "40-50%",
+            "n": 455,
+            "predicted": 44,
+            "observed": 42.9
+          },
+          {
+            "range": "50-60%",
+            "n": 128,
+            "predicted": 53.9,
+            "observed": 52.3
+          },
+          {
+            "range": "60-70%",
+            "n": 24,
+            "predicted": 62.3,
+            "observed": 50
+          },
+          {
+            "range": "70-80%",
+            "n": 4,
+            "predicted": 73.3,
+            "observed": 75
+          }
+        ]
+      },
+      "new|1x2": {
+        "n": 3041,
+        "accuracy": 52.22,
+        "brier": 0.5921,
+        "logLoss": 0.9927,
+        "ece": 1.66,
+        "bins": [
+          {
+            "range": "0-10%",
+            "n": 86,
+            "predicted": 7.9,
+            "observed": 7
+          },
+          {
+            "range": "10-20%",
+            "n": 904,
+            "predicted": 16.3,
+            "observed": 12.2
+          },
+          {
+            "range": "20-30%",
+            "n": 4044,
+            "predicted": 25.6,
+            "observed": 25
+          },
+          {
+            "range": "30-40%",
+            "n": 1565,
+            "predicted": 34.5,
+            "observed": 33.8
+          },
+          {
+            "range": "40-50%",
+            "n": 1248,
+            "predicted": 44.6,
+            "observed": 46.5
+          },
+          {
+            "range": "50-60%",
+            "n": 793,
+            "predicted": 54.5,
+            "observed": 55.5
+          },
+          {
+            "range": "60-70%",
+            "n": 350,
+            "predicted": 63.9,
+            "observed": 72.9
+          },
+          {
+            "range": "70-80%",
+            "n": 119,
+            "predicted": 73.8,
+            "observed": 84.9
+          },
+          {
+            "range": "80-90%",
+            "n": 14,
+            "predicted": 83.1,
+            "observed": 71.4
+          }
+        ]
+      },
+      "new|btts": {
+        "n": 3041,
+        "accuracy": 54.49,
+        "brier": 0.24621,
+        "logLoss": 0.68551,
+        "ece": 1.61,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 15,
+            "predicted": 39,
+            "observed": 60
+          },
+          {
+            "range": "40-50%",
+            "n": 753,
+            "predicted": 46.7,
+            "observed": 50.5
+          },
+          {
+            "range": "50-60%",
+            "n": 1689,
+            "predicted": 54.9,
+            "observed": 53.9
+          },
+          {
+            "range": "60-70%",
+            "n": 583,
+            "predicted": 62.8,
+            "observed": 62.8
+          },
+          {
+            "range": "70-80%",
+            "n": 1,
+            "predicted": 70.3,
+            "observed": 100
+          }
+        ]
+      },
+      "new|over1.5": {
+        "n": 3041,
+        "accuracy": 77.01,
+        "brier": 0.17371,
+        "logLoss": 0.5294,
+        "ece": 0.85,
+        "bins": [
+          {
+            "range": "50-60%",
+            "n": 1,
+            "predicted": 59.8,
+            "observed": 100
+          },
+          {
+            "range": "60-70%",
+            "n": 347,
+            "predicted": 67.1,
+            "observed": 69.5
+          },
+          {
+            "range": "70-80%",
+            "n": 1666,
+            "predicted": 75.5,
+            "observed": 74.6
+          },
+          {
+            "range": "80-90%",
+            "n": 1013,
+            "predicted": 83.1,
+            "observed": 83.2
+          },
+          {
+            "range": "90-100%",
+            "n": 14,
+            "predicted": 91.4,
+            "observed": 100
+          }
+        ]
+      },
+      "new|over2.5": {
+        "n": 3041,
+        "accuracy": 56.49,
+        "brier": 0.24216,
+        "logLoss": 0.67711,
+        "ece": 0.95,
+        "bins": [
+          {
+            "range": "30-40%",
+            "n": 170,
+            "predicted": 37.5,
+            "observed": 37.6
+          },
+          {
+            "range": "40-50%",
+            "n": 978,
+            "predicted": 45.8,
+            "observed": 47.1
+          },
+          {
+            "range": "50-60%",
+            "n": 1284,
+            "predicted": 54.9,
+            "observed": 54.3
+          },
+          {
+            "range": "60-70%",
+            "n": 568,
+            "predicted": 63.3,
+            "observed": 63.9
+          },
+          {
+            "range": "70-80%",
+            "n": 40,
+            "predicted": 73.4,
+            "observed": 85
+          },
+          {
+            "range": "80-90%",
+            "n": 1,
+            "predicted": 81.5,
+            "observed": 100
+          }
+        ]
+      },
+      "new|over3.5": {
+        "n": 3041,
+        "accuracy": 69.39,
+        "brier": 0.2056,
+        "logLoss": 0.59992,
+        "ece": 1.5,
+        "bins": [
+          {
+            "range": "10-20%",
+            "n": 182,
+            "predicted": 18,
+            "observed": 15.9
+          },
+          {
+            "range": "20-30%",
+            "n": 1246,
+            "predicted": 25.5,
+            "observed": 23.7
+          },
+          {
+            "range": "30-40%",
+            "n": 1240,
+            "predicted": 34.5,
+            "observed": 35.3
+          },
+          {
+            "range": "40-50%",
+            "n": 336,
+            "predicted": 43,
+            "observed": 45.5
+          },
+          {
+            "range": "50-60%",
+            "n": 35,
+            "predicted": 53.2,
+            "observed": 54.3
+          },
+          {
+            "range": "60-70%",
+            "n": 2,
+            "predicted": 62.1,
+            "observed": 100
+          }
+        ]
+      }
+    },
+    "picks": {
+      "app": {
+        "n": 3041,
+        "hitRate": 79.5,
+        "meanProbability": 80,
+        "bands": {
+          "70-80%": {
+            "n": 1546,
+            "hitRate": 77.4,
+            "meanProbability": 76.7
+          },
+          "80-90%": {
+            "n": 1418,
+            "hitRate": 81.4,
+            "meanProbability": 83
+          },
+          "90-100%": {
+            "n": 77,
+            "hitRate": 87,
+            "meanProbability": 91.4
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 1739,
+            "hitRate": 79.5,
+            "meanProbability": 80.3
+          },
+          "under35": {
+            "n": 821,
+            "hitRate": 75.8,
+            "meanProbability": 79
+          },
+          "dcX2": {
+            "n": 248,
+            "hitRate": 82.3,
+            "meanProbability": 80.5
+          },
+          "dc1X": {
+            "n": 233,
+            "hitRate": 89.7,
+            "meanProbability": 80.8
+          }
+        }
+      },
+      "appMarket": {
+        "n": 3041,
+        "hitRate": 83.3,
+        "meanProbability": 81.7,
+        "bands": {
+          "70-80%": {
+            "n": 1214,
+            "hitRate": 77.5,
+            "meanProbability": 76.9
+          },
+          "80-90%": {
+            "n": 1564,
+            "hitRate": 86.1,
+            "meanProbability": 83.6
+          },
+          "90-100%": {
+            "n": 263,
+            "hitRate": 93.9,
+            "meanProbability": 92
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 1073,
+            "hitRate": 81.5,
+            "meanProbability": 80.1
+          },
+          "dc1X": {
+            "n": 950,
+            "hitRate": 86.2,
+            "meanProbability": 84.9
+          },
+          "under35": {
+            "n": 683,
+            "hitRate": 80.2,
+            "meanProbability": 78.9
+          },
+          "dcX2": {
+            "n": 335,
+            "hitRate": 87.2,
+            "meanProbability": 83.1
+          }
+        }
+      },
+      "appMarket1x2": {
+        "n": 3041,
+        "hitRate": 81.7,
+        "meanProbability": 82.1,
+        "bands": {
+          "70-80%": {
+            "n": 1068,
+            "hitRate": 77.1,
+            "meanProbability": 76.8
+          },
+          "80-90%": {
+            "n": 1675,
+            "hitRate": 82.8,
+            "meanProbability": 83.7
+          },
+          "90-100%": {
+            "n": 298,
+            "hitRate": 92.3,
+            "meanProbability": 92
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 1186,
+            "hitRate": 79,
+            "meanProbability": 80.8
+          },
+          "dc1X": {
+            "n": 958,
+            "hitRate": 85.2,
+            "meanProbability": 84.9
+          },
+          "under35": {
+            "n": 553,
+            "hitRate": 78.5,
+            "meanProbability": 79.5
+          },
+          "dcX2": {
+            "n": 344,
+            "hitRate": 86.6,
+            "meanProbability": 82.9
+          }
+        }
+      },
+      "new": {
+        "n": 3041,
+        "hitRate": 81.6,
+        "meanProbability": 80.7,
+        "bands": {
+          "70-80%": {
+            "n": 1301,
+            "hitRate": 76.7,
+            "meanProbability": 76.9
+          },
+          "80-90%": {
+            "n": 1630,
+            "hitRate": 84.7,
+            "meanProbability": 83.1
+          },
+          "90-100%": {
+            "n": 110,
+            "hitRate": 92.7,
+            "meanProbability": 91.7
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 1485,
+            "hitRate": 79.1,
+            "meanProbability": 80.2
+          },
+          "dc1X": {
+            "n": 720,
+            "hitRate": 86.7,
+            "meanProbability": 83.6
+          },
+          "under35": {
+            "n": 597,
+            "hitRate": 80.6,
+            "meanProbability": 78.5
+          },
+          "dcX2": {
+            "n": 239,
+            "hitRate": 84.1,
+            "meanProbability": 81.1
+          }
+        }
+      },
+      "newMarket": {
+        "n": 3041,
+        "hitRate": 83.3,
+        "meanProbability": 82.6,
+        "bands": {
+          "70-80%": {
+            "n": 983,
+            "hitRate": 76.8,
+            "meanProbability": 77.1
+          },
+          "80-90%": {
+            "n": 1681,
+            "hitRate": 84.7,
+            "meanProbability": 83.7
+          },
+          "90-100%": {
+            "n": 377,
+            "hitRate": 93.6,
+            "meanProbability": 92.3
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 1147,
+            "hitRate": 81.3,
+            "meanProbability": 81
+          },
+          "dc1X": {
+            "n": 925,
+            "hitRate": 86.3,
+            "meanProbability": 86
+          },
+          "under35": {
+            "n": 641,
+            "hitRate": 80.5,
+            "meanProbability": 79.8
+          },
+          "dcX2": {
+            "n": 328,
+            "hitRate": 86.9,
+            "meanProbability": 84
+          }
+        }
+      },
+      "newMarket1x2": {
+        "n": 3041,
+        "hitRate": 82.9,
+        "meanProbability": 82.2,
+        "bands": {
+          "70-80%": {
+            "n": 1044,
+            "hitRate": 77.6,
+            "meanProbability": 77
+          },
+          "80-90%": {
+            "n": 1650,
+            "hitRate": 84.1,
+            "meanProbability": 83.4
+          },
+          "90-100%": {
+            "n": 347,
+            "hitRate": 93.4,
+            "meanProbability": 92.5
+          }
+        },
+        "markets": {
+          "over15": {
+            "n": 1167,
+            "hitRate": 80.6,
+            "meanProbability": 80.3
+          },
+          "dc1X": {
+            "n": 944,
+            "hitRate": 85.4,
+            "meanProbability": 85.9
+          },
+          "under35": {
+            "n": 587,
+            "hitRate": 81.3,
+            "meanProbability": 79.1
+          },
+          "dcX2": {
+            "n": 343,
+            "hitRate": 86.6,
+            "meanProbability": 83.9
+          }
+        }
+      }
+    }
+  }
+}

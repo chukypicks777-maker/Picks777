@@ -1,0 +1,374 @@
+{
+  "checkedAt": "2026-10-07T13:30:29.826Z",
+  "method": "ESPN: resultados de liga 2025-2026; pronósticos de 2026 con datos de días anteriores. stat = modelo nuevo sin cuotas; statOld = Poisson de temporada anterior; market = cuotas del proveedor sin margen (power).",
+  "report": {
+    "Liga MX": {
+      "stat1x2": {
+        "n": 43,
+        "accuracy": 46.5,
+        "brier": 0.658,
+        "logLoss": 1.0952
+      },
+      "statOld1x2": {
+        "n": 43,
+        "accuracy": 34.9,
+        "brier": 0.6642,
+        "logLoss": 1.1028
+      },
+      "market1x2": null,
+      "statO25": {
+        "n": 43,
+        "accuracy": 48.8,
+        "brier": 0.2485,
+        "logLoss": 0.6901
+      },
+      "statOldO25": {
+        "n": 43,
+        "accuracy": 51.2,
+        "brier": 0.2604,
+        "logLoss": 0.7147
+      },
+      "marketO25": null,
+      "cornersNew85": {
+        "n": 250,
+        "accuracy": 63.6,
+        "brier": 0.232,
+        "logLoss": 0.6568
+      },
+      "cornersOld85": {
+        "n": 250,
+        "accuracy": 57.2,
+        "brier": 0.2491,
+        "logLoss": 0.6989
+      },
+      "cornersNew95": {
+        "n": 250,
+        "accuracy": 48.8,
+        "brier": 0.2523,
+        "logLoss": 0.6977
+      },
+      "cornersOld95": {
+        "n": 250,
+        "accuracy": 53.2,
+        "brier": 0.2652,
+        "logLoss": 0.7312
+      },
+      "cardsNew35": {
+        "n": 242,
+        "accuracy": 63.2,
+        "brier": 0.2334,
+        "logLoss": 0.6604
+      },
+      "cardsOld35": {
+        "n": 242,
+        "accuracy": 62.8,
+        "brier": 0.2485,
+        "logLoss": 0.6969
+      }
+    },
+    "MLS": {
+      "stat1x2": {
+        "n": 329,
+        "accuracy": 47.4,
+        "brier": 0.6441,
+        "logLoss": 1.0675
+      },
+      "statOld1x2": {
+        "n": 329,
+        "accuracy": 39.8,
+        "brier": 0.6635,
+        "logLoss": 1.0941
+      },
+      "market1x2": null,
+      "statO25": {
+        "n": 329,
+        "accuracy": 63.2,
+        "brier": 0.23,
+        "logLoss": 0.6524
+      },
+      "statOldO25": {
+        "n": 329,
+        "accuracy": 62,
+        "brier": 0.2372,
+        "logLoss": 0.6686
+      },
+      "marketO25": null,
+      "cornersNew85": {
+        "n": 405,
+        "accuracy": 64.2,
+        "brier": 0.2305,
+        "logLoss": 0.6539
+      },
+      "cornersOld85": {
+        "n": 405,
+        "accuracy": 60,
+        "brier": 0.2605,
+        "logLoss": 0.7355
+      },
+      "cornersNew95": {
+        "n": 405,
+        "accuracy": 50.4,
+        "brier": 0.2511,
+        "logLoss": 0.6955
+      },
+      "cornersOld95": {
+        "n": 405,
+        "accuracy": 47.4,
+        "brier": 0.2836,
+        "logLoss": 0.7722
+      },
+      "cardsNew35": {
+        "n": 399,
+        "accuracy": 61.2,
+        "brier": 0.2392,
+        "logLoss": 0.6716
+      },
+      "cardsOld35": {
+        "n": 399,
+        "accuracy": 57.1,
+        "brier": 0.2565,
+        "logLoss": 0.7101
+      }
+    },
+    "UEFA Champions League": {
+      "stat1x2": null,
+      "statOld1x2": null,
+      "market1x2": null,
+      "statO25": null,
+      "statOldO25": null,
+      "marketO25": null,
+      "cornersNew85": {
+        "n": 86,
+        "accuracy": 61.6,
+        "brier": 0.2345,
+        "logLoss": 0.6617
+      },
+      "cornersOld85": {
+        "n": 86,
+        "accuracy": 53.5,
+        "brier": 0.297,
+        "logLoss": 0.8149
+      },
+      "cornersNew95": {
+        "n": 86,
+        "accuracy": 60.5,
+        "brier": 0.2454,
+        "logLoss": 0.684
+      },
+      "cornersOld95": {
+        "n": 86,
+        "accuracy": 44.2,
+        "brier": 0.2938,
+        "logLoss": 0.7998
+      },
+      "cardsNew35": {
+        "n": 82,
+        "accuracy": 53.7,
+        "brier": 0.2491,
+        "logLoss": 0.6914
+      },
+      "cardsOld35": {
+        "n": 82,
+        "accuracy": 58.5,
+        "brier": 0.2451,
+        "logLoss": 0.6839
+      }
+    },
+    "Premier League": {
+      "stat1x2": null,
+      "statOld1x2": null,
+      "market1x2": null,
+      "statO25": null,
+      "statOldO25": null,
+      "marketO25": null,
+      "cornersNew85": {
+        "n": 235,
+        "accuracy": 64.3,
+        "brier": 0.228,
+        "logLoss": 0.6485
+      },
+      "cornersOld85": {
+        "n": 235,
+        "accuracy": 57.9,
+        "brier": 0.2523,
+        "logLoss": 0.707
+      },
+      "cornersNew95": {
+        "n": 235,
+        "accuracy": 58.7,
+        "brier": 0.2468,
+        "logLoss": 0.6868
+      },
+      "cornersOld95": {
+        "n": 235,
+        "accuracy": 55.7,
+        "brier": 0.2648,
+        "logLoss": 0.7322
+      },
+      "cardsNew35": {
+        "n": 232,
+        "accuracy": 62.5,
+        "brier": 0.2383,
+        "logLoss": 0.6694
+      },
+      "cardsOld35": {
+        "n": 232,
+        "accuracy": 57.3,
+        "brier": 0.25,
+        "logLoss": 0.6948
+      }
+    },
+    "LaLiga": {
+      "stat1x2": {
+        "n": 18,
+        "accuracy": 61.1,
+        "brier": 0.5099,
+        "logLoss": 0.8823
+      },
+      "statOld1x2": {
+        "n": 18,
+        "accuracy": 55.6,
+        "brier": 0.6009,
+        "logLoss": 1.0197
+      },
+      "market1x2": null,
+      "statO25": {
+        "n": 18,
+        "accuracy": 77.8,
+        "brier": 0.2034,
+        "logLoss": 0.5974
+      },
+      "statOldO25": {
+        "n": 18,
+        "accuracy": 72.2,
+        "brier": 0.1831,
+        "logLoss": 0.5512
+      },
+      "marketO25": null,
+      "cornersNew85": {
+        "n": 264,
+        "accuracy": 58.7,
+        "brier": 0.2377,
+        "logLoss": 0.6672
+      },
+      "cornersOld85": {
+        "n": 264,
+        "accuracy": 56.8,
+        "brier": 0.2525,
+        "logLoss": 0.711
+      },
+      "cornersNew95": {
+        "n": 264,
+        "accuracy": 54.5,
+        "brier": 0.2399,
+        "logLoss": 0.6726
+      },
+      "cornersOld95": {
+        "n": 264,
+        "accuracy": 57.6,
+        "brier": 0.2548,
+        "logLoss": 0.712
+      },
+      "cardsNew35": {
+        "n": 259,
+        "accuracy": 66,
+        "brier": 0.2252,
+        "logLoss": 0.6425
+      },
+      "cardsOld35": {
+        "n": 259,
+        "accuracy": 64.5,
+        "brier": 0.2241,
+        "logLoss": 0.6397
+      }
+    },
+    "Serie A": {
+      "stat1x2": null,
+      "statOld1x2": null,
+      "market1x2": null,
+      "statO25": null,
+      "statOldO25": null,
+      "marketO25": null,
+      "cornersNew85": {
+        "n": 259,
+        "accuracy": 47.5,
+        "brier": 0.2524,
+        "logLoss": 0.698
+      },
+      "cornersOld85": {
+        "n": 259,
+        "accuracy": 49,
+        "brier": 0.2836,
+        "logLoss": 0.7749
+      },
+      "cornersNew95": {
+        "n": 259,
+        "accuracy": 61.4,
+        "brier": 0.2363,
+        "logLoss": 0.6653
+      },
+      "cornersOld95": {
+        "n": 259,
+        "accuracy": 52.9,
+        "brier": 0.2667,
+        "logLoss": 0.7379
+      },
+      "cardsNew35": {
+        "n": 251,
+        "accuracy": 57,
+        "brier": 0.2458,
+        "logLoss": 0.6844
+      },
+      "cardsOld35": {
+        "n": 251,
+        "accuracy": 49.8,
+        "brier": 0.2643,
+        "logLoss": 0.7253
+      }
+    },
+    "Ligue 1": {
+      "stat1x2": null,
+      "statOld1x2": null,
+      "market1x2": null,
+      "statO25": null,
+      "statOldO25": null,
+      "marketO25": null,
+      "cornersNew85": {
+        "n": 196,
+        "accuracy": 63.3,
+        "brier": 0.2317,
+        "logLoss": 0.656
+      },
+      "cornersOld85": {
+        "n": 196,
+        "accuracy": 53.6,
+        "brier": 0.2649,
+        "logLoss": 0.7331
+      },
+      "cornersNew95": {
+        "n": 196,
+        "accuracy": 53.1,
+        "brier": 0.2498,
+        "logLoss": 0.6929
+      },
+      "cornersOld95": {
+        "n": 196,
+        "accuracy": 47.4,
+        "brier": 0.2865,
+        "logLoss": 0.7767
+      },
+      "cardsNew35": {
+        "n": 192,
+        "accuracy": 59.4,
+        "brier": 0.239,
+        "logLoss": 0.6709
+      },
+      "cardsOld35": {
+        "n": 192,
+        "accuracy": 52.6,
+        "brier": 0.2525,
+        "logLoss": 0.6987
+      }
+    }
+  }
+}

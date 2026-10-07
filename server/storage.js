@@ -8,6 +8,10 @@ import { SOCIAL_LINKS } from '../src/constants/socials.js';
 import { validateSocialLinks } from './socialSettings.js';
 import { ACCESS_READ_SCRIPT, selectAccess, normalizeAccessRead } from './storageReads.js';
 const KEY = 'picks:v2:access';
+// Compare-and-set on the exact previous value; sent by digest after the first call.
+const CAS_SCRIPT = "local old=redis.call('GET',KEYS[1]); if (not old and ARGV[1]=='') or old==ARGV[1] then redis.call('SET',KEYS[1],ARGV[2]); return 1 end; return 0";
+// Device identifiers are informational; a short recent list bounds record growth.
+const MAX_USER_DEVICES = 10, MAX_CODE_DEVICES = 20;
 const clean = code => String(code || '').trim().toUpperCase();
 const initial = () => ({ codes: [], users: [], aiConfig: null });
 // Keep only keyed fingerprints and the original access deadline after deletion.
@@ -67,8 +71,10 @@ export class StorageManager {
         const raw = await this.loadRaw();
         const db = raw ? JSON.parse(raw) : initial();
         const result = change(db);
-        const script = "local old=redis.call('GET',KEYS[1]); if (not old and ARGV[1]=='') or old==ARGV[1] then redis.call('SET',KEYS[1],ARGV[2]); return 1 end; return 0";
-        if (await redisCommand('EVAL', script, 1, KEY, raw || '', JSON.stringify(db))) return result;
+        const next = JSON.stringify(db);
+        // A login or logout that changes nothing must not upload the database twice.
+        if (raw && next === raw) return result;
+        if (await redisEval(CAS_SCRIPT, 1, KEY, raw || '', next)) return result;
       }
       throw new Error('Almacenamiento ocupado. Reintenta la operación.');
     }
@@ -141,6 +147,8 @@ export class StorageManager {
     });
   }
   async revokeSession(id, expires) {
+    // Replaying an already revoked cookie must not rewrite the database.
+    if (await this.isSessionRevoked(id)) return;
     return this.transaction(db => {
       db.revokedSessions = Object.fromEntries(Object.entries(db.revokedSessions || {}).filter(([, end]) => end > Date.now()));
       db.revokedSessions[id] = expires;
@@ -167,9 +175,8 @@ export class StorageManager {
         if (cleanPic) user.picture = cleanPic;
         if (gId && !user.googleId) user.googleId = gId;
         user.devices ||= [];
-        if (deviceId && !user.devices.includes(deviceId)) {
-          if (user.devices.length < 50) user.devices.push(deviceId);
-        }
+        if (deviceId && !user.devices.includes(deviceId)) user.devices.push(deviceId);
+        if (user.devices.length > MAX_USER_DEVICES) user.devices = user.devices.slice(-MAX_USER_DEVICES);
       } else {
         const trialDays = 3;
         const createdAt = new Date(now).toISOString();
@@ -230,7 +237,8 @@ export class StorageManager {
         item.expiresAt = new Date(now + item.durationDays * 86400000).toISOString();
       }
       item.devices ||= [];
-      if (deviceId && !item.devices.includes(deviceId) && item.devices.length < 100) item.devices.push(deviceId);
+      if (deviceId && !item.devices.includes(deviceId)) item.devices.push(deviceId);
+      if (item.devices.length > MAX_CODE_DEVICES) item.devices = item.devices.slice(-MAX_CODE_DEVICES);
       user.vipCode = item.code; user.vipExpiresAt = item.expiresAt;
       user.hasRedeemedVip = true; user.role = 'vip_user';
       rememberTrial(db, user);
@@ -269,26 +277,35 @@ export class StorageManager {
     return null;
   }
   async getSocialSettings() {
+    // Public and read on every page load; a remote store is consulted at most
+    // every 30 seconds per instance. Saving here refreshes it immediately.
+    if (redisConfigured() && this.socialMemo?.expires > Date.now()) return structuredClone(this.socialMemo.value);
     const settings = await this.read('social');
-    return { promoImageVisible: true, ...(settings || { links: SOCIAL_LINKS, revision: 0, updatedAt: null }) };
+    const value = { promoImageVisible: true, ...(settings || { links: SOCIAL_LINKS, revision: 0, updatedAt: null }) };
+    if (redisConfigured()) this.socialMemo = { value, expires: Date.now() + 30000 };
+    return structuredClone(value);
   }
   async updateSocialSettings(links, revision) {
     const validated = validateSocialLinks(links);
-    return this.transaction(db => {
+    const saved = await this.transaction(db => {
       const current = db.socialSettings?.revision || 0;
       if (!Number.isInteger(revision) || revision !== current) throw new Error('Los enlaces cambiaron. Recarga antes de guardar.');
       db.socialSettings = { promoImageVisible: db.socialSettings?.promoImageVisible !== false, links: validated, revision: current + 1, updatedAt: new Date().toISOString() };
       return db.socialSettings;
     });
+    this.socialMemo = null;
+    return saved;
   }
   async updatePromoImageVisibility(visible, revision) {
     if (typeof visible !== 'boolean') throw new Error('La visibilidad debe ser verdadera o falsa.');
-    return this.transaction(db => {
+    const saved = await this.transaction(db => {
       const current = db.socialSettings || { links: SOCIAL_LINKS, revision: 0 };
       if (!Number.isInteger(revision) || revision !== current.revision) throw new Error('La configuración cambió. Recarga antes de guardar.');
       db.socialSettings = { ...current, promoImageVisible: visible, revision: current.revision + 1, updatedAt: new Date().toISOString() };
       return db.socialSettings;
     });
+    this.socialMemo = null;
+    return saved;
   }
   async updateAiConfig(updates = {}) {
     return this.transaction(db => {

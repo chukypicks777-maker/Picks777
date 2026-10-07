@@ -205,11 +205,19 @@ export function marketWinner(odds = {}) {
   return Number.isFinite(h) && h > 1 && Number.isFinite(a) && a > 1 ? (1 / h) / (1 / h + 1 / a) : null;
 }
 
+// League home-court edge from earlier results, shrunk toward zero with 30
+// virtual neutral games. NBA 2025-26 walk-forward: winner log loss 0.623 → 0.618.
+export function homeCourtEdge(match, games = [], now = Date.now()) {
+  const prior = historical(match, games, now).filter(game => Number.isFinite(game.finalScore?.home) && Number.isFinite(game.finalScore?.away));
+  return prior.reduce((sum, game) => sum + game.finalScore.home - game.finalScore.away, 0) / (prior.length + 30);
+}
+
 export function basketballAnalysis(match, games = [], now = Date.now()) {
   const home = teamSample(match, games, 'home', now), away = teamSample(match, games, 'away', now);
   const hm = home.map(g => g.own - g.against), am = away.map(g => g.own - g.against);
   const ready = hm.length >= 5 && am.length >= 5;
-  const margin = ready ? (mean(hm) - mean(am)) / 2 : null;
+  const edge = ready ? homeCourtEdge(match, games, now) : 0;
+  const margin = ready ? (mean(hm) - mean(am)) / 2 + edge : null;
   const variance = values => mean(values.map(v => (v - mean(values)) ** 2)) * values.length / (values.length - 1);
   const deviation = ready ? Math.sqrt((variance(hm) + variance(am)) / 2) : null;
   const hasDistribution = ready && deviation > 0;
@@ -231,7 +239,8 @@ export function basketballAnalysis(match, games = [], now = Date.now()) {
     probabilitySource: oddsWinner !== null ? 'published-odds' : 'experimental-model',
     sampleSize: { home: home.length, away: away.length },
     records: { home: home.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })), away: away.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })) },
-    method: 'Hándicaps estimados con una distribución normal del margen, calculada sobre los últimos 20 resultados disponibles de la misma competición (mínimo 5 por equipo). Incluyen prórroga cuando está incluida en el resultado oficial.'
+    homeCourtEdge: ready ? Number(edge.toFixed(2)) : null,
+    method: 'Hándicaps estimados con una distribución normal del margen, calculada sobre los últimos 20 resultados disponibles de la misma competición (mínimo 5 por equipo), más la ventaja de local observada en la competición. Incluyen prórroga cuando está incluida en el resultado oficial.'
       + (oddsWinner !== null ? ' Ganador: probabilidad implícita en las dos cuotas publicadas, sin margen de la casa. La distribución de hándicaps se centra en ese ganador y conserva la dispersión histórica.' : ' Ganador: distribución del margen histórico.'),
     notice: hasDistribution ? 'El hándicap suma o resta puntos al equipo elegido. Proyección previa al partido.' : 'Falta muestra suficiente o variación de marcadores para estimar los hándicaps.'
   };

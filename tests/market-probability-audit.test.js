@@ -5,6 +5,7 @@ import { parseFootballOdds } from '../server/services/footballDataService.js';
 import { noVigMarket, footballProbabilityLabel } from '../src/utils/marketProbability.js';
 import { decimalToAmerican } from '../src/utils/oddsFormatter.js';
 import { getTop3Opportunities } from '../src/utils/mathProbabilities.js';
+import { devigPower } from '../src/utils/footballModel.js';
 import { baseballAnalysis } from '../server/services/sportProbabilityModel.js';
 import { sportWinnerPick } from '../src/utils/sportPicks.js';
 
@@ -13,18 +14,25 @@ const lens = () => ({ id: 'lens-lyon', status: 'SCHEDULED', kickoff: '2026-10-09
   awayTeam: { id: '167', name: 'Lyon', gamesPlayed: 5, goalsFor: 10, goalsAgainst: 2 },
   odds: { homeWin: 2.4, draw: 3.85, awayWin: 2.7 }, oddsProvider: 'DraftKings' });
 
-test('Lens–Lyon uses the complete quoted market; its five-game model stays separate in card, picks and report inputs', () => {
+const round2 = value => Math.round(value * 100) / 100;
+
+test('Lens–Lyon uses the complete quoted market; goal lines follow the same quote instead of a five-game sample', () => {
   const match = applyFootballForecast(lens());
-  const market = noVigMarket(match.odds, ['homeWin', 'draw', 'awayWin']);
+  // Power de-vig scored better than proportional scaling out of sample.
+  const market = devigPower(match.odds, ['homeWin', 'draw', 'awayWin']);
   for (const key of ['homeWin', 'draw', 'awayWin']) {
-    assert.equal(match.probabilities[key], market.probabilities[key]);
-    assert.equal(match.model.probabilities[key], market.probabilities[key]);
+    assert.equal(match.probabilities[key], round2(market.probabilities[key]));
+    assert.equal(match.model.probabilities[key], round2(market.probabilities[key]));
     assert.equal(match.model.probabilitySources[key], 'published-odds');
   }
-  assert.ok(Math.abs(match.model.statisticalProbabilities.awayWin - 56.029768047080054) < 1e-9);
   assert.ok(match.probabilities.homeWin > match.probabilities.awayWin);
-  assert.equal(match.model.probabilitySources.over15, 'experimental-model');
-  assert.ok(Math.abs(match.probabilities.over15 - 80.08517265285438) < 1e-9);
+  // Without league ratings the goals total comes from the 1X2 draw price, not
+  // from five games: the supremacy is now coherent with the quoted favourite.
+  assert.equal(match.model.statisticalProbabilities, null);
+  assert.equal(match.model.totalSource, 'draw-price');
+  assert.equal(match.model.probabilitySources.over15, 'market-derived-model');
+  assert.ok(match.model.expectedGoals.home > match.model.expectedGoals.away);
+  assert.ok(match.probabilities.over05 >= match.probabilities.over15 && match.probabilities.over15 >= match.probabilities.over25);
   const resultPick = getTop3Opportunities(match).find(p => p.category === 'result');
   assert.equal(resultPick.probabilitySource, 'published-odds');
   assert.equal(footballProbabilityLabel(match, resultPick.key), 'Mercado sin margen · DraftKings');
@@ -74,7 +82,10 @@ test('a published over/under total adjusts modeled goal lines without moving the
   const match = applyFootballForecast({ ...lens(), odds: { ...lens().odds, over25: 1.1, under25: 9 } });
   const p = match.probabilities;
   assert.ok(p.over05 >= p.over15 && p.over15 >= p.over25 && p.over25 >= p.over35 && p.over35 >= p.over45);
-  assert.ok(Math.abs(p.homeWin - 39.804709936817936) < 1e-9);
+  assert.equal(p.homeWin, applyFootballForecast(lens()).probabilities.homeWin);
+  assert.equal(p.homeWin, round2(devigPower(lens().odds, ['homeWin', 'draw', 'awayWin']).probabilities.homeWin));
+  assert.equal(p.over25, round2(devigPower({ over25: 1.1, under25: 9 }, ['over25', 'under25']).probabilities.over25));
+  assert.equal(match.model.totalSource, 'published-odds');
   assert.equal(match.probabilitySources.over15, 'market-derived-model');
   assert.equal(match.probabilitySources.over25, 'published-odds');
 });

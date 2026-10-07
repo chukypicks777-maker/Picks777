@@ -1,0 +1,19 @@
+
+> proyecto-picks-apuesta@1.1.4 build
+> vite build
+
+[36mvite v8.2.2 [32mbuilding client environment for production...[36m[39m
+transforming...
+✓ 1903 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                1.62 kB │ gzip:   0.79 kB
+dist/assets/index-DgFx86Y4.css               115.72 kB │ gzip:  16.45 kB
+dist/assets/StatsCenterModal-CQZ0XBGI.js       3.62 kB │ gzip:   1.57 kB
+dist/assets/jsx-runtime-Ck_JZEHs.js            9.84 kB │ gzip:   3.92 kB
+dist/assets/SportsPage-CZzvTYyL.js            47.04 kB │ gzip:  14.02 kB
+dist/assets/AdminDashboardModal-yYxmdMFw.js   50.89 kB │ gzip:  12.07 kB
+dist/assets/MatchDetailModal-CmotGQWP.js      72.51 kB │ gzip:  17.21 kB
+dist/assets/index-CxUQGbjD.js                480.78 kB │ gzip: 143.94 kB
+
+[32m✓ built in 3.23s[39m

@@ -6,7 +6,9 @@ Preparación 1.1.3 y corrección del panel VIP: [PUBLICAR-TIENDAS.md](PUBLICAR-T
 
 ## Datos y probabilidades
 
-El backend consulta ESPN y conserva fuente y fecha de consulta. Las métricas ausentes se muestran como N/D. El modelo usa Poisson independiente sobre goles observados; como alternativa usa cuotas de mercados completos para aproximar una distribución. No implementa xG observado, Dixon-Coles ni una calibración histórica validada. La IA prioriza hechos del catálogo; su texto libre se descarta y no puede reemplazar números, cuotas ni selecciones calculadas.
+El backend consulta ESPN y conserva fuente y fecha de consulta. Las métricas ausentes se muestran como N/D. El fútbol usa ratings de ataque y defensa ajustados por rival y localía (goles y tiros a puerta, ponderados en el tiempo), distribución Dixon-Coles y, para córners y tarjetas, binomial negativa. Con cuotas, el 1X2 y el total 2.5 son los del mercado sin margen (método power) y el resto de líneas se deriva de forma coherente. La validación retrospectiva (2024-25 a 2026-27, cinco ligas europeas, y ESPN 2026 para Liga MX, MLS y Champions) está en [VALIDACION-MODELO-IA-REDIS-2026-10-07.md](VALIDACION-MODELO-IA-REDIS-2026-10-07.md); se reproduce con `node --import ./tests/setup.js scripts/backtest-football.mjs`. No es xG de tiros observados ni incorpora alineaciones o lesiones. La IA prioriza hechos del catálogo; su texto libre se descarta y no puede reemplazar números, cuotas ni selecciones calculadas. Una selección de la IA se comparte entre todos los usuarios y la cuota de IA solo se cobra al generarla.
+
+Redis guarda únicamente cuentas, límites, selecciones de IA, modelos de liga compactos y datos históricos inmutables; los calendarios de proveedores viven en la memoria de cada instancia.
 
 No se garantiza una tasa de aciertos del 90 % ni ganancias. Las cuotas teóricas derivadas del modelo se distinguen de las publicadas. Las combinadas son simulaciones bajo independencia, no apuestas colocadas. Deben confirmarse las cuotas y condiciones con el proveedor correspondiente.
 

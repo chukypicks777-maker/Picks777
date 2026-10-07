@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import LiveTicker from './components/LiveTicker';
 import SportSelector from './components/SportSelector';
-import SportsPage from './components/SportsPage';
+// Loaded on demand: the first paint needs only the calendar and cards.
+const SportsPage = lazy(() => import('./components/SportsPage'));
 import useActiveAiModel from './hooks/useActiveAiModel.js';
 import { SPORTS, sportFromPath, footballLeagueFromLocation } from './constants/sports.js';
 import { LEAGUES_DATA } from './constants/leagues.js';
@@ -12,11 +13,11 @@ import LeagueSelector from './components/LeagueSelector';
 import DateFilterTabs from './components/DateFilterTabs';
 import HeroFeaturedMatch from './components/HeroFeaturedMatch';
 import MatchCard from './components/MatchCard';
-import MatchDetailModal from './components/MatchDetailModal';
+const MatchDetailModal = lazy(() => import('./components/MatchDetailModal'));
 import AutonomousAiBar from './components/AutonomousAiBar';
 import ParlayBuilderDrawer from './components/ParlayBuilderDrawer';
-import AdminDashboardModal from './components/AdminDashboardModal';
-import StatsCenterModal from './components/StatsCenterModal';
+const AdminDashboardModal = lazy(() => import('./components/AdminDashboardModal'));
+const StatsCenterModal = lazy(() => import('./components/StatsCenterModal'));
 import FooterCommunityShowcase from './components/FooterCommunityShowcase';
 import { sounds } from './utils/audioEffects';
 import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
@@ -424,12 +425,13 @@ export default function App() {
     };
   }, [fetchMatches, isFootball, auth?.valid, auth?.trialExpired, auth?.user?.id]);
 
-  // Real-time live polling (every 25 seconds)
+  // The server refreshes the provider calendar every 60 seconds; polling faster
+  // only downloads the same calendar again.
   useEffect(() => {
     if (!isFootball || !auth?.valid || auth?.trialExpired) return;
     pollingRef.current = setInterval(() => {
       if (!document.hidden) syncLiveMatchesSilent();
-    }, 25000);
+    }, 60000);
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
@@ -710,7 +712,7 @@ export default function App() {
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
 
         {!isFootball ? (
-          <SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} sessionKey={auth?.user?.id || auth?.user?.uid || ''} oddsFormat={oddsFormat} currency={currency} isOwner={isOwner} activeModelInfo={activeAiModel} onToast={showToast} onSessionExpired={handleSportsSessionExpired} onToggleParlay={handleToggleParlay} parlayLegs={parlayLegs} />
+          <Suspense fallback={<p role="status" className="text-xs text-sky-300">Cargando deporte…</p>}><SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} sessionKey={auth?.user?.id || auth?.user?.uid || ''} oddsFormat={oddsFormat} currency={currency} isOwner={isOwner} activeModelInfo={activeAiModel} onToast={showToast} onSessionExpired={handleSportsSessionExpired} onToggleParlay={handleToggleParlay} parlayLegs={parlayLegs} /></Suspense>
         ) : (
         <div role="tabpanel" id={`sport-panel-${selectedSport}`} aria-labelledby={`sport-${selectedSport}`}>
 
@@ -979,6 +981,7 @@ export default function App() {
       )}
 
       {/* Modals */}
+      <Suspense fallback={null}>
       {selectedMatch && (
         <MatchDetailModal
           match={selectedMatch}
@@ -1013,6 +1016,7 @@ export default function App() {
       {showStatsModal && (
         <StatsCenterModal key={selectedSport} leagues={footballLeagues} onClose={() => setShowStatsModal(false)} />
       )}
+      </Suspense>
 
       {/* Footer */}
       <footer className="w-full bg-[#07090f] border-t border-white/5 py-6 px-4 text-center text-xs font-mono text-slate-500">

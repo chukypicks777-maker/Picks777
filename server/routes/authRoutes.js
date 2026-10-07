@@ -19,6 +19,8 @@ router.use('/redeem-code', rateLimit('auth'));
 router.use('/google', rateLimit('auth'));
 router.use('/apple', rateLimit('auth'));
 router.use('/delete-account', rateLimit('auth'));
+// Logout writes the revocation list; bound replays of the same or stolen cookies.
+router.use('/logout', rateLimit('session'));
 
 function publicSession(session) {
   const isOwner = session.role === 'owner';

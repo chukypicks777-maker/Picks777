@@ -1,5 +1,6 @@
 import { protectMutations } from './security.js';
 import { securityHeaders } from './httpHeaders.js';
+import { compressJson } from './compression.js';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +22,7 @@ app.use(securityHeaders);
 app.use('/api', protectMutations);
 app.use(express.json({ limit: '32kb' }));
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'private, no-store'); next(); });
+app.use('/api', compressJson);
 app.use('/api', (req, res, next) => {
   if (!secureConfiguration()) return res.status(503).json({ success: false, message: 'Configuración segura requerida.' });
   next();

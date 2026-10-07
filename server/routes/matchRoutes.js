@@ -1,9 +1,11 @@
 import express from 'express';
-import { getFootballFeed, LEAGUES, getLeagueStandings, enrichMatchWithRealData } from '../services/footballDataService.js';
-import { generateAiMatchReport } from '../services/aiService.js';
-import { rateLimit } from '../rateLimit.js';
+import { getFootballFeed, LEAGUES, getLeagueStandings, enrichMatchWithRealData, listView } from '../services/footballDataService.js';
+import { enrichHistoricalStats } from '../services/verifiedStats.js';
+import { generateAiMatchReport, readAiMatchReport, isAiConfigured } from '../services/aiService.js';
+import { consumeAiLimit, sendLimited } from '../rateLimit.js';
 import { requireAdmin } from '../session.js';
 const router = express.Router();
+const MATCH_ID = /^espn-(?:femenil-)?\d{1,15}$/;
 router.get('/leagues', async (req, res) => {
   const sport = req.query.sport === 'femenil' ? 'femenil' : 'futbol';
   const feed = await getFootballFeed({ sport });
@@ -39,11 +41,11 @@ async function feedHandler(req, res) {
   const feed = await getFootballFeed({ sport: req.query.sport || 'futbol' });
   const coverage = feed.coverage.filter(league => !req.query.league || req.query.league === 'all' || league.leagueId === req.query.league);
   if (coverage.length && coverage.every(c => c.status === 'unavailable')) {
-    return res.status(503).json({ ...feed, success: false, message: 'No se puede consultar el proveedor. No se muestran datos de demostración.' });
+    return res.status(503).json({ ...feed, matches: [], success: false, message: 'No se puede consultar el proveedor. No se muestran datos de demostración.' });
   }
   try {
-    const matches = filterMatches(feed.matches, req.query);
-    const liveMatches = feed.matches.filter(m => m.status === 'LIVE');
+    const matches = filterMatches(feed.matches, req.query).map(listView);
+    const liveMatches = feed.matches.filter(m => m.status === 'LIVE').map(listView);
     res.json({ ...feed, success: true, matches, liveMatches, count: matches.length });
   } catch {
     res.status(400).json({ success: false, message: 'Filtros o zona horaria no válidos.' });
@@ -52,10 +54,11 @@ async function feedHandler(req, res) {
 router.get('/live-sync', feedHandler);
 router.get('/', feedHandler);
 router.post('/sync', feedHandler);
-router.get('/boost', async (req, res) => {
+
+async function rankedFeed(req, res, select) {
   const feed = await getFootballFeed();
   if (feed.coverage.every(c => c.status === 'unavailable')) {
-    return res.status(503).json({ ...feed, success: false, message: 'No se puede consultar el proveedor.' });
+    return res.status(503).json({ ...feed, matches: [], success: false, message: 'No se puede consultar el proveedor.' });
   }
   let list = feed.matches;
   try {
@@ -63,82 +66,65 @@ router.get('/boost', async (req, res) => {
   } catch {
     return res.status(400).json({ success: false, message: 'Filtros o zona horaria no válidos.' });
   }
-  const boostMatches = list
-    .filter(m => m.status !== 'FINISHED')
-    .sort((a, b) => {
-      const pA = a.model?.probabilities || a.probabilities || {};
-      const pB = b.model?.probabilities || b.probabilities || {};
-      const valA = pA.confidence ?? Math.max(pA.homeWin ?? 0, pA.awayWin ?? 0, pA.over15 ?? 0);
-      const valB = pB.confidence ?? Math.max(pB.homeWin ?? 0, pB.awayWin ?? 0, pB.over15 ?? 0);
-      return valB - valA;
-    })
-    .slice(0, 10);
-  res.json({ success: true, count: boostMatches.length, matches: boostMatches, coverage: feed.coverage });
-});
-router.get('/goal', async (req, res) => {
-  const feed = await getFootballFeed();
-  if (feed.coverage.every(c => c.status === 'unavailable')) {
-    return res.status(503).json({ ...feed, success: false, message: 'No se puede consultar el proveedor.' });
-  }
-  let list = feed.matches;
-  try {
-    if (Object.keys(req.query || {}).length > 0) list = filterMatches(list, req.query);
-  } catch {
-    return res.status(400).json({ success: false, message: 'Filtros o zona horaria no válidos.' });
-  }
-  const goalMatches = list
-    .filter(m => {
-      const p = m.model?.probabilities || m.probabilities;
-      return m.status !== 'FINISHED' && p && (p.over25 != null || p.over15 != null || p.bttsYes != null);
-    })
-    .sort((a, b) => {
-      const pA = a.model?.probabilities || a.probabilities || {};
-      const pB = b.model?.probabilities || b.probabilities || {};
-      return (((pB.over15 ?? 0) + (pB.over25 ?? 0) + (pB.bttsYes ?? 0)) - ((pA.over15 ?? 0) + (pA.over25 ?? 0) + (pA.bttsYes ?? 0)));
-    });
-  res.json({ success: true, count: goalMatches.length, matches: goalMatches, coverage: feed.coverage });
-});
-router.get('/btts', async (req, res) => {
-  const feed = await getFootballFeed();
-  if (feed.coverage.every(c => c.status === 'unavailable')) {
-    return res.status(503).json({ ...feed, success: false, message: 'No se puede consultar el proveedor.' });
-  }
-  let list = feed.matches;
-  try {
-    if (Object.keys(req.query || {}).length > 0) list = filterMatches(list, req.query);
-  } catch {
-    return res.status(400).json({ success: false, message: 'Filtros o zona horaria no válidos.' });
-  }
-  const bttsMatches = list
-    .filter(m => {
-      const p = m.model?.probabilities || m.probabilities;
-      return m.status !== 'FINISHED' && p && p.bttsYes != null;
-    })
-    .sort((a, b) => {
-      const pA = a.model?.probabilities || a.probabilities || {};
-      const pB = b.model?.probabilities || b.probabilities || {};
-      return (pB.bttsYes ?? 0) - (pA.bttsYes ?? 0);
-    });
-  res.json({ success: true, count: bttsMatches.length, matches: bttsMatches, coverage: feed.coverage });
-});
-router.get('/:id', async (req, res) => {
-  try {
-    const sport = req.params.id.startsWith('espn-femenil-') ? 'femenil' : 'futbol';
-    let feed;
+  const matches = select(list).map(listView);
+  res.json({ success: true, count: matches.length, matches, coverage: feed.coverage });
+}
+const probs = m => m.model?.probabilities || m.probabilities || {};
+router.get('/boost', (req, res) => rankedFeed(req, res, list => list.filter(m => m.status !== 'FINISHED')
+  .sort((a, b) => (probs(b).confidence ?? Math.max(probs(b).homeWin ?? 0, probs(b).awayWin ?? 0, probs(b).over15 ?? 0))
+    - (probs(a).confidence ?? Math.max(probs(a).homeWin ?? 0, probs(a).awayWin ?? 0, probs(a).over15 ?? 0))).slice(0, 10)));
+router.get('/goal', (req, res) => rankedFeed(req, res, list => list
+  .filter(m => m.status !== 'FINISHED' && (probs(m).over25 != null || probs(m).over15 != null || probs(m).bttsYes != null))
+  .sort((a, b) => ((probs(b).over15 ?? 0) + (probs(b).over25 ?? 0) + (probs(b).bttsYes ?? 0)) - ((probs(a).over15 ?? 0) + (probs(a).over25 ?? 0) + (probs(a).bttsYes ?? 0)))));
+router.get('/btts', (req, res) => rankedFeed(req, res, list => list
+  .filter(m => m.status !== 'FINISHED' && probs(m).bttsYes != null).sort((a, b) => (probs(b).bttsYes ?? 0) - (probs(a).bttsYes ?? 0))));
+
+// A fixture missing from this instance's calendar may be newer than its copy.
+// One forced refresh per interval: unknown IDs cannot multiply provider calls.
+let lastForcedRefresh = 0;
+async function findMatch(id, { allowRefresh = true } = {}) {
+  const sport = id.startsWith('espn-femenil-') ? 'femenil' : 'futbol';
+  let feed;
+  try { feed = await getFootballFeed({ sport }); } catch { feed = { matches: [] }; }
+  let match = feed.matches?.find(m => m.id === id);
+  if (!match && allowRefresh && Date.now() - lastForcedRefresh > 30000) {
+    lastForcedRefresh = Date.now();
     try {
-      feed = await getFootballFeed({ sport });
-    } catch {
-      feed = { matches: [] };
+      feed = await getFootballFeed({ forceRefresh: true, sport });
+      match = feed.matches?.find(m => m.id === id);
+    } catch (err) {
+      console.warn('[matchRoutes] Error refreshing feed for match by id:', err?.message || err);
     }
-    let match = feed.matches?.find(m => m.id === req.params.id);
-    if (!match) {
-      try {
-        feed = await getFootballFeed({ forceRefresh: true, sport });
-        match = feed.matches?.find(m => m.id === req.params.id);
-      } catch (err) {
-        console.warn('[matchRoutes] Error refreshing feed for match by id:', err?.message || err);
-      }
-    }
+  }
+  return match || null;
+}
+
+// Stored AI selections for many cards in one request. Never calls a provider and
+// never consumes the AI quota; missing reports are simply absent.
+router.post('/ai-reports', async (req, res) => {
+  const ids = req.body?.ids;
+  if (!Array.isArray(ids) || !ids.length || ids.length > 100 || ids.some(id => typeof id !== 'string' || !MATCH_ID.test(id)) || new Set(ids).size !== ids.length) {
+    return res.status(400).json({ success: false, message: 'Selecciona entre 1 y 100 partidos válidos.' });
+  }
+  if (!await isAiConfigured()) return res.json({ success: true, reports: {} });
+  const feeds = await Promise.all(['futbol', 'femenil'].map(sport => getFootballFeed({ sport }).catch(() => ({ matches: [] }))));
+  const byId = new Map(feeds.flatMap(feed => feed.matches).map(match => [match.id, match]));
+  const reports = {};
+  for (const id of ids) {
+    const match = byId.get(id);
+    if (!match || match.status !== 'SCHEDULED') continue;
+    // League records are local; the per-match provider summary is not fetched here.
+    const enriched = await enrichHistoricalStats(match, { localOnly: true }).catch(() => match);
+    const report = await readAiMatchReport(enriched).catch(() => null);
+    if (report?.aiAvailable) reports[id] = report;
+  }
+  res.json({ success: true, reports });
+});
+
+router.get('/:id', async (req, res) => {
+  if (!MATCH_ID.test(req.params.id)) return res.status(400).json({ success: false, message: 'Identificador de partido inválido.' });
+  try {
+    const match = await findMatch(req.params.id);
     if (!match) return res.status(404).json({ success: false, message: 'Partido no disponible en el feed actual.' });
     let enriched = match;
     try {
@@ -155,27 +141,13 @@ router.get('/:id', async (req, res) => {
 router.post('/:id/ai-analysis', (req, res, next) => {
   if (req.query.force === '1' || req.body?.forceRefresh || req.query.model || req.body?.model || req.body?.aiConfig) return requireAdmin(req, res, next);
   next();
-}, rateLimit('ai'), async (req, res) => {
+}, async (req, res) => {
+  if (!MATCH_ID.test(req.params.id)) return res.status(400).json({ success: false, message: 'Identificador de partido inválido.' });
   const deadline = Date.now() + 50000;
   try {
-    const sport = req.params.id.startsWith('espn-femenil-') ? 'femenil' : 'futbol';
     const forceRefresh = Boolean(req.query.force === '1' || req.body?.forceRefresh);
-    let feed;
-    try {
-      feed = await getFootballFeed({ sport });
-    } catch {
-      feed = { matches: [] };
-    }
-    let match = feed.matches?.find(m => m.id === req.params.id);
     // Fixture facts must come from the server's provider feed, never the browser.
-    if (!match && forceRefresh) {
-      try {
-        feed = await getFootballFeed({ forceRefresh: true, sport });
-        match = feed.matches?.find(m => m.id === req.params.id);
-      } catch (err) {
-        console.warn('[matchRoutes] Error refreshing football feed:', err?.message || err);
-      }
-    }
+    const match = await findMatch(req.params.id, { allowRefresh: forceRefresh });
     if (!match) return res.status(404).json({ success: false, message: 'Partido no disponible en el feed actual.' });
 
     let enriched = match;
@@ -186,7 +158,17 @@ router.post('/:id/ai-analysis', (req, res, next) => {
     }
     const model = req.body?.model || req.query?.model || undefined;
     const aiConfig = req.body?.aiConfig;
-    const report = await generateAiMatchReport(enriched, { forceRefresh, model, aiConfig, deadline });
+    let report = forceRefresh || model || aiConfig ? null : await readAiMatchReport(enriched).catch(() => null);
+    if (!report) {
+      // The AI quota is charged only when a provider request may follow.
+      if (await isAiConfigured() || aiConfig) {
+        let limit;
+        try { limit = await consumeAiLimit(req); }
+        catch { return res.set('Retry-After', '30').status(503).json({ success: false, message: 'Limitador no disponible temporalmente.' }); }
+        if (!limit.allowed) return sendLimited(res, limit.retryAfter);
+      }
+      report = await generateAiMatchReport(enriched, { forceRefresh, model, aiConfig, deadline });
+    }
     if (report?.topPick && report.aiAvailable) {
       enriched.aiPick = {
         ...enriched.aiPick,

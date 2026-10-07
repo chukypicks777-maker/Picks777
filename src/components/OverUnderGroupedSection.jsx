@@ -110,7 +110,7 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
             <span>Agrupación Cuantitativa de Mercados: Lado OVERS (+) vs Lado UNDERS (-)</span>
           </h5>
           <p className="text-[11px] text-slate-400 font-sans mt-0.5">
-            Distribución separada por lados para comparar fácilmente líneas positivas y negativas de goles, córners y tarjetas. Estimaciones Poisson sobre datos registrados; N/D indica falta de muestra.
+            Distribución separada por lados para comparar fácilmente líneas positivas y negativas de goles, córners y tarjetas. Goles: Poisson con corrección Dixon-Coles; córners y tarjetas: ratings de la liga ajustados por rival con binomial negativa cuando hay historial. N/D indica falta de muestra.
           </p>
         </div>
         <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 rounded text-[10px] font-bold">

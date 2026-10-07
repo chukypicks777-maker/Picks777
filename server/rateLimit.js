@@ -1,7 +1,7 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
 import { positiveInteger } from './config.js';
-import { redisConfigured, redisCommand } from './services/dataCache.js';
+import { redisConfigured, redisEval } from './services/dataCache.js';
 
 // All buckets are checked and consumed together, in one Redis transaction.
 export const LIMIT_SCRIPT = `
@@ -40,7 +40,7 @@ export function clientIdentity(req) {
 
 export async function consumeLimits(buckets, now = Date.now()) {
   if (redisConfigured()) {
-    const result = await redisCommand('EVAL', LIMIT_SCRIPT, buckets.length,
+    const result = await redisEval(LIMIT_SCRIPT, buckets.length,
       ...buckets.map(b => `picks:v2:limit:${b.key}`), ...buckets.flatMap(b => [b.limit, b.windowMs]));
     if (!Array.isArray(result) || result.length !== 2 || ![0, 1].includes(result[0]) || !Number.isFinite(result[1]) || result[1] < 0) throw new Error('Limitador no disponible.');
     return { allowed: result[0] === 1, retryAfter: Math.max(1, Math.ceil(result[1] / 1000)) };
@@ -59,6 +59,29 @@ export async function consumeLimits(buckets, now = Date.now()) {
   return { allowed: true, retryAfter: 1 };
 }
 
+// Only the Owner's server-computed session role bypasses the AI quota.
+export const isOwnerSession = session => session?.role === 'owner';
+
+function aiBuckets(req) {
+  // VIP quota is per code, or per Google user for trial users.
+  const subject = req.session.code ? `vip:${req.session.code}` : `user:${req.session.userId || clientIdentity(req)}`;
+  return [
+    { key: `ai:${digest(subject)}`, limit: positiveInteger('AI_MAX_ANALYSES', 100), windowMs: positiveInteger('AI_WINDOW_SECONDS', 3600, 86400) * 1000 },
+    { key: 'ai:global', limit: positiveInteger('AI_GLOBAL_MAX_ANALYSES', 1000), windowMs: positiveInteger('AI_GLOBAL_WINDOW_SECONDS', 86400, 604800) * 1000 }
+  ];
+}
+
+// Charged immediately before a paid provider request. Reading a stored report
+// is free. Throws when the limiter is unavailable so callers fail closed.
+export async function consumeAiLimit(req) {
+  if (isOwnerSession(req.session)) return { allowed: true, retryAfter: 0 };
+  return consumeLimits(aiBuckets(req));
+}
+
+export function sendLimited(res, retryAfter) {
+  return res.set('Retry-After', String(retryAfter)).status(429).json({ success: false, message: 'Límite alcanzado. Reintenta después de la ventana indicada.', retryAfter });
+}
+
 export function rateLimit(kind) {
   return async (req, res, next) => {
     try {
@@ -69,30 +92,16 @@ export function rateLimit(kind) {
           { key: `auth:${clientIdentity(req)}`, limit: positiveInteger('AUTH_MAX_ATTEMPTS', 20), windowMs },
           { key: 'auth:global', limit: positiveInteger('AUTH_GLOBAL_MAX_ATTEMPTS', 300), windowMs }
         ];
+      } else if (kind === 'session') {
+        // Per-client ceiling for cheap authenticated writes such as logout.
+        buckets = [{ key: `session:${clientIdentity(req)}`, limit: positiveInteger('SESSION_MAX_WRITES', 30), windowMs: 900000 }];
       } else {
         if (!req.session) return res.status(401).json({ success: false, message: 'Sesión requerida.' });
-        // Owner has unconstrained access to trigger retries and re-analysis without rate limit collapse
-        const isOwner = Boolean(
-          req.session.role === 'owner' ||
-          req.session.plan === 'Owner' ||
-          req.session.isAdmin === true ||
-          req.session.code === 'MASTER' ||
-          req.session.user?.role === 'owner' ||
-          req.session.user?.plan === 'Owner'
-        );
-        if (isOwner) {
-          return next();
-        }
-        // VIP quota is per code, or per Google user for trial users
-        const subject = req.session.code ? `vip:${req.session.code}` : `user:${req.session.userId || clientIdentity(req)}`;
-        const userLimit = positiveInteger('AI_MAX_ANALYSES', 100);
-        buckets = [
-          { key: `ai:${digest(subject)}`, limit: userLimit, windowMs: positiveInteger('AI_WINDOW_SECONDS', 3600, 86400) * 1000 },
-          { key: 'ai:global', limit: positiveInteger('AI_GLOBAL_MAX_ANALYSES', 1000), windowMs: positiveInteger('AI_GLOBAL_WINDOW_SECONDS', 86400, 604800) * 1000 }
-        ];
+        if (isOwnerSession(req.session)) return next();
+        buckets = aiBuckets(req);
       }
       const result = await consumeLimits(buckets);
-      if (!result.allowed) return res.set('Retry-After', String(result.retryAfter)).status(429).json({ success: false, message: 'Límite alcanzado. Reintenta después de la ventana indicada.', retryAfter: result.retryAfter });
+      if (!result.allowed) return sendLimited(res, result.retryAfter);
       next();
     } catch {
       // Fail closed: never spend provider tokens when the limiter cannot be checked.

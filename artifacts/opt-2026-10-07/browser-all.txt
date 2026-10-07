@@ -1,0 +1,304 @@
+
+Running 234 tests using 2 workers
+
+[1/234] [android-chromium] › tests\browser\auto-analysis-toggle.spec.js:17:3 › beisbol: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[2/234] [android-chromium] › tests\browser\auto-analysis-toggle.spec.js:17:3 › futbol: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[WebServer] 10:20:11 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match futbol-toggle-1: signal is aborted without reason
+
+[WebServer] 10:20:11 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match beisbol-toggle-1: signal is aborted without reason
+
+[3/234] [android-chromium] › tests\browser\auto-analysis-toggle.spec.js:17:3 › tenis: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[4/234] [android-chromium] › tests\browser\auto-analysis-toggle.spec.js:17:3 › basquetbol: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[WebServer] 10:20:25 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match tenis-toggle-1: signal is aborted without reason
+
+[WebServer] 10:20:25 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match basquetbol-toggle-1: signal is aborted without reason
+
+[5/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:54:3 › Boost, Audio and VIP Unlock Modal Verification › an invalid VIP code preserves the account, current page and session after reload
+[6/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:75:3 › Boost, Audio and VIP Unlock Modal Verification › VIP redemption confirms the stored membership and keeps it on reload
+[7/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:90:3 › Boost, Audio and VIP Unlock Modal Verification › a session refresh outage preserves identity after expiry but requires reactivation
+[8/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:107:3 › Boost, Audio and VIP Unlock Modal Verification › the iPhone native channel contains no code redemption or external sales communities
+[9/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:121:3 › Boost, Audio and VIP Unlock Modal Verification › iPhone offers Apple login and confirms the account without requesting a VIP code
+[10/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:137:3 › Boost, Audio and VIP Unlock Modal Verification › Direct visit to /banqueros activates Banqueros filter and renders banner
+[11/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:163:3 › Boost, Audio and VIP Unlock Modal Verification › Category Banqueros button navigates to /banqueros and highlights
+[12/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:175:3 › Boost, Audio and VIP Unlock Modal Verification › Desbloquear con VIP opens upgrade modal and back navigation closes modal without expelling user
+[13/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:201:3 › Boost, Audio and VIP Unlock Modal Verification › Desbloquear con VIP modal closes safely via X button without expelling user
+[14/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:224:3 › Boost, Audio and VIP Unlock Modal Verification › Desbloquear con VIP modal closes safely via Escape key
+[15/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:242:3 › Boost, Audio and VIP Unlock Modal Verification › Click sound engine executes on user interaction without audio context errors
+[16/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:271:3 › Boost, Audio and VIP Unlock Modal Verification › Opening Desbloquear con VIP from inside MatchDetailModal keeps match modal open when VIP modal is closed with X
+[17/234] [android-chromium] › tests\browser\boost-and-vip.spec.js:299:3 › Boost, Audio and VIP Unlock Modal Verification › Opening Desbloquear con VIP from inside MatchDetailModal pops VIP first then match on back navigation
+[18/234] [android-chromium] › tests\browser\client-reports.spec.js:39:1 › el anuncio permanece oculto al cambiar de mercado y recargar
+[19/234] [android-chromium] › tests\browser\client-reports.spec.js:55:1 › el retorno usa el producto completo de cuotas antes de redondear
+[20/234] [android-chromium] › tests\browser\client-reports.spec.js:65:1 › un ID numérico y su texto identifican el mismo partido sin duplicar la cuota
+[21/234] [android-chromium] › tests\browser\client-reports.spec.js:77:3 › las cuotas se multiplican y cada pick conserva su momio (decimal)
+[22/234] [android-chromium] › tests\browser\client-reports.spec.js:77:3 › las cuotas se multiplican y cada pick conserva su momio (american)
+[23/234] [android-chromium] › tests\browser\client-reports.spec.js:77:3 › las cuotas se multiplican y cada pick conserva su momio (fractional)
+[24/234] [android-chromium] › tests\browser\client-reports.spec.js:99:1 › nuevo boleto elimina selecciones, cuota y monto previos incluso minimizado
+[25/234] [android-chromium] › tests\browser\client-reports.spec.js:115:1 › cambiar selección del mismo partido recalcula sin sumar el pick anterior
+[26/234] [android-chromium] › tests\browser\client-reports.spec.js:131:1 › ocultar funciona al navegar aunque el navegador bloquee guardar preferencias
+[27/234] [android-chromium] › tests\browser\client-reports.spec.js:142:1 › una respuesta diaria tardía no restaura el boleto que se acaba de vaciar
+[28/234] [android-chromium] › tests\browser\client-reports.spec.js:171:1 › una carga diaria fallida conserva el boleto y comunica el error
+[29/234] [android-chromium] › tests\browser\install.spec.js:3:1 › installation works without a VIP session on narrow phones and tablets
+[30/234] [android-chromium] › tests\browser\mobile-auth.spec.js:2:1 › acceso Android confirma la cuenta, oculta el ticket y vuelve sin credenciales en el enlace
+[31/234] [android-chromium] › tests\browser\mobile-auth.spec.js:20:1 › una solicitud móvil sin ticket no permite iniciar ni confirmar identidad
+[32/234] [android-chromium] › tests\browser\mobile-auth.spec.js:26:1 › the Apple mobile request preserves its provider after hiding the ticket and returns without credentials
+[33/234] [android-chromium] › tests\browser\mobile.spec.js:30:1 › owner puede abrir instalación Android en una pantalla de 360 px
+[34/234] [android-chromium] › tests\browser\mobile.spec.js:47:1 › un informe estadístico no se anuncia como análisis IA exitoso
+[35/234] [android-chromium] › tests\browser\mobile.spec.js:56:3 › detalle y parlay conservan controles accesibles 320x568
+[36/234] [android-chromium] › tests\browser\mobile.spec.js:56:3 › detalle y parlay conservan controles accesibles 844x390
+[37/234] [android-chromium] › tests\browser\mobile.spec.js:77:1 › Google → prueba gratuita → recarga conserva acceso sin guardar privilegios en localStorage
+[38/234] [android-chromium] › tests\browser\mobile.spec.js:89:1 › Google restaura VIP y entra sin volver a pedir el código
+[39/234] [android-chromium] › tests\browser\mobile.spec.js:99:1 › cookie no persistida muestra un error y mantiene el paso de prueba
+[40/234] [android-chromium] › tests\browser\mobile.spec.js:108:1 › cambiar de cuenta regresa al selector y permite volver a entrar
+[41/234] [android-chromium] › tests\browser\mobile.spec.js:119:1 › prueba vencida no ofrece continuar sin código
+[42/234] [android-chromium] › tests\browser\mobile.spec.js:126:1 › los apartados de deportes muestran sus filtros y permiten volver a fútbol
+[43/234] [android-chromium] › tests\browser\mobile.spec.js:157:1 › la prueba se bloquea al vencer aunque falle la comprobación de sesión
+[44/234] [android-chromium] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 320x568
+[45/234] [android-chromium] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 360x640
+[46/234] [android-chromium] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 390x844
+[47/234] [android-chromium] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 412x915
+[48/234] [android-chromium] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 600x960
+[49/234] [android-chromium] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 844x390
+[50/234] [android-chromium] › tests\browser\promo-owner.spec.js:3:1 › Owner oculta todo el anuncio; persiste y un fallo no anuncia éxito
+[51/234] [android-chromium] › tests\browser\promo-owner.spec.js:62:1 › una visita nueva oculta todo el bloque si el Owner ya lo desactivó
+[52/234] [android-chromium] › tests\browser\sports-design-ai.spec.js:56:1 › Banqueros in every new sport shows only the top ten winners in descending order, and no football categories
+[53/234] [android-chromium] › tests\browser\sports-design-ai.spec.js:74:1 › compact cards render images, winner picks and three markets on desktop and mobile, and broken images have initials
+[54/234] [android-chromium] › tests\browser\sports-design-ai.spec.js:93:1 › only the Owner has retry controls; a real request updates confirmed AI state and preserves probabilities
+[55/234] [android-chromium] › tests\browser\sports-design-ai.spec.js:123:1 › Owner analysis starts automatically with the configured model and leaves no queue running after changing sport
+[56/234] [android-chromium] › tests\browser\sports-design-ai.spec.js:135:1 › all sports add and remove winners in one parlay without opening the match dialog
+[57/234] [android-chromium] › tests\browser\sports-design-ai.spec.js:159:3 › beisbol analyzes automatically for a member with no Owner panel, independent of filters, and retains reports on reload
+[58/234] [android-chromium] › tests\browser\sports-design-ai.spec.js:159:3 › tenis analyzes automatically for a member with no Owner panel, independent of filters, and retains reports on reload
+[59/234] [android-chromium] › tests\browser\sports-design-ai.spec.js:159:3 › basquetbol analyzes automatically for a member with no Owner panel, independent of filters, and retains reports on reload
+[60/234] [android-chromium] › tests\browser\sports-design-ai.spec.js:181:1 › member automatic analysis waits for Retry-After and retries the same pending game
+[61/234] [android-chromium] › tests\browser\sports-design-ai.spec.js:194:1 › football also analyzes automatically for a member and sends no Owner-only overrides
+[62/234] [android-chromium] › tests\browser\sports-loading.spec.js:33:3 › beisbol: 240 cards load offscreen and 180 reports survive polling, navigation and browser reload
+[63/234] [android-chromium] › tests\browser\sports-loading.spec.js:33:3 › tenis: 240 cards load offscreen and 180 reports survive polling, navigation and browser reload
+[64/234] [android-chromium] › tests\browser\sports-loading.spec.js:33:3 › basquetbol: 240 cards load offscreen and 180 reports survive polling, navigation and browser reload
+[65/234] [android-chromium] › tests\browser\sports-loading.spec.js:113:1 › football retains completed work and resumes an interrupted pending AI request when returning
+[66/234] [android-chromium] › tests\browser\sports-markets.spec.js:67:1 › la liga femenil tiene encuentros propios, informe, recarga y regreso a fútbol
+[67/234] [android-chromium] › tests\browser\sports-markets.spec.js:88:1 › béisbol abre toda la tarjeta y ofrece Over/Under, totales 1.5–9.5 y extra innings sí/no
+[68/234] [android-chromium] › tests\browser\sports-markets.spec.js:122:1 › las tarjetas de tenis y básquetbol abren desde el cuerpo y con teclado; las redes respetan la configuración
+[69/234] [android-chromium] › tests\browser\sports-markets.spec.js:146:1 › tenis ofrece los seis torneos, ambos sets y sí/no para al menos un set de cada jugador
+[70/234] [android-chromium] › tests\browser\sports-markets.spec.js:165:1 › básquetbol ofrece las cuatro ligas y todos los hándicaps para ambos equipos
+[71/234] [android-chromium] › tests\browser\sports-markets.spec.js:180:1 › un fallo del calendario muestra el error y permite reintentar sin fabricar porcentajes
+[72/234] [android-chromium] › tests\browser\sports-markets.spec.js:191:1 › todos los deportes muestran fecha, hora y momios en el formato elegido; las rachas tienen resultados
+[73/234] [android-chromium] › tests\browser\sports-markets.spec.js:232:1 › las cuotas de la captura mantienen al favorito y la línea F5 queda visible en una tarjeta móvil
+[74/234] [android-chromium] › tests\browser\sports-markets.spec.js:259:1 › las ligas rápidas aparecen durante una consulta lenta y cambiar el formato o la visibilidad no cancela la carga
+[75/234] [android-chromium] › tests\browser\sports-markets.spec.js:286:1 › básquetbol carga el calendario primero y completa forma y probabilidades sin cambiar de sección
+[76/234] [android-chromium] › tests\browser\sports-markets.spec.js:311:1 › los filtros de fútbol están entre las ligas y el destacado; /femenil conserva la selección
+[77/234] [android-chromium] › tests\browser\sports-markets.spec.js:328:1 › la sincronización superior actualiza el deporte abierto y respeta el ganador implícito en sus momios
+[78/234] [android-chromium] › tests\browser\sports-markets.spec.js:348:1 › femenil actualiza su calendario con los filtros activos y retira datos cuando falla su proveedor
+[79/234] [iphone-webkit] › tests\browser\auto-analysis-toggle.spec.js:17:3 › futbol: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[80/234] [iphone-webkit] › tests\browser\auto-analysis-toggle.spec.js:17:3 › beisbol: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[WebServer] 10:24:52 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match beisbol-toggle-1: Fetch is aborted
+
+[WebServer] 10:24:52 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match futbol-toggle-1: Fetch is aborted
+
+[81/234] [iphone-webkit] › tests\browser\auto-analysis-toggle.spec.js:17:3 › tenis: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[82/234] [iphone-webkit] › tests\browser\auto-analysis-toggle.spec.js:17:3 › basquetbol: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[WebServer] 10:25:13 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match tenis-toggle-1: Fetch is aborted
+
+[WebServer] 10:25:21 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match basquetbol-toggle-1: Fetch is aborted
+
+[83/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:54:3 › Boost, Audio and VIP Unlock Modal Verification › an invalid VIP code preserves the account, current page and session after reload
+[84/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:75:3 › Boost, Audio and VIP Unlock Modal Verification › VIP redemption confirms the stored membership and keeps it on reload
+[85/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:90:3 › Boost, Audio and VIP Unlock Modal Verification › a session refresh outage preserves identity after expiry but requires reactivation
+[86/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:107:3 › Boost, Audio and VIP Unlock Modal Verification › the iPhone native channel contains no code redemption or external sales communities
+[87/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:121:3 › Boost, Audio and VIP Unlock Modal Verification › iPhone offers Apple login and confirms the account without requesting a VIP code
+[88/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:137:3 › Boost, Audio and VIP Unlock Modal Verification › Direct visit to /banqueros activates Banqueros filter and renders banner
+[89/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:163:3 › Boost, Audio and VIP Unlock Modal Verification › Category Banqueros button navigates to /banqueros and highlights
+[90/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:175:3 › Boost, Audio and VIP Unlock Modal Verification › Desbloquear con VIP opens upgrade modal and back navigation closes modal without expelling user
+[91/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:201:3 › Boost, Audio and VIP Unlock Modal Verification › Desbloquear con VIP modal closes safely via X button without expelling user
+[92/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:224:3 › Boost, Audio and VIP Unlock Modal Verification › Desbloquear con VIP modal closes safely via Escape key
+[93/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:242:3 › Boost, Audio and VIP Unlock Modal Verification › Click sound engine executes on user interaction without audio context errors
+[94/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:271:3 › Boost, Audio and VIP Unlock Modal Verification › Opening Desbloquear con VIP from inside MatchDetailModal keeps match modal open when VIP modal is closed with X
+[95/234] [iphone-webkit] › tests\browser\boost-and-vip.spec.js:299:3 › Boost, Audio and VIP Unlock Modal Verification › Opening Desbloquear con VIP from inside MatchDetailModal pops VIP first then match on back navigation
+[96/234] [iphone-webkit] › tests\browser\client-reports.spec.js:39:1 › el anuncio permanece oculto al cambiar de mercado y recargar
+[97/234] [iphone-webkit] › tests\browser\client-reports.spec.js:55:1 › el retorno usa el producto completo de cuotas antes de redondear
+[98/234] [iphone-webkit] › tests\browser\client-reports.spec.js:65:1 › un ID numérico y su texto identifican el mismo partido sin duplicar la cuota
+[99/234] [iphone-webkit] › tests\browser\client-reports.spec.js:77:3 › las cuotas se multiplican y cada pick conserva su momio (decimal)
+[100/234] [iphone-webkit] › tests\browser\client-reports.spec.js:77:3 › las cuotas se multiplican y cada pick conserva su momio (american)
+[101/234] [iphone-webkit] › tests\browser\client-reports.spec.js:77:3 › las cuotas se multiplican y cada pick conserva su momio (fractional)
+[102/234] [iphone-webkit] › tests\browser\client-reports.spec.js:99:1 › nuevo boleto elimina selecciones, cuota y monto previos incluso minimizado
+[103/234] [iphone-webkit] › tests\browser\client-reports.spec.js:115:1 › cambiar selección del mismo partido recalcula sin sumar el pick anterior
+[104/234] [iphone-webkit] › tests\browser\client-reports.spec.js:131:1 › ocultar funciona al navegar aunque el navegador bloquee guardar preferencias
+[105/234] [iphone-webkit] › tests\browser\client-reports.spec.js:142:1 › una respuesta diaria tardía no restaura el boleto que se acaba de vaciar
+[106/234] [iphone-webkit] › tests\browser\client-reports.spec.js:171:1 › una carga diaria fallida conserva el boleto y comunica el error
+[107/234] [iphone-webkit] › tests\browser\install.spec.js:3:1 › installation works without a VIP session on narrow phones and tablets
+[108/234] [iphone-webkit] › tests\browser\mobile-auth.spec.js:2:1 › acceso Android confirma la cuenta, oculta el ticket y vuelve sin credenciales en el enlace
+[109/234] [iphone-webkit] › tests\browser\mobile-auth.spec.js:20:1 › una solicitud móvil sin ticket no permite iniciar ni confirmar identidad
+[110/234] [iphone-webkit] › tests\browser\mobile-auth.spec.js:26:1 › the Apple mobile request preserves its provider after hiding the ticket and returns without credentials
+[111/234] [iphone-webkit] › tests\browser\mobile.spec.js:30:1 › owner puede abrir instalación Android en una pantalla de 360 px
+[112/234] [iphone-webkit] › tests\browser\mobile.spec.js:47:1 › un informe estadístico no se anuncia como análisis IA exitoso
+[113/234] [iphone-webkit] › tests\browser\mobile.spec.js:56:3 › detalle y parlay conservan controles accesibles 320x568
+[114/234] [iphone-webkit] › tests\browser\mobile.spec.js:56:3 › detalle y parlay conservan controles accesibles 844x390
+[115/234] [iphone-webkit] › tests\browser\mobile.spec.js:77:1 › Google → prueba gratuita → recarga conserva acceso sin guardar privilegios en localStorage
+[116/234] [iphone-webkit] › tests\browser\mobile.spec.js:89:1 › Google restaura VIP y entra sin volver a pedir el código
+[117/234] [iphone-webkit] › tests\browser\mobile.spec.js:99:1 › cookie no persistida muestra un error y mantiene el paso de prueba
+[118/234] [iphone-webkit] › tests\browser\mobile.spec.js:108:1 › cambiar de cuenta regresa al selector y permite volver a entrar
+[119/234] [iphone-webkit] › tests\browser\mobile.spec.js:119:1 › prueba vencida no ofrece continuar sin código
+[120/234] [iphone-webkit] › tests\browser\mobile.spec.js:126:1 › los apartados de deportes muestran sus filtros y permiten volver a fútbol
+[121/234] [iphone-webkit] › tests\browser\mobile.spec.js:157:1 › la prueba se bloquea al vencer aunque falle la comprobación de sesión
+[122/234] [iphone-webkit] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 320x568
+[123/234] [iphone-webkit] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 360x640
+[124/234] [iphone-webkit] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 390x844
+[125/234] [iphone-webkit] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 412x915
+[126/234] [iphone-webkit] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 600x960
+[127/234] [iphone-webkit] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 844x390
+[128/234] [iphone-webkit] › tests\browser\promo-owner.spec.js:3:1 › Owner oculta todo el anuncio; persiste y un fallo no anuncia éxito
+[129/234] [iphone-webkit] › tests\browser\promo-owner.spec.js:62:1 › una visita nueva oculta todo el bloque si el Owner ya lo desactivó
+[130/234] [iphone-webkit] › tests\browser\sports-design-ai.spec.js:56:1 › Banqueros in every new sport shows only the top ten winners in descending order, and no football categories
+[131/234] [iphone-webkit] › tests\browser\sports-design-ai.spec.js:74:1 › compact cards render images, winner picks and three markets on desktop and mobile, and broken images have initials
+[132/234] [iphone-webkit] › tests\browser\sports-design-ai.spec.js:93:1 › only the Owner has retry controls; a real request updates confirmed AI state and preserves probabilities
+[133/234] [iphone-webkit] › tests\browser\sports-design-ai.spec.js:123:1 › Owner analysis starts automatically with the configured model and leaves no queue running after changing sport
+[134/234] [iphone-webkit] › tests\browser\sports-design-ai.spec.js:135:1 › all sports add and remove winners in one parlay without opening the match dialog
+[135/234] [iphone-webkit] › tests\browser\sports-design-ai.spec.js:159:3 › beisbol analyzes automatically for a member with no Owner panel, independent of filters, and retains reports on reload
+[136/234] [iphone-webkit] › tests\browser\sports-design-ai.spec.js:159:3 › tenis analyzes automatically for a member with no Owner panel, independent of filters, and retains reports on reload
+[137/234] [iphone-webkit] › tests\browser\sports-design-ai.spec.js:159:3 › basquetbol analyzes automatically for a member with no Owner panel, independent of filters, and retains reports on reload
+[138/234] [iphone-webkit] › tests\browser\sports-design-ai.spec.js:181:1 › member automatic analysis waits for Retry-After and retries the same pending game
+[139/234] [iphone-webkit] › tests\browser\sports-design-ai.spec.js:194:1 › football also analyzes automatically for a member and sends no Owner-only overrides
+[140/234] [iphone-webkit] › tests\browser\sports-loading.spec.js:33:3 › beisbol: 240 cards load offscreen and 180 reports survive polling, navigation and browser reload
+[141/234] [iphone-webkit] › tests\browser\sports-loading.spec.js:33:3 › tenis: 240 cards load offscreen and 180 reports survive polling, navigation and browser reload
+[142/234] [iphone-webkit] › tests\browser\sports-loading.spec.js:33:3 › basquetbol: 240 cards load offscreen and 180 reports survive polling, navigation and browser reload
+[143/234] [iphone-webkit] › tests\browser\sports-loading.spec.js:113:1 › football retains completed work and resumes an interrupted pending AI request when returning
+[144/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:67:1 › la liga femenil tiene encuentros propios, informe, recarga y regreso a fútbol
+[145/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:88:1 › béisbol abre toda la tarjeta y ofrece Over/Under, totales 1.5–9.5 y extra innings sí/no
+[WebServer] 10:34:19 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match football-loading-2: Fetch is aborted
+
+[146/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:122:1 › las tarjetas de tenis y básquetbol abren desde el cuerpo y con teclado; las redes respetan la configuración
+[147/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:146:1 › tenis ofrece los seis torneos, ambos sets y sí/no para al menos un set de cada jugador
+[148/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:165:1 › básquetbol ofrece las cuatro ligas y todos los hándicaps para ambos equipos
+[149/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:180:1 › un fallo del calendario muestra el error y permite reintentar sin fabricar porcentajes
+[150/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:191:1 › todos los deportes muestran fecha, hora y momios en el formato elegido; las rachas tienen resultados
+[151/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:232:1 › las cuotas de la captura mantienen al favorito y la línea F5 queda visible en una tarjeta móvil
+[152/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:259:1 › las ligas rápidas aparecen durante una consulta lenta y cambiar el formato o la visibilidad no cancela la carga
+[153/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:286:1 › básquetbol carga el calendario primero y completa forma y probabilidades sin cambiar de sección
+[154/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:311:1 › los filtros de fútbol están entre las ligas y el destacado; /femenil conserva la selección
+[155/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:328:1 › la sincronización superior actualiza el deporte abierto y respeta el ganador implícito en sus momios
+[156/234] [iphone-webkit] › tests\browser\sports-markets.spec.js:348:1 › femenil actualiza su calendario con los filtros activos y retira datos cuando falla su proveedor
+[157/234] [firefox] › tests\browser\auto-analysis-toggle.spec.js:17:3 › futbol: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[158/234] [firefox] › tests\browser\auto-analysis-toggle.spec.js:17:3 › beisbol: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[WebServer] 10:35:35 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match futbol-toggle-1: The operation was aborted. 
+
+[WebServer] 10:35:39 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match beisbol-toggle-1: The operation was aborted. 
+
+[159/234] [firefox] › tests\browser\auto-analysis-toggle.spec.js:17:3 › tenis: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[160/234] [firefox] › tests\browser\auto-analysis-toggle.spec.js:17:3 › basquetbol: Owner checkbox stops an active queue, preserves progress and resumes only pending reports
+[WebServer] 10:35:55 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match tenis-toggle-1: The operation was aborted. 
+
+[WebServer] 10:35:56 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match basquetbol-toggle-1: The operation was aborted. 
+
+[161/234] [firefox] › tests\browser\boost-and-vip.spec.js:54:3 › Boost, Audio and VIP Unlock Modal Verification › an invalid VIP code preserves the account, current page and session after reload
+[162/234] [firefox] › tests\browser\boost-and-vip.spec.js:75:3 › Boost, Audio and VIP Unlock Modal Verification › VIP redemption confirms the stored membership and keeps it on reload
+[163/234] [firefox] › tests\browser\boost-and-vip.spec.js:90:3 › Boost, Audio and VIP Unlock Modal Verification › a session refresh outage preserves identity after expiry but requires reactivation
+[164/234] [firefox] › tests\browser\boost-and-vip.spec.js:107:3 › Boost, Audio and VIP Unlock Modal Verification › the iPhone native channel contains no code redemption or external sales communities
+[165/234] [firefox] › tests\browser\boost-and-vip.spec.js:121:3 › Boost, Audio and VIP Unlock Modal Verification › iPhone offers Apple login and confirms the account without requesting a VIP code
+[166/234] [firefox] › tests\browser\boost-and-vip.spec.js:137:3 › Boost, Audio and VIP Unlock Modal Verification › Direct visit to /banqueros activates Banqueros filter and renders banner
+[167/234] [firefox] › tests\browser\boost-and-vip.spec.js:163:3 › Boost, Audio and VIP Unlock Modal Verification › Category Banqueros button navigates to /banqueros and highlights
+[168/234] [firefox] › tests\browser\boost-and-vip.spec.js:175:3 › Boost, Audio and VIP Unlock Modal Verification › Desbloquear con VIP opens upgrade modal and back navigation closes modal without expelling user
+[169/234] [firefox] › tests\browser\boost-and-vip.spec.js:201:3 › Boost, Audio and VIP Unlock Modal Verification › Desbloquear con VIP modal closes safely via X button without expelling user
+[170/234] [firefox] › tests\browser\boost-and-vip.spec.js:224:3 › Boost, Audio and VIP Unlock Modal Verification › Desbloquear con VIP modal closes safely via Escape key
+[171/234] [firefox] › tests\browser\boost-and-vip.spec.js:242:3 › Boost, Audio and VIP Unlock Modal Verification › Click sound engine executes on user interaction without audio context errors
+[172/234] [firefox] › tests\browser\boost-and-vip.spec.js:271:3 › Boost, Audio and VIP Unlock Modal Verification › Opening Desbloquear con VIP from inside MatchDetailModal keeps match modal open when VIP modal is closed with X
+[173/234] [firefox] › tests\browser\boost-and-vip.spec.js:299:3 › Boost, Audio and VIP Unlock Modal Verification › Opening Desbloquear con VIP from inside MatchDetailModal pops VIP first then match on back navigation
+[174/234] [firefox] › tests\browser\client-reports.spec.js:39:1 › el anuncio permanece oculto al cambiar de mercado y recargar
+[175/234] [firefox] › tests\browser\client-reports.spec.js:55:1 › el retorno usa el producto completo de cuotas antes de redondear
+[176/234] [firefox] › tests\browser\client-reports.spec.js:65:1 › un ID numérico y su texto identifican el mismo partido sin duplicar la cuota
+[177/234] [firefox] › tests\browser\client-reports.spec.js:77:3 › las cuotas se multiplican y cada pick conserva su momio (decimal)
+[178/234] [firefox] › tests\browser\client-reports.spec.js:77:3 › las cuotas se multiplican y cada pick conserva su momio (american)
+[179/234] [firefox] › tests\browser\client-reports.spec.js:77:3 › las cuotas se multiplican y cada pick conserva su momio (fractional)
+[180/234] [firefox] › tests\browser\client-reports.spec.js:99:1 › nuevo boleto elimina selecciones, cuota y monto previos incluso minimizado
+[181/234] [firefox] › tests\browser\client-reports.spec.js:115:1 › cambiar selección del mismo partido recalcula sin sumar el pick anterior
+[182/234] [firefox] › tests\browser\client-reports.spec.js:131:1 › ocultar funciona al navegar aunque el navegador bloquee guardar preferencias
+[183/234] [firefox] › tests\browser\client-reports.spec.js:142:1 › una respuesta diaria tardía no restaura el boleto que se acaba de vaciar
+[184/234] [firefox] › tests\browser\client-reports.spec.js:171:1 › una carga diaria fallida conserva el boleto y comunica el error
+[185/234] [firefox] › tests\browser\install.spec.js:3:1 › installation works without a VIP session on narrow phones and tablets
+[186/234] [firefox] › tests\browser\mobile-auth.spec.js:2:1 › acceso Android confirma la cuenta, oculta el ticket y vuelve sin credenciales en el enlace
+[187/234] [firefox] › tests\browser\mobile-auth.spec.js:20:1 › una solicitud móvil sin ticket no permite iniciar ni confirmar identidad
+[188/234] [firefox] › tests\browser\mobile-auth.spec.js:26:1 › the Apple mobile request preserves its provider after hiding the ticket and returns without credentials
+[189/234] [firefox] › tests\browser\mobile.spec.js:30:1 › owner puede abrir instalación Android en una pantalla de 360 px
+[190/234] [firefox] › tests\browser\mobile.spec.js:47:1 › un informe estadístico no se anuncia como análisis IA exitoso
+[191/234] [firefox] › tests\browser\mobile.spec.js:56:3 › detalle y parlay conservan controles accesibles 320x568
+[192/234] [firefox] › tests\browser\mobile.spec.js:56:3 › detalle y parlay conservan controles accesibles 844x390
+[193/234] [firefox] › tests\browser\mobile.spec.js:77:1 › Google → prueba gratuita → recarga conserva acceso sin guardar privilegios en localStorage
+[194/234] [firefox] › tests\browser\mobile.spec.js:89:1 › Google restaura VIP y entra sin volver a pedir el código
+[195/234] [firefox] › tests\browser\mobile.spec.js:99:1 › cookie no persistida muestra un error y mantiene el paso de prueba
+[196/234] [firefox] › tests\browser\mobile.spec.js:108:1 › cambiar de cuenta regresa al selector y permite volver a entrar
+[197/234] [firefox] › tests\browser\mobile.spec.js:119:1 › prueba vencida no ofrece continuar sin código
+[198/234] [firefox] › tests\browser\mobile.spec.js:126:1 › los apartados de deportes muestran sus filtros y permiten volver a fútbol
+[199/234] [firefox] › tests\browser\mobile.spec.js:157:1 › la prueba se bloquea al vencer aunque falle la comprobación de sesión
+[200/234] [firefox] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 320x568
+[201/234] [firefox] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 360x640
+[202/234] [firefox] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 390x844
+[203/234] [firefox] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 412x915
+[204/234] [firefox] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 600x960
+[205/234] [firefox] › tests\browser\mobile.spec.js:175:3 › acceso y página adaptables 844x390
+[206/234] [firefox] › tests\browser\promo-owner.spec.js:3:1 › Owner oculta todo el anuncio; persiste y un fallo no anuncia éxito
+[207/234] [firefox] › tests\browser\promo-owner.spec.js:62:1 › una visita nueva oculta todo el bloque si el Owner ya lo desactivó
+[208/234] [firefox] › tests\browser\sports-design-ai.spec.js:56:1 › Banqueros in every new sport shows only the top ten winners in descending order, and no football categories
+[209/234] [firefox] › tests\browser\sports-design-ai.spec.js:74:1 › compact cards render images, winner picks and three markets on desktop and mobile, and broken images have initials
+[210/234] [firefox] › tests\browser\sports-design-ai.spec.js:93:1 › only the Owner has retry controls; a real request updates confirmed AI state and preserves probabilities
+[211/234] [firefox] › tests\browser\sports-design-ai.spec.js:123:1 › Owner analysis starts automatically with the configured model and leaves no queue running after changing sport
+[212/234] [firefox] › tests\browser\sports-design-ai.spec.js:135:1 › all sports add and remove winners in one parlay without opening the match dialog
+[213/234] [firefox] › tests\browser\sports-design-ai.spec.js:159:3 › beisbol analyzes automatically for a member with no Owner panel, independent of filters, and retains reports on reload
+[214/234] [firefox] › tests\browser\sports-design-ai.spec.js:159:3 › tenis analyzes automatically for a member with no Owner panel, independent of filters, and retains reports on reload
+[215/234] [firefox] › tests\browser\sports-design-ai.spec.js:159:3 › basquetbol analyzes automatically for a member with no Owner panel, independent of filters, and retains reports on reload
+[216/234] [firefox] › tests\browser\sports-design-ai.spec.js:181:1 › member automatic analysis waits for Retry-After and retries the same pending game
+[217/234] [firefox] › tests\browser\sports-design-ai.spec.js:194:1 › football also analyzes automatically for a member and sends no Owner-only overrides
+[218/234] [firefox] › tests\browser\sports-loading.spec.js:33:3 › beisbol: 240 cards load offscreen and 180 reports survive polling, navigation and browser reload
+[219/234] [firefox] › tests\browser\sports-loading.spec.js:33:3 › tenis: 240 cards load offscreen and 180 reports survive polling, navigation and browser reload
+[220/234] [firefox] › tests\browser\sports-loading.spec.js:33:3 › basquetbol: 240 cards load offscreen and 180 reports survive polling, navigation and browser reload
+[221/234] [firefox] › tests\browser\sports-loading.spec.js:113:1 › football retains completed work and resumes an interrupted pending AI request when returning
+[WebServer] 10:41:08 a. m. [vite] (client) [console.warn] [AutonomousAI] Error analyzing match football-loading-2: The operation was aborted. 
+
+[222/234] [firefox] › tests\browser\sports-markets.spec.js:67:1 › la liga femenil tiene encuentros propios, informe, recarga y regreso a fútbol
+[223/234] [firefox] › tests\browser\sports-markets.spec.js:88:1 › béisbol abre toda la tarjeta y ofrece Over/Under, totales 1.5–9.5 y extra innings sí/no
+[224/234] [firefox] › tests\browser\sports-markets.spec.js:122:1 › las tarjetas de tenis y básquetbol abren desde el cuerpo y con teclado; las redes respetan la configuración
+[225/234] [firefox] › tests\browser\sports-markets.spec.js:146:1 › tenis ofrece los seis torneos, ambos sets y sí/no para al menos un set de cada jugador
+[226/234] [firefox] › tests\browser\sports-markets.spec.js:165:1 › básquetbol ofrece las cuatro ligas y todos los hándicaps para ambos equipos
+[227/234] [firefox] › tests\browser\sports-markets.spec.js:180:1 › un fallo del calendario muestra el error y permite reintentar sin fabricar porcentajes
+[228/234] [firefox] › tests\browser\sports-markets.spec.js:191:1 › todos los deportes muestran fecha, hora y momios en el formato elegido; las rachas tienen resultados
+[229/234] [firefox] › tests\browser\sports-markets.spec.js:232:1 › las cuotas de la captura mantienen al favorito y la línea F5 queda visible en una tarjeta móvil
+[230/234] [firefox] › tests\browser\sports-markets.spec.js:259:1 › las ligas rápidas aparecen durante una consulta lenta y cambiar el formato o la visibilidad no cancela la carga
+[231/234] [firefox] › tests\browser\sports-markets.spec.js:286:1 › básquetbol carga el calendario primero y completa forma y probabilidades sin cambiar de sección
+  1) [firefox] › tests\browser\sports-markets.spec.js:191:1 › todos los deportes muestran fecha, hora y momios en el formato elegido; las rachas tienen resultados 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('dialog', { name: 'Análisis del encuentro' }).getByRole('region', { name: 'Carreras · LA Dodgers', exact: true })
+    Expected pattern: /Sin cuota publicada/
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toContainText" getByRole('dialog', { name: 'Análisis del encuentro' }).getByRole('region', { name: 'Carreras · LA Dodgers', exact: true }) with timeout 5000ms
+      - waiting for getByRole('dialog', { name: 'Análisis del encuentro' }).getByRole('region', { name: 'Carreras · LA Dodgers', exact: true })
+
+
+      220 |     expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+      221 |     const markets = sport === 'beisbol' ? ['Carreras · LA Dodgers', 'Totales extra innings'] : sport === 'tenis' ? ['Ganador del primer set', 'Ganador del segundo set'] : ['Hándicap · Boston Celtics', 'Hándicap · LA Lakers'];
+    > 222 |     for (const market of markets) await expect(dialog.getByRole('region', { name: market, exact: true })).toContainText(sport === 'tenis' ? /Precio del modelo [+-]\d+/ : /Sin cuota publicada/);
+          |                                                                                                           ^
+      223 |     await page.keyboard.press('Escape');
+      224 |     await page.getByRole('combobox', { name: 'Formato de Momios', exact: true }).selectOption('decimal');
+      225 |     await card.getByRole('button', { name: 'Ver análisis y mercados' }).click();
+        at C:\Users\rober\OneDrive\Escritorio\Proyecto Picks Apuesta\tests\browser\sports-markets.spec.js:222:107
+
+    Error Context: test-results\sports-markets-todos-los-d-a010c-as-rachas-tienen-resultados-firefox\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\sports-markets-todos-los-d-a010c-as-rachas-tienen-resultados-firefox\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\sports-markets-todos-los-d-a010c-as-rachas-tienen-resultados-firefox\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[232/234] [firefox] › tests\browser\sports-markets.spec.js:328:1 › la sincronización superior actualiza el deporte abierto y respeta el ganador implícito en sus momios
+[233/234] [firefox] › tests\browser\sports-markets.spec.js:311:1 › los filtros de fútbol están entre las ligas y el destacado; /femenil conserva la selección
+[234/234] [firefox] › tests\browser\sports-markets.spec.js:348:1 › femenil actualiza su calendario con los filtros activos y retira datos cuando falla su proveedor
+  1 failed
+    [firefox] › tests\browser\sports-markets.spec.js:191:1 › todos los deportes muestran fecha, hora y momios en el formato elegido; las rachas tienen resultados 
+  233 passed (22.2m)
+
+# Rerun without concurrent backtests (firefox, repeat-each=2): todos los deportes muestran fecha, hora y momios -> 2 passed

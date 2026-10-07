@@ -1,6 +1,44 @@
 import { getBestBankerPick } from '../../src/utils/mathProbabilities.js';
 import { noVigMarket } from '../../src/utils/marketProbability.js';
 import { SPORT_MODEL_VERSION } from '../../src/utils/sportModelVersion.js';
+import { forecastFootball, FOOTBALL_MODEL } from '../../src/utils/footballModel.js';
+import { leagueModelFor, modelFits } from './footballHistory.js';
+
+const unpacked = new WeakMap();
+function leagueFits(match) {
+  const model = leagueModelFor(match.espnCode);
+  if (!model) return null;
+  if (!unpacked.has(model)) unpacked.set(model, modelFits(model));
+  return { model, fits: unpacked.get(model) };
+}
+
+const RATINGS_METHOD = 'Ratings de ataque y defensa ajustados por rival con ponderación temporal y contracción bayesiana (goles y tiros a puerta), distribución Dixon-Coles. Con cuotas, 1X2 y total 2.5 del mercado sin margen (método power) y el resto de líneas coherentes con esas cuotas.';
+const RATINGS_LIMITS = 'Estimación previa al partido. Validación retrospectiva 2024-25 a 2026-27 en cinco ligas europeas (scripts/backtest-football.mjs); no incorpora alineaciones, lesiones ni noticias y no garantiza resultados. El marcador más probable es solo un escenario.';
+
+function applyRatingsForecast(match, forecast) {
+  // Keep the established source vocabulary used by labels and cached reports.
+  const sources = Object.fromEntries(Object.entries(forecast.sources).map(([key, source]) => [key, source === 'statistical-model' ? 'experimental-model' : source]));
+  const quoted = sources.homeWin === 'published-odds';
+  match.model = {
+    probabilities: forecast.probabilities, probabilitySources: sources,
+    predictedScore: forecast.predictedScore, scoreDistribution: forecast.scoreDistribution,
+    expectedGoals: forecast.expectedGoals, statisticalExpectedGoals: forecast.statisticalExpectedGoals,
+    statisticalProbabilities: forecast.statisticalProbabilities, statisticalSampleSize: forecast.sample, sampleSize: forecast.sample,
+    homeGoals: forecast.homeGoals, awayGoals: forecast.awayGoals, corners: forecast.corners, cards: forecast.cards, halves: forecast.halves,
+    totalSource: forecast.totalSource, usedShots: forecast.usedShots, engine: FOOTBALL_MODEL.version,
+    method: RATINGS_METHOD, limitations: RATINGS_LIMITS, modelVersion: SPORT_MODEL_VERSION
+  };
+  match.probabilities = { ...forecast.probabilities, predictedScore: forecast.predictedScore };
+  match.probabilitySources = sources;
+  match.probabilitySource = quoted ? 'published-odds' : 'experimental-model';
+  match.marketOverround = forecast.overround;
+  match.goalMarketsConflict = false;
+  if (forecast.halves) match.halfGoals = { ...forecast.halves, method: 'Reparto por mitades observado en la liga (goles de tiempo reglamentario); incluye descuento.' };
+  match.modelVersion = SPORT_MODEL_VERSION;
+  match.aiPick = null;
+  match.aiPick = buildPick(match);
+  return match;
+}
 
 export function applyFootballForecast(match) {
   if (match.status !== 'SCHEDULED') {
@@ -9,6 +47,20 @@ export function applyFootballForecast(match) {
     return Object.assign(match, { model: null, probabilities: {}, probabilitySources: {},
       probabilitySource: 'unavailable', aiPick: null, marketOverround: null, modelVersion: SPORT_MODEL_VERSION });
   }
+  // League ratings and/or a complete 1X2 quote. Without either, the season
+  // average Poisson below remains the last resort. ESPN publishes no BTTS
+  // prices; if a source ever does, the coherence guard below handles them.
+  const bttsQuoted = Boolean(noVigMarket(match.odds, ['bttsYes', 'bttsNo']));
+  const league = bttsQuoted ? null : leagueFits(match);
+  const forecast = bttsQuoted ? null : forecastFootball(league?.fits || null, match.homeTeamId ?? match.homeTeam?.id, match.awayTeamId ?? match.awayTeam?.id, match.odds);
+  if (forecast) return applyRatingsForecast(match, forecast);
+  return applyLegacyFootballForecast(match);
+}
+
+// Season-average Poisson with proportional de-vig: the previous production
+// method, kept as the fallback and as the baseline of the retrospective checks.
+export function applyLegacyFootballForecast(match) {
+  if (match.status !== 'SCHEDULED') return applyFootballForecast(match);
   const statistical = poissonModel(match.homeTeam, match.awayTeam);
   const winner = noVigMarket(match.odds, ['homeWin', 'draw', 'awayWin']);
   const total = noVigMarket(match.odds, ['over25', 'under25']);

@@ -117,10 +117,16 @@ test('analysis rejects a browser-invented fixture when it does not exist in the 
       homeTeam: { name: 'Invented Home', gamesPlayed: 10, goalsFor: 50, goalsAgainst: 1 },
       awayTeam: { name: 'Invented Away', gamesPlayed: 10, goalsFor: 1, goalsAgainst: 50 } }
   });
-  assert.equal(response.status, 404);
+  // Not an ESPN fixture identifier: rejected before any provider or AI work.
+  assert.equal(response.status, 400);
   const body = await response.json();
   assert.equal(body.match, undefined);
   assert.equal(body.report, undefined);
+  const wellFormed = await request('/api/matches/espn-999999999999/ai-analysis', { match: { id: 'espn-999999999999', status: 'SCHEDULED' } });
+  assert.equal(wellFormed.status, 404);
+  const missing = await wellFormed.json();
+  assert.equal(missing.match, undefined);
+  assert.equal(missing.report, undefined);
 });
 
 test('all specialized feeds reject invalid filters instead of returning unrelated fixtures', async t => {

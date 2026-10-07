@@ -51,3 +51,6 @@ artifacts/mobile/
 ios/build/
 ios/**/xcuserdata/
 *.xcuserstate
+
+# Historical CSVs downloaded by scripts/backtest-football.mjs (re-downloadable)
+artifacts/backtest-cache/

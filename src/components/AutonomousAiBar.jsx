@@ -70,8 +70,13 @@ export default function AutonomousAiBar({
   const progressPercent = totalCount > 0 ? Math.round((analyzedCount / totalCount) * 100) : 0;
 
   const toggleAutoPref = () => {
+    if (!isOwner) return;
     const next = !autoRunOnLoad;
-    if (next) pausedByOwner.current = false;
+    pausedByOwner.current = !next;
+    if (!next) {
+      stopRequested.current = true;
+      requestController.current?.abort();
+    }
     setAutoRunOnLoad(next);
     try {
       localStorage.setItem('picks777_auto_ai_pref', String(next));
@@ -94,9 +99,34 @@ export default function AutonomousAiBar({
     setIsRunning(true);
     if (isOwner) sounds.playRadarScan();
 
-    const targets = forceAll
+    let targets = forceAll
       ? [...currentMatches]
       : currentMatches.filter(m => m?.id && !isMatchAnalyzed(m.id, m) && !attemptedMatchIdsRef.current.has(attemptKey(m)));
+
+    // Football reports generated for any member are shared: fetch them in one
+    // request and only ask for the fixtures nobody has analyzed yet.
+    if (sport === 'futbol' && !forceAll && targets.length > 0) {
+      try {
+        const controller = new AbortController();
+        requestController.current = controller;
+        const res = await fetch('/api/matches/ai-reports', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin', signal: controller.signal, body: JSON.stringify({ ids: targets.slice(0, 100).map(m => m.id) }) });
+        const data = await res.json().catch(() => null);
+        if (mounted.current && res.ok && data?.reports) {
+          for (const [id, report] of Object.entries(data.reports)) {
+            const current = matchesRef.current.find(match => match.id === id);
+            if (!current || !report?.aiAvailable) continue;
+            const analyzed = { ...current, isAiAnalyzed: true, aiReport: report };
+            // No enriched copy: opening the report still loads the full detail.
+            setCachedAnalysis(id, current, { aiReport: report, model: report.modelUsed });
+            onMatchAnalyzed?.(id, analyzed, report, current);
+            if (!onMatchAnalyzed) window.dispatchEvent(new CustomEvent('ai-analysis-updated', { detail: { matchId: id, match: analyzed, report } }));
+          }
+          targets = targets.filter(m => !data.reports[m.id]?.aiAvailable);
+        }
+      } catch { /* The per-fixture queue below still works. */ }
+      if (!mounted.current || stopRequested.current) { runningRef.current = false; setIsRunning(false); return; }
+    }
 
     if (targets.length === 0) {
       setIsRunning(false);

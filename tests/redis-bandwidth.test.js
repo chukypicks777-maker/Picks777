@@ -111,28 +111,67 @@ test('cache compression is lossless, reads legacy JSON and rejects corrupt or ov
 
 test('shared compressed reports survive cold reads; simultaneous misses collapse and expire without starting AI', async t => {
   const { keys, traffic, outage } = fixture(t);
-  const key = 'sports:report-test', value = { aiAvailable: true, source: 'ESPN', factIds: Array.from({ length: 400 }, (_, i) => `fact-${i}`) };
+  const key = 'ai:report-test', value = { aiAvailable: true, source: 'ESPN', factIds: Array.from({ length: 400 }, (_, i) => `fact-${i}`) };
   await cachedData(key, 60, async () => value);
   clearCachePattern('');
   assert.deepEqual(await readCachedData(key), value);
   const before = traffic.length;
-  await Promise.all(Array.from({ length: 15 }, () => readCachedData('sports:no-report')));
+  await Promise.all(Array.from({ length: 15 }, () => readCachedData('ai:no-report')));
   assert.equal(traffic.length, before + 1);
-  assert.equal(await readCachedData('sports:no-report'), null);
+  assert.equal(await readCachedData('ai:no-report'), null);
   assert.equal(traffic.length, before + 1);
   let now = Date.now(); t.mock.method(Date, 'now', () => now);
   now += 15001;
-  assert.equal(await readCachedData('sports:no-report'), null);
+  assert.equal(await readCachedData('ai:no-report'), null);
   assert.equal(traffic.length, before + 2);
-  await cachedData('sports:no-report', 60, async () => value);
-  assert.deepEqual(await readCachedData('sports:no-report'), value, 'A write invalidates a local miss');
-  keys.set('picks:v2:cache:sports:legacy', JSON.stringify({ value: { odds: null }, expires: now + 1000 }));
-  assert.deepEqual(await cachedData('sports:legacy', 60, () => { throw new Error('Must use existing cache'); }), { odds: null });
+  await cachedData('ai:no-report', 60, async () => value);
+  assert.deepEqual(await readCachedData('ai:no-report'), value, 'A write invalidates a local miss');
+  keys.set('picks:v2:cache:ai:legacy', JSON.stringify({ value: { odds: null }, expires: now + 1000 }));
+  assert.deepEqual(await cachedData('ai:legacy', 60, () => { throw new Error('Must use existing cache'); }), { odds: null });
   now += 1001;
-  assert.equal(await readCachedData('sports:legacy'), null, 'No stale report after expiry');
-  outage(true); assert.equal(await readCachedData('sports:recover'), null);
-  outage(false); keys.set('picks:v2:cache:sports:recover', JSON.stringify({ value, expires: now + 1000 }));
-  assert.deepEqual(await readCachedData('sports:recover'), value, 'An outage is not cached as absence');
+  assert.equal(await readCachedData('ai:legacy'), null, 'No stale report after expiry');
+  outage(true); assert.equal(await readCachedData('ai:recover'), null);
+  outage(false); keys.set('picks:v2:cache:ai:recover', JSON.stringify({ value, expires: now + 1000 }));
+  assert.deepEqual(await readCachedData('ai:recover'), value, 'An outage is not cached as absence');
+});
+
+test('repeated logins and logouts do not rewrite the access database; session reads omit device lists', async t => {
+  process.env.SESSION_SECRET = 'bandwidth-test-session-secret-at-least-32-characters';
+  const filler = Array.from({ length: 40 }, (_, i) => ({ id: `other-${i}`, email: `other-${i}@example.invalid`, devices: Array.from({ length: 10 }, (_, d) => `device-${i}-${d}`) }));
+  const { keys, traffic } = fixture(t, { users: filler, codes: [] });
+  const writes = () => traffic.filter(item => ['EVAL', 'EVALSHA'].includes(item.command) && item.requestBytes > 2000).length;
+  const user = await storage.upsertGoogleUser({ googleId: 'same-google', email: 'same@example.invalid', name: 'Igual', deviceId: 'device-a' });
+  const afterFirst = writes();
+  assert.ok(afterFirst >= 1, 'A new account is stored');
+  await storage.upsertGoogleUser({ googleId: 'same-google', email: 'same@example.invalid', name: 'Igual', deviceId: 'device-a' });
+  assert.equal(writes(), afterFirst, 'An unchanged login only reads');
+  for (let i = 0; i < 15; i++) await storage.upsertGoogleUser({ googleId: 'same-google', email: 'same@example.invalid', name: 'Igual', deviceId: `device-${i}` });
+  const stored = JSON.parse(keys.get('picks:v2:access')).users.find(item => item.id === user.id);
+  assert.equal(stored.devices.length, 10, 'Device history is bounded');
+  assert.equal(stored.devices.at(-1), 'device-14');
+  await storage.revokeSession('session-1', Date.now() + 86400000);
+  const afterLogout = writes();
+  await storage.revokeSession('session-1', Date.now() + 86400000);
+  await storage.revokeSession('session-1', Date.now() + 86400000);
+  assert.equal(writes(), afterLogout, 'Replaying a revoked cookie does not upload the database again');
+  assert.equal(await storage.isSessionRevoked('session-1'), true);
+  const access = await storage.getSessionAccess('fresh-session', user.id);
+  assert.equal(access.user.id, user.id);
+  assert.equal(access.user.devices, undefined, 'Authorization reads do not transfer device lists');
+});
+
+test('short-lived provider data stays in memory; only opted-in immutable data uses Redis', async t => {
+  const { keys, traffic } = fixture(t);
+  const calendar = { events: Array.from({ length: 200 }, (_, i) => ({ id: i, name: 'Calendario público' })) };
+  let loads = 0;
+  for (let i = 0; i < 5; i++) assert.deepEqual(await cachedData('scoreboard:test', 60, async () => { loads++; return calendar; }), calendar);
+  assert.equal(loads, 1, 'Memory serves repeated reads');
+  assert.equal(traffic.length, 0, 'A 60-second provider calendar never costs Redis bandwidth');
+  assert.equal([...keys.keys()].some(key => key.includes('scoreboard:test')), false);
+  await cachedData('historical-summary:test', 3600, async () => calendar, { persist: true });
+  assert.deepEqual(traffic.map(item => item.command), ['GET', 'SET']);
+  clearCachePattern('');
+  assert.deepEqual(await cachedData('historical-summary:test', 3600, () => { throw new Error('Must read the stored copy'); }, { persist: true }), calendar);
 });
 
 test('compact historical summaries preserve measured zeros, missing values, halves and placeholder detection', () => {

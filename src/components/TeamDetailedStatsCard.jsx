@@ -32,7 +32,9 @@ export default function TeamDetailedStatsCard({ stats, isHome }) {
     <footer className="text-slate-400 space-y-2">
       <p>Córners: {stats.avgCorners != null ? `${displayNumber(stats.avgCorners)} / p` : 'N/D'} · Amarillas: {stats.cards != null ? `${displayNumber(stats.cards)} / p` : 'N/D'} · Faltas: {stats.fouls != null ? `${displayNumber(stats.fouls)} / p` : 'N/D'}</p>
       <p>{stats.statsSource || 'Estadísticas de detalle verificadas'} · Muestra córners: {stats.sampleSizes?.corners ?? 'N/D'}; tarjetas: {stats.sampleSizes?.cards ?? 'N/D'}.</p>
-      <p>Las probabilidades son estimaciones Poisson; su precisión no está calibrada con resultados futuros.</p>
+      <p>{stats.expectedCorners != null
+        ? `Córners esperados ante este rival: ${displayNumber(stats.expectedCorners)} (ratings de la liga, binomial negativa). Estimaciones previas; no garantizan resultados.`
+        : 'Las probabilidades son estimaciones Poisson; su precisión no está calibrada con resultados futuros.'}</p>
     </footer>
   </article>;
 }

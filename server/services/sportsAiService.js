@@ -1,16 +1,13 @@
-import { createHash } from 'node:crypto';
-import { generateGroundedAiReport } from './aiService.js';
-import { cachedData, readCachedData } from './dataCache.js';
+import { generateGroundedAiReport, readGroundedAiReport } from './aiService.js';
 import { sportWinnerPick } from '../../src/utils/sportPicks.js';
 
-export function sportsReportKey(match) {
-  // Poll timestamps are not sporting facts; scores, samples and quotes are.
-  const facts = [match.id, match.sport, match.status, match.kickoff, match.homeTeam?.id, match.awayTeam?.id,
-    match.homeTeam?.name, match.awayTeam?.name, match.liveScore, match.finalScore, match.odds, match.oddsProvider, match.analysis];
-  return 'ai:sports-report:v1:' + createHash('sha256').update(JSON.stringify(facts)).digest('hex');
+// A stored AI selection is re-rendered with the current calendar, quotes and
+// analysis, so poll timestamps never create a second paid request.
+export async function readSportsAiReport(match) {
+  if (!match?.homeTeam || !match?.awayTeam) return null;
+  const { facts, baseline } = sportsReportInputs(match);
+  return readGroundedAiReport(match, facts, baseline);
 }
-
-export const readSportsAiReport = match => readCachedData(sportsReportKey(match));
 
 export function sportsReportFacts(match) {
   const a = match.analysis || {}, home = match.homeTeam.name, away = match.awayTeam.name;
@@ -40,15 +37,17 @@ export function sportsReportFacts(match) {
   return facts;
 }
 
-export async function generateAiSportsReport(match, options = {}) {
+export function sportsReportInputs(match) {
   const facts = sportsReportFacts(match), pick = sportWinnerPick(match), a = match.analysis || {};
   const baseline = { aiAvailable: false, modelUsed: null, generatedAt: new Date().toISOString(), source: match.source, sourceUrl: match.sourceUrl,
     dataFetchedAt: match.fetchedAt, probabilities: a.winner, topPick: pick, facts: facts.map(fact => fact.text),
     analysisSections: { dataVerification: facts.find(fact => fact.id === 'sample').text, verdict: pick ? `${pick.selection}: ${pick.probability}% estimado.` : 'Sin datos suficientes para un ganador.' },
     narrativeAnalysis: facts.map(fact => fact.text).join('\n\n'), aiStatus: 'Cálculo estadístico disponible; proveedor de IA sin configurar.',
     limitations: facts.find(fact => fact.id === 'limits').text };
-  // Retain completed work. The key includes the entire statistical input, so a
-  // new result, participant, quote or sample retrieves a different report.
-  const ttl = match.status === 'LIVE' || match.status === 'SCHEDULED' && Date.parse(match.kickoff) <= Date.now() ? 30 : 86400;
-  return cachedData(sportsReportKey(match), ttl, () => generateGroundedAiReport(match, facts, baseline, options), { forceRefresh: Boolean(options.forceRefresh) });
+  return { facts, baseline };
+}
+
+export async function generateAiSportsReport(match, options = {}) {
+  const { facts, baseline } = sportsReportInputs(match);
+  return generateGroundedAiReport(match, facts, baseline, options);
 }

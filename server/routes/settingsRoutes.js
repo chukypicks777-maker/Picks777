@@ -1,7 +1,7 @@
 import express from 'express';
 import { requireAdmin } from '../session.js';
 import { storage, maskApiKey } from '../storage.js';
-import { fetchProviderModels, testAiConnection, getEffectiveAiConfig } from '../services/aiService.js';
+import { fetchProviderModels, testAiConnection, getEffectiveAiConfig, forgetAiConfig } from '../services/aiService.js';
 import { clearCachePattern } from '../services/dataCache.js';
 import { resolveAiConfig } from '../security.js';
 
@@ -126,6 +126,7 @@ router.post('/update', async (req, res) => {
     });
 
     // Limpia el caché de reportes previos para que usen el nuevo motor
+    forgetAiConfig();
     clearCachePattern('ai:');
 
     res.json({

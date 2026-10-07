@@ -1,0 +1,1301 @@
+
+> proyecto-picks-apuesta@1.1.4 test
+> node --import ./tests/setup.js --test tests/*.test.js
+
+TAP version 13
+# Subtest: logout revokes the original cookie; deleting an account requires its verified identity and removes data
+ok 1 - logout revokes the original cookie; deleting an account requires its verified identity and removes data
+  ---
+  duration_ms: 1783.191
+  type: 'test'
+  ...
+# Subtest: production API fails closed when security configuration is missing
+ok 2 - production API fails closed when security configuration is missing
+  ---
+  duration_ms: 25.8466
+  type: 'test'
+  ...
+# Subtest: Vercel refuses authentication and protected APIs without durable storage
+ok 3 - Vercel refuses authentication and protected APIs without durable storage
+  ---
+  duration_ms: 47.2966
+  type: 'test'
+  ...
+# Subtest: deleted identities and VIP codes cannot be resurrected from signed cookies; storage outages fail closed
+ok 4 - deleted identities and VIP codes cannot be resurrected from signed cookies; storage outages fail closed
+  ---
+  duration_ms: 73.1616
+  type: 'test'
+  ...
+# Subtest: one AI selection serves every member; reading it costs no quota and the batch read never calls the provider
+ok 5 - one AI selection serves every member; reading it costs no quota and the batch read never calls the provider
+  ---
+  duration_ms: 2661.7891
+  type: 'test'
+  ...
+# Subtest: calendar polls return the lean list view and unknown fixtures cannot force repeated provider refreshes
+ok 6 - calendar polls return the lean list view and unknown fixtures cannot force repeated provider refreshes
+  ---
+  duration_ms: 2246.4804
+  type: 'test'
+  ...
+# Subtest: a fixture already being analyzed by another instance waits for that selection instead of paying twice
+ok 7 - a fixture already being analyzed by another instance waits for that selection instead of paying twice
+  ---
+  duration_ms: 3067.0531
+  type: 'test'
+  ...
+# Subtest: large JSON responses are gzip-compressed off Vercel and left to the CDN on Vercel
+ok 8 - large JSON responses are gzip-compressed off Vercel and left to the CDN on Vercel
+  ---
+  duration_ms: 73.5017
+  type: 'test'
+  ...
+# [aiService] Candidate model test-model returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4.1 returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-chat returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4-flash returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model test-model returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4.1 returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-chat returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4-flash returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model test-model returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4.1 returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-chat returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4-flash returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model test-model returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4.1 returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-chat returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4-flash returned an invalid fact selection. Trying next candidate...
+# Subtest: AI cannot inject made-up probabilities, scores, tactics, odds, HTML or unauthorized fact IDs
+ok 9 - AI cannot inject made-up probabilities, scores, tactics, odds, HTML or unauthorized fact IDs
+  ---
+  duration_ms: 2624.3427
+  type: 'test'
+  ...
+# Subtest: saved credentials are reused only for the same provider and normalized API base
+ok 10 - saved credentials are reused only for the same provider and normalized API base
+  ---
+  duration_ms: 8.4554
+  type: 'test'
+  ...
+# Subtest: catalog errors remain errors and never become invented models or balances
+ok 11 - catalog errors remain errors and never become invented models or balances
+  ---
+  duration_ms: 107.3022
+  type: 'test'
+  ...
+# Subtest: connection test requires real final text, preserves model and makes one request
+ok 12 - connection test requires real final text, preserves model and makes one request
+  ---
+  duration_ms: 10.7302
+  type: 'test'
+  ...
+# Subtest: Claude uses Messages while Gemini uses its native API and excludes thought text
+ok 13 - Claude uses Messages while Gemini uses its native API and excludes thought text
+  ---
+  duration_ms: 5.7917
+  type: 'test'
+  ...
+# Subtest: WAF, quota, auth, timeout and malformed responses are not success and do not retry another protocol
+ok 14 - WAF, quota, auth, timeout and malformed responses are not success and do not retry another protocol
+  ---
+  duration_ms: 19.4107
+  type: 'test'
+  ...
+# Subtest: custom reasoning APIs receive exactly one token limit and keep their path
+ok 15 - custom reasoning APIs receive exactly one token limit and keep their path
+  ---
+  duration_ms: 3.9334
+  type: 'test'
+  ...
+# Subtest: private environment default serves as fallback when storage has no key and saved storage takes precedence
+ok 16 - private environment default serves as fallback when storage has no key and saved storage takes precedence
+  ---
+  duration_ms: 20.2313
+  type: 'test'
+  ...
+# Subtest: settings HTTP flow saves, reopens and tests the same key; provider switches never reuse it
+ok 17 - settings HTTP flow saves, reopens and tests the same key; provider switches never reuse it
+  ---
+  duration_ms: 2412.9683
+  type: 'test'
+  ...
+# Subtest: a published odds change or small probability change invalidates a cached report
+ok 18 - a published odds change or small probability change invalidates a cached report
+  ---
+  duration_ms: 5.0816
+  type: 'test'
+  ...
+# Subtest: computeMatchFingerprint is immune to background polling timestamps
+ok 19 - computeMatchFingerprint is immune to background polling timestamps
+  ---
+  duration_ms: 40.7207
+  type: 'test'
+  ...
+# Subtest: analysis cache persists across re-opens and polling updates
+ok 20 - analysis cache persists across re-opens and polling updates
+  ---
+  duration_ms: 1.7682
+  type: 'test'
+  ...
+# Subtest: analysis cache invalidates when a live goal is scored or status changes
+ok 21 - analysis cache invalidates when a live goal is scored or status changes
+  ---
+  duration_ms: 0.7737
+  type: 'test'
+  ...
+# Subtest: setCachedAnalysis safely merges partial updates without deleting existing report
+ok 22 - setCachedAnalysis safely merges partial updates without deleting existing report
+  ---
+  duration_ms: 1.1395
+  type: 'test'
+  ...
+# Subtest: removeCachedAnalysis and clearAllAnalysisCache properly evict cached records
+ok 23 - removeCachedAnalysis and clearAllAnalysisCache properly evict cached records
+  ---
+  duration_ms: 1.8801
+  type: 'test'
+  ...
+# Subtest: analysis cache invalidates when requestedModel differs or AI is configured over non-AI baseline
+ok 24 - analysis cache invalidates when requestedModel differs or AI is configured over non-AI baseline
+  ---
+  duration_ms: 1.0751
+  type: 'test'
+  ...
+# Subtest: analysis cache preserves reports when predictedScore is null or N/D without infinite loops
+ok 25 - analysis cache preserves reports when predictedScore is null or N/D without infinite loops
+  ---
+  duration_ms: 0.9118
+  type: 'test'
+  ...
+# Subtest: analysis cache invalidates changed live probabilities even when the score is unchanged
+ok 26 - analysis cache invalidates changed live probabilities even when the score is unchanged
+  ---
+  duration_ms: 1.3991
+  type: 'test'
+  ...
+# Subtest: completed scheduled reports survive long queues while live reports expire within thirty seconds
+ok 27 - completed scheduled reports survive long queues while live reports expire within thirty seconds
+  ---
+  duration_ms: 11.285
+  type: 'test'
+  ...
+# Subtest: a scheduled report survives a long queue, invalidates changed facts and has bounded retention
+ok 28 - a scheduled report survives a long queue, invalidates changed facts and has bounded retention
+  ---
+  duration_ms: 3.2219
+  type: 'test'
+  ...
+# Subtest: localStorage persistence allows retrieval across mock browser sessions
+ok 29 - localStorage persistence allows retrieval across mock browser sessions
+  ---
+  duration_ms: 37.2997
+  type: 'test'
+  ...
+# Subtest: computeMatchFingerprint is identical whether probabilities are attached at root or model
+ok 30 - computeMatchFingerprint is identical whether probabilities are attached at root or model
+  ---
+  duration_ms: 1.6969
+  type: 'test'
+  ...
+# Subtest: backend cachedData persists ai: keys to disk cache across in-memory wipes and isolates deletion
+ok 31 - backend cachedData persists ai: keys to disk cache across in-memory wipes and isolates deletion
+  ---
+  duration_ms: 164.2068
+  type: 'test'
+  ...
+# Subtest: Apple access and mobile exchange require project-verified Apple identity and preserve account-bound VIP
+ok 32 - Apple access and mobile exchange require project-verified Apple identity and preserve account-bound VIP
+  ---
+  duration_ms: 1424.0262
+  type: 'test'
+  ...
+# Subtest: named fixtures do not create unobserved historical statistics or sample sizes
+ok 33 - named fixtures do not create unobserved historical statistics or sample sizes
+  ---
+  duration_ms: 12.8712
+  type: 'test'
+  ...
+# Subtest: market model rejects invalid percentages and normalizes complete markets and complements
+ok 34 - market model rejects invalid percentages and normalizes complete markets and complements
+  ---
+  duration_ms: 13.7173
+  type: 'test'
+  ...
+# Subtest: one published outcome cannot become a 100 percent favorite
+ok 35 - one published outcome cannot become a 100 percent favorite
+  ---
+  duration_ms: 10.7187
+  type: 'test'
+  ...
+# Subtest: extreme but finite goal markets stay monotonic and impossible BTTS inputs are rejected
+ok 36 - extreme but finite goal markets stay monotonic and impossible BTTS inputs are rejected
+  ---
+  duration_ms: 99.1775
+  type: 'test'
+  ...
+# Subtest: custom AI hosts cannot send requests to arbitrary domains
+ok 37 - custom AI hosts cannot send requests to arbitrary domains
+  ---
+  duration_ms: 3.622
+  type: 'test'
+  ...
+# Subtest: Android release and APK require server-validated owner role
+ok 38 - Android release and APK require server-validated owner role
+  ---
+  duration_ms: 2887.6527
+  type: 'test'
+  ...
+# Subtest: isMatchAnalyzed and getBatchAnalyzedStatus accurately track autonomous analysis status
+ok 39 - isMatchAnalyzed and getBatchAnalyzedStatus accurately track autonomous analysis status
+  ---
+  duration_ms: 17.5387
+  type: 'test'
+  ...
+# Subtest: enrichHistoricalStats backfills missing standings from verified sample history
+ok 40 - enrichHistoricalStats backfills missing standings from verified sample history
+  ---
+  duration_ms: 2790.1708
+  type: 'test'
+  ...
+# Subtest: enrichMatchWithRealData recalculates model and aiPick when forceRefresh is true
+ok 41 - enrichMatchWithRealData recalculates model and aiPick when forceRefresh is true
+  ---
+  duration_ms: 800.8226
+  type: 'test'
+  ...
+# Subtest: generateAiMatchReport grounds report on real match stats, odds, and returns deep analysis metadata
+ok 42 - generateAiMatchReport grounds report on real match stats, odds, and returns deep analysis metadata
+  ---
+  duration_ms: 419.2632
+  type: 'test'
+  ...
+# Subtest: MatchDetailModal and mobile.css enforce mobile close button, sticky header and confirmation badge
+ok 43 - MatchDetailModal and mobile.css enforce mobile close button, sticky header and confirmation badge
+  ---
+  duration_ms: 49.9947
+  type: 'test'
+  ...
+# Subtest: AutonomousAiBar keeps Owner controls hidden and retains session loop locks
+ok 44 - AutonomousAiBar keeps Owner controls hidden and retains session loop locks
+  ---
+  duration_ms: 1.6351
+  type: 'test'
+  ...
+# Subtest: MatchDetailModal restricts retry and regeneration buttons exclusively to Owner
+ok 45 - MatchDetailModal restricts retry and regeneration buttons exclusively to Owner
+  ---
+  duration_ms: 27.3407
+  type: 'test'
+  ...
+# Subtest: MatchCard preserves quantitative statistics, banker picks, and defines modelName and verifiedAiPick
+ok 46 - MatchCard preserves quantitative statistics, banker picks, and defines modelName and verifiedAiPick
+  ---
+  duration_ms: 1.1056
+  type: 'test'
+  ...
+# Subtest: Arsenal vs Lille Champions League early stage: deriveCalibratedPoissonModel derives coherent ladder and predicted score
+ok 47 - Arsenal vs Lille Champions League early stage: deriveCalibratedPoissonModel derives coherent ladder and predicted score
+  ---
+  duration_ms: 18.2625
+  type: 'test'
+  ...
+# Subtest: fillPoissonGoalLadder fills missing lines when over25 is 59%
+ok 48 - fillPoissonGoalLadder fills missing lines when over25 is 59%
+  ---
+  duration_ms: 2.4008
+  type: 'test'
+  ...
+# Subtest: getCoherentPredictedScore resolves calculated score and never returns N/D for populated matches
+ok 49 - getCoherentPredictedScore resolves calculated score and never returns N/D for populated matches
+  ---
+  duration_ms: 5.5674
+  type: 'test'
+  ...
+# Subtest: parseEspnEvent automatically calibrates model and predictedScore when tournament gamesPlayed < 5 but odds exist
+ok 50 - parseEspnEvent automatically calibrates model and predictedScore when tournament gamesPlayed < 5 but odds exist
+  ---
+  duration_ms: 26.2103
+  type: 'test'
+  ...
+# Subtest: generateAiMatchReport includes calibrated predictedScore and complete analysis for Champions League fixture
+ok 51 - generateAiMatchReport includes calibrated predictedScore and complete analysis for Champions League fixture
+  ---
+  duration_ms: 8600.7526
+  type: 'test'
+  ...
+# Subtest: solvePoissonLambdaFromUnder25 is robust against decimal (0.41) and percentage (41) inputs
+ok 52 - solvePoissonLambdaFromUnder25 is robust against decimal (0.41) and percentage (41) inputs
+  ---
+  duration_ms: 1.2994
+  type: 'test'
+  ...
+# Subtest: fillPoissonGoalLadder computes BTTS probabilities and preserves complementary bounds
+ok 53 - fillPoissonGoalLadder computes BTTS probabilities and preserves complementary bounds
+  ---
+  duration_ms: 0.7615
+  type: 'test'
+  ...
+# Subtest: deriveCalibratedPoissonModel returns null when zero data is present without inventing numbers
+ok 54 - deriveCalibratedPoissonModel returns null when zero data is present without inventing numbers
+  ---
+  duration_ms: 0.6303
+  type: 'test'
+  ...
+# Subtest: Project version is consistently current release across all configuration and client manifest files
+ok 55 - Project version is consistently current release across all configuration and client manifest files
+  ---
+  duration_ms: 8.5289
+  type: 'test'
+  ...
+# Subtest: Poisson pipeline rejects missing data: getCoherentPredictedScore returns N/D and sample sizes are null without inventing 1 - 1 or 5 games
+ok 56 - Poisson pipeline rejects missing data: getCoherentPredictedScore returns N/D and sample sizes are null without inventing 1 - 1 or 5 games
+  ---
+  duration_ms: 8.4468
+  type: 'test'
+  ...
+# Subtest: Villarreal vs Napoli UCL match derives goal projections but never invents unobserved corners or cards
+ok 57 - Villarreal vs Napoli UCL match derives goal projections but never invents unobserved corners or cards
+  ---
+  duration_ms: 8.8156
+  type: 'test'
+  ...
+# Subtest: provider keys are removed from legacy browser storage and never persisted by new saves
+ok 58 - provider keys are removed from legacy browser storage and never persisted by new saves
+  ---
+  duration_ms: 9.1272
+  type: 'test'
+  ...
+# Subtest: getContextualPick returns Over 2.5 Goals when marketFilter is over
+ok 59 - getContextualPick returns Over 2.5 Goals when marketFilter is over
+  ---
+  duration_ms: 13.0919
+  type: 'test'
+  ...
+# Subtest: getContextualPick returns BTTS Yes when marketFilter is btts
+ok 60 - getContextualPick returns BTTS Yes when marketFilter is btts
+  ---
+  duration_ms: 1.0269
+  type: 'test'
+  ...
+# Subtest: getContextualPick calculates estimated odds when published odds are absent
+ok 61 - getContextualPick calculates estimated odds when published odds are absent
+  ---
+  duration_ms: 2.6953
+  type: 'test'
+  ...
+# Subtest: deriveSeasonPoisson derives over25 and btts probabilities when model is missing
+ok 62 - deriveSeasonPoisson derives over25 and btts probabilities when model is missing
+  ---
+  duration_ms: 1.0197
+  type: 'test'
+  ...
+# Subtest: getContextualPick returns null when probability is under 50% without falling back to banker pick
+ok 63 - getContextualPick returns null when probability is under 50% without falling back to banker pick
+  ---
+  duration_ms: 4.691
+  type: 'test'
+  ...
+# Subtest: getContextualPick derives over25 and btts from published odds when model probabilities are absent
+ok 64 - getContextualPick derives over25 and btts from published odds when model probabilities are absent
+  ---
+  duration_ms: 0.8991
+  type: 'test'
+  ...
+# Subtest: getContextualPick gracefully handles invalid or postponed matches
+ok 65 - getContextualPick gracefully handles invalid or postponed matches
+  ---
+  duration_ms: 0.6869
+  type: 'test'
+  ...
+# Subtest: missing provider data stays null; upcoming score is not 0–0
+ok 66 - missing provider data stays null; upcoming score is not 0–0
+  ---
+  duration_ms: 16.8279
+  type: 'test'
+  ...
+# Subtest: zero goals and points are preserved; postpone is not live
+ok 67 - zero goals and points are preserved; postpone is not live
+  ---
+  duration_ms: 1.1301
+  type: 'test'
+  ...
+# Subtest: real odds conversion and totals keep their exact market line
+ok 68 - real odds conversion and totals keep their exact market line
+  ---
+  duration_ms: 1.8578
+  type: 'test'
+  ...
+# Subtest: Poisson is normalized, preserves zero probabilities and does not manufacture confidence or odds
+ok 69 - Poisson is normalized, preserves zero probabilities and does not manufacture confidence or odds
+  ---
+  duration_ms: 94.8254
+  type: 'test'
+  ...
+# Subtest: H2H only contains completed direct fixtures, deduplicated and capped at 10
+ok 70 - H2H only contains completed direct fixtures, deduplicated and capped at 10
+  ---
+  duration_ms: 3.5671
+  type: 'test'
+  ...
+# Subtest: live box scores retain genuine zero values without season-average substitution
+ok 71 - live box scores retain genuine zero values without season-average substitution
+  ---
+  duration_ms: 11.5026
+  type: 'test'
+  ...
+# Subtest: filters use the user timezone including DST tomorrow
+ok 72 - filters use the user timezone including DST tomorrow
+  ---
+  duration_ms: 78.6986
+  type: 'test'
+  ...
+# Subtest: parlays never fall back to fake fixtures or clamp probabilities
+ok 73 - parlays never fall back to fake fixtures or clamp probabilities
+  ---
+  duration_ms: 2.2572
+  type: 'test'
+  ...
+# Subtest: codes persist, activate once, track sessions and revoke
+ok 74 - codes persist, activate once, track sessions and revoke
+  ---
+  duration_ms: 1474.8697
+  type: 'test'
+  ...
+# Subtest: AI without credentials returns an explicitly non-AI factual report
+ok 75 - AI without credentials returns an explicitly non-AI factual report
+  ---
+  duration_ms: 35.3289
+  type: 'test'
+  ...
+# Subtest: provider outage yields unavailable coverage and no example matches
+ok 76 - provider outage yields unavailable coverage and no example matches
+  ---
+  duration_ms: 488.3549
+  type: 'test'
+  ...
+# Subtest: HTTP session and owner flow, access persistence and revocation
+ok 77 - HTTP session and owner flow, access persistence and revocation
+  ---
+  duration_ms: 2552.1174
+  type: 'test'
+  ...
+# Subtest: unfilled all-zero ESPN boxscores cannot masquerade as observed corners, cards or fouls
+ok 78 - unfilled all-zero ESPN boxscores cannot masquerade as observed corners, cards or fouls
+  ---
+  duration_ms: 12.404
+  type: 'test'
+  ...
+# Subtest: goal sample size is independent of corners and never turns absent halves into zero scored goals
+ok 79 - goal sample size is independent of corners and never turns absent halves into zero scored goals
+  ---
+  duration_ms: 210.8703
+  type: 'test'
+  ...
+# Subtest: today standings cannot supply a supposedly pregame model for an already finished football fixture
+ok 80 - today standings cannot supply a supposedly pregame model for an already finished football fixture
+  ---
+  duration_ms: 4.3161
+  type: 'test'
+  ...
+# Subtest: fresh polling owns model, odds and timestamps even when cached enrichment contains old values
+ok 81 - fresh polling owns model, odds and timestamps even when cached enrichment contains old values
+  ---
+  duration_ms: 4.0039
+  type: 'test'
+  ...
+# Subtest: verified zero innings retain their sample without claiming deterministic future draws or unders
+ok 82 - verified zero innings retain their sample without claiming deterministic future draws or unders
+  ---
+  duration_ms: 20.7887
+  type: 'test'
+  ...
+# Subtest: MLB inning parser preserves unplayed innings and zeroes; no nine-inning default is invented
+ok 83 - MLB inning parser preserves unplayed innings and zeroes; no nine-inning default is invented
+  ---
+  duration_ms: 2.2051
+  type: 'test'
+  ...
+# Subtest: NPB inning tables require the same official fixture, team order and score totals
+ok 84 - NPB inning tables require the same official fixture, team order and score totals
+  ---
+  duration_ms: 8.7356
+  type: 'test'
+  ...
+# Subtest: a KBO score from today cannot falsely prove a match has finished
+ok 85 - a KBO score from today cannot falsely prove a match has finished
+  ---
+  duration_ms: 7.4564
+  type: 'test'
+  ...
+# Subtest: league history keeps regulation results, stoppage-time halves and unreported data as unknown
+ok 86 - league history keeps regulation results, stoppage-time halves and unreported data as unknown
+  ---
+  duration_ms: 110.1621
+  type: 'test'
+  ...
+# Subtest: a compact league model drives forecasts, recorded averages and lean calendar responses
+ok 87 - a compact league model drives forecasts, recorded averages and lean calendar responses
+  ---
+  duration_ms: 240.7425
+  type: 'test'
+  ...
+# Subtest: an old league model is served at once while a fresh one is built in the background; failures are not retried per request
+ok 88 - an old league model is served at once while a fresh one is built in the background; failures are not retried per request
+  ---
+  duration_ms: 234.1728
+  type: 'test'
+  ...
+# Subtest: strength ratings recover opponent-adjusted attack and defense from a balanced schedule
+ok 89 - strength ratings recover opponent-adjusted attack and defense from a balanced schedule
+  ---
+  duration_ms: 27.4055
+  type: 'test'
+  ...
+# Subtest: Dixon-Coles keeps total mass, supremacy and totals above 2.5 while adding draws
+ok 90 - Dixon-Coles keeps total mass, supremacy and totals above 2.5 while adding draws
+  ---
+  duration_ms: 7.2669
+  type: 'test'
+  ...
+# Subtest: market fitting reproduces quoted supremacy, totals and the draw-implied total
+ok 91 - market fitting reproduces quoted supremacy, totals and the draw-implied total
+  ---
+  duration_ms: 22.6057
+  type: 'test'
+  ...
+# Subtest: negative binomial counts keep their mean, overdispersion and complementary ladders
+ok 92 - negative binomial counts keep their mean, overdispersion and complementary ladders
+  ---
+  duration_ms: 1.7007
+  type: 'test'
+  ...
+# Subtest: forecasts keep quoted prices, derive coherent lines and add corners, cards and halves from league ratings
+ok 93 - forecasts keep quoted prices, derive coherent lines and add corners, cards and halves from league ratings
+  ---
+  duration_ms: 25.0816
+  type: 'test'
+  ...
+# Subtest: Google registration grants 3-day trial and preserves original expiration on re-login
+ok 94 - Google registration grants 3-day trial and preserves original expiration on re-login
+  ---
+  duration_ms: 1266.4981
+  type: 'test'
+  ...
+# Subtest: Expired 3-day trial blocks protected routes and unlocks upon valid VIP code redemption
+ok 95 - Expired 3-day trial blocks protected routes and unlocks upon valid VIP code redemption
+  ---
+  duration_ms: 1118.8154
+  type: 'test'
+  ...
+# Subtest: Master Admin Code can be redeemed to grant Owner privileges to Google user
+ok 96 - Master Admin Code can be redeemed to grant Owner privileges to Google user
+  ---
+  duration_ms: 1086.5405
+  type: 'test'
+  ...
+# Subtest: Upgrading active trial to VIP and logout clearing session
+ok 97 - Upgrading active trial to VIP and logout clearing session
+  ---
+  duration_ms: 1745.5254
+  type: 'test'
+  ...
+# Subtest: Owner privileges and MASTER code persist across subsequent Google logins
+ok 98 - Owner privileges and MASTER code persist across subsequent Google logins
+  ---
+  duration_ms: 1062.6191
+  type: 'test'
+  ...
+# Subtest: Re-login after trial has expired remains expired and blocked
+ok 99 - Re-login after trial has expired remains expired and blocked
+  ---
+  duration_ms: 422.1419
+  type: 'test'
+  ...
+# Subtest: Lens–Lyon uses the complete quoted market; goal lines follow the same quote instead of a five-game sample
+ok 100 - Lens–Lyon uses the complete quoted market; goal lines follow the same quote instead of a five-game sample
+  ---
+  duration_ms: 45.8558
+  type: 'test'
+  ...
+# Subtest: refreshing odds recalculates the winner and cannot recycle an old AI pick
+ok 101 - refreshing odds recalculates the winner and cannot recycle an old AI pick
+  ---
+  duration_ms: 49.534
+  type: 'test'
+  ...
+# Subtest: incomplete or cross-format football prices do not manufacture a complete market
+ok 102 - incomplete or cross-format football prices do not manufacture a complete market
+  ---
+  duration_ms: 78.2895
+  type: 'test'
+  ...
+# Subtest: published goal markets retain their own source, separate from the statistical winner
+ok 103 - published goal markets retain their own source, separate from the statistical winner
+  ---
+  duration_ms: 55.5896
+  type: 'test'
+  ...
+# Subtest: a current score or standings never creates a new pregame forecast after kickoff
+ok 104 - a current score or standings never creates a new pregame forecast after kickoff
+  ---
+  duration_ms: 22.2534
+  type: 'test'
+  ...
+# Subtest: a published over/under total adjusts modeled goal lines without moving the quoted winner
+ok 105 - a published over/under total adjusts modeled goal lines without moving the quoted winner
+  ---
+  duration_ms: 32.6855
+  type: 'test'
+  ...
+# Subtest: incompatible goal inputs cannot bypass the model guard through season-statistic fallbacks
+ok 106 - incompatible goal inputs cannot bypass the model guard through season-statistic fallbacks
+  ---
+  duration_ms: 49.1703
+  type: 'test'
+  ...
+# Subtest: KBO ties use unique matches and the same game cannot count twice in both team histories
+ok 107 - KBO ties use unique matches and the same game cannot count twice in both team histories
+  ---
+  duration_ms: 16.1893
+  type: 'test'
+  ...
+# Subtest: KBO two-way sportsbook prices are not attached to three-way model probabilities
+ok 108 - KBO two-way sportsbook prices are not attached to three-way model probabilities
+  ---
+  duration_ms: 2.5383
+  type: 'test'
+  ...
+# Subtest: the screenshot +176 is a correct conversion, while -110/-115 imply a different two-way market
+ok 109 - the screenshot +176 is a correct conversion, while -110/-115 imply a different two-way market
+  ---
+  duration_ms: 1.2271
+  type: 'test'
+  ...
+# Subtest: Poisson preserves the degenerate zero distribution and rejects absent rates
+ok 110 - Poisson preserves the degenerate zero distribution and rejects absent rates
+  ---
+  duration_ms: 5.9552
+  type: 'test'
+  ...
+# Subtest: 5.5 corners means six or more, and every ladder is bounded, monotonic and complementary across 401 rates
+ok 111 - 5.5 corners means six or more, and every ladder is bounded, monotonic and complementary across 401 rates
+  ---
+  duration_ms: 95.7571
+  type: 'test'
+  ...
+# Subtest: all score and goal markets come from the same untouched distribution across 121 team combinations
+ok 112 - all score and goal markets come from the same untouched distribution across 121 team combinations
+  ---
+  duration_ms: 913.625
+  type: 'test'
+  ...
+# Subtest: missing data never creates teams, scores, odds or picks; zero data stays zero
+ok 113 - missing data never creates teams, scores, odds or picks; zero data stays zero
+  ---
+  duration_ms: 22.8013
+  type: 'test'
+  ...
+# Subtest: half goals use verified split samples, preserve full total and reject small samples
+ok 114 - half goals use verified split samples, preserve full total and reject small samples
+  ---
+  duration_ms: 55.6107
+  type: 'test'
+  ...
+# Subtest: half parser rejects contradictory scores, extra time, unfinished and future records
+ok 115 - half parser rejects contradictory scores, extra time, unfinished and future records
+  ---
+  duration_ms: 1.9816
+  type: 'test'
+  ...
+# Subtest: historical clean sheet and BTTS rates require observations and never masquerade as Poisson estimates
+ok 116 - historical clean sheet and BTTS rates require observations and never masquerade as Poisson estimates
+  ---
+  duration_ms: 2.772
+  type: 'test'
+  ...
+# Subtest: getEffectiveOdds prefers real published odds, falls back to estimatedOdds from model, and preserves null on invalid data
+ok 117 - getEffectiveOdds prefers real published odds, falls back to estimatedOdds from model, and preserves null on invalid data
+  ---
+  duration_ms: 1.1812
+  type: 'test'
+  ...
+# Subtest: parlay candidates always provide finite effective odds > 1 when model probabilities exist
+ok 118 - parlay candidates always provide finite effective odds > 1 when model probabilities exist
+  ---
+  duration_ms: 3.9899
+  type: 'test'
+  ...
+# Subtest: getTop3Opportunities derives opportunities when probabilities are missing but published odds exist
+ok 119 - getTop3Opportunities derives opportunities when probabilities are missing but published odds exist
+  ---
+  duration_ms: 2.3679
+  type: 'test'
+  ...
+# Subtest: getTop3Opportunities falls back to highest-probability candidate or aiPick when probabilities are under 50%
+ok 120 - getTop3Opportunities falls back to highest-probability candidate or aiPick when probabilities are under 50%
+  ---
+  duration_ms: 1.2895
+  type: 'test'
+  ...
+# Subtest: mobile credential requires the original verifier and can be consumed exactly once
+ok 121 - mobile credential requires the original verifier and can be consumed exactly once
+  ---
+  duration_ms: 12.5264
+  type: 'test'
+  ...
+# Subtest: mobile request expires without extending its lifetime on confirmation
+ok 122 - mobile request expires without extending its lifetime on confirmation
+  ---
+  duration_ms: 3.7949
+  type: 'test'
+  ...
+# Subtest: HTTP mobile handshake rejects fake identity and CSRF, and returns the verified token only once
+ok 123 - HTTP mobile handshake rejects fake identity and CSRF, and returns the verified token only once
+  ---
+  duration_ms: 2224.115
+  type: 'test'
+  ...
+# Subtest: all modeled 1X2 and BTTS probabilities agree with the same score-generating distribution
+ok 124 - all modeled 1X2 and BTTS probabilities agree with the same score-generating distribution
+  ---
+  duration_ms: 101.6461
+  type: 'test'
+  ...
+# Subtest: an isolated winner price does not manufacture a winner distribution
+ok 125 - an isolated winner price does not manufacture a winner distribution
+  ---
+  duration_ms: 8.3674
+  type: 'test'
+  ...
+# Subtest: stopped or unknown matches cannot produce actionable banker picks
+ok 126 - stopped or unknown matches cannot produce actionable banker picks
+  ---
+  duration_ms: 1.0285
+  type: 'test'
+  ...
+# Subtest: GCD calculates the greatest common divisor correctly
+ok 127 - GCD calculates the greatest common divisor correctly
+  ---
+  duration_ms: 3.0948
+  type: 'test'
+  ...
+# Subtest: Decimal to American conversion adheres to exact sports betting standards
+ok 128 - Decimal to American conversion adheres to exact sports betting standards
+  ---
+  duration_ms: 2.3718
+  type: 'test'
+  ...
+# Subtest: Decimal to Fractional conversion produces simplified fractions with standard betting GCD
+ok 129 - Decimal to Fractional conversion produces simplified fractions with standard betting GCD
+  ---
+  duration_ms: 1.5061
+  type: 'test'
+  ...
+# Subtest: formatOdds dynamically routes between american, decimal, and fractional formats with alias support
+ok 130 - formatOdds dynamically routes between american, decimal, and fractional formats with alias support
+  ---
+  duration_ms: 1.1801
+  type: 'test'
+  ...
+# Subtest: oddsToProbability correctly inverts decimal odds into percentage
+ok 131 - oddsToProbability correctly inverts decimal odds into percentage
+  ---
+  duration_ms: 0.8598
+  type: 'test'
+  ...
+# Subtest: Navbar renders odds format selector visibly with Americano, Decimal and Fraccionario options
+ok 132 - Navbar renders odds format selector visibly with Americano, Decimal and Fraccionario options
+  ---
+  duration_ms: 882.147
+  type: 'test'
+  ...
+# Subtest: Version numbers are consistent across package.json, package-lock.json, App.jsx, public/sw.js and mobile.config.json
+ok 133 - Version numbers are consistent across package.json, package-lock.json, App.jsx, public/sw.js and mobile.config.json
+  ---
+  duration_ms: 42.7186
+  type: 'test'
+  ...
+# [aiService] Candidate model deepseek-v4.1 failed: HTTP 500: Solicitud rechazada.. Trying next candidate...
+# [aiService] Candidate model deepseek-chat failed: HTTP 500: Solicitud rechazada.. Trying next candidate...
+# [aiService] Candidate model deepseek-v4-flash failed: HTTP 500: Solicitud rechazada.. Trying next candidate...
+# Subtest: Owner retry and re-analysis bypasses rate limits, prevents 429, and handles forceRefresh without crashing
+ok 134 - Owner retry and re-analysis bypasses rate limits, prevents 429, and handles forceRefresh without crashing
+  ---
+  duration_ms: 3462.039
+  type: 'test'
+  ...
+# Subtest: isMatchAnalyzed and MatchDetailModal distinguish between verified AI analysis and baseline report
+ok 135 - isMatchAnalyzed and MatchDetailModal distinguish between verified AI analysis and baseline report
+  ---
+  duration_ms: 21.1359
+  type: 'test'
+  ...
+# Subtest: Owner can save VyceAI API key and deepseek-v4.1 model from settings panel even if AI_DEFAULT_CONFIG is invalid
+ok 136 - Owner can save VyceAI API key and deepseek-v4.1 model from settings panel even if AI_DEFAULT_CONFIG is invalid
+  ---
+  duration_ms: 2219.1192
+  type: 'test'
+  ...
+# Subtest: extractJsonFromAiResponse cleanly parses DeepSeek reasoning blocks, markdown fences and unescaped newlines
+ok 137 - extractJsonFromAiResponse cleanly parses DeepSeek reasoning blocks, markdown fences and unescaped newlines
+  ---
+  duration_ms: 8.6572
+  type: 'test'
+  ...
+# Subtest: adding different matches multiplies raw decimal odds without changing either pick
+ok 138 - adding different matches multiplies raw decimal odds without changing either pick
+  ---
+  duration_ms: 11.4962
+  type: 'test'
+  ...
+# Subtest: numeric and string match IDs replace or toggle one selection rather than multiply duplicates
+ok 139 - numeric and string match IDs replace or toggle one selection rather than multiply duplicates
+  ---
+  duration_ms: 1.736
+  type: 'test'
+  ...
+# Subtest: a refreshed odd updates the existing selection without adding a leg
+ok 140 - a refreshed odd updates the existing selection without adding a leg
+  ---
+  duration_ms: 1.0069
+  type: 'test'
+  ...
+# Subtest: replacing a selection still works when the ticket reaches its 20-match limit
+ok 141 - replacing a selection still works when the ticket reaches its 20-match limit
+  ---
+  duration_ms: 1.7537
+  type: 'test'
+  ...
+# Subtest: decimal commas keep their exact value across parsing, normalization and effective odds
+ok 142 - decimal commas keep their exact value across parsing, normalization and effective odds
+  ---
+  duration_ms: 6.6323
+  type: 'test'
+  ...
+# Subtest: successive batched actions use the latest ticket and removing or clearing resets its product
+ok 143 - successive batched actions use the latest ticket and removing or clearing resets its product
+  ---
+  duration_ms: 1.0256
+  type: 'test'
+  ...
+# Subtest: loading daily picks replaces the complete previous ticket and rejects malformed responses
+ok 144 - loading daily picks replaces the complete previous ticket and rejects malformed responses
+  ---
+  duration_ms: 2.2524
+  type: 'test'
+  ...
+# Subtest: invalid legs and invalid amounts never yield a fake neutral multiplier or payout
+ok 145 - invalid legs and invalid amounts never yield a fake neutral multiplier or payout
+  ---
+  duration_ms: 2.0389
+  type: 'test'
+  ...
+# Subtest: sports winners share the football ticket while preserving published and theoretical quotes
+ok 146 - sports winners share the football ticket while preserving published and theoretical quotes
+  ---
+  duration_ms: 17.4967
+  type: 'test'
+  ...
+# Subtest: sports never create parlay selections from missing forecasts, unknown rivals or expired games
+ok 147 - sports never create parlay selections from missing forecasts, unknown rivals or expired games
+  ---
+  duration_ms: 2.1105
+  type: 'test'
+  ...
+# Subtest: featured fixture never invents a score, 88 percent confidence or a quote from another pick
+ok 148 - featured fixture never invents a score, 88 percent confidence or a quote from another pick
+  ---
+  duration_ms: 161.0577
+  type: 'test'
+  ...
+# Subtest: ticker never invents a 0–0 score or announces an empty feed as live
+ok 149 - ticker never invents a 0–0 score or announces an empty feed as live
+  ---
+  duration_ms: 23.9375
+  type: 'test'
+  ...
+# Subtest: football cards and spotlight retain published 1X2 prices, avoid unquoted winner prices, and show dates for all statuses
+ok 150 - football cards and spotlight retain published 1X2 prices, avoid unquoted winner prices, and show dates for all statuses
+  ---
+  duration_ms: 335.3162
+  type: 'test'
+  ...
+# Subtest: probability display never turns unavailable data into 0% or animates false intermediate values
+ok 151 - probability display never turns unavailable data into 0% or animates false intermediate values
+  ---
+  duration_ms: 13.0109
+  type: 'test'
+  ...
+# Subtest: HalfGoalsSection locks 1st half with VIP overlay when isVip=false and unlocks when isVip=true
+ok 152 - HalfGoalsSection locks 1st half with VIP overlay when isVip=false and unlocks when isVip=true
+  ---
+  duration_ms: 66.3599
+  type: 'test'
+  ...
+# Subtest: OverUnderGroupedSection locks LADO OVERS with VIP overlay when isVip=false and unlocks when isVip=true
+ok 153 - OverUnderGroupedSection locks LADO OVERS with VIP overlay when isVip=false and unlocks when isVip=true
+  ---
+  duration_ms: 173.6617
+  type: 'test'
+  ...
+# Subtest: OverUnderGroupedSection reconstructs goal ladder while preserving missing card data when feed only has over25
+ok 154 - OverUnderGroupedSection reconstructs goal ladder while preserving missing card data when feed only has over25
+  ---
+  duration_ms: 31.5259
+  type: 'test'
+  ...
+# Subtest: football renders the full requested corner and card ladders on both sides, preserving zero
+ok 155 - football renders the full requested corner and card ladders on both sides, preserving zero
+  ---
+  duration_ms: 36.7285
+  type: 'test'
+  ...
+# Subtest: the reported -138/+114 prices favour Padres after removing margin even when history favours Brewers
+ok 156 - the reported -138/+114 prices favour Padres after removing margin even when history favours Brewers
+  ---
+  duration_ms: 24.0021
+  type: 'test'
+  ...
+# Subtest: unrelated quote snapshots and incomplete prices never manufacture a market probability
+ok 157 - unrelated quote snapshots and incomplete prices never manufacture a market probability
+  ---
+  duration_ms: 2.2627
+  type: 'test'
+  ...
+# Subtest: baseball count predictions account for observed variance and finite samples, without clipping probabilities
+ok 158 - baseball count predictions account for observed variance and finite samples, without clipping probabilities
+  ---
+  duration_ms: 2.5549
+  type: 'test'
+  ...
+# Subtest: duplicated or contradictory inning records are unavailable instead of producing extreme totals
+ok 159 - duplicated or contradictory inning records are unavailable instead of producing extreme totals
+  ---
+  duration_ms: 16.832
+  type: 'test'
+  ...
+# Subtest: MLB calendar, banker ranking and hydrated details all recalculate from the same exact published prices
+ok 160 - MLB calendar, banker ranking and hydrated details all recalculate from the same exact published prices
+  ---
+  duration_ms: 406.8346
+  type: 'test'
+  ...
+# Subtest: Lua access projections preserve existing records and return only the requested account
+ok 161 - Lua access projections preserve existing records and return only the requested account
+  ---
+  duration_ms: 492.9542
+  type: 'test'
+  ...
+# Subtest: one compact Redis read authorizes a VIP and immediately observes revocation, deletion and outages
+ok 162 - one compact Redis read authorizes a VIP and immediately observes revocation, deletion and outages
+  ---
+  duration_ms: 649.1273
+  type: 'test'
+  ...
+# Subtest: cache compression is lossless, reads legacy JSON and rejects corrupt or oversized cache data
+ok 163 - cache compression is lossless, reads legacy JSON and rejects corrupt or oversized cache data
+  ---
+  duration_ms: 4781.0323
+  type: 'test'
+  ...
+# Subtest: shared compressed reports survive cold reads; simultaneous misses collapse and expire without starting AI
+ok 164 - shared compressed reports survive cold reads; simultaneous misses collapse and expire without starting AI
+  ---
+  duration_ms: 96.668
+  type: 'test'
+  ...
+# Subtest: repeated logins and logouts do not rewrite the access database; session reads omit device lists
+ok 165 - repeated logins and logouts do not rewrite the access database; session reads omit device lists
+  ---
+  duration_ms: 266.5234
+  type: 'test'
+  ...
+# Subtest: short-lived provider data stays in memory; only opted-in immutable data uses Redis
+ok 166 - short-lived provider data stays in memory; only opted-in immutable data uses Redis
+  ---
+  duration_ms: 28.9196
+  type: 'test'
+  ...
+# Subtest: compact historical summaries preserve measured zeros, missing values, halves and placeholder detection
+ok 167 - compact historical summaries preserve measured zeros, missing values, halves and placeholder detection
+  ---
+  duration_ms: 5.4587
+  type: 'test'
+  ...
+# Subtest: Vercel KV names support secure production and Redis commands without mixing credentials
+ok 168 - Vercel KV names support secure production and Redis commands without mixing credentials
+  ---
+  duration_ms: 119.9578
+  type: 'test'
+  ...
+# Subtest: trial ends at exactly 72 hours and every protected API rejects the original cookie
+ok 169 - trial ends at exactly 72 hours and every protected API rejects the original cookie
+  ---
+  duration_ms: 2143.2708
+  type: 'test'
+  ...
+# Subtest: deleting and recreating an identity cannot restart its trial or restore consumed VIP
+ok 170 - deleting and recreating an identity cannot restart its trial or restore consumed VIP
+  ---
+  duration_ms: 1120.5623
+  type: 'test'
+  ...
+# Subtest: analysis rejects a browser-invented fixture when it does not exist in the provider feed
+ok 171 - analysis rejects a browser-invented fixture when it does not exist in the provider feed
+  ---
+  duration_ms: 191.5772
+  type: 'test'
+  ...
+# Subtest: all specialized feeds reject invalid filters instead of returning unrelated fixtures
+ok 172 - all specialized feeds reject invalid filters instead of returning unrelated fixtures
+  ---
+  duration_ms: 930.7376
+  type: 'test'
+  ...
+# Subtest: social validation blocks scripts, credentials, deceptive domains and duplicate groups
+ok 173 - social validation blocks scripts, credentials, deceptive domains and duplicate groups
+  ---
+  duration_ms: 6.2069
+  type: 'test'
+  ...
+# Subtest: AI destinations reject SSRF, credentials, queries and type confusion
+ok 174 - AI destinations reject SSRF, credentials, queries and type confusion
+  ---
+  duration_ms: 8.3844
+  type: 'test'
+  ...
+# Subtest: group writes persist and concurrent stale edits do not overwrite a newer save
+ok 175 - group writes persist and concurrent stale edits do not overwrite a newer save
+  ---
+  duration_ms: 268.3294
+  type: 'test'
+  ...
+# Subtest: identity verification fails closed for unsigned tokens, wrong audiences and unverified email
+ok 176 - identity verification fails closed for unsigned tokens, wrong audiences and unverified email
+  ---
+  duration_ms: 89.6151
+  type: 'test'
+  ...
+# Subtest: HTTP groups: anonymous/VIP/header forgery/CSRF denied; Owner succeeds; public read exposes only groups
+ok 177 - HTTP groups: anonymous/VIP/header forgery/CSRF denied; Owner succeeds; public read exposes only groups
+  ---
+  duration_ms: 2042.6073
+  type: 'test'
+  ...
+# Subtest: production refuses default secrets and Vercel without persistent storage
+ok 178 - production refuses default secrets and Vercel without persistent storage
+  ---
+  duration_ms: 3.0604
+  type: 'test'
+  ...
+# Subtest: session storage outages report 503 without revoking or clearing the cookie; recovery restores access
+ok 179 - session storage outages report 503 without revoking or clearing the cookie; recovery restores access
+  ---
+  duration_ms: 391.3741
+  type: 'test'
+  ...
+# Subtest: sports APIs require a session, keep the women feed separate, filter leagues, enrich any basketball match and report provider outages
+ok 180 - sports APIs require a session, keep the women feed separate, filter leagues, enrich any basketball match and report provider outages
+  ---
+  duration_ms: 2152.4439
+  type: 'test'
+  ...
+# Subtest: Banqueros ranks at most ten future winners, with away favourites, stable ties and unavailable games excluded
+ok 181 - Banqueros ranks at most ten future winners, with away favourites, stable ties and unavailable games excluded
+  ---
+  duration_ms: 59.5221
+  type: 'test'
+  ...
+# [aiService] Candidate model test-sports-model returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4.1 returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-chat returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4-flash returned an invalid fact selection. Trying next candidate...
+# Subtest: sports AI uses the configured provider, rejects fabricated numbers and shares only matching factual reports
+ok 182 - sports AI uses the configured provider, rejects fabricated numbers and shares only matching factual reports
+  ---
+  duration_ms: 1756.5654
+  type: 'test'
+  ...
+# [aiService] Candidate model test-reselection-model returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4.1 returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-chat returned an invalid fact selection. Trying next candidate...
+# [aiService] Candidate model deepseek-v4-flash returned an invalid fact selection. Trying next candidate...
+# Subtest: a copied fact catalog triggers one real re-selection request and is never silently accepted as AI analysis
+ok 183 - a copied fact catalog triggers one real re-selection request and is never silently accepted as AI analysis
+  ---
+  duration_ms: 404.1361
+  type: 'test'
+  ...
+# Subtest: tennis identity preserves published portraits and uses the real country flag when the provider omits a photo
+ok 184 - tennis identity preserves published portraits and uses the real country flag when the provider omits a photo
+  ---
+  duration_ms: 6.9502
+  type: 'test'
+  ...
+# Subtest: day and time share the viewer zone, date rollover is correct, and missing hours stay unconfirmed
+ok 185 - day and time share the viewer zone, date rollover is correct, and missing hours stay unconfirmed
+  ---
+  duration_ms: 121.5861
+  type: 'test'
+  ...
+# Subtest: published offers have priority and theoretical odds never masquerade as bookmaker prices
+ok 186 - published offers have priority and theoretical odds never masquerade as bookmaker prices
+  ---
+  duration_ms: 4.3492
+  type: 'test'
+  ...
+# Subtest: MLB bookmaker quotes require exact teams, orientation and start time, including doubleheader safeguards
+ok 187 - MLB bookmaker quotes require exact teams, orientation and start time, including doubleheader safeguards
+  ---
+  duration_ms: 3.5306
+  type: 'test'
+  ...
+# Subtest: recent form uses five unique completed earlier results in the same league and correct home/away scores
+ok 188 - recent form uses five unique completed earlier results in the same league and correct home/away scores
+  ---
+  duration_ms: 17.9932
+  type: 'test'
+  ...
+# Subtest: a hung provider ends with a retryable timeout, and cancellation stays cancellation
+ok 189 - a hung provider ends with a retryable timeout, and cancellation stays cancellation
+  ---
+  duration_ms: 27.4773
+  type: 'test'
+  ...
+# Subtest: sports caches are session-scoped and late reports cannot replace a changed score, date or quote
+ok 190 - sports caches are session-scoped and late reports cannot replace a changed score, date or quote
+  ---
+  duration_ms: 3.6535
+  type: 'test'
+  ...
+# Subtest: late detail responses preserve a newer AI retry only when its sporting inputs and lifetime still match
+ok 191 - late detail responses preserve a newer AI retry only when its sporting inputs and lifetime still match
+  ---
+  duration_ms: 1.8406
+  type: 'test'
+  ...
+# Subtest: late football AI replies cannot overwrite a newer score, minute, participant or quote
+ok 192 - late football AI replies cannot overwrite a newer score, minute, participant or quote
+  ---
+  duration_ms: 6.674
+  type: 'test'
+  ...
+# Subtest: tennis history spans a year without crossing ESPN seasons in a query, including December rollover
+ok 193 - tennis history spans a year without crossing ESPN seasons in a query, including December rollover
+  ---
+  duration_ms: 10.3817
+  type: 'test'
+  ...
+# Subtest: football calendar summaries keep completed reports after missing quotes are enriched, but invalidate changed known quotes
+ok 194 - football calendar summaries keep completed reports after missing quotes are enriched, but invalidate changed known quotes
+  ---
+  duration_ms: 47.9192
+  type: 'test'
+  ...
+# Subtest: all sports retain more than 150 completed reports through long queues without accepting changed facts
+ok 195 - all sports retain more than 150 completed reports through long queues without accepting changed facts
+  ---
+  duration_ms: 113.5844
+  type: 'test'
+  ...
+# Subtest: unknown opponents and past fixtures never enter the automatic AI queue
+ok 196 - unknown opponents and past fixtures never enter the automatic AI queue
+  ---
+  duration_ms: 3.9074
+  type: 'test'
+  ...
+# Subtest: indexed history matches independent chronological replay across present and historical cutoffs
+ok 197 - indexed history matches independent chronological replay across present and historical cutoffs
+  ---
+  duration_ms: 131.5952
+  type: 'test'
+  ...
+# Subtest: women share the football league selector, legacy deep links remain valid, and basketball has four US leagues
+ok 198 - women share the football league selector, legacy deep links remain valid, and basketball has four US leagues
+  ---
+  duration_ms: 14.9852
+  type: 'test'
+  ...
+# Subtest: baseball totals are monotone and complementary, first inning includes the draw, and game winners sum to 100
+ok 199 - baseball totals are monotone and complementary, first inning includes the draw, and game winners sum to 100
+  ---
+  duration_ms: 61.7386
+  type: 'test'
+  ...
+# Subtest: no future results, current game results or other leagues leak into forecasts; absent samples stay unavailable
+ok 200 - no future results, current game results or other leagues leak into forecasts; absent samples stay unavailable
+  ---
+  duration_ms: 8.5213
+  type: 'test'
+  ...
+# Subtest: full baseball game totals include all nine requested lines and preserve missing samples
+ok 201 - full baseball game totals include all nine requested lines and preserve missing samples
+  ---
+  duration_ms: 2.3946
+  type: 'test'
+  ...
+# Subtest: extra innings require actual duration, complete consistent scoring and a tied regulation, including seven-inning games
+ok 202 - extra innings require actual duration, complete consistent scoring and a tied regulation, including seven-inning games
+  ---
+  duration_ms: 7.7571
+  type: 'test'
+  ...
+# Subtest: extra innings probability uses verified same-duration history, unique games and a disclosed mathematical prior
+ok 203 - extra innings probability uses verified same-duration history, unique games and a disclosed mathematical prior
+  ---
+  duration_ms: 35.5958
+  type: 'test'
+  ...
+# Subtest: basketball handicaps apply the correct team sign and agree with opposite-team complementary markets
+ok 204 - basketball handicaps apply the correct team sign and agree with opposite-team complementary markets
+  ---
+  duration_ms: 5.7371
+  type: 'test'
+  ...
+# Subtest: tennis winner, each set and yes/no for at least one set are coherent for best of 3 and best of 5
+ok 205 - tennis winner, each set and yes/no for at least one set are coherent for best of 3 and best of 5
+  ---
+  duration_ms: 54.0211
+  type: 'test'
+  ...
+# Subtest: MLB parser preserves unknown upcoming scores and does not confuse LMB with winter baseball
+ok 206 - MLB parser preserves unknown upcoming scores and does not confuse LMB with winter baseball
+  ---
+  duration_ms: 3.0814
+  type: 'test'
+  ...
+# Subtest: NPB and KBO official HTML parsers keep home/away orientation and carry rowspan dates without invented scores
+ok 207 - NPB and KBO official HTML parsers keep home/away orientation and carry rowspan dates without invented scores
+  ---
+  duration_ms: 18.8278
+  type: 'test'
+  ...
+# Subtest: ESPN parsers split NBA preseason and flatten singles, Grand Slams and both tours
+ok 208 - ESPN parsers split NBA preseason and flatten singles, Grand Slams and both tours
+  ---
+  duration_ms: 6.3982
+  type: 'test'
+  ...
+# Subtest: codes bind atomically to one account and expire at the exact millisecond for every duration
+ok 209 - codes bind atomically to one account and expire at the exact millisecond for every duration
+  ---
+  duration_ms: 1557.7224
+  type: 'test'
+  ...
+# Subtest: Google relogin restores VIP, owner is granted only from verified configured identity, anonymous codes fail
+ok 210 - Google relogin restores VIP, owner is granted only from verified configured identity, anonymous codes fail
+  ---
+  duration_ms: 737.8778
+  type: 'test'
+  ...
+1..210
+# tests 210
+# suites 0
+# pass 210
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14901.0841

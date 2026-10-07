@@ -3,9 +3,10 @@ import { SPORT_LEAGUES } from '../../src/constants/leagues.js';
 import { getSportsFeed, getSportsMatch, getSportsBankerCandidates, getSportsDetails } from '../services/sportsDataService.js';
 import { filterMatches } from './matchRoutes.js';
 import { generateAiSportsReport } from '../services/sportsAiService.js';
+import { isAiConfigured } from '../services/aiService.js';
 import { rankSportWinners } from '../../src/utils/sportPicks.js';
 import { requireAdmin } from '../session.js';
-import { rateLimit } from '../rateLimit.js';
+import { consumeAiLimit, sendLimited } from '../rateLimit.js';
 
 const router = express.Router();
 router.post('/:sport/details', async (req, res) => {
@@ -26,15 +27,26 @@ function leagueOptions(sport, value) {
 router.post('/:sport/:id/ai-analysis', (req, res, next) => {
   if (req.query.force === '1' || req.body?.forceRefresh === true || req.body?.model || req.body?.aiConfig) return requireAdmin(req, res, next);
   next();
-}, rateLimit('ai'), async (req, res) => {
+}, async (req, res) => {
   if (!Object.hasOwn(SPORT_LEAGUES, req.params.sport)) return res.status(400).json({ success: false, message: 'Deporte no válido.' });
+  if (typeof req.params.id !== 'string' || req.params.id.length > 120) return res.status(400).json({ success: false, message: 'Encuentro no válido.' });
   const deadline = Date.now() + 50000;
   let options;
   try { options = leagueOptions(req.params.sport, req.query.league); } catch { return res.status(400).json({ success: false, message: 'Liga no válida.' }); }
   const forceRefresh = req.query.force === '1' || req.body?.forceRefresh === true;
   const match = await getSportsMatch(req.params.sport, req.params.id, { ...options, forceRefresh });
   if (!match) return res.status(404).json({ success: false, message: 'El encuentro no está disponible en el calendario actual.' });
-  const report = await generateAiSportsReport(match, { forceRefresh, deadline, model: req.body?.model, aiConfig: req.body?.aiConfig });
+  // A stored selection (already attached by the detail) costs no AI quota.
+  let report = forceRefresh || req.body?.model || req.body?.aiConfig ? null : match.aiReport?.aiAvailable ? match.aiReport : null;
+  if (!report) {
+    if (await isAiConfigured() || req.body?.aiConfig) {
+      let limit;
+      try { limit = await consumeAiLimit(req); }
+      catch { return res.set('Retry-After', '30').status(503).json({ success: false, message: 'Limitador no disponible temporalmente.' }); }
+      if (!limit.allowed) return sendLimited(res, limit.retryAfter);
+    }
+    report = await generateAiSportsReport(match, { forceRefresh, deadline, model: req.body?.model, aiConfig: req.body?.aiConfig });
+  }
   res.json({ success: true, match: { ...match, aiReport: report, isAiAnalyzed: Boolean(report.aiAvailable) }, report });
 });
 router.get('/:sport/:id', async (req, res) => {

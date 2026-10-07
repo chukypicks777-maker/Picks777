@@ -2,6 +2,7 @@ import { enrichHistoricalStats } from './verifiedStats.js';
 import { cachedData, fetchJson } from './dataCache.js';
 import { applyFootballForecast } from './probabilityModel.js';
 import { hasReportedStatistics } from './espnParsing.js';
+import { loadLeagueModel, leagueModelFor } from './footballHistory.js';
 
 export const LEAGUES = [
   ['inglaterra', 'Premier League', '🏴', 'eng.1'],
@@ -16,6 +17,7 @@ export const LEAGUES = [
 ].map(([id, name, flag, espnCode]) => ({ id, name, flag, espnCode, sport: id === 'mexico_femenil' ? 'femenil' : 'futbol' }));
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 let lastObservation = null;
+const parsedFeeds = new Map();
 export function sportsDiagnostic(now = Date.now()) {
   if (!lastObservation) return { source: 'ESPN', status: 'unknown', checkedAt: null, scope: 'instance', providerUpdatedAt: null };
   return { ...structuredClone(lastObservation), status: now - Date.parse(lastObservation.checkedAt) >= 120000 ? 'stale' : lastObservation.status };
@@ -160,20 +162,26 @@ export async function getFootballFeed(options = {}) {
             fetchedAt: new Date().toISOString(), degraded: valid.length !== urls.length
           };
         }, { forceRefresh }),
-        standingsFor(league, { forceRefresh }).catch(() => null)
+        standingsFor(league, { forceRefresh }).catch(() => null),
+        // Loaded with the calendar so every parsed fixture can use the ratings.
+        loadLeagueModel(league).catch(() => null)
       ]);
-      const matches = scoreboard.data.events.map(e => {
-        const season = scoreboard.data.leagues?.[0]?.season;
-        const sameSeason = standings?.seasonYear != null && (e.season?.year ?? season?.year) === standings.seasonYear;
-        const parsed = parseEspnEvent(e, league, sameSeason ? standings.rows : [], scoreboard.fetchedAt, season?.displayName);
-        return parsed ? { ...parsed, standingsFetchedAt: sameSeason ? standings.fetchedAt : null } : null;
-      }).filter(Boolean).filter(m => {
-        // Exclude ancient finished or cancelled matches older than 72 hours from the active feed
-        if ((m.status === 'FINISHED' || m.status === 'CANCELLED') && (Date.now() - Date.parse(m.kickoff) > 72 * 3600 * 1000)) {
-          return false;
-        }
-        return true;
-      });
+      // Parsing and forecasting depend only on these snapshots; reuse the result
+      // for every request until one of them changes.
+      const memoKey = `${scoreboard.fetchedAt}|${standings?.fetchedAt}|${leagueModelFor(league.espnCode)?.builtAt}`;
+      let parsedMatches = parsedFeeds.get(league.id)?.key === memoKey ? parsedFeeds.get(league.id).matches : null;
+      if (!parsedMatches) {
+        parsedMatches = scoreboard.data.events.map(e => {
+          const season = scoreboard.data.leagues?.[0]?.season;
+          const sameSeason = standings?.seasonYear != null && (e.season?.year ?? season?.year) === standings.seasonYear;
+          const parsed = parseEspnEvent(e, league, sameSeason ? standings.rows : [], scoreboard.fetchedAt, season?.displayName);
+          return parsed ? { ...parsed, standingsFetchedAt: sameSeason ? standings.fetchedAt : null } : null;
+        }).filter(Boolean);
+        parsedFeeds.set(league.id, { key: memoKey, matches: parsedMatches });
+      }
+      // Exclude finished or cancelled matches older than 72 hours from the active feed.
+      const matches = parsedMatches.filter(m => !((m.status === 'FINISHED' || m.status === 'CANCELLED') && (Date.now() - Date.parse(m.kickoff) > 72 * 3600 * 1000)))
+        .map(m => ({ ...m }));
       return { matches, coverage: { leagueId: league.id, name: league.name, status: scoreboard.degraded ? 'degraded' : 'available', count: matches.length, fetchedAt: scoreboard.fetchedAt, standingsAvailable: Boolean(standings) } };
     } catch {
       return { matches: [], coverage: { leagueId: league.id, name: league.name, status: 'unavailable', count: 0, fetchedAt: null } };
@@ -190,6 +198,16 @@ export async function getFootballFeed(options = {}) {
   };
 }
 export async function generateMatches() { return (await getFootballFeed()).matches; }
+
+// Calendar responses are polled; the complete model belongs to the detail
+// endpoint the report opens. Cards read probabilities, sources and the score.
+const LIST_MODEL_FIELDS = ['probabilities', 'probabilitySources', 'predictedScore', 'expectedGoals', 'sampleSize', 'totalSource', 'engine', 'modelVersion'];
+export function listView(match) {
+  if (!match) return match;
+  const { probabilitySources: _sources, halfGoals: _half, realBoxscore: _box, h2h, recentMatches, ...rest } = match;
+  return { ...rest, ...(h2h?.length ? { h2h } : {}), ...(recentMatches?.length ? { recentMatches } : {}),
+    model: match.model ? Object.fromEntries(LIST_MODEL_FIELDS.filter(key => match.model[key] !== undefined).map(key => [key, match.model[key]])) : null };
+}
 export async function getLeagueStandings(leagueId) {
   const league = LEAGUES.find(l => l.id === leagueId);
   if (!league) throw new Error('Selecciona una liga válida.');
@@ -260,10 +278,14 @@ export async function enrichMatchWithRealData(match, options = {}) {
   match = await enrichHistoricalStats(match, { forceRefresh });
   match = applyFootballForecast(match);
   try {
-    const details = await cachedData(`summary:v2:${match.id}:${match.status}`, match.status === 'LIVE' ? 60 : 600, async () => {
+    const details = await cachedData(`summary:v3:${match.id}:${match.status}`, match.status === 'LIVE' ? 60 : 600, async () => {
       const url = `${BASE}/${match.espnCode}/summary?event=${match.espnEventId}`;
       const data = await fetchJson(url);
-      return { ...parseSummaryDetails(data, match), rawHeader: data.header, fetchedAt: new Date().toISOString(), sourceUrl: url };
+      // Keep only the header fields read below: status, scores and the quote.
+      const comp = data.header?.competitions?.[0];
+      const rawHeader = comp ? { competitions: [{ status: comp.status, odds: comp.odds?.slice(0, 1),
+        competitors: (comp.competitors || []).map(c => ({ id: c.id, homeAway: c.homeAway, score: c.score })) }] } : null;
+      return { ...parseSummaryDetails(data, match), rawHeader, fetchedAt: new Date().toISOString(), sourceUrl: url };
     }, { forceRefresh });
 
     let updatedLiveScore = match.liveScore;

@@ -103,9 +103,13 @@ export async function redisEval(script, keyCount, ...args) {
   }
 }
 
+// Redis bandwidth is billed per byte read and written. Public provider data with
+// short lives stays in each instance's memory; only expensive or immutable
+// results opt in with `persist` (AI reports always persist).
 export async function cachedData(key, ttlSeconds, loader, options = {}) {
   const now = Date.now();
   const forceRefresh = Boolean(options.forceRefresh);
+  const persist = options.persist ?? key.startsWith('ai:');
 
   if (!forceRefresh) {
     const local = memory.get(key);
@@ -115,7 +119,7 @@ export async function cachedData(key, ttlSeconds, loader, options = {}) {
 
   const task = (async () => {
     if (!forceRefresh) {
-      if (redisConfigured()) {
+      if (persist && redisConfigured()) {
         try {
           const stored = await redisCommand('GET', `picks:v2:cache:${key}`);
           if (stored) {
@@ -141,9 +145,9 @@ export async function cachedData(key, ttlSeconds, loader, options = {}) {
     const value = await loader();
     const effectiveTtl = (value && value.aiAvailable === false) ? 60 : ttlSeconds;
     const envelope = { value, expires: Date.now() + effectiveTtl * 1000 };
-    const encoded = await encodeCache(envelope);
+    const encoded = persist ? await encodeCache(envelope) : { stored: null, bytes: Buffer.byteLength(JSON.stringify(envelope)) };
 
-    if (redisConfigured() && encoded.stored !== null) {
+    if (persist && redisConfigured() && encoded.stored !== null) {
       try {
         await redisCommand('SET', `picks:v2:cache:${key}`, encoded.stored, 'EX', effectiveTtl);
       } catch {}
@@ -163,10 +167,11 @@ export async function cachedData(key, ttlSeconds, loader, options = {}) {
 }
 
 // Reading a shared report must never start a paid provider request.
-export async function readCachedData(key) {
+// `fresh` skips the short negative cache while waiting for another instance.
+export async function readCachedData(key, { fresh = false } = {}) {
   const local = memory.get(key);
   if (local?.expires > Date.now()) return structuredClone(local.value);
-  if (absent.get(key) > Date.now()) return null;
+  if (!fresh && absent.get(key) > Date.now()) return null;
   if (reading.has(key)) return structuredClone(await reading.get(key));
   const task = (async () => {
     let confirmedMissing = !redisConfigured();

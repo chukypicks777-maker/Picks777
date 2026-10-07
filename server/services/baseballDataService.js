@@ -91,11 +91,12 @@ export async function getNpbLeague(league, today) {
     if (Date.now() >= deadline) break;
     const batch = await Promise.all(days.slice(i, i + 5).map(async day => {
       try {
-        return await cachedData(`sports:npb:v2:${day}`, day < today ? 3600 : 60, async () => {
+        // Completed dates are immutable and slow to rebuild: share them across instances.
+        return await cachedData(`sports:npb:v2:${day}`, day < today ? 86400 : 60, async () => {
           const html = await fetchHtml(`https://npb.jp/bis/eng/${day.slice(0, 4)}/games/gm${day.replaceAll('-', '')}.html`);
           const fetchedAt = new Date().toISOString();
           return { matches: parseNpbSchedule(html, league, day, fetchedAt), fetchedAt };
-        });
+        }, { persist: day < today });
       } catch { return null; }
     }));
     results.push(...batch.filter(Boolean));
@@ -136,7 +137,7 @@ export async function enrichNpbInnings(games) {
           const innings = parseNpbInnings(await fetchHtml(game.sourceUrl), game);
           if (!innings) throw new Error('Innings no verificados.');
           return { innings, fetchedAt: new Date().toISOString() };
-        });
+        }, { persist: true });
         return { ...game, inningScores: observation.innings, inningsFetchedAt: observation.fetchedAt };
       } catch { return game; }
     }));

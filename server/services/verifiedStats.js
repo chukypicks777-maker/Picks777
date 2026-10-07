@@ -2,6 +2,7 @@ import { cachedData, fetchJson } from './dataCache.js';
 import { numberOrNull, hasReportedStatistics } from './espnParsing.js';
 import { totalLines } from '../../src/utils/probability.js';
 import { poissonModel } from './probabilityModel.js';
+import { leagueModelFor } from './footballHistory.js';
 
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
 const MIN_SAMPLE = 5;
@@ -112,7 +113,7 @@ async function history(match, teamId, options = {}) {
       rows.push(...await Promise.all(events.slice(i, i + 4).map(async e => {
         try {
           const data = await cachedData(`historical-summary:v2:${leagueCode}:${e.id}`, 21600,
-            async () => compactHistoricalSummary(await fetchJson(`${BASE}/${leagueCode}/summary?event=${e.id}`)), { forceRefresh });
+            async () => compactHistoricalSummary(await fetchJson(`${BASE}/${leagueCode}/summary?event=${e.id}`)), { forceRefresh, persist: true });
           const row = readHistoricalSummary(data, teamId, cutoff);
           return row ? { ...row, leagueCode } : null;
         } catch { return null; }
@@ -137,8 +138,20 @@ export function halfGoalModel(model, home, away) {
     sampleSize: { home: home.sampleSizes.halves, away: away.sampleSizes.halves },
     method: 'Poisson; reparto por mitades observado en partidos terminados. Incluye descuento; excluye prórroga y penales.' };
 }
+// Recorded averages from the league model built for the forecast: the same ten
+// latest league results per team, without one summary request per match.
+function leagueRecords(match) {
+  const model = leagueModelFor(match.espnCode);
+  const records = [match.homeTeamId, match.awayTeamId].map(id => model?.teams?.[String(id)]);
+  if (!records.every(r => r?.sampleSizes?.goals >= MIN_SAMPLE)) return null;
+  const team = (original, stats) => ({ ...original, ...stats, statsSource: 'ESPN · resultados de la liga', statsFetchedAt: new Date(model.builtAt).toISOString(), statsRecords: null });
+  return { ...match, homeTeam: team(match.homeTeam, records[0]), awayTeam: team(match.awayTeam, records[1]) };
+}
+
 export async function enrichHistoricalStats(match, options = {}) {
   if (!match?.espnCode || !match.homeTeamId || !match.awayTeamId) return match;
+  const fromLeague = leagueRecords(match);
+  if (fromLeague || options.localOnly) return fromLeague || match;
   const histories = await Promise.all([match.homeTeamId, match.awayTeamId].map(id => history(match, id, options).catch(() => null)));
   const team = (original, stats) => {
     if (!stats) return original;

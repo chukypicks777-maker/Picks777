@@ -104,7 +104,10 @@ export default function HalfGoalsSection({ match, isVip = false, onUnlockVip = n
       </div>
       {data && (
         <p className="text-xs text-slate-400">
-          Muestra: {data.sampleSize?.home ?? '-'} partidos del local y {data.sampleSize?.away ?? '-'} del visitante. {data.method || ''}
+          {Number.isFinite(data.firstHalfShare)
+            ? `Reparto de la liga: ${data.firstHalfShare}% de los goles antes del descanso, en ${data.sampleSize ?? '-'} partidos. `
+            : `Muestra: ${data.sampleSize?.home ?? '-'} partidos del local y ${data.sampleSize?.away ?? '-'} del visitante. `}
+          {data.method || ''}
         </p>
       )}
     </section>

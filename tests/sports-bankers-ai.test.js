@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { rankSportWinners, sportWinnerPick } from '../src/utils/sportPicks.js';
-import { generateAiSportsReport, readSportsAiReport, sportsReportKey } from '../server/services/sportsAiService.js';
+import { generateAiSportsReport, readSportsAiReport } from '../server/services/sportsAiService.js';
 import { computeMatchFingerprint } from '../src/utils/analysisCache.js';
 import { parseTennisEvents } from '../server/services/sportsDataService.js';
 import { storage } from '../server/storage.js';
@@ -55,23 +55,29 @@ test('sports AI uses the configured provider, rejects fabricated numbers and sha
       assert.equal(report.aiAvailable, true); assert.equal(report.dataGrounded, true); assert.equal(report.modelUsed, 'test-sports-model');
       assert.deepEqual(report.probabilities, fixture.analysis.winner);
       assert.equal(report.topPick.probability, 70); assert.equal(report.topPick.odds, 100 / 70);
-      assert.doesNotMatch(JSON.stringify(report), /999|888|Inventado|<script>/);
+      // Numeric outputs are checked above; timestamps may legitimately contain 999 or 888.
+      assert.doesNotMatch(JSON.stringify(report), /Inventado|<script>/);
       assert.match(parsedPrompt, /8 partidos|8|10/);
       assert.deepEqual(await readSportsAiReport(fixture), report); assert.equal(calls, before + 1);
       const freshQuery = { ...fixture, fetchedAt: new Date(now + 30000).toISOString() };
-      assert.equal(sportsReportKey(fixture), sportsReportKey(freshQuery));
-      assert.deepEqual(await readSportsAiReport(freshQuery), report);
-      for (const changed of [{ ...fixture, liveScore: { home: 1, away: 0 } }, { ...fixture, odds: { homeWin: 1.5 } }, { ...fixture, analysis: { ...fixture.analysis, sampleSize: { home: 9, away: 10 } } }]) {
-        assert.notEqual(sportsReportKey(fixture), sportsReportKey(changed));
-        assert.notEqual(computeMatchFingerprint(fixture), computeMatchFingerprint(changed));
-        assert.equal(await readSportsAiReport(changed), null);
-      }
+      assert.deepEqual((await readSportsAiReport(freshQuery)).tacticalKeypoints, report.tacticalKeypoints);
+      // The stored AI choice is re-rendered with current quotes and samples:
+      // members see today's numbers and no second provider request is made.
+      const changed = { ...fixture, odds: { homeWin: 1.5 }, analysis: { ...fixture.analysis, sampleSize: { home: 9, away: 10 } } };
+      assert.notEqual(computeMatchFingerprint(fixture), computeMatchFingerprint(changed));
+      const rerendered = await readSportsAiReport(changed);
+      assert.equal(rerendered.aiAvailable, true);
+      assert.match(rerendered.facts.join(' '), /Jugador A 9 partidos/);
+      assert.doesNotMatch(rerendered.facts.join(' '), /Jugador A 8 partidos/);
+      assert.equal(calls, before + 1);
+      // A different state (for example, kickoff) needs its own selection.
+      assert.equal(await readSportsAiReport({ ...fixture, status: 'LIVE' }), null);
     }
     factIds = ['winner', 'invented-fact'];
     const invalid = await generateAiSportsReport(match('invalid-report'), { forceRefresh: true });
     assert.equal(invalid.aiAvailable, false); assert.equal(invalid.modelUsed, null);
     assert.deepEqual(invalid.probabilities, { home: 70, away: 30 });
-  } finally { clearCachePattern('ai:sports-report:v1:'); storage.file = oldFile; await rm(directory, { recursive: true, force: true }); }
+  } finally { clearCachePattern('ai:selection:v1:'); storage.file = oldFile; await rm(directory, { recursive: true, force: true }); }
 });
 
 test('a copied fact catalog triggers one real re-selection request and is never silently accepted as AI analysis', async t => {

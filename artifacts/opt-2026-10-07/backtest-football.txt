@@ -1,0 +1,166 @@
+
+=== TRAIN ===
+appMarket1x2|1x2             n  4605 acc  54.07 brier 0.5785 logloss 0.9726 ece 1.11
+appMarket1x2|btts            n  4605 acc  54.88 brier 0.2462 logloss 0.6855 ece 2.28
+appMarket1x2|over1.5         n  4605 acc  77.11 brier 0.1748 logloss 0.5330 ece 1.5
+appMarket1x2|over2.5         n  4605 acc   56.2 brier 0.2460 logloss 0.6852 ece 1.85
+appMarket1x2|over3.5         n  4605 acc  68.95 brier 0.2099 logloss 0.6098 ece 1.53
+appMarket|1x2                n  4605 acc  54.07 brier 0.5785 logloss 0.9726 ece 1.11
+appMarket|btts               n  4605 acc  55.77 brier 0.2437 logloss 0.6804 ece 1.32
+appMarket|over1.5            n  4605 acc  77.16 brier 0.1715 logloss 0.5238 ece 1.4
+appMarket|over2.5            n  4605 acc  58.81 brier 0.2389 logloss 0.6705 ece 1.98
+appMarket|over3.5            n  4605 acc  69.36 brier 0.2039 logloss 0.5960 ece 1.76
+app|1x2                      n  4605 acc  50.16 brier 0.6100 logloss 1.0194 ece 2.04
+app|btts                     n  4605 acc  54.88 brier 0.2462 logloss 0.6855 ece 2.28
+app|over1.5                  n  4605 acc  77.11 brier 0.1748 logloss 0.5330 ece 1.5
+app|over2.5                  n  4605 acc   56.2 brier 0.2460 logloss 0.6852 ece 1.85
+app|over3.5                  n  4605 acc  68.95 brier 0.2099 logloss 0.6098 ece 1.53
+cards.current|total2.5       n  4605 acc  76.11 brier 0.1767 logloss 0.5400 ece 4.56
+cards.current|total3.5       n  4605 acc  60.78 brier 0.2389 logloss 0.6739 ece 6.63
+cards.current|total4.5       n  4605 acc  60.17 brier 0.2373 logloss 0.6698 ece 6.14
+cards.current|total5.5       n  4605 acc  73.38 brier 0.1860 logloss 0.5594 ece 4.92
+cards.new|total2.5           n  4605 acc  76.83 brier 0.1711 logloss 0.5229 ece 1.43
+cards.new|total3.5           n  4605 acc  61.74 brier 0.2293 logloss 0.6506 ece 1.29
+cards.new|total4.5           n  4605 acc  61.59 brier 0.2291 logloss 0.6494 ece 1.34
+cards.new|total5.5           n  4605 acc  74.81 brier 0.1794 logloss 0.5399 ece 1.14
+close|1x2                    n  4605 acc   54.2 brier 0.5768 logloss 0.9700 ece 0.66
+close|over2.5                n  4605 acc  58.85 brier 0.2379 logloss 0.6685 ece 1.42
+corners.current|away3.5      n  4605 acc  56.98 brier 0.2664 logloss 0.7483 ece 14.29
+corners.current|away4.5      n  4605 acc  53.77 brier 0.2661 logloss 0.7358 ece 13.94
+corners.current|away5.5      n  4605 acc  64.43 brier 0.2247 logloss 0.6479 ece 11.66
+corners.current|home3.5      n  4605 acc  67.86 brier 0.2133 logloss 0.6210 ece 9.04
+corners.current|home4.5      n  4605 acc  56.24 brier 0.2561 logloss 0.7130 ece 10.25
+corners.current|home5.5      n  4605 acc  58.65 brier 0.2558 logloss 0.7220 ece 10.54
+corners.current|total10.5    n  4605 acc  56.13 brier 0.2644 logloss 0.7405 ece 13.37
+corners.current|total11.5    n  4605 acc  67.64 brier 0.2230 logloss 0.6595 ece 11.78
+corners.current|total5.5     n  4605 acc  90.97 brier 0.0868 logloss 0.3447 ece 4.91
+corners.current|total6.5     n  4605 acc  82.35 brier 0.1504 logloss 0.5009 ece 7.55
+corners.current|total7.5     n  4605 acc  69.84 brier 0.2150 logloss 0.6415 ece 10.47
+corners.current|total8.5     n  4605 acc   57.2 brier 0.2597 logloss 0.7319 ece 12.29
+corners.current|total9.5     n  4605 acc   51.6 brier 0.2782 logloss 0.7690 ece 13.41
+corners.new|away3.5          n  4605 acc  60.43 brier 0.2340 logloss 0.6602 ece 2.94
+corners.new|away4.5          n  4605 acc  61.17 brier 0.2301 logloss 0.6521 ece 3.07
+corners.new|away5.5          n  4605 acc  71.42 brier 0.1963 logloss 0.5787 ece 2.41
+corners.new|home3.5          n  4605 acc  71.79 brier 0.1941 logloss 0.5739 ece 3.3
+corners.new|home4.5          n  4605 acc  60.72 brier 0.2324 logloss 0.6567 ece 2.19
+corners.new|home5.5          n  4605 acc  60.61 brier 0.2324 logloss 0.6568 ece 3.25
+corners.new|total10.5        n  4605 acc  61.67 brier 0.2338 logloss 0.6601 ece 0.43
+corners.new|total11.5        n  4605 acc  72.38 brier 0.1963 logloss 0.5804 ece 0.61
+corners.new|total5.5         n  4605 acc  91.03 brier 0.0808 logloss 0.2970 ece 0.49
+corners.new|total6.5         n  4605 acc  83.21 brier 0.1380 logloss 0.4464 ece 0.32
+corners.new|total7.5         n  4605 acc  72.81 brier 0.1950 logloss 0.5775 ece 0.66
+corners.new|total8.5         n  4605 acc  61.95 brier 0.2326 logloss 0.6577 ece 0.2
+corners.new|total9.5         n  4605 acc  55.14 brier 0.2468 logloss 0.6868 ece 0.71
+half1.current|over0.5        n  4605 acc  71.66 brier 0.2011 logloss 0.5910 ece 1.93
+half1.current|over1.5        n  4605 acc  63.74 brier 0.2311 logloss 0.6558 ece 3.05
+half1.new|over0.5            n  4605 acc  71.83 brier 0.1989 logloss 0.5860 ece 0.41
+half1.new|over1.5            n  4605 acc  64.04 brier 0.2262 logloss 0.6444 ece 0.71
+half2.current|over0.5        n  4605 acc  79.83 brier 0.1613 logloss 0.5028 ece 2.14
+half2.current|over1.5        n  4605 acc   55.5 brier 0.2468 logloss 0.6870 ece 2.8
+half2.new|over0.5            n  4605 acc  79.83 brier 0.1588 logloss 0.4958 ece 1.84
+half2.new|over1.5            n  4605 acc  56.72 brier 0.2436 logloss 0.6803 ece 1.39
+newMarket1x2|1x2             n  4605 acc  54.07 brier 0.5783 logloss 0.9722 ece 0.61
+newMarket1x2|btts            n  4605 acc  55.77 brier 0.2441 logloss 0.6813 ece 1.65
+newMarket1x2|over1.5         n  4605 acc  77.16 brier 0.1716 logloss 0.5238 ece 0.51
+newMarket1x2|over2.5         n  4605 acc  58.33 brier 0.2398 logloss 0.6725 ece 1.27
+newMarket1x2|over3.5         n  4605 acc  69.27 brier 0.2048 logloss 0.5981 ece 1.31
+newMarket|1x2                n  4605 acc  54.07 brier 0.5783 logloss 0.9722 ece 0.61
+newMarket|btts               n  4605 acc  56.59 brier 0.2435 logloss 0.6801 ece 1.87
+newMarket|over1.5            n  4605 acc  77.16 brier 0.1714 logloss 0.5233 ece 0.35
+newMarket|over2.5            n  4605 acc  58.83 brier 0.2387 logloss 0.6702 ece 1.53
+newMarket|over3.5            n  4605 acc   69.4 brier 0.2039 logloss 0.5958 ece 1.26
+new|1x2                      n  4605 acc  52.29 brier 0.5928 logloss 0.9936 ece 1.2
+new|btts                     n  4605 acc  55.53 brier 0.2451 logloss 0.6833 ece 0.75
+new|over1.5                  n  4605 acc  77.16 brier 0.1726 logloss 0.5268 ece 0.46
+new|over2.5                  n  4605 acc  56.92 brier 0.2424 logloss 0.6778 ece 0.7
+new|over3.5                  n  4605 acc  69.27 brier 0.2068 logloss 0.6029 ece 1.23
+PICK app            n 4605 hit 79.7 meanP 80.2
+PICK appMarket      n 4605 hit 84.1 meanP 81.2
+PICK appMarket1x2   n 4605 hit 82.3 meanP 82.1
+PICK new            n 4605 hit 81.9 meanP 80.8
+PICK newMarket      n 4605 hit 84.1 meanP 82
+PICK newMarket1x2   n 4605 hit 84 meanP 81.8
+
+=== TEST ===
+appMarket1x2|1x2             n  3041 acc  53.24 brier 0.5800 logloss 0.9744 ece 0.85
+appMarket1x2|btts            n  3041 acc  55.05 brier 0.2488 logloss 0.6912 ece 2.74
+appMarket1x2|over1.5         n  3041 acc  76.88 brier 0.1774 logloss 0.5395 ece 2.24
+appMarket1x2|over2.5         n  3041 acc  54.82 brier 0.2480 logloss 0.6896 ece 3.12
+appMarket1x2|over3.5         n  3041 acc  69.02 brier 0.2088 logloss 0.6081 ece 1.54
+appMarket|1x2                n  3041 acc  53.24 brier 0.5800 logloss 0.9744 ece 0.85
+appMarket|btts               n  3041 acc  55.34 brier 0.2448 logloss 0.6826 ece 1.84
+appMarket|over1.5            n  3041 acc  77.01 brier 0.1727 logloss 0.5265 ece 0.95
+appMarket|over2.5            n  3041 acc  58.14 brier 0.2394 logloss 0.6714 ece 0.71
+appMarket|over3.5            n  3041 acc  69.45 brier 0.2037 logloss 0.5951 ece 0.96
+app|1x2                      n  3041 acc  50.41 brier 0.6099 logloss 1.0189 ece 2.16
+app|btts                     n  3041 acc  55.05 brier 0.2488 logloss 0.6912 ece 2.74
+app|over1.5                  n  3041 acc  76.88 brier 0.1774 logloss 0.5395 ece 2.24
+app|over2.5                  n  3041 acc  54.82 brier 0.2480 logloss 0.6896 ece 3.12
+app|over3.5                  n  3041 acc  69.02 brier 0.2088 logloss 0.6081 ece 1.54
+cards.current|total2.5       n  3040 acc  73.06 brier 0.1953 logloss 0.5816 ece 5.63
+cards.current|total3.5       n  3040 acc  55.53 brier 0.2530 logloss 0.7017 ece 7.28
+cards.current|total4.5       n  3040 acc  61.55 brier 0.2364 logloss 0.6697 ece 7.55
+cards.current|total5.5       n  3040 acc  78.39 brier 0.1669 logloss 0.5192 ece 6.15
+cards.new|total2.5           n  3040 acc  74.21 brier 0.1888 logloss 0.5642 ece 1.53
+cards.new|total3.5           n  3040 acc  57.53 brier 0.2395 logloss 0.6718 ece 1.29
+cards.new|total4.5           n  3040 acc   64.8 brier 0.2225 logloss 0.6361 ece 2.23
+cards.new|total5.5           n  3040 acc  79.31 brier 0.1588 logloss 0.4947 ece 2.61
+close|1x2                    n  3041 acc   53.9 brier 0.5779 logloss 0.9714 ece 0.71
+close|over2.5                n  3038 acc  58.82 brier 0.2379 logloss 0.6682 ece 1.47
+corners.current|away3.5      n  3040 acc  56.55 brier 0.2724 logloss 0.7635 ece 14.61
+corners.current|away4.5      n  3040 acc  53.55 brier 0.2686 logloss 0.7446 ece 15.34
+corners.current|away5.5      n  3040 acc  66.15 brier 0.2218 logloss 0.6436 ece 12.67
+corners.current|home3.5      n  3040 acc  66.81 brier 0.2153 logloss 0.6239 ece 7.76
+corners.current|home4.5      n  3040 acc  56.41 brier 0.2551 logloss 0.7115 ece 9.88
+corners.current|home5.5      n  3040 acc  59.11 brier 0.2560 logloss 0.7252 ece 11.46
+corners.current|total10.5    n  3040 acc  59.54 brier 0.2533 logloss 0.7158 ece 12.76
+corners.current|total11.5    n  3040 acc  69.74 brier 0.2134 logloss 0.6421 ece 11.31
+corners.current|total5.5     n  3040 acc  88.65 brier 0.1061 logloss 0.4003 ece 5.9
+corners.current|total6.5     n  3040 acc     80 brier 0.1655 logloss 0.5369 ece 9.02
+corners.current|total7.5     n  3040 acc  66.45 brier 0.2269 logloss 0.6647 ece 11.74
+corners.current|total8.5     n  3040 acc  54.93 brier 0.2661 logloss 0.7412 ece 13.38
+corners.current|total9.5     n  3040 acc  51.61 brier 0.2767 logloss 0.7623 ece 14.27
+corners.new|away3.5          n  3040 acc  60.39 brier 0.2352 logloss 0.6628 ece 1.72
+corners.new|away4.5          n  3040 acc   62.7 brier 0.2297 logloss 0.6514 ece 2.91
+corners.new|away5.5          n  3040 acc  72.47 brier 0.1897 logloss 0.5635 ece 1.66
+corners.new|home3.5          n  3040 acc  70.46 brier 0.1972 logloss 0.5804 ece 2.31
+corners.new|home4.5          n  3040 acc  61.09 brier 0.2327 logloss 0.6575 ece 2.32
+corners.new|home5.5          n  3040 acc  61.94 brier 0.2293 logloss 0.6501 ece 2.7
+corners.new|total10.5        n  3040 acc  62.76 brier 0.2291 logloss 0.6503 ece 1.78
+corners.new|total11.5        n  3040 acc  73.32 brier 0.1924 logloss 0.5717 ece 0.84
+corners.new|total5.5         n  3040 acc  88.82 brier 0.0990 logloss 0.3494 ece 1.35
+corners.new|total6.5         n  3040 acc  81.18 brier 0.1509 logloss 0.4778 ece 1.4
+corners.new|total7.5         n  3040 acc  70.86 brier 0.2041 logloss 0.5980 ece 1.83
+corners.new|total8.5         n  3040 acc     60 brier 0.2362 logloss 0.6652 ece 1.66
+corners.new|total9.5         n  3040 acc  57.01 brier 0.2441 logloss 0.6813 ece 1.92
+half1.current|over0.5        n  3040 acc  71.22 brier 0.2054 logloss 0.6009 ece 4.07
+half1.current|over1.5        n  3040 acc  64.77 brier 0.2247 logloss 0.6421 ece 4.24
+half1.new|over0.5            n  3040 acc  71.51 brier 0.2004 logloss 0.5894 ece 1.01
+half1.new|over1.5            n  3040 acc  66.15 brier 0.2188 logloss 0.6284 ece 2.44
+half2.current|over0.5        n  3040 acc  80.69 brier 0.1565 logloss 0.4914 ece 3.18
+half2.current|over1.5        n  3040 acc  54.11 brier 0.2487 logloss 0.6910 ece 3.6
+half2.new|over0.5            n  3040 acc  80.69 brier 0.1551 logloss 0.4877 ece 2.23
+half2.new|over1.5            n  3040 acc  56.68 brier 0.2442 logloss 0.6814 ece 1.37
+newMarket1x2|1x2             n  3041 acc  53.24 brier 0.5798 logloss 0.9739 ece 0.96
+newMarket1x2|btts            n  3041 acc  55.08 brier 0.2453 logloss 0.6837 ece 2.11
+newMarket1x2|over1.5         n  3041 acc  77.01 brier 0.1729 logloss 0.5268 ece 1.54
+newMarket1x2|over2.5         n  3041 acc  58.14 brier 0.2401 logloss 0.6727 ece 0.88
+newMarket1x2|over3.5         n  3041 acc  69.25 brier 0.2040 logloss 0.5960 ece 1.29
+newMarket|1x2                n  3041 acc  53.24 brier 0.5798 logloss 0.9739 ece 0.96
+newMarket|btts               n  3041 acc  55.57 brier 0.2452 logloss 0.6834 ece 2.37
+newMarket|over1.5            n  3041 acc  77.01 brier 0.1727 logloss 0.5264 ece 1.5
+newMarket|over2.5            n  3041 acc  58.17 brier 0.2394 logloss 0.6714 ece 0.81
+newMarket|over3.5            n  3041 acc  69.48 brier 0.2037 logloss 0.5951 ece 1.16
+new|1x2                      n  3041 acc  52.22 brier 0.5921 logloss 0.9927 ece 1.66
+new|btts                     n  3041 acc  54.49 brier 0.2462 logloss 0.6855 ece 1.61
+new|over1.5                  n  3041 acc  77.01 brier 0.1737 logloss 0.5294 ece 0.85
+new|over2.5                  n  3041 acc  56.49 brier 0.2422 logloss 0.6771 ece 0.95
+new|over3.5                  n  3041 acc  69.39 brier 0.2056 logloss 0.5999 ece 1.5
+PICK app            n 3041 hit 79.5 meanP 80
+PICK appMarket      n 3041 hit 83.3 meanP 81.7
+PICK appMarket1x2   n 3041 hit 81.7 meanP 82.1
+PICK new            n 3041 hit 81.6 meanP 80.7
+PICK newMarket      n 3041 hit 83.3 meanP 82.6
+PICK newMarket1x2   n 3041 hit 82.9 meanP 82.2
+
+training dispersion {"cornersTotal":76.45185171043589,"cornersHome":10.835389925074114,"cornersAway":10.869778143763662,"cardsTotal":105.88773983735908} runtime 204.2 s
