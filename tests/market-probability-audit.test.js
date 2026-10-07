@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { applyFootballForecast } from '../server/services/probabilityModel.js';
 import { parseFootballOdds } from '../server/services/footballDataService.js';
-import { noVigMarket } from '../src/utils/marketProbability.js';
+import { noVigMarket, footballProbabilityLabel } from '../src/utils/marketProbability.js';
 import { decimalToAmerican } from '../src/utils/oddsFormatter.js';
 import { getTop3Opportunities } from '../src/utils/mathProbabilities.js';
 import { baseballAnalysis } from '../server/services/sportProbabilityModel.js';
@@ -25,7 +25,10 @@ test('Lens–Lyon uses the complete quoted market; its five-game model stays sep
   assert.ok(match.probabilities.homeWin > match.probabilities.awayWin);
   assert.equal(match.model.probabilitySources.over15, 'experimental-model');
   assert.ok(Math.abs(match.probabilities.over15 - 80.08517265285438) < 1e-9);
-  assert.equal(getTop3Opportunities(match).find(p => p.category === 'result').probabilitySource, 'published-odds');
+  const resultPick = getTop3Opportunities(match).find(p => p.category === 'result');
+  assert.equal(resultPick.probabilitySource, 'published-odds');
+  assert.equal(footballProbabilityLabel(match, resultPick.key), 'Mercado sin margen · DraftKings');
+  assert.equal(footballProbabilityLabel(match, 'dcX2'), 'Mercado sin margen · DraftKings');
   assert.equal(match.model.predictedScore, '1 - 1');
 });
 

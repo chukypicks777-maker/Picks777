@@ -10,6 +10,8 @@ export function noVigMarket(odds, keys) {
 }
 
 export function footballProbabilitySource(match, key = 'homeWin') {
+  // Double chance adds mutually exclusive outcomes from the same 1X2 source.
+  if (key === 'dc1X' || key === 'dcX2') key = 'homeWin';
   const source = match?.model?.probabilitySources?.[key] || match?.probabilitySources?.[key];
   if (source && source !== 'unavailable') return source;
   const keys = ['homeWin', 'draw', 'awayWin'].includes(key) ? ['homeWin', 'draw', 'awayWin']
