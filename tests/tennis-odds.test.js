@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildTennisRatings } from '../server/services/tennisRatings.js';
-import { tennisAnalysis, calibrateTennis } from '../server/services/sportProbabilityModel.js';
+import { tennisAnalysis, calibrateTennis, tennisFeatureProbability, TENNIS_WEIGHTS } from '../server/services/sportProbabilityModel.js';
 import { loadTennisQuotes, attachTennisQuotes, bestQuote, forgetOddsApi, samePlayer } from '../server/services/oddsApi.js';
 import { kalshiQuote, loadKalshiTennis, forgetKalshi, KALSHI_WINDOW_HOURS } from '../server/services/kalshiOdds.js';
 
@@ -66,10 +66,13 @@ test('real bookmaker quotes attach only to an unambiguous match and never replac
   assert.equal(attachTennisQuotes([upcoming], { ...snapshot, events: [...snapshot.events, ...snapshot.events] })[0].odds.homeWin, undefined);
 });
 
-test('ATP combines Elo, official ranking points and the head-to-head record; WTA keeps calibrated Elo', () => {
+test('ATP and WTA combine Elo, game-share rating, official ranking points and head-to-head, without prices', () => {
   const base = buildTennisRatings('atp', history, NOW);
   const met = base.h2h['p1|p2'];
   assert.ok(met && met[0] + met[1] > 0, 'Head-to-head wins are kept per pair');
+  assert.ok(Object.values(base.players).every(entry => Number.isFinite(entry[5])), 'Every player has a game-share rating');
+  // p1 dominates its games more than p6 in the replay.
+  assert.ok(base.players.p1[5] > base.players.p6[5]);
   const even = tennisAnalysis(upcoming, [], NOW, { ...base, rankings: { points: { p1: 1000, p6: 1000 }, floor: 300 } }).winner.home;
   const ranking = { points: { p1: 2000, p6: 500 }, floor: 300 };
   const ranked = tennisAnalysis(upcoming, [], NOW, { ...base, rankings: ranking });
@@ -80,11 +83,20 @@ test('ATP combines Elo, official ranking points and the head-to-head record; WTA
   assert.deepEqual(ranked.headToHead, { home: 0, away: 0 }, 'p1 and p6 never met');
   const rival = tennisAnalysis({ ...upcoming, awayTeam: { id: 'p2', name: 'Rival' } }, [], NOW, { ...base, rankings: ranking });
   assert.deepEqual(rival.headToHead, { home: met[0], away: met[1] });
-  // An unlisted player uses the published floor; WTA ignores ATP-only signals.
+  // The formula reproduces the documented weights.
+  const manual = tennisFeatureProbability('atp', { eloChance: 0.6, gameGap: 40, pointsRatio: 2, homeWins: 1, awayWins: 0 });
+  const w = TENNIS_WEIGHTS.atp;
+  assert.ok(Math.abs(manual - 1 / (1 + Math.exp(-(w.elo * Math.log(1.5) + w.games * 0.1 * Math.LN10 + w.rank * Math.log(2) + w.h2h / 3)))) < 1e-12);
+  // An unlisted player uses the published floor; WTA now uses its own ranking and head-to-head too.
   assert.equal(tennisAnalysis(upcoming, [], NOW, { ...base, rankings: { points: { p1: 2000 }, floor: 300 } }).rankingPoints.away, 300);
-  const wta = buildTennisRatings('wta', history.map(game => ({ ...game, tour: 'wta' })), NOW);
-  assert.equal(wta.h2h, undefined);
-  assert.equal(tennisAnalysis({ ...upcoming, tour: 'wta' }, [], NOW, { ...wta, rankings: ranking }).rankingPoints, null);
+  const wta = buildTennisRatings('wta', history.map(game => ({ ...game, tour: 'wta' })), NOW, ranking);
+  assert.ok(wta.h2h['p1|p2']);
+  const women = tennisAnalysis({ ...upcoming, tour: 'wta' }, [], NOW, wta);
+  assert.deepEqual(women.rankingPoints, { home: 2000, away: 500 });
+  assert.match(women.method, /ranking WTA/);
+  // Without a ranking list the calibrated Elo remains the fallback.
+  assert.equal(tennisAnalysis(upcoming, [], NOW, base).rankingPoints, null);
+  assert.ok(tennisAnalysis(upcoming, [], NOW, base).winner.home > 50);
 });
 
 const kalshiEvent = (home, away, homeBook, awayBook, extra = {}) => ({ event_ticker: `E-${home}`, title: `${home} vs ${away}`, markets: [

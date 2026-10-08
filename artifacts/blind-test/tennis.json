@@ -1,74 +1,74 @@
 {
-  "checkedAt": "2026-10-08T00:27:44.425Z",
-  "method": "Prueba ciega: Elo con resultados anteriores, ranking ATP de la última lista semanal previa al partido y cara a cara previo. ESPN no publica cuotas de tenis, por lo que no hay comparación con casino.",
+  "checkedAt": "2026-10-08T20:24:05.877Z",
+  "method": "Prueba ciega: Elo por resultados y por porcentaje de juegos con partidos anteriores, ranking ATP/WTA de la última lista semanal previa al partido y cara a cara previo. Pesos ajustados antes de octubre de 2025. Sin cuotas de casas.",
   "atp": {
     "winner": {
       "n": 3420,
-      "hitRate": 65,
-      "brier": 0.2175,
-      "logLoss": 0.6239,
+      "hitRate": 65.2,
+      "brier": 0.2165,
+      "logLoss": 0.6216,
       "calibration": [
         {
           "band": "50-60%",
-          "n": 1528,
-          "said": 54.9,
-          "happened": 56.3
+          "n": 1475,
+          "said": 54.8,
+          "happened": 55.5
         },
         {
           "band": "60-70%",
-          "n": 1093,
+          "n": 1144,
           "said": 64.5,
-          "happened": 66.1
+          "happened": 67.3
         },
         {
           "band": "70-80%",
-          "n": 575,
-          "said": 74.4,
-          "happened": 77
+          "n": 580,
+          "said": 74.3,
+          "happened": 77.1
         },
         {
           "band": "80-90%",
-          "n": 190,
-          "said": 83.8,
-          "happened": 86.3
+          "n": 193,
+          "said": 83.5,
+          "happened": 87.6
         },
         {
           "band": "90-100%",
-          "n": 34,
-          "said": 92.9,
-          "happened": 97.1
+          "n": 28,
+          "said": 92.8,
+          "happened": 96.4
         }
       ]
     },
     "favouriteAtLeast65": {
-      "n": 1257,
-      "hitRate": 76.4,
-      "brier": 0.1771,
-      "logLoss": 0.5359,
+      "n": 1280,
+      "hitRate": 75.9,
+      "brier": 0.1782,
+      "logLoss": 0.5379,
       "calibration": [
         {
           "band": "60-70%",
-          "n": 458,
-          "said": 67.4,
-          "happened": 69.9
+          "n": 479,
+          "said": 67.5,
+          "happened": 68.5
         },
         {
           "band": "70-80%",
-          "n": 575,
-          "said": 74.4,
-          "happened": 77
+          "n": 580,
+          "said": 74.3,
+          "happened": 77.1
         },
         {
           "band": "80-90%",
-          "n": 190,
-          "said": 83.8,
-          "happened": 86.3
+          "n": 193,
+          "said": 83.5,
+          "happened": 87.6
         },
         {
           "band": "90-100%",
-          "n": 34,
-          "said": 92.9,
-          "happened": 97.1
+          "n": 28,
+          "said": 92.8,
+          "happened": 96.4
         }
       ]
     }
@@ -76,71 +76,71 @@
   "wta": {
     "winner": {
       "n": 5618,
-      "hitRate": 64.1,
-      "brier": 0.2195,
-      "logLoss": 0.6282,
+      "hitRate": 65.9,
+      "brier": 0.2142,
+      "logLoss": 0.6166,
       "calibration": [
         {
           "band": "50-60%",
-          "n": 2473,
-          "said": 54.9,
-          "happened": 55
+          "n": 2362,
+          "said": 54.8,
+          "happened": 56
         },
         {
           "band": "60-70%",
-          "n": 1819,
-          "said": 64.6,
-          "happened": 65.5
+          "n": 1821,
+          "said": 64.5,
+          "happened": 67.9
         },
         {
           "band": "70-80%",
-          "n": 946,
-          "said": 74.4,
-          "happened": 76.3
+          "n": 979,
+          "said": 74.3,
+          "happened": 76.4
         },
         {
           "band": "80-90%",
-          "n": 347,
-          "said": 84.3,
-          "happened": 85.3
+          "n": 402,
+          "said": 84.2,
+          "happened": 86.1
         },
         {
           "band": "90-100%",
-          "n": 33,
-          "said": 92.2,
-          "happened": 97
+          "n": 54,
+          "said": 92.3,
+          "happened": 98.1
         }
       ]
     },
     "favouriteAtLeast65": {
-      "n": 2135,
-      "hitRate": 75.1,
-      "brier": 0.1824,
-      "logLoss": 0.5477,
+      "n": 2217,
+      "hitRate": 76.6,
+      "brier": 0.1752,
+      "logLoss": 0.5313,
       "calibration": [
         {
           "band": "60-70%",
-          "n": 809,
+          "n": 782,
           "said": 67.4,
-          "happened": 68.4
+          "happened": 70.5
         },
         {
           "band": "70-80%",
-          "n": 946,
-          "said": 74.4,
-          "happened": 76.3
+          "n": 979,
+          "said": 74.3,
+          "happened": 76.4
         },
         {
           "band": "80-90%",
-          "n": 347,
-          "said": 84.3,
-          "happened": 85.3
+          "n": 402,
+          "said": 84.2,
+          "happened": 86.1
         },
         {
           "band": "90-100%",
-          "n": 33,
-          "said": 92.2,
-          "happened": 97
+          "n": 54,
+          "said": 92.3,
+          "happened": 98.1
         }
       ]
     }

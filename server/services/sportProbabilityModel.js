@@ -357,22 +357,37 @@ function ratingSample(match, ratings, side) {
   return entry ? { rating: entry[0], count: entry[1], won: entry[2], played: entry[3], matches: entry[4] } : { rating: 1500, count: 0, won: 0, played: 0, matches: 0 };
 }
 
-// ATP: Elo, official ranking points (last list before the match; they include
-// Challenger results that ESPN does not publish) and the shrunk head-to-head
-// record. Weights fitted before October 2025; ESPN walk-forward afterwards:
-// accuracy 63.9% -> 65.0%, log loss 0.632 -> 0.624. WTA has no historical
-// ranking source to validate and head-to-head did not help, so it keeps Elo.
-export const TENNIS_ATP_WEIGHTS = Object.freeze({ elo: 0.37, rank: 0.43, h2h: 0.42 });
-function atpRankedProbability(match, ratings, eloChance) {
+// ATP and WTA: Elo on results, Elo on the share of games won, official ranking
+// points (last list before the match; they include Challenger and ITF results
+// that ESPN does not publish) and the shrunk head-to-head record. Only the
+// app's own data: no bookmaker price enters the formula. Weights fitted on
+// March-September 2025; ESPN walk-forward from October 2025 (never used to fit):
+// ATP accuracy 65.0% -> 65.3%, log loss 0.6239 -> 0.6215 (3,420 matches);
+// WTA accuracy 64.1% -> 65.9%, log loss 0.6282 -> 0.6166 (5,618 matches).
+// See scripts/backtest/experiment-tennis-v2.mjs.
+export const TENNIS_WEIGHTS = Object.freeze({
+  atp: Object.freeze({ elo: 0.17, games: 0.71, rank: 0.43, h2h: 0.53 }),
+  wta: Object.freeze({ elo: 0.17, games: 0.82, rank: 0.48, h2h: 0.56 })
+});
+export function tennisFeatureProbability(tour, { eloChance, gameGap, pointsRatio, homeWins = 0, awayWins = 0 }) {
+  const w = TENNIS_WEIGHTS[tour];
+  if (!w || !Number.isFinite(eloChance) || !Number.isFinite(gameGap) || !(pointsRatio > 0)) return null;
+  const p = Math.min(0.99, Math.max(0.01, eloChance));
+  const x = w.elo * Math.log(p / (1 - p)) + w.games * gameGap / 400 * Math.LN10 + w.rank * Math.log(pointsRatio) + w.h2h * (homeWins - awayWins) / (homeWins + awayWins + 2);
+  return 1 / (1 + Math.exp(-x));
+}
+function rankedProbability(match, ratings, eloChance) {
   const points = ratings.rankings?.points;
-  if (match.tour !== 'atp' || !points || !Number.isFinite(ratings.rankings.floor)) return null;
-  const pts = side => points[String(match[`${side}Team`]?.id)] ?? ratings.rankings.floor;
-  const [first, second] = [String(match.homeTeam?.id), String(match.awayTeam?.id)].sort();
+  if (!TENNIS_WEIGHTS[match.tour] || !points || !(ratings.rankings.floor > 0)) return null;
+  const id = side => String(match[`${side}Team`]?.id);
+  const pts = side => points[id(side)] ?? ratings.rankings.floor;
+  const gameRating = side => ratings.players[id(side)]?.[5];
+  if (!Number.isFinite(gameRating('home')) || !Number.isFinite(gameRating('away'))) return null;
+  const [first, second] = [id('home'), id('away')].sort();
   const record = ratings.h2h?.[`${first}|${second}`] || [0, 0];
-  const homeWins = first === String(match.homeTeam?.id) ? record[0] : record[1], awayWins = record[0] + record[1] - homeWins;
-  const p = Math.min(0.99, Math.max(0.01, eloChance)), w = TENNIS_ATP_WEIGHTS;
-  const x = w.elo * Math.log(p / (1 - p)) + w.rank * Math.log(pts('home') / pts('away')) + w.h2h * (homeWins - awayWins) / (homeWins + awayWins + 2);
-  return { probability: 1 / (1 + Math.exp(-x)), headToHead: { home: homeWins, away: awayWins }, rankingPoints: { home: pts('home'), away: pts('away') } };
+  const homeWins = first === id('home') ? record[0] : record[1], awayWins = record[0] + record[1] - homeWins;
+  const probability = tennisFeatureProbability(match.tour, { eloChance, gameGap: gameRating('home') - gameRating('away'), pointsRatio: pts('home') / pts('away'), homeWins, awayWins });
+  return probability === null ? null : { probability, headToHead: { home: homeWins, away: awayWins }, rankingPoints: { home: pts('home'), away: pts('away') } };
 }
 
 export function tennisAnalysis(match, games = [], now = Date.now(), ratings = null) {
@@ -392,7 +407,7 @@ export function tennisAnalysis(match, games = [], now = Date.now(), ratings = nu
   const ready = strength.probability !== null && home.matches >= 5 && away.matches >= 5 && home.played >= 5 && away.played >= 5;
   let setChance = null;
   const maxSets = match.maxSets === 5 ? 5 : 3;
-  const ranked = ready && stored ? atpRankedProbability(match, stored, strength.probability) : null;
+  const ranked = ready && stored ? rankedProbability(match, stored, strength.probability) : null;
   const matchChance = oddsWinner ?? (ranked?.probability ?? (ready ? calibrateTennis(strength.probability, match.tour) : null));
   if (matchChance !== null) {
     let low = 0, high = 1;
@@ -409,7 +424,7 @@ export function tennisAnalysis(match, games = [], now = Date.now(), ratings = nu
     probabilitySource: oddsWinner !== null ? 'published-odds' : 'experimental-model',
     headToHead: oddsWinner === null ? ranked?.headToHead ?? null : null, rankingPoints: oddsWinner === null ? ranked?.rankingPoints ?? null : null,
     method: (oddsWinner !== null ? 'Ganador implícito en las dos cuotas publicadas, sin margen; probabilidad por set inferida de ese ganador.'
-      : ranked ? 'Ganador combinando tres señales reales de ESPN: fuerza tipo Elo con resultados de los últimos dos años (mínimo 5 partidos y 5 sets por jugador), puntos del ranking ATP oficial publicado (incluye Challengers) y el cara a cara previo. Pesos elegidos con partidos anteriores a octubre de 2025 y comprobados después. Probabilidad por set inferida del ganador.'
+      : ranked ? `Ganador calculado solo con datos propios, sin cuotas: fuerza tipo Elo con resultados de los últimos dos años, rating por porcentaje de juegos ganados (no es lo mismo ganar 6-1 6-1 que 7-6 7-6), puntos del ranking ${match.tour === 'wta' ? 'WTA' : 'ATP'} oficial publicado y el cara a cara previo (mínimo 5 partidos y 5 sets por jugador). Pesos elegidos con partidos anteriores a octubre de 2025 y comprobados después a ciegas. Probabilidad por set inferida del ganador.`
       : 'Ganador por fuerza relativa tipo Elo con resultados reales previos del mismo circuito en ESPN (hasta dos años; mínimo 5 partidos y 5 sets verificados por jugador). Actualización dinámica según partidos jugados y calibración que modera los favoritos; parámetros elegidos con resultados anteriores a octubre de 2025 y comprobados después. Probabilidad por set inferida del ganador.')
       + ` Partido al mejor de ${maxSets} sets. Los sets se suponen independientes y con la misma probabilidad: primer y segundo set comparten estimación. Gana un set significa al menos uno; se supone que el partido se completa.`,
     notice: setChance !== null ? 'Estimaciones previas al partido; no incorporan cambios durante el encuentro. Precisión predictiva sin validación prospectiva.' : 'Faltan cuotas completas o al menos 5 partidos y 5 sets verificados por jugador.'

@@ -22,8 +22,8 @@ Datos completos: `artifacts/blind-test/*.json`. Se repite con `node --import ./t
 | MLB 2026 | 1,962 | 54.2% | 57.7% | 72.4% | 5.1 pts |
 | NBA 2025-26 | 1,046 | 69.0% | 69.5% | 87.9% | 7.6 pts |
 | WNBA 2026 | 282 | 69.1% | 72.3% | 88.3% | 6.6 pts |
-| Tenis ATP | 3,420 | 65.0% | — | — | — |
-| Tenis WTA | 5,618 | 64.1% | — | — | — |
+| Tenis ATP | 3,420 | 65.2% | — | — | — |
+| Tenis WTA | 5,618 | 65.9% | — | — | — |
 
 En fútbol el 1X2 tiene tres resultados, por eso el acierto ronda 50% también para el casino.
 
@@ -91,10 +91,14 @@ En el hándicap a la línea exacta del casino el modelo acierta 46.9% (NBA) y 47
 
 ## Tenis (ATP y WTA, ESPN)
 
-| | Acierto | Favorito de 65% o más | Dijo → pasó |
-|---|---:|---:|---|
-| ATP (Elo + ranking oficial + cara a cara) | 65.0% | 76.4% | 54.9%→56.3% · 64.5%→66.1% · 74.4%→77% · 83.8%→86.3% |
-| WTA (Elo calibrado) | 64.1% | 75.1% | 54.9%→55% · 64.6%→65.5% · 74.4%→76.3% · 84.3%→85.3% |
+Actualizado el 8 de octubre de 2026. Fórmula propia, sin cuotas de casas: Elo por resultados, Elo por porcentaje de juegos ganados (un 6-1 6-1 pesa más que un 7-6 7-6), puntos del ranking ATP/WTA de la última lista semanal previa y cara a cara. Pesos ajustados con marzo-septiembre de 2025; cifras de octubre de 2025 en adelante (`scripts/backtest/experiment-tennis-v2.mjs`, `scripts/blind-test/tennis.mjs`).
+
+| | Acierto antes | Acierto ahora | Log loss antes → ahora | Favorito de 65% o más | Dijo → pasó |
+|---|---:|---:|---|---:|---|
+| ATP | 65.0% | **65.2%** | 0.6239 → 0.6216 | 75.9% | 54.8%→55.5% · 64.5%→67.3% · 74.3%→77.1% · 83.5%→87.6% |
+| WTA | 64.1% | **65.9%** | 0.6282 → 0.6166 | 76.6% | 54.8%→56% · 64.5%→67.9% · 74.3%→76.4% · 84.2%→86.1% |
+
+Contra Caliente (35 partidos ATP/WTA del 8-10 de octubre, sin su comisión): mismo favorito en 33, diferencia media 5.9 puntos (antes 6.8), 19 partidos a 5 puntos o menos (antes 14). El momio que muestra la app es el publicado por Pinnacle (The Odds API) o Kalshi; el porcentaje es siempre del modelo.
 
 ## Qué cambió en la app con esta prueba
 

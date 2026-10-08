@@ -8,33 +8,45 @@ import { parseTennisEvents, tennisDateRanges } from './sportsDataService.js';
 // years. A season scoreboard is 20-25 MB, so only these few kilobytes are kept
 // and shared; members never wait for the history download.
 const BASE = 'https://site.api.espn.com/apis/site/v2/sports/tennis';
-export const TENNIS_RATINGS_VERSION = 'tennis-elo-rank-h2h-2026-10-07';
-const REBUILD_AFTER_MS = 6 * 3600000, KEEP_SECONDS = 48 * 3600, MEMORY_MS = 20 * 60000, RETRY_FAILED_MS = 10 * 60000;
+export const TENNIS_RATINGS_VERSION = 'tennis-elo-games-rank-h2h-2026-10-08';
+// Ratings change once per rebuild (6 h); each instance re-reads Redis only every
+// 3 h (about 150 KB for both tours) to keep Upstash bandwidth low.
+const REBUILD_AFTER_MS = 6 * 3600000, KEEP_SECONDS = 48 * 3600, MEMORY_MS = 3 * 3600000, RETRY_FAILED_MS = 10 * 60000;
 const memory = new Map(), loading = new Map(), refreshing = new Map(), failures = new Map();
 
 const validSet = set => validNumber(set.home) && validNumber(set.away)
   && ((Math.max(set.home, set.away) >= 6 && Math.abs(set.home - set.away) >= 2) || (Math.max(set.home, set.away) === 7 && Math.min(set.home, set.away) === 6));
 
+// Share of games won by the home player in the completed sets, or null.
+export function gameShare(game) {
+  const sets = (game.setScores || []).filter(validSet), total = sets.reduce((sum, set) => sum + set.home + set.away, 0);
+  return total ? sets.reduce((sum, set) => sum + set.home, 0) / total : null;
+}
+
 // Replays finished, completed singles in date order. Each player keeps the Elo
-// rating, the matches it rests on and set results of their last 20 matches.
+// rating, the matches it rests on, set results of their last 20 matches and a
+// game-share rating: winning 6-1 6-1 says more than winning 7-6 7-6.
 export function buildTennisRatings(tour, games, asOf = Date.now(), ranking = null) {
   const finished = [...new Map(games.map(game => [game.id, game])).values()]
     .filter(game => game.tour === tour && game.status === 'FINISHED' && !game.retired && Date.parse(game.kickoff) < asOf
       && Number.isInteger(game.finalScore?.home) && Number.isInteger(game.finalScore?.away) && game.finalScore.home !== game.finalScore.away)
     .sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff) || a.id.localeCompare(b.id));
-  const rating = new Map(), count = new Map(), recent = new Map(), h2h = {};
+  const rating = new Map(), gameRating = new Map(), count = new Map(), recent = new Map(), h2h = {};
   for (const game of finished) {
     const h = String(game.homeTeam.id), a = String(game.awayTeam.id);
     if (h === a) continue;
     const rh = rating.get(h) ?? 1500, ra = rating.get(a) ?? 1500, expected = eloProbability(rh, ra);
-    const actual = game.finalScore.home > game.finalScore.away ? 1 : 0;
-    rating.set(h, rh + eloK(count.get(h)) * (actual - expected)); rating.set(a, ra - eloK(count.get(a)) * (actual - expected));
-    count.set(h, (count.get(h) || 0) + 1); count.set(a, (count.get(a) || 0) + 1);
-    if (tour === 'atp') {
-      // Head-to-head wins, keyed by the sorted pair.
-      const [first, second] = [h, a].sort(), pair = h2h[`${first}|${second}`] ||= [0, 0];
-      pair[(actual === 1 ? h : a) === first ? 0 : 1]++;
+    const actual = game.finalScore.home > game.finalScore.away ? 1 : 0, kh = eloK(count.get(h)), ka = eloK(count.get(a));
+    rating.set(h, rh + kh * (actual - expected)); rating.set(a, ra - ka * (actual - expected));
+    const share = gameShare(game);
+    if (share !== null) {
+      const gh = gameRating.get(h) ?? 1500, ga = gameRating.get(a) ?? 1500, expectedShare = eloProbability(gh, ga);
+      gameRating.set(h, gh + kh * 2 * (share - expectedShare)); gameRating.set(a, ga - ka * 2 * (share - expectedShare));
     }
+    count.set(h, (count.get(h) || 0) + 1); count.set(a, (count.get(a) || 0) + 1);
+    // Head-to-head wins, keyed by the sorted pair.
+    const [first, second] = [h, a].sort(), pair = h2h[`${first}|${second}`] ||= [0, 0];
+    pair[(actual === 1 ? h : a) === first ? 0 : 1]++;
     const sets = (game.setScores || []).filter(validSet);
     if (sets.length) for (const [id, side] of [[h, 'home'], [a, 'away']]) {
       const list = recent.get(id) || [];
@@ -46,9 +58,9 @@ export function buildTennisRatings(tour, games, asOf = Date.now(), ranking = nul
   const players = {};
   for (const [id, value] of rating) {
     const list = recent.get(id) || [];
-    players[id] = [Math.round(value * 10) / 10, count.get(id), list.reduce((s, x) => s + x[0], 0), list.reduce((s, x) => s + x[1], 0), list.length];
+    players[id] = [Math.round(value * 10) / 10, count.get(id), list.reduce((s, x) => s + x[0], 0), list.reduce((s, x) => s + x[1], 0), list.length, Math.round((gameRating.get(id) ?? 1500) * 10) / 10];
   }
-  return { version: TENNIS_RATINGS_VERSION, tour, asOf, builtAt: asOf, games: finished.length, ...(tour === 'atp' ? { h2h, rankings: ranking } : {}),
+  return { version: TENNIS_RATINGS_VERSION, tour, asOf, builtAt: asOf, games: finished.length, h2h, rankings: ranking,
     period: finished.length ? [finished[0].kickoff, finished.at(-1).kickoff] : null, players };
 }
 
@@ -61,7 +73,7 @@ async function rebuild(tour) {
     for (const game of parseTennisEvents(data, tour)) games.push({ id: game.id, tour, kickoff: game.kickoff, status: game.status, retired: game.retired,
       finalScore: game.finalScore, setScores: game.setScores, homeTeam: { id: game.homeTeam.id }, awayTeam: { id: game.awayTeam.id } });
   }
-  const ratings = buildTennisRatings(tour, games, Date.now(), tour === 'atp' ? await officialRanking(tour).catch(() => null) : null);
+  const ratings = buildTennisRatings(tour, games, Date.now(), await officialRanking(tour).catch(() => null));
   if (ratings.games < 100) throw new Error('Muestra insuficiente.');
   if (redisConfigured()) {
     try {
@@ -72,8 +84,8 @@ async function rebuild(tour) {
   return ratings;
 }
 
-// Latest official list published by ESPN (top 150 with points). Players outside
-// it get 70% of the last listed points, as in the validation.
+// Latest official ATP or WTA list published by ESPN (top 150 with points).
+// Players outside it get 70% of the last listed points, as in the validation.
 export async function officialRanking(tour) {
   const data = await fetchJson(`${BASE}/${tour}/rankings`);
   const ranks = data.rankings?.[0]?.ranks || [];
