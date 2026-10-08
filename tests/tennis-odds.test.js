@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildTennisRatings } from '../server/services/tennisRatings.js';
 import { tennisAnalysis, calibrateTennis } from '../server/services/sportProbabilityModel.js';
-import { loadTennisQuotes, attachTennisQuotes, bestQuote, forgetOddsApi } from '../server/services/oddsApi.js';
+import { loadTennisQuotes, attachTennisQuotes, bestQuote, forgetOddsApi, samePlayer } from '../server/services/oddsApi.js';
+import { kalshiQuote, loadKalshiTennis, forgetKalshi, KALSHI_WINDOW_HOURS } from '../server/services/kalshiOdds.js';
 
 const NOW = Date.parse('2026-10-07T12:00:00Z'), HOUR = 3600000;
 const players = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
@@ -84,4 +85,47 @@ test('ATP combines Elo, official ranking points and the head-to-head record; WTA
   const wta = buildTennisRatings('wta', history.map(game => ({ ...game, tour: 'wta' })), NOW);
   assert.equal(wta.h2h, undefined);
   assert.equal(tennisAnalysis({ ...upcoming, tour: 'wta' }, [], NOW, { ...wta, rankings: ranking }).rankingPoints, null);
+});
+
+const kalshiEvent = (home, away, homeBook, awayBook, extra = {}) => ({ event_ticker: `E-${home}`, title: `${home} vs ${away}`, markets: [
+  { status: 'active', yes_sub_title: home, yes_bid_dollars: String(homeBook[0]), yes_ask_dollars: String(homeBook[1]), occurrence_datetime: new Date(NOW - 40 * HOUR).toISOString(), updated_time: '2026-10-07T10:00:00Z' },
+  { status: 'active', yes_sub_title: away, yes_bid_dollars: String(awayBook[0]), yes_ask_dollars: String(awayBook[1]), occurrence_datetime: new Date(NOW - 40 * HOUR).toISOString(), updated_time: '2026-10-07T11:00:00Z' }], ...extra });
+
+test('Kalshi exchange prices: only tight two-way books, names in either order, never stored in Redis', async t => {
+  t.after(() => { process.env.KALSHI_TENNIS_ODDS = 'off'; forgetKalshi(); });
+  // Real case: Shelton 0.87/0.88 against Altmaier 0.12/0.13 (Playdoit: -1000 / +600).
+  const quote = kalshiQuote(kalshiEvent('Ben Shelton', 'Daniel Altmaier', [0.87, 0.88], [0.12, 0.13]));
+  assert.deepEqual([quote.homePrice, quote.awayPrice], [1.1364, 7.6923], 'Decimal price = 1 / ask of each YES contract');
+  assert.equal(quote.lastUpdate, '2026-10-07T11:00:00Z');
+  assert.equal(kalshiQuote(kalshiEvent('A B', 'C D', [0.5, 0.62], [0.4, 0.45])), null, 'A wide spread is not a price');
+  assert.equal(kalshiQuote(kalshiEvent('A B', 'C D', [0, 0.9], [0.05, 0.1])), null, 'A side without bids is not a price');
+  assert.equal(kalshiQuote(kalshiEvent('A B', 'C D', [0.6, 0.62], [0.5, 0.52])), null, 'An incoherent book (114%) is skipped');
+  assert.equal(kalshiQuote({ markets: [kalshiEvent('A B', 'C D', [0.5, 0.52], [0.47, 0.49]).markets[0]] }), null);
+  assert.ok(samePlayer('Bu Yunchaokete', 'Yunchaokete Bu') && samePlayer('Zheng Qinwen', 'Qinwen Zheng'), 'Family name first in one source');
+  assert.ok(!samePlayer('Juan Manuel Cerundolo', 'Francisco Cerundolo') && !samePlayer('Bu Yunchaokete', 'Bu Kai'));
+
+  assert.equal(await loadKalshiTennis('atp'), null, 'Disabled in deterministic tests');
+  process.env.KALSHI_TENNIS_ODDS = 'on'; forgetKalshi();
+  const urls = [];
+  t.mock.method(globalThis, 'fetch', async url => {
+    urls.push(String(url));
+    if (!String(url).startsWith('https://api.elections.kalshi.com/')) throw new Error(`Unexpected request ${url}`);
+    return new Response(JSON.stringify({ events: [kalshiEvent('Valentin Royer', 'Adolfo Daniel Vallejo', [0.44, 0.46], [0.54, 0.56]), kalshiEvent('Otro Uno', 'Otro Dos', [0.1, 0.5], [0.5, 0.9])], cursor: '' }));
+  });
+  const snapshot = await loadKalshiTennis('atp');
+  assert.equal(snapshot.events.length, 1, 'The illiquid market is dropped');
+  assert.match(urls[0], /series_ticker=KXATPMATCH/);
+  await loadKalshiTennis('atp');
+  assert.equal(urls.length, 1, 'Instance memory serves repeated requests');
+  assert.ok(!urls.some(url => url.includes('redis') || url.includes('upstash')));
+
+  const [priced] = attachTennisQuotes([upcoming], snapshot, KALSHI_WINDOW_HOURS);
+  assert.deepEqual([priced.odds.homeWin, priced.odds.awayWin], [1.7857, 2.1739], 'Orientation follows the ESPN players');
+  assert.equal(priced.oddsProvider, 'Kalshi');
+  assert.equal(priced.oddsSource, 'Kalshi');
+  assert.equal(tennisAnalysis(priced, history, NOW).probabilitySource, 'published-odds');
+  assert.equal(attachTennisQuotes([upcoming], snapshot)[0].odds.homeWin, undefined, 'Kalshi dates are loose: only its own wider window pairs them');
+  const bookmaker = { ...upcoming, odds: { homeWin: 1.8, awayWin: 2.05 }, oddsProvider: 'Pinnacle · The Odds API' };
+  assert.equal(attachTennisQuotes([bookmaker], snapshot, KALSHI_WINDOW_HOURS)[0].oddsProvider, 'Pinnacle · The Odds API', 'A bookmaker price is never replaced');
+  assert.equal(attachTennisQuotes([{ ...upcoming, status: 'LIVE' }], snapshot, KALSHI_WINDOW_HOURS)[0].odds.homeWin, undefined, 'Live prices are never attached');
 });

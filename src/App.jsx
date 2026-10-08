@@ -712,7 +712,7 @@ export default function App() {
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
 
         {!isFootball ? (
-          <Suspense fallback={<p role="status" className="text-xs text-sky-300">Cargando deporte…</p>}><SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} sessionKey={auth?.user?.id || auth?.user?.uid || ''} oddsFormat={oddsFormat} currency={currency} isOwner={isOwner} activeModelInfo={activeAiModel} onToast={showToast} onSessionExpired={handleSportsSessionExpired} onToggleParlay={handleToggleParlay} parlayLegs={parlayLegs} /></Suspense>
+          <Suspense fallback={<p role="status" className="text-xs text-sky-300">Cargando deporte…</p>}><SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} sessionKey={auth?.user?.id || auth?.user?.uid || ''} oddsFormat={oddsFormat} currency={currency} isOwner={isOwner} isVip={isVipUser} onUnlockVip={openUpgradeModal} activeModelInfo={activeAiModel} onToast={showToast} onSessionExpired={handleSportsSessionExpired} onToggleParlay={handleToggleParlay} parlayLegs={parlayLegs} /></Suspense>
         ) : (
         <div role="tabpanel" id={`sport-panel-${selectedSport}`} aria-labelledby={`sport-${selectedSport}`}>
 

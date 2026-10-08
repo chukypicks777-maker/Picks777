@@ -17,7 +17,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { sounds } from '../utils/audioEffects';
-import { formatMatchSchedule } from '../utils/matchSchedule.js';
+import { formatFixtureSchedule } from '../utils/matchSchedule.js';
 import LiveTacticalPitch from './LiveTacticalPitch';
 import RadarScanner from './RadarScanner';
 import NumberCounter from './NumberCounter';
@@ -477,7 +477,7 @@ export default function MatchDetailModal({
                 </span>
               </h3>
               <p className="text-[10px] sm:text-xs font-mono text-slate-400 break-words">
-                <time dateTime={m.kickoff}>{formatMatchSchedule(m.kickoff, { timeTBD: m.timeTBD })}</time>{m.venue ? ` · ${m.venue}` : ''}
+                <time dateTime={m.kickoff}>{formatFixtureSchedule(m)}</time>{m.venue ? ` · ${m.venue}` : ''}
               </p>
             </div>
           </div>

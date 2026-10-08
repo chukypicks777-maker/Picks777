@@ -4,6 +4,8 @@ process.env.CUSTOM_AI_API_KEY = '';
 process.env.GEMINI_API_KEY = '';
 for (const key of ['AI_DEFAULT_CONFIG', 'VYCEAI_API_KEY', 'AI_API_KEY', 'THIRD_PARTY_API_KEY', 'THIRD_PARTY_AI_KEY', 'AGENTROUTER_API_KEY', 'DEEPSEEK_API_KEY', 'GROQ_API_KEY']) process.env[key] = '';
 process.env.UPSTASH_REDIS_REST_URL = '';
+// Deterministic tests never reach live exchange prices; Kalshi tests enable it.
+process.env.KALSHI_TENNIS_ODDS = 'off';
 process.env.UPSTASH_REDIS_REST_TOKEN = '';
 process.env.KV_REST_API_URL = '';
 process.env.KV_REST_API_TOKEN = '';

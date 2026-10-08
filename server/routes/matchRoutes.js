@@ -4,6 +4,7 @@ import { enrichHistoricalStats } from '../services/verifiedStats.js';
 import { generateAiMatchReport, readAiMatchReport, isAiConfigured } from '../services/aiService.js';
 import { consumeAiLimit, sendLimited } from '../rateLimit.js';
 import { requireAdmin } from '../session.js';
+import { dayKeys, matchDayKey } from '../../src/utils/matchDay.js';
 const router = express.Router();
 const MATCH_ID = /^espn-(?:femenil-)?\d{1,15}$/;
 router.get('/leagues', async (req, res) => {
@@ -19,21 +20,15 @@ router.get('/standings', async (req, res) => {
     res.status(503).json({ success: false, message: 'Clasificación no disponible para esta liga.' });
   }
 });
-function dayInZone(date, timeZone) {
-  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
-}
 export function filterMatches(matches, query, now = new Date()) {
   const { league, timeframe, status, search, timezone = 'UTC' } = query;
   if (Object.values(query).some(value => typeof value !== 'string')) throw new Error('Filtros inválidos.');
   if (timeframe && !['all', 'today', 'tomorrow'].includes(timeframe)) throw new Error('Fecha inválida.');
   // Validate the IANA zone even when no date filter is set.
-  const today = dayInZone(now, timezone);
-  const parts = new Intl.DateTimeFormat('en-US', { timeZone: timezone, year: 'numeric', month: 'numeric', day: 'numeric' }).formatToParts(now);
-  const value = key => Number(parts.find(p => p.type === key).value);
-  const tomorrow = dayInZone(new Date(Date.UTC(value('year'), value('month') - 1, value('day') + 1, 12)), 'UTC');
+  const { today, tomorrow } = dayKeys(now, timezone);
   return matches.filter(m => (!league || league === 'all' || m.leagueId === league) &&
     (!status || status === 'all' || m.status === status) &&
-    (!timeframe || timeframe === 'all' || dayInZone(new Date(m.kickoff), timezone) === (timeframe === 'today' ? today : tomorrow)) &&
+    (!timeframe || timeframe === 'all' || matchDayKey(m, timezone) === (timeframe === 'today' ? today : tomorrow)) &&
     (!search || `${m.homeTeam.name} ${m.awayTeam.name} ${m.leagueName} ${m.venue || ''}`.toLowerCase().includes(String(search).trim().toLowerCase())));
 }
 async function feedHandler(req, res) {

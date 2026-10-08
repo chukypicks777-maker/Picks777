@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Plus, Eye, Clock, Zap, Target, CheckCircle2 } from 'lucide-react';
 import { formatOdds, marketQuote } from '../utils/oddsFormatter';
 import { footballProbabilityLabel } from '../utils/marketProbability.js';
-import { formatMatchSchedule } from '../utils/matchSchedule.js';
+import { formatFixtureSchedule } from '../utils/matchSchedule.js';
 import { sounds } from '../utils/audioEffects';
 import { isSameMatch } from '../utils/parlayTicket.js';
 import TiltCard from './TiltCard';
@@ -69,7 +69,7 @@ export default function HeroFeaturedMatch({
             {/* Header Info */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 mb-4 sm:mb-6">
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-mono">
-                <span className="px-2 py-1 bg-sky-500/15 text-sky-300 border border-sky-500/25 rounded-md flex items-center gap-1 shrink-0"><Clock className="w-3 h-3 shrink-0" /><time dateTime={match.kickoff} title={`Hora local · ${Intl.DateTimeFormat().resolvedOptions().timeZone}`}>{formatMatchSchedule(match.kickoff, { timeTBD: match.timeTBD })}</time></span>
+                <span className="px-2 py-1 bg-sky-500/15 text-sky-300 border border-sky-500/25 rounded-md flex items-center gap-1 shrink-0"><Clock className="w-3 h-3 shrink-0" /><time dateTime={match.kickoff} title={`Hora local · ${Intl.DateTimeFormat().resolvedOptions().timeZone}`}>{formatFixtureSchedule(match)}</time></span>
                 {match.status === 'LIVE' ? (
                   <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-500/20 text-rose-400 border border-rose-500/40 rounded-md font-bold flex items-center space-x-1.5 shadow-[0_0_12px_rgba(244,63,94,0.3)] shrink-0">
                     <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-rose-400 live-dot"></span>

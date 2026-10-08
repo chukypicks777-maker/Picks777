@@ -30,18 +30,21 @@ export function rankSportWinners(matches, now = Date.now(), limit = 10) {
     .slice(0, limit).map((match, index) => ({ ...match, bankerRank: index + 1 }));
 }
 
+// vip: market reserved for VIP members, as the football Over and first-half
+// markets (sets, early innings, extra innings and negative handicaps).
+export const isVipHandicap = line => line < 0;
 export function sportCardMarkets(match) {
   const a = match.analysis || {}, pick = sportWinnerPick(match), side = pick?.side || 'home';
   const label = match[`${side}Team`]?.shortName || match[`${side}Team`]?.name || 'Equipo';
   if (match.sport === 'tenis') return [
-    { label: `1er set · ${label}`, value: a.firstSet?.[side] },
-    { label: `2º set · ${label}`, value: a.secondSet?.[side] },
-    { label: `Gana un set · ${label}`, value: a.winsSet?.[side]?.yes }
+    { label: `1er set · ${label}`, value: a.firstSet?.[side], vip: true },
+    { label: `2º set · ${label}`, value: a.secondSet?.[side], vip: true },
+    { label: `Gana un set · ${label}`, value: a.winsSet?.[side]?.yes, vip: false }
   ];
   if (match.sport === 'beisbol') return [
-    { label: `1er inning · ${label}`, value: a.firstInning?.[side] },
-    { label: 'Innings 1–5 · Over 2.5', value: a.firstFive?.find(row => row.line === 2.5)?.over },
-    { label: 'Extra innings · Sí', value: a.extraInnings?.yes }
+    { label: `1er inning · ${label}`, value: a.firstInning?.[side], vip: true },
+    { label: 'Innings 1–5 · Over 2.5', value: a.firstFive?.find(row => row.line === 2.5)?.over, vip: true },
+    { label: 'Extra innings · Sí', value: a.extraInnings?.yes, vip: true }
   ];
-  return [1.5, -1.5, 5.5].map(line => ({ label: `${line > 0 ? '+' : ''}${line} · ${label}`, value: a.handicaps?.[side]?.find(row => row.line === line)?.probability }));
+  return [1.5, -1.5, 5.5].map(line => ({ label: `${line > 0 ? '+' : ''}${line} · ${label}`, value: a.handicaps?.[side]?.find(row => row.line === line)?.probability, vip: isVipHandicap(line) }));
 }

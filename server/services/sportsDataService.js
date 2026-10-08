@@ -7,8 +7,10 @@ import { readSportsAiReport } from './sportsAiService.js';
 import { loadAllTennisRatings, loadTennisRatings } from './tennisRatings.js';
 import { loadAllBasketballHistory, loadBasketballHistory } from './basketballHistory.js';
 import { oddsApiConfigured, loadTennisQuotes, attachTennisQuotes } from './oddsApi.js';
+import { loadKalshiTennis, KALSHI_WINDOW_HOURS } from './kalshiOdds.js';
 import { rankSportWinners } from '../../src/utils/sportPicks.js';
 import { isKnownFixture } from '../../src/utils/fixtureEligibility.js';
+import { easternDay } from '../../src/utils/matchDay.js';
 
 const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports';
 const shift = (day, amount) => new Date(Date.parse(day) + amount * 86400000).toISOString().slice(0, 10).replaceAll('-', '');
@@ -16,6 +18,8 @@ const exceptional = { STATUS_POSTPONED: 'POSTPONED', STATUS_CANCELED: 'CANCELLED
 export function espnSportStatus(status) {
   return exceptional[status?.type?.name] || (status?.type?.completed ? 'FINISHED' : status?.type?.state === 'in' ? 'LIVE' : status?.type?.state === 'pre' ? 'SCHEDULED' : 'UNKNOWN');
 }
+// ESPN places fixtures without a confirmed time at midnight Eastern; keep that date.
+export const providerDate = (tbd, date) => tbd ? { scheduleDate: easternDay(date) } : {};
 export function oddsFor(comp) {
   const data = comp.odds?.[0];
   // Both prices must come from the same snapshot. Mixing one modern quote
@@ -40,7 +44,7 @@ export function parseBasketballEvent(event, leagues = SPORT_LEAGUES.basquetbol, 
   return {
     id: `espn-${league.id}-${event.id}`, providerEventId: String(event.id), sport: 'basquetbol',
     leagueId: league.id, leagueName: league.name, leagueFlag: league.flag,
-    homeTeam: team(home), awayTeam: team(away), kickoff: event.date, timeTBD: comp.timeValid === false,
+    homeTeam: team(home), awayTeam: team(away), kickoff: event.date, timeTBD: comp.timeValid === false, ...providerDate(comp.timeValid === false, event.date),
     status, statusDetail: (comp.status || event.status)?.type?.shortDetail || status,
     liveScore: score, finalScore: status === 'FINISHED' ? score : { home: null, away: null },
     venue: comp.venue?.fullName || null, season: event.season?.year, ...oddsFor(comp), source: 'ESPN', fetchedAt,
@@ -83,7 +87,7 @@ export function parseTennisEvents(data, tour, fetchedAt = new Date().toISOString
       const fixture = {
         id: `espn-tennis-${tour}-${comp.id}`, providerEventId: String(comp.id), sport: 'tenis', tour,
         leagueId, leagueName: league.name, leagueFlag: league.flag, tournamentName: event.name, round: comp.round?.displayName,
-        homeTeam: player(home), awayTeam: player(away), kickoff: comp.date, timeTBD: comp.timeValid === false,
+        homeTeam: player(home), awayTeam: player(away), kickoff: comp.date, timeTBD: comp.timeValid === false, ...providerDate(comp.timeValid === false, comp.date),
         status, statusDetail: comp.status?.type?.shortDetail || status, liveScore: score, finalScore: status === 'FINISHED' ? score : { home: null, away: null },
         setScores, maxSets, retired, venue: comp.venue?.fullName || null, ...oddsFor(comp),
         source: 'ESPN', sourceUrl: `https://www.espn.com/tennis/scoreboard/_/date/${comp.date.slice(0, 10).replaceAll('-', '')}`, fetchedAt
@@ -323,13 +327,17 @@ export async function getSportsHistory(sport, now = Date.now(), options = {}) {
   if (options.leagueId && !SPORT_LEAGUES[sport].some(league => league.id === options.leagueId)) throw new Error('Liga no válida.');
   const results = await (sport === 'tenis' ? getTennis(today, options) : sport === 'basquetbol' ? getBasketball(today, options) : getBaseball(today, now, options));
   let games = [...new Map(results.flatMap(result => result.matches).map(match => [match.id, match])).values()];
-  // ESPN publishes no tennis prices: attach real bookmaker quotes when configured.
-  if (sport === 'tenis' && oddsApiConfigured()) {
-    for (const tour of ['atp', 'wta']) {
-      if (options.leagueId && ['atp', 'wta'].includes(options.leagueId) && options.leagueId !== tour) continue;
-      const snapshot = await loadTennisQuotes(tour).catch(() => null);
-      games = games.map(game => game.tour === tour ? attachTennisQuotes([game], snapshot)[0] : game);
-    }
+  // ESPN publishes no tennis prices: attach real ones. A bookmaker (The Odds API,
+  // when configured) comes first; Kalshi exchange prices fill the rest.
+  if (sport === 'tenis') {
+    const tours = ['atp', 'wta'].filter(tour => !(options.leagueId && ['atp', 'wta'].includes(options.leagueId) && options.leagueId !== tour));
+    const snapshots = Object.fromEntries(await Promise.all(tours.map(async tour => [tour, await Promise.all([
+      oddsApiConfigured() ? loadTennisQuotes(tour).catch(() => null) : null, loadKalshiTennis(tour).catch(() => null)])])));
+    games = games.map(game => {
+      const [bookmaker, exchange] = snapshots[game.tour] || [];
+      if (!bookmaker && !exchange) return game;
+      return attachTennisQuotes(attachTennisQuotes([game], bookmaker), exchange, KALSHI_WINDOW_HOURS)[0];
+    });
   }
   return { games, coverage: results.flatMap(result => result.coverage) };
 }

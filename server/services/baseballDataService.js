@@ -33,7 +33,7 @@ export function parseMlbGame(game, league, fetchedAt = new Date().toISOString())
     logo: `https://www.mlbstatic.com/team-logos/${game.teams[side].team.id}.svg` });
   return fixture(league, {
     id: `mlb-${league.id}-${game.gamePk}`, providerEventId: String(game.gamePk), kickoff: game.gameDate,
-    timeTBD: Boolean(game.status?.startTimeTBD), status, statusDetail: detail,
+    timeTBD: Boolean(game.status?.startTimeTBD), ...(game.status?.startTimeTBD && /^\d{4}-\d{2}-\d{2}$/.test(game.officialDate || '') ? { scheduleDate: game.officialDate } : {}), status, statusDetail: detail,
     homeTeam: team('home'), awayTeam: team('away'),
     liveScore: { home: status === 'SCHEDULED' ? null : number(game.teams.home.score), away: status === 'SCHEDULED' ? null : number(game.teams.away.score) },
     venue: game.venue?.name || null, season: game.season,
@@ -81,7 +81,7 @@ export function parseNpbSchedule(html, league, day, fetchedAt = new Date().toISO
     const status = cancelled ? 'CANCELLED' : href && scores.every(score => score !== null) && scores.length === 2 ? 'FINISHED' : Date.parse(kickoff) < Date.parse(fetchedAt) && time ? 'UNKNOWN' : 'SCHEDULED';
     const team = side => ({ id: `npb-${logos[side][2]}`, name: names[side], shortName: names[side], logo: new URL(logos[side][1], 'https://npb.jp').href });
     return [fixture(league, {
-      id: `npb-${day}-${logos[0][2]}-${logos[1][2]}-${index}`, kickoff, timeTBD: !time, liveSupported: false,
+      id: `npb-${day}-${logos[0][2]}-${logos[1][2]}-${index}`, kickoff, timeTBD: !time, ...(time ? {} : { scheduleDate: day }), liveSupported: false,
       homeTeam: team(0), awayTeam: team(1), liveScore: { home: status === 'FINISHED' ? scores[0] : null, away: status === 'FINISHED' ? scores[1] : null },
       status, statusDetail: status === 'FINISHED' ? 'Finalizado' : status === 'CANCELLED' ? 'Cancelado' : status === 'UNKNOWN' ? 'Estado pendiente del proveedor' : 'Programado', venue: round.replace(/\d{1,2}:\d{2}|Game \d+/g, '').trim() || null,
       source: 'NPB oficial', sourceUrl: href ? new URL(href, 'https://npb.jp').href : `https://npb.jp/bis/eng/${day.slice(0, 4)}/games/gm${day.replaceAll('-', '')}.html`
@@ -172,7 +172,7 @@ export function parseKboSchedule(html, league, fetchedAt = new Date().toISOStrin
     const status = /cancel|postpon|취소/i.test(text(row[1])) ? 'CANCELLED' : values && day < providerDay ? 'FINISHED' : Date.parse(kickoff) < Date.parse(fetchedAt) && time ? 'UNKNOWN' : 'SCHEDULED';
     const team = name => ({ id: `kbo-${name.toLowerCase().replaceAll(' ', '-')}`, name, shortName: name });
     return [fixture(league, {
-      id: `kbo-${day}-${home}-${away}-${index}`, kickoff, timeTBD: !time, liveSupported: false,
+      id: `kbo-${day}-${home}-${away}-${index}`, kickoff, timeTBD: !time, ...(time ? {} : { scheduleDate: day }), liveSupported: false,
       homeTeam: team(home), awayTeam: team(away), liveScore: { home: values ? number(values[2]) : null, away: values ? number(values[1]) : null },
       status, statusDetail: status === 'FINISHED' ? 'Finalizado' : status === 'CANCELLED' ? 'Cancelado' : status === 'UNKNOWN' ? 'Estado pendiente del proveedor' : 'Programado',
       venue: text(row[1].match(/class="LOCATION"[^>]*>([\s\S]*?)<\/td>/i)?.[1] || '') || null,

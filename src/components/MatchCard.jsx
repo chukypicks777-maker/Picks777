@@ -4,7 +4,7 @@ import { isStoreApp } from '../auth/platform.js';
 import { Plus, Eye, Clock, CheckCircle2, Zap, Sparkles, Lock, Crown, RotateCw } from 'lucide-react';
 import { formatOdds, marketQuote } from '../utils/oddsFormatter';
 import { footballProbabilityLabel } from '../utils/marketProbability.js';
-import { formatMatchSchedule } from '../utils/matchSchedule.js';
+import { formatFixtureSchedule } from '../utils/matchSchedule.js';
 import { sounds } from '../utils/audioEffects';
 import { isSameMatch } from '../utils/parlayTicket.js';
 import TiltCard from './TiltCard';
@@ -175,7 +175,7 @@ function MatchCard({
             </div>
           </div>
 
-          <p className="flex items-center justify-center gap-1.5 mb-3 text-[11px] text-sky-300"><Clock className="w-3 h-3 shrink-0" /><time dateTime={match.kickoff} title={`Hora local · ${Intl.DateTimeFormat().resolvedOptions().timeZone}`}>{formatMatchSchedule(match.kickoff, { timeTBD: match.timeTBD })}</time></p>
+          <p className="flex items-center justify-center gap-1.5 mb-3 text-[11px] text-sky-300"><Clock className="w-3 h-3 shrink-0" /><time dateTime={match.kickoff} title={`Hora local · ${Intl.DateTimeFormat().resolvedOptions().timeZone}`}>{formatFixtureSchedule(match)}</time></p>
 
           {/* AI Analysis Confirmation Banner */}
           {analyzed ? (

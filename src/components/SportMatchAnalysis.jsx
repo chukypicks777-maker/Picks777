@@ -2,9 +2,11 @@ import React from 'react';
 import Modal from './Modal';
 import { Clock, Sparkles, RotateCw, CheckCircle2 } from 'lucide-react';
 import { formatOdds, marketQuote } from '../utils/oddsFormatter.js';
-import { formatMatchSchedule } from '../utils/matchSchedule.js';
+import { formatFixtureSchedule } from '../utils/matchSchedule.js';
 import TeamForm from './TeamForm';
 import SportIdentity from './SportIdentity';
+import VipLock, { VipBadge } from './VipLock';
+import { isVipHandicap } from '../utils/sportPicks.js';
 
 export function Probability({ value }) {
   const available = typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
@@ -56,18 +58,18 @@ function BinaryMarket({ title, values, oddsFormat }) {
   </section>;
 }
 
-function HandicapTable({ title, lines = [], oddsFormat }) {
+function HandicapTable({ title, lines = [], oddsFormat, isVip = false, onUnlockVip }) {
   return <section className="rounded-xl border border-white/10 overflow-hidden bg-[#111a28]" aria-label={title}>
     <h3 className="p-4 text-sm font-bold border-b border-white/10 break-words">{title}</h3>
     <div className="overflow-x-auto overscroll-x-contain">
       <table className="w-full text-xs sm:text-sm"><thead className="text-slate-400 bg-white/[0.03]"><tr><th scope="col" className="px-2 py-2.5 sm:p-3 text-left">Hándicap</th><th scope="col" className="px-2 py-2.5 sm:p-3 text-right">Probabilidad / Momio</th></tr></thead>
-        <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="px-2 py-2.5 sm:p-3 text-left font-mono font-semibold text-slate-300">{row.line > 0 ? '+' : ''}{row.line}</th><td className="px-2 py-2.5 sm:p-3 text-right"><MarketValue value={row.probability} oddsFormat={oddsFormat} /></td></tr>)}</tbody>
+        <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="px-2 py-2.5 sm:p-3 text-left font-mono font-semibold text-slate-300">{row.line > 0 ? '+' : ''}{row.line}</th><td className="px-2 py-2.5 sm:p-3 text-right">{isVipHandicap(row.line) && !isVip ? <button type="button" onClick={onUnlockVip} className="min-h-9 px-2 rounded-lg border border-amber-500/30 bg-amber-500/10 cursor-pointer" aria-label={`Hándicap ${row.line} reservado para VIP`}><VipBadge /></button> : <MarketValue value={row.probability} oddsFormat={oddsFormat} />}</td></tr>)}</tbody>
       </table>
     </div>
   </section>;
 }
 
-export default function SportMatchAnalysis({ match, onClose, loading = false, error = '', oddsFormat = 'decimal', isOwner = false, onRetryAi, aiLoading = false }) {
+export default function SportMatchAnalysis({ match, onClose, loading = false, error = '', oddsFormat = 'decimal', isOwner = false, isVip = false, onUnlockVip, onRetryAi, aiLoading = false }) {
   const a = match.analysis || {};
   const home = match.homeTeam.name, away = match.awayTeam.name;
   return <Modal title="Análisis del encuentro" onClose={onClose}>
@@ -75,7 +77,7 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
       <header className="space-y-2">
         <p className="text-xs text-slate-400">{match.leagueFlag} {match.leagueName}{match.tournamentName ? ` · ${match.tournamentName}` : ''}</p>
         <h2 className="text-lg sm:text-xl font-bold break-words">{home} <span className="text-slate-500 font-normal">vs</span> {away}</h2>
-        <p className="flex gap-1.5 items-center text-xs text-sky-300"><Clock size={14} /><time dateTime={match.kickoff}>{formatMatchSchedule(match.kickoff, { timeTBD: match.timeTBD })}</time></p>
+        <p className="flex gap-1.5 items-center text-xs text-sky-300"><Clock size={14} /><time dateTime={match.kickoff}>{formatFixtureSchedule(match)}</time></p>
         {match.venue && <p className="text-xs text-slate-500">{match.venue}</p>}
         <p className="text-xs text-sky-300">Probabilidades previas al partido</p>
         <div className="grid grid-cols-2 gap-3 pt-2">{[match.homeTeam, match.awayTeam].map(team => <div key={team.id} className="flex items-center gap-2 min-w-0 rounded-xl border border-white/10 bg-[#111a28] p-3"><SportIdentity key={`${team.id}:${team.logo}`} team={team} size="large" /><span className="text-xs font-semibold break-words min-w-0">{team.name}</span></div>)}</div>
@@ -107,20 +109,23 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
         <div className="grid sm:grid-cols-2 gap-3"><RunTable title={`Carreras · ${home}`} lines={a.teamRuns?.home} oddsFormat={oddsFormat} /><RunTable title={`Carreras · ${away}`} lines={a.teamRuns?.away} oddsFormat={oddsFormat} /></div>
         <RunTable title="Totales extra innings" lines={a.totalRuns} oddsFormat={oddsFormat} />
         <p className="text-xs text-slate-400">Carreras de ambos equipos durante el partido completo, incluidos extra innings; no son únicamente las carreras de las entradas extra.</p>
-        <Outcomes title="Primer inning · 1X2" values={a.firstInning} home={home} away={away} draw oddsFormat={oddsFormat} />
-        <RunTable title="Innings 1 a 5 · Total de carreras de ambos equipos" lines={a.firstFive} oddsFormat={oddsFormat} />
+        <VipLock locked={!isVip} title="Primer inning e Innings 1 a 5" onUnlockVip={onUnlockVip}><div className="space-y-3">
+          <Outcomes title="Primer inning · 1X2" values={a.firstInning} home={home} away={away} draw oddsFormat={oddsFormat} />
+          <RunTable title="Innings 1 a 5 · Total de carreras de ambos equipos" lines={a.firstFive} oddsFormat={oddsFormat} />
+        </div></VipLock>
         {a.inningSampleSize && <p className="text-xs text-slate-400">Registros por equipo · Primer inning: {a.inningSampleSize.first.home} / {a.inningSampleSize.first.away} · Innings 1 a 5: {a.inningSampleSize.five.home} / {a.inningSampleSize.five.away}. Sin 5 registros por equipo, el mercado indica N/D.</p>}
       </>}
 
       {match.sport === 'tenis' && <>
-        <div className="grid sm:grid-cols-2 gap-3"><Outcomes title="Ganador del primer set" values={a.firstSet} home={home} away={away} oddsFormat={oddsFormat} /><Outcomes title="Ganador del segundo set" values={a.secondSet} home={home} away={away} oddsFormat={oddsFormat} /></div>
+        <VipLock locked={!isVip} title="Ganador del 1er y 2º set" onUnlockVip={onUnlockVip}><div className="grid sm:grid-cols-2 gap-3"><Outcomes title="Ganador del primer set" values={a.firstSet} home={home} away={away} oddsFormat={oddsFormat} /><Outcomes title="Ganador del segundo set" values={a.secondSet} home={home} away={away} oddsFormat={oddsFormat} /></div></VipLock>
         <div className="grid sm:grid-cols-2 gap-3"><BinaryMarket title={`${home} gana al menos un set`} values={a.winsSet?.home} oddsFormat={oddsFormat} /><BinaryMarket title={`${away} gana al menos un set`} values={a.winsSet?.away} oddsFormat={oddsFormat} /></div>
         <p className="text-xs text-slate-400">Al mejor de {a.maxSets || match.maxSets || 3} sets · Primer y segundo set comparten estimación bajo el modelo.</p>
       </>}
 
       {match.sport === 'basquetbol' && <>
         <div className="rounded-xl bg-sky-500/5 border border-sky-500/20 p-3 text-xs text-sky-200 leading-relaxed">El hándicap positivo suma puntos al equipo; el negativo los resta. La probabilidad indica que el equipo gana después de aplicar ese ajuste.</div>
-        <div className="grid sm:grid-cols-2 gap-3"><HandicapTable title={`Hándicap · ${home}`} lines={a.handicaps?.home} oddsFormat={oddsFormat} /><HandicapTable title={`Hándicap · ${away}`} lines={a.handicaps?.away} oddsFormat={oddsFormat} /></div>
+        <div className="grid sm:grid-cols-2 gap-3"><HandicapTable title={`Hándicap · ${home}`} lines={a.handicaps?.home} oddsFormat={oddsFormat} isVip={isVip} onUnlockVip={onUnlockVip} /><HandicapTable title={`Hándicap · ${away}`} lines={a.handicaps?.away} oddsFormat={oddsFormat} isVip={isVip} onUnlockVip={onUnlockVip} /></div>
+        {!isVip && <p className="text-[11px] text-amber-300">Los hándicaps negativos (el equipo gana por más de esa diferencia) son exclusivos VIP.</p>}
       </>}
 
       <details className="rounded-xl bg-[#0b121e] border border-white/10 p-4 text-xs text-slate-400 space-y-3">
@@ -135,7 +140,7 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
       {match.sport === 'beisbol' && <details className="rounded-xl bg-[#111a28] border border-sky-500/25 text-xs text-slate-400 overflow-hidden">
         <summary className="cursor-pointer text-sky-300 font-semibold p-4 min-h-11">¿Habrá extra innings?</summary>
         <div className="p-3 pt-0 space-y-3">
-          <BinaryMarket title="Probabilidad de extra innings" values={a.extraInnings} oddsFormat={oddsFormat} />
+          <VipLock locked={!isVip} title="Probabilidad de extra innings" onUnlockVip={onUnlockVip}><BinaryMarket title="Probabilidad de extra innings" values={a.extraInnings} oddsFormat={oddsFormat} /></VipLock>
           <p className="leading-relaxed">Muestra verificada: {a.extraInningsSampleSize?.home ?? 0} partidos de {home} y {a.extraInningsSampleSize?.away ?? 0} de {away}; {a.extraInningsSampleSize?.uniqueGames ?? 0} encuentros distintos, {a.extraInningsSampleSize?.extraGames ?? 0} con extra innings. Sin al menos 5 registros por equipo y duración reglamentaria publicada, N/D.</p>
         </div>
       </details>}

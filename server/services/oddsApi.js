@@ -28,9 +28,13 @@ async function request(path, params = {}) {
 
 export const normalizeName = value => String(value || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z\s-]/g, ' ').split(/[\s-]+/).filter(Boolean);
 // Same surname and first initial; middle names may be omitted by either source.
+// Chinese and Japanese players may also come family name first in one source
+// ("Bu Yunchaokete" / "Yunchaokete Bu").
 export function samePlayer(a, b) {
   const x = normalizeName(a), y = normalizeName(b);
-  return x.length > 0 && y.length > 0 && x.at(-1) === y.at(-1) && x[0][0] === y[0][0];
+  if (!x.length || !y.length) return false;
+  if (x.at(-1) === y.at(-1) && x[0][0] === y[0][0]) return true;
+  return x.length >= 2 && y.length >= 2 && x[0] === y.at(-1) && x.at(-1) === y[0];
 }
 
 export function bestQuote(event) {
@@ -101,22 +105,24 @@ export async function loadTennisQuotes(tour) {
   try { return await task; } finally { loading.delete(tour); }
 }
 
-// Attaches a quote only when both players and the start (±36 h; tennis order
-// of play moves) identify exactly one priced event.
-export function attachTennisQuotes(matches, snapshot) {
+// Attaches a quote only when both players and the start (±36 h by default;
+// tennis order of play moves) identify exactly one priced event. Fixtures that
+// already carry a price keep it, so sources are applied in order of preference.
+export function attachTennisQuotes(matches, snapshot, windowHours = 36) {
   if (!snapshot?.events?.length) return matches;
+  const source = snapshot.source || 'The Odds API';
   return matches.map(match => {
     if (match.status !== 'SCHEDULED' || Number(match.odds?.homeWin) > 1) return match;
     const kickoff = Date.parse(match.kickoff);
-    const candidates = snapshot.events.filter(event => Math.abs(Date.parse(event.commence) - kickoff) <= 36 * 3600000).flatMap(event => {
+    const candidates = snapshot.events.filter(event => Math.abs(Date.parse(event.commence) - kickoff) <= windowHours * 3600000).flatMap(event => {
       if (samePlayer(event.home, match.homeTeam?.name) && samePlayer(event.away, match.awayTeam?.name)) return [{ event, home: event.homePrice, away: event.awayPrice }];
       if (samePlayer(event.home, match.awayTeam?.name) && samePlayer(event.away, match.homeTeam?.name)) return [{ event, home: event.awayPrice, away: event.homePrice }];
       return [];
     });
     if (candidates.length !== 1) return match;
     const [{ event, home, away }] = candidates;
-    return { ...match, odds: { ...(match.odds || {}), homeWin: home, awayWin: away }, oddsProvider: `${event.bookmaker} · The Odds API`,
-      oddsSource: 'The Odds API', oddsFetchedAt: snapshot.fetchedAt, oddsUpdatedAt: event.lastUpdate || null };
+    return { ...match, odds: { ...(match.odds || {}), homeWin: home, awayWin: away }, oddsProvider: event.bookmaker === source ? source : `${event.bookmaker} · ${source}`,
+      oddsSource: source, ...(snapshot.sourceUrl ? { oddsSourceUrl: snapshot.sourceUrl } : {}), oddsFetchedAt: snapshot.fetchedAt, oddsUpdatedAt: event.lastUpdate || null };
   });
 }
 

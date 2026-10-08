@@ -3,6 +3,7 @@ import { cachedData, fetchJson } from './dataCache.js';
 import { applyFootballForecast } from './probabilityModel.js';
 import { hasReportedStatistics } from './espnParsing.js';
 import { loadLeagueModel, leagueModelFor } from './footballHistory.js';
+import { easternDay } from '../../src/utils/matchDay.js';
 
 export const LEAGUES = [
   ['inglaterra', 'Premier League', '🏴', 'eng.1'],
@@ -105,7 +106,7 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
     homeTeamId: String(hc.team.id), awayTeamId: String(ac.team.id),
     leagueId: league.id, leagueName: league.name, leagueFlag: league.flag, season,
     status, statusDetail: s.type?.description || status, liveMinute: status === 'LIVE' ? s.displayClock || null : null,
-    kickoff: event.date, timeTBD: comp.timeValid === false, venue: comp.venue?.fullName || null, referee: comp.officials?.[0]?.displayName || null,
+    kickoff: event.date, timeTBD: comp.timeValid === false, ...(comp.timeValid === false ? { scheduleDate: easternDay(event.date) } : {}), venue: comp.venue?.fullName || null, referee: comp.officials?.[0]?.displayName || null,
     liveScore: { home: status === 'SCHEDULED' ? null : numberOrNull(hc.score), away: status === 'SCHEDULED' ? null : numberOrNull(ac.score) },
     finalScore: { home: status === 'FINISHED' ? numberOrNull(hc.score) : null, away: status === 'FINISHED' ? numberOrNull(ac.score) : null },
     homeTeam: team(hc), awayTeam: team(ac), odds,

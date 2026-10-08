@@ -11,14 +11,17 @@ import useSportsHydration from '../hooks/useSportsHydration.js';
 import { readSportDetail, saveSportDetail, sportMatchVersion, requestSports, mergeSportDetail } from '../utils/sportsClient.js';
 import { computeMatchFingerprint } from '../utils/analysisCache.js';
 import { sportWinnerPick } from '../utils/sportPicks.js';
+import { dayKeys, matchDayKey } from '../utils/matchDay.js';
 import { TelegramIcon, WhatsAppIcon, InstagramIcon } from './SocialIcons';
 import { useSocialLinks, getSocialLink } from '../utils/socialSettings';
+import { isStoreApp } from '../auth/platform.js';
 
-const dayFormatter = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
-const day = value => dayFormatter.format(new Date(value));
+// Free (trial) members see the top 3 Banqueros; #4 to #10 are VIP, as in football.
+const FREE_BANKERS = 3;
+
 const emptyMatches = [];
 
-export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat = 'decimal', currency = 'USD', isOwner = false, activeModelInfo = null, onToast, onSessionExpired, onToggleParlay, parlayLegs = emptyMatches }) {
+export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat = 'decimal', currency = 'USD', isOwner = false, isVip = false, onUnlockVip = null, activeModelInfo = null, onToast, onSessionExpired, onToggleParlay, parlayLegs = emptyMatches }) {
   const activeSport = SPORTS.find(item => item.id === sport);
   const socialLinks = useSocialLinks();
   const leagues = useMemo(() => [{ id: 'all', name: sport === 'tenis' ? 'Todos los torneos' : 'Todas las Ligas', flag: '🌍' }, ...SPORT_LEAGUES[sport]], [sport]);
@@ -175,10 +178,10 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
     for (const match of feed.matches) { result.all++; result[match.leagueId] = (result[match.leagueId] || 0) + 1; }
     return result;
   }, [leagues, feed.matches]);
-  const now = new Date(), tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
-  const todayKey = day(now), tomorrowKey = day(tomorrow);
+  // Local calendar day; fixtures without a confirmed time keep the provider date.
+  const { today: todayKey, tomorrow: tomorrowKey } = dayKeys();
   const filteredMatches = useMemo(() => feed.matches.filter(match => (league === 'all' || match.leagueId === league)
-    && (filter === 'all' || (['LIVE', 'FINISHED'].includes(filter) ? match.status === filter : day(match.kickoff) === (filter === 'today' ? todayKey : tomorrowKey)))
+    && (filter === 'all' || (['LIVE', 'FINISHED'].includes(filter) ? match.status === filter : matchDayKey(match) === (filter === 'today' ? todayKey : tomorrowKey)))
     && (!search.trim() || `${match.homeTeam.name} ${match.awayTeam.name} ${match.tournamentName || ''}`.toLowerCase().includes(search.trim().toLowerCase()))), [feed.matches, league, filter, search, todayKey, tomorrowKey]);
   const matches = category === 'bankers' ? bankerFeed?.rankingScope === rankingScope ? bankerFeed.matches : emptyMatches : filteredMatches;
   useEffect(() => { displayMatchesRef.current = matches; }, [matches]);
@@ -186,6 +189,8 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
   const missing = coverage.filter(item => item.status === 'unavailable' || item.status === 'degraded');
   const error = !loading && feed.coverage.length > 0 && feed.coverage.every(item => item.status === 'unavailable') ? feed.coverage.find(item => item.error)?.error || 'No se pudo consultar el calendario. Revisa la conexión y reintenta.' : '';
   const selectedMatch = bankerFeed?.matches.find(match => match.id === selected) || feed.matches.find(match => match.id === selected);
+  // The analysis is a native modal dialog on the top layer: close it so the VIP access window is visible.
+  const unlockFromAnalysis = useCallback(() => { setSelected(null); onUnlockVip?.(); }, [onUnlockVip]);
   const parlaySelections = useMemo(() => new Map(parlayLegs.map(leg => [String(leg.matchId), leg.selection])), [parlayLegs]);
 
   return <section role="tabpanel" id={`sport-panel-${sport}`} aria-labelledby={`sport-${sport}`} className="space-y-5 pb-6">
@@ -207,6 +212,10 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
     <div className="flex items-center gap-2 font-mono text-xs overflow-x-auto no-scrollbar" aria-label="Categoría de pronósticos"><span className="text-slate-500 shrink-0">Categoría:</span>{[['all', 'Todos los Mercados'], ['bankers', 'Banqueros']].map(([value, name]) => <button key={value} type="button" aria-pressed={category === value} onClick={() => { setCategory(value); setSelected(null); }} className={`shrink-0 inline-flex gap-1.5 items-center min-h-11 px-3 rounded-lg border cursor-pointer transition-colors ${category === value ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold' : 'bg-[#121824] border-white/10 text-slate-400 hover:text-white'}`}>{value === 'bankers' && <Crown size={13} />}{name}</button>)}</div>
     {enabled && feed.matches.length > 0 && <AutonomousAiBar sport={sport} sessionKey={sessionKey} matches={feed.matches} onMatchAnalyzed={handleAiAnalyzed} activeModelInfo={activeModelInfo} onToast={onToast} onSessionExpired={onSessionExpired} isOwner={isOwner} onAnalyzing={setQueueAiId} externalBusy={Boolean(manualAiId || modalAiLoading)} />}
     <div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><h2 className="text-sm sm:text-base font-bold">{category === 'bankers' ? 'Top 10 Banqueros · Ganadores' : 'Partidos & Pronósticos Cuantitativos'}</h2><span className="text-[10px] font-mono text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 rounded-full">{matches.length} encuentros</span></div><p className="text-[10px] font-mono text-slate-500">Formato: <strong className="text-slate-300">{oddsFormat === 'american' ? 'AMERICANO' : oddsFormat === 'fractional' ? 'FRACCIONARIO' : 'DECIMAL'}</strong> · Moneda: <strong className="text-slate-300">{currency}</strong></p></div>
+    {category === 'bankers' && !isVip && <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-mono">
+      <p className="flex items-center gap-2"><Crown className="w-4 h-4 text-amber-400 shrink-0" /><span><strong>Acceso Invitado / Prueba (3 Días):</strong> Tienes acceso a los 3 mejores banqueros. Los picks #4 al #10 están reservados para miembros VIP.</span></p>
+      <button type="button" onClick={onUnlockVip} className="min-h-10 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold rounded-lg text-xs font-mono shrink-0 cursor-pointer">{isStoreApp() ? 'Mi acceso' : '👑 Desbloquear VIP'}</button>
+    </div>}
     {category === 'bankers' && <p className="text-[11px] text-slate-400">Ganadores próximos de mayor a menor probabilidad estimada. Solo se incluyen encuentros con datos suficientes; hasta 10 selecciones.{bankerFeed?.ranking && ` ${bankerFeed.ranking.examined} encuentros revisados, ${bankerFeed.ranking.available} con ganador estimable.`}</p>}
     {missing.length > 0 && !error && <p role="status" className="text-xs text-amber-300 bg-amber-500/5 border border-amber-500/20 rounded-xl p-3">Cobertura limitada: {missing.map(item => item.name).join(', ')}. Algunos calendarios o datos no están disponibles. <button type="button" onClick={reload} className="underline cursor-pointer">Reintentar</button></p>}
     {error && <div role="alert" className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4 text-sm text-rose-300">{error} <button type="button" onClick={reload} className="underline ml-2 cursor-pointer">Reintentar</button></div>}
@@ -217,9 +226,9 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
     {hydration.pending > 0 && <p role="status" className="text-[11px] text-sky-300">Consultando estadísticas en segundo plano · {hydration.pending} pendientes</p>}
     {hydration.failed > 0 && <p role="status" className="text-xs text-amber-300">No se pudo completar el historial de {hydration.failed} encuentros. <button type="button" onClick={reload} className="underline cursor-pointer">Reintentar estadísticas</button></p>}
     {!matches.length ? (!(category === 'bankers' ? bankerLoading : loading) && <div role="status" className="py-16 px-4 text-center rounded-2xl border border-white/10 bg-[#0d121c]"><p className="font-semibold">Sin encuentros disponibles para este filtro</p><p className="text-xs text-slate-500 mt-2">{category === 'bankers' ? 'No hay ganadores próximos con datos suficientes en esta selección.' : 'Los partidos aparecerán cuando la competición tenga un calendario publicado.'}</p></div>) : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {matches.map(match => { const pick = sportWinnerPick(match); return <SportMatchCard key={match.id} match={match} oddsFormat={oddsFormat} onOpen={setSelected} onToggleParlay={onToggleParlay} isInParlay={Boolean(pick && parlaySelections.get(String(match.id)) === pick.selection)} analyzing={manualAiId === match.id || queueAiId === match.id} bankerRank={category === 'bankers' ? match.bankerRank : null} />; })}
+      {matches.map(match => { const pick = sportWinnerPick(match), locked = category === 'bankers' && !isVip && match.bankerRank > FREE_BANKERS; return <SportMatchCard key={match.id} match={match} oddsFormat={oddsFormat} onOpen={locked ? onUnlockVip : setSelected} onToggleParlay={locked ? null : onToggleParlay} isInParlay={Boolean(pick && parlaySelections.get(String(match.id)) === pick.selection)} analyzing={manualAiId === match.id || queueAiId === match.id} bankerRank={category === 'bankers' ? match.bankerRank : null} isVip={isVip} locked={locked} onUnlockVip={onUnlockVip} />; })}
     </div>}
     <p className="text-[11px] text-slate-500 leading-relaxed">Momio: cuota publicada por la fuente. Momio justo: calculado desde nuestra probabilidad, sin margen de casa. N/D indica falta de datos. Probabilidades comprobadas a ciegas con partidos ya jugados; no garantizan resultados. Horarios en tu zona local y consulta automática cada minuto; el proveedor puede publicar con retraso.{sport === 'beisbol' && ' NPB y KBO no tienen marcador en vivo verificado.'}</p>
-    {selectedMatch && <SportMatchAnalysis match={selectedMatch} oddsFormat={oddsFormat} loading={detailLoading} error={detailError} isOwner={isOwner} onRetryAi={() => retryAi(selectedMatch)} aiLoading={Boolean(manualAiId || queueAiId || modalAiLoading)} onClose={() => { setSelected(null); setDetailError(''); setDetailLoading(false); setModalAiLoading(false); }} />}
+    {selectedMatch && <SportMatchAnalysis match={selectedMatch} oddsFormat={oddsFormat} loading={detailLoading} error={detailError} isOwner={isOwner} isVip={isVip} onUnlockVip={unlockFromAnalysis} onRetryAi={() => retryAi(selectedMatch)} aiLoading={Boolean(manualAiId || queueAiId || modalAiLoading)} onClose={() => { setSelected(null); setDetailError(''); setDetailLoading(false); setModalAiLoading(false); }} />}
   </section>;
 }
