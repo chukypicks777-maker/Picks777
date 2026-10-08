@@ -386,7 +386,9 @@ export function tennisAnalysis(match, games = [], now = Date.now(), ratings = nu
     home = setSample(match, games, 'home', now); away = setSample(match, games, 'away', now);
     strength = relativeResultStrength(match, games, now);
   }
-  const oddsWinner = marketWinner(match.odds);
+  // Owner rule: tennis percentages are always the app's own model. A published
+  // price (Kalshi / bookmaker) is shown next to it as the momio, never copied in.
+  const oddsWinner = null;
   const ready = strength.probability !== null && home.matches >= 5 && away.matches >= 5 && home.played >= 5 && away.played >= 5;
   let setChance = null;
   const maxSets = match.maxSets === 5 ? 5 : 3;

@@ -29,7 +29,7 @@ test('stored tennis ratings reproduce the history replay, are calibrated and nev
   assert.equal(tennisAnalysis(old, [], NOW, ratings).winner.home, null, 'A result inside the ratings is not re-forecast with them');
 });
 
-test('real bookmaker quotes attach only to an unambiguous match and drive the winner when present', async t => {
+test('real bookmaker quotes attach only to an unambiguous match and never replace the model percentages', async t => {
   const previous = process.env.ODDS_API_KEY;
   t.after(() => { if (previous === undefined) delete process.env.ODDS_API_KEY; else process.env.ODDS_API_KEY = previous; forgetOddsApi(); });
   delete process.env.ODDS_API_KEY; forgetOddsApi();
@@ -58,8 +58,8 @@ test('real bookmaker quotes attach only to an unambiguous match and drive the wi
   assert.deepEqual([priced.odds.homeWin, priced.odds.awayWin], [1.79, 2.1], 'Orientation follows the ESPN home and away players');
   assert.equal(priced.oddsProvider, 'Pinnacle · The Odds API');
   const analysis = tennisAnalysis(priced, history, NOW);
-  assert.equal(analysis.probabilitySource, 'published-odds');
-  assert.equal(analysis.winner.home, Math.round((1 / 1.79) / (1 / 1.79 + 1 / 2.1) * 1000) / 10);
+  assert.equal(analysis.probabilitySource, 'experimental-model');
+  assert.deepEqual(analysis.winner, tennisAnalysis(upcoming, history, NOW).winner, 'The percentage is the app model, not the bookmaker');
   // Wrong players, a distant date or two candidate events never receive a price.
   assert.equal(attachTennisQuotes([{ ...upcoming, awayTeam: { name: 'Otro Jugador' } }], snapshot)[0].odds.homeWin, undefined);
   assert.equal(attachTennisQuotes([{ ...upcoming, kickoff: new Date(NOW + 72 * HOUR).toISOString() }], snapshot)[0].odds.homeWin, undefined);
@@ -123,7 +123,7 @@ test('Kalshi exchange prices: only tight two-way books, names in either order, n
   assert.deepEqual([priced.odds.homeWin, priced.odds.awayWin], [1.7857, 2.1739], 'Orientation follows the ESPN players');
   assert.equal(priced.oddsProvider, 'Kalshi');
   assert.equal(priced.oddsSource, 'Kalshi');
-  assert.equal(tennisAnalysis(priced, history, NOW).probabilitySource, 'published-odds');
+  assert.equal(tennisAnalysis(priced, history, NOW).probabilitySource, 'experimental-model', 'Kalshi is shown as the momio only');
   assert.equal(attachTennisQuotes([upcoming], snapshot)[0].odds.homeWin, undefined, 'Kalshi dates are loose: only its own wider window pairs them');
   const bookmaker = { ...upcoming, odds: { homeWin: 1.8, awayWin: 2.05 }, oddsProvider: 'Pinnacle · The Odds API' };
   assert.equal(attachTennisQuotes([bookmaker], snapshot, KALSHI_WINDOW_HOURS)[0].oddsProvider, 'Pinnacle · The Odds API', 'A bookmaker price is never replaced');

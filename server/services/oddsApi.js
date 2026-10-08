@@ -13,9 +13,11 @@ const PREFERRED = ['pinnacle', 'betfair_ex_eu', 'bet365', 'williamhill', 'unibet
 
 const apiKey = () => String(process.env.ODDS_API_KEY || '').trim();
 export const oddsApiConfigured = () => /^[A-Za-z0-9]{20,64}$/.test(apiKey());
+// 8 h by default: two tours with one or two priced tournaments each stay well
+// inside the free plan's 500 credits per month.
 const refreshMs = () => {
-  const minutes = Number(process.env.ODDS_API_REFRESH_MINUTES || 360);
-  return (Number.isFinite(minutes) && minutes >= 30 && minutes <= 1440 ? minutes : 360) * 60000;
+  const minutes = Number(process.env.ODDS_API_REFRESH_MINUTES || 480);
+  return (Number.isFinite(minutes) && minutes >= 30 && minutes <= 1440 ? minutes : 480) * 60000;
 };
 
 async function request(path, params = {}) {

@@ -134,8 +134,12 @@ test('basketball handicaps apply the correct team sign and agree with opposite-t
 });
 
 test('tennis winner, each set and yes/no for at least one set are coherent for best of 3 and best of 5', () => {
+  const base = { ...target('tenis'), tour: 'atp', maxSets: 3 };
+  const rated = history(base).map(game => ({ ...game, setScores: [{ home: 6, away: 3 }, { home: 6, away: 4 }], retired: false }));
   for (const maxSets of [3, 5]) for (const homeOdds of [1.05, 1.5, 2, 4, 20]) {
-    const result = tennisAnalysis({ ...target('tenis'), tour: 'atp', maxSets, odds: { homeWin: homeOdds, awayWin: 2 } }, [], NOW);
+    const result = tennisAnalysis({ ...base, maxSets, odds: { homeWin: homeOdds, awayWin: 2 } }, rated, NOW);
+    // The owner's rule: published prices never change the model's percentages.
+    assert.deepEqual(result.winner, tennisAnalysis({ ...base, maxSets, odds: {} }, rated, NOW).winner);
     assert.equal(result.available, true); assert.equal(sum(result.winner), 100); assert.equal(sum(result.firstSet), 100); assert.deepEqual(result.firstSet, result.secondSet);
     const needed = (maxSets + 1) / 2;
     for (const side of ['home', 'away']) assert.equal(result.winsSet[side].yes + result.winsSet[side].no, 100);
