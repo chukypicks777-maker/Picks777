@@ -1,6 +1,8 @@
 import { roundDistribution, totalLines, validNumber, poissonProbability } from '../../src/utils/probability.js';
 import { countForecast, countLines, combinedCount, countResult } from './baseballCountModel.js';
 import { noVigMarket } from '../../src/utils/marketProbability.js';
+import { ratedRuns } from './baseballRatings.js';
+import { ratedMargin } from './basketballRatings.js';
 
 import { SPORT_MODEL_VERSION } from '../../src/utils/sportModelVersion.js';
 export { SPORT_MODEL_VERSION };
@@ -140,7 +142,7 @@ export function poissonResult(homeRate, awayRate) {
     : { home: null, draw: null, away: null };
 }
 
-export function baseballAnalysis(match, games = [], now = Date.now()) {
+function legacyBaseballAnalysis(match, games = [], now = Date.now()) {
   const home = teamSample(match, games, 'home', now), away = teamSample(match, games, 'away', now);
   const ready = home.length >= 5 && away.length >= 5;
   const forecasts = (h, a) => {
@@ -204,6 +206,36 @@ export function baseballAnalysis(match, games = [], now = Date.now()) {
   };
 }
 
+
+// Opponent- and venue-adjusted run ratings (server/services/baseballRatings.js).
+// MLB 2026 blind test against the last-20-games model: winner 52.3% -> 54.0%,
+// every runs market with lower log loss and calibrated 60-70% bands. Without
+// enough league history the previous method is kept.
+export function baseballAnalysis(match, games = [], now = Date.now()) {
+  const legacy = legacyBaseballAnalysis(match, games, now);
+  const rated = ['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status) ? ratedRuns(match, games, now) : null;
+  if (!rated) return legacy;
+  const lines = (mass, list) => countLines({ mass }, list);
+  const homeShare = rated.full.home / (rated.full.home + rated.full.away);
+  let winner = legacy.winner;
+  if (legacy.probabilitySource !== 'published-odds') {
+    // Three-way leagues keep their observed tie frequency for the draw.
+    if (match.allowsDraw) winner = Number.isFinite(legacy.winner.draw)
+      ? roundDistribution({ home: homeShare * (100 - legacy.winner.draw), draw: legacy.winner.draw, away: (1 - homeShare) * (100 - legacy.winner.draw) }, 1) : legacy.winner;
+    else winner = pair(homeShare);
+  }
+  const firstInning = roundDistribution({ home: rated.firstInning.home * 100, draw: rated.firstInning.draw * 100, away: rated.firstInning.away * 100 }, 1);
+  return { ...legacy, available: winner.home !== null, winner,
+    expectedRuns: { home: rated.expected.home, away: rated.expected.away }, ratingSample: rated.sample,
+    scoresRun: { home: yesNo(1 - rated.home[0]), away: yesNo(1 - rated.away[0]) },
+    teamRuns: { home: lines(rated.home, RUN_LINES), away: lines(rated.away, RUN_LINES) },
+    totalRuns: lines(rated.total, TOTAL_RUN_LINES), firstFive: lines(rated.firstFive, RUN_LINES), firstInning,
+    extraInnings: Number.isInteger(match.scheduledInnings) ? yesNo(rated.regulationTie) : legacy.extraInnings,
+    method: 'Carreras con ratings de ataque y pitcheo de cada equipo ajustados por rival y localía, con más peso a los resultados recientes (vida media 60 días) y contracción hacia la media de la liga; binomial negativa con la dispersión medida en MLB 2025. Totales por convolución; primeros cinco innings y primer inning con el reparto de carreras observado; extra innings = probabilidad de empate tras nueve entradas. Comprobado a ciegas en MLB 2026. No incorpora lanzadores abridores ni alineaciones.'
+      + (legacy.probabilitySource === 'published-odds' ? ' Ganador: mercado completo de la misma casa, normalizado para retirar el margen.' : match.allowsDraw ? ' Empate final por frecuencia observada de partidos únicos.' : '')
+  };
+}
+
 export function normalCdf(value) {
   if (!Number.isFinite(value)) return value === Infinity ? 1 : value === -Infinity ? 0 : null;
   const x = Math.abs(value) / Math.SQRT2;
@@ -224,7 +256,40 @@ export function homeCourtEdge(match, games = [], now = Date.now()) {
   return prior.reduce((sum, game) => sum + game.finalScore.home - game.finalScore.away, 0) / (prior.length + 30);
 }
 
-export function basketballAnalysis(match, games = [], now = Date.now()) {
+// Margin whose normal probability matches the published winner, so every
+// handicap stays on the same distribution as that price.
+function marketMargin(probability, deviation) {
+  let low = -10, high = 10;
+  for (let i = 0; i < 60; i++) { const mid = (low + high) / 2; if (normalCdf(mid) < probability) low = mid; else high = mid; }
+  return (low + high) / 2 * deviation;
+}
+
+// NBA/WNBA: opponent- and venue-adjusted points ratings (basketballRatings.js)
+// built from the league's stored results. Blind test against the last-20-games
+// model: NBA 2025-26 winner log loss 0.623 -> 0.595 (accuracy 67.3% -> 68.6%),
+// WNBA 2026 0.614 -> 0.595; mean gap to DraftKings 11.3 -> 7.8 and 10.4 -> 7.6
+// points. Other competitions, or a missing history, keep the previous method.
+export function basketballAnalysis(match, games = [], now = Date.now(), history = null) {
+  const legacy = legacyBasketballAnalysis(match, games, now);
+  const rated = ['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status) ? ratedMargin(match, games, history, now) : null;
+  if (!rated) return legacy;
+  const { deviation } = rated, oddsWinner = marketWinner(match.odds);
+  const winner = pair(oddsWinner ?? normalCdf(rated.margin / deviation));
+  const margin = oddsWinner !== null ? marketMargin(oddsWinner, deviation) : rated.margin;
+  const handicaps = Object.fromEntries(['home', 'away'].map(side => [side, HANDICAP_LINES.map(line => ({
+    line, probability: pair(normalCdf(((side === 'home' ? margin : -margin) + line) / deviation)).home
+  }))]));
+  return { ...legacy, available: true, winner, handicaps,
+    probabilitySource: oddsWinner !== null ? 'published-odds' : 'experimental-model',
+    expectedPoints: { home: Number(rated.points.home.toFixed(1)), away: Number(rated.points.away.toFixed(1)) },
+    ratingSample: rated.sample, homeCourtEdge: Number(rated.homeEdge.toFixed(2)),
+    method: `Hándicaps con una distribución normal del margen final (desviación ${deviation} puntos, medida en la temporada anterior). Margen esperado = puntos esperados de cada equipo según ratings de ataque y defensa ajustados por rival y localía, con más peso a los resultados recientes (vida media 60 días) y contracción hacia la media de la liga; usa temporada regular y playoffs de los últimos 13 meses. Comprobado a ciegas en NBA 2025-26 y WNBA 2026. No incorpora lesiones ni alineaciones. Incluye prórroga cuando está incluida en el resultado oficial.`
+      + (oddsWinner !== null ? ' Ganador: probabilidad implícita en las dos cuotas publicadas, sin margen de la casa. La distribución de hándicaps se centra en ese ganador.' : ' Ganador: probabilidad de margen positivo según los ratings.'),
+    notice: 'El hándicap suma o resta puntos al equipo elegido. Proyección previa al partido.'
+  };
+}
+
+function legacyBasketballAnalysis(match, games = [], now = Date.now()) {
   const home = teamSample(match, games, 'home', now), away = teamSample(match, games, 'away', now);
   const hm = home.map(g => g.own - g.against), am = away.map(g => g.own - g.against);
   const ready = hm.length >= 5 && am.length >= 5;
@@ -236,12 +301,7 @@ export function basketballAnalysis(match, games = [], now = Date.now()) {
   const oddsWinner = marketWinner(match.odds);
   const winner = pair(oddsWinner ?? (hasDistribution ? normalCdf(margin / deviation) : null));
   let distributionMargin = margin;
-  if (hasDistribution && oddsWinner !== null) {
-    // Keep every handicap on the same distribution as the published winner.
-    let low = -10, high = 10;
-    for (let i = 0; i < 60; i++) { const mid = (low + high) / 2; if (normalCdf(mid) < oddsWinner) low = mid; else high = mid; }
-    distributionMargin = (low + high) / 2 * deviation;
-  }
+  if (hasDistribution && oddsWinner !== null) distributionMargin = marketMargin(oddsWinner, deviation);
   const handicaps = Object.fromEntries(['home', 'away'].map(side => [side, HANDICAP_LINES.map(line => ({
     line, probability: hasDistribution ? pair(normalCdf(((side === 'home' ? distributionMargin : -distributionMargin) + line) / deviation)).home : null
   }))]));
@@ -354,9 +414,9 @@ export function tennisAnalysis(match, games = [], now = Date.now(), ratings = nu
   };
 }
 
-export function analyzeSportMatch(match, games = [], now = Date.now(), { tennisRatings = null } = {}) {
+export function analyzeSportMatch(match, games = [], now = Date.now(), { tennisRatings = null, basketballHistory = null } = {}) {
   const model = match.sport === 'beisbol' ? baseballAnalysis : match.sport === 'tenis' ? tennisAnalysis : basketballAnalysis;
-  const analysis = model(match, games, now, match.sport === 'tenis' ? tennisRatings?.[match.tour] : undefined);
+  const analysis = model(match, games, now, match.sport === 'tenis' ? tennisRatings?.[match.tour] : match.sport === 'basquetbol' ? basketballHistory?.[match.leagueId] : undefined);
   if (!['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status)) return model({ ...match, odds: {}, kickoff: 'invalid' }, [], now);
   return analysis;
 }

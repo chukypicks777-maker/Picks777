@@ -153,3 +153,11 @@ ESPN conserva los rankings ATP semanales (top 150 con puntos); en cada partido s
 | **Elo + ranking + cara a cara (publicado en ATP)** | 65,0 % | **0,6240** | — |
 
 Cuando este modelo dio al favorito 65 % o más (73,7 % de media), ganó el 76,3 % de 1 257 partidos ATP. El ranking aporta los resultados de Challenger que ESPN no publica. En WTA el cara a cara no mejoró y ESPN no ofrece rankings WTA históricos fiables (su API devuelve la lista ATP), así que WTA mantiene el Elo calibrado. Los porcentajes los calcula este modelo matemático; la IA (DeepSeek) solo prioriza hechos verificados y no puede escribir ni cambiar números.
+
+## 10. Prueba ciega de todos los deportes (actualización)
+
+Informe completo, por deporte y mercado, en [PRUEBA-CIEGA-2026-10-07.md](PRUEBA-CIEGA-2026-10-07.md). Cambios que salieron de ella:
+
+- **MLB**: ratings de carreras por rival y localía (`server/services/baseballRatings.js`, ajustados con MLB 2025). MLB 2026 a ciegas: ganador 52.3% → 54.2%, log loss 0.695 → 0.687 (DraftKings 57.7%, 0.676).
+- **NBA / WNBA**: ratings de puntos por rival y localía (`server/services/basketballRatings.js`, ajustados con NBA 2024-25 y WNBA 2025). A ciegas: NBA log loss 0.623 → 0.599 (acierto 67.1% → 69.0%), WNBA 0.602 → 0.583; distancia media a DraftKings 11.3 → 7.6 y 10.5 → 6.6 puntos.
+- El historial de básquetbol (13 meses) se guarda compacto en Redis (≈23 KB NBA, ≈6 KB WNBA), se reconstruye cada 6 h en segundo plano descargando solo los dos últimos meses y nunca bloquea una petición.

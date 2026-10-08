@@ -96,7 +96,7 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
         <details className="text-xs text-slate-400"><summary className="cursor-pointer text-sky-300 min-h-8">Ver los resultados recientes</summary><p className="py-2 text-[10px]">Últimos resultados anteriores al partido en esta competición.</p><div className="mt-2 space-y-4">{[['home', home], ['away', away]].map(([side, name]) => <div key={side}><p className="font-semibold text-slate-200 mb-2">{name}</p>{a.form?.[side]?.length ? [...a.form[side]].reverse().map(game => <div key={game.id} className="flex justify-between gap-2 py-2 border-b border-white/5"><span>{new Date(game.date).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}{game.opponent ? ` · ${game.opponent}` : ''}</span><a href={game.sourceUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 font-mono text-sky-300 underline">{game.own}–{game.against} ({game.result})</a></div>) : <p>N/D</p>}</div>)}</div></details>
       </section>}
       <Outcomes title="Ganador del encuentro" values={a.winner} home={home} away={away} draw={Boolean(match.allowsDraw)} odds={match.odds} oddsFormat={oddsFormat} />
-      <p className="text-xs text-sky-300">{a.probabilitySource === 'published-odds' ? 'Ganador: probabilidad implícita del mercado, sin margen de la casa.' : 'Ganador: estimación histórica; faltan cuotas completas para contrastar el mercado.'}</p>
+      <p className="text-xs text-sky-300">{a.probabilitySource === 'published-odds' ? 'Ganador: probabilidad implícita del mercado, sin margen de la casa.' : a.ratingSample ? 'Ganador: ratings ajustados por rival y localía, comprobados a ciegas en temporadas anteriores; sin cuotas publicadas para contrastar.' : 'Ganador: estimación histórica; faltan cuotas completas para contrastar el mercado.'}</p>
       <p className="text-[11px] text-slate-400 leading-relaxed">Publicado: cuota de la fuente{match.oddsProvider ? ` (${match.oddsProvider})` : ''}; confirma su vigencia en la casa. Teórico: 100 dividido por la probabilidad estimada, sin margen; no es un momio ofrecido por una casa.</p>
       {a.notice && <p role="status" className="text-xs text-slate-400 leading-relaxed">{a.notice}</p>}
 
@@ -124,7 +124,7 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
       <details className="rounded-xl bg-[#0b121e] border border-white/10 p-4 text-xs text-slate-400 space-y-3">
         <summary className="cursor-pointer text-slate-200 font-semibold">Datos y método de cálculo</summary>
         <p className="leading-relaxed">{a.method}</p>
-        <p>Muestra: {home} {a.sampleSize?.home ?? 0} partidos · {away} {a.sampleSize?.away ?? 0} partidos.</p>
+        <p>Muestra: {home} {(a.ratingSample || a.sampleSize)?.home ?? 0} partidos · {away} {(a.ratingSample || a.sampleSize)?.away ?? 0} partidos.</p>
         {a.setSampleSize && <p>Sets observados: {home} {a.setSampleSize.home} · {away} {a.setSampleSize.away}.</p>}
         <p>Fuente: <a href={match.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline text-sky-300">{match.source}</a> · Consultado {match.fetchedAt ? new Date(match.fetchedAt).toLocaleString('es') : 'N/D'}.</p>
         {match.oddsSourceUrl && <p>Fuente de momios: <a href={match.oddsSourceUrl} target="_blank" rel="noopener noreferrer" className="underline text-sky-300">{match.oddsSource}</a> · Consultado {match.oddsFetchedAt ? new Date(match.oddsFetchedAt).toLocaleString('es') : 'N/D'}.</p>}

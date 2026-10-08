@@ -45,15 +45,22 @@ export function parseMlbGame(game, league, fetchedAt = new Date().toISOString())
   }, fetchedAt);
 }
 
+// The run ratings use 120 days of results. Completed dates rarely change, so
+// they refresh every three hours; the live window refreshes every minute.
 export async function getMlbLeague(league, today) {
-  const url = `${MLB_BASE}/schedule?sportId=${league.sportId}${league.leagueId ? `&leagueId=${league.leagueId}` : ''}&startDate=${shiftDay(today, -45)}&endDate=${shiftDay(today, 7)}&hydrate=linescore`;
-  const data = await cachedData(`sports:baseball:v3:${league.id}:${today}`, 60, async () => {
+  const range = (from, to) => `${MLB_BASE}/schedule?sportId=${league.sportId}${league.leagueId ? `&leagueId=${league.leagueId}` : ''}&startDate=${from}&endDate=${to}&hydrate=linescore`;
+  const load = (key, ttl, url) => cachedData(key, ttl, async () => {
     const schedule = await fetchJson(url);
     if (!Array.isArray(schedule.dates)) throw new Error('Formato de calendario no reconocido.');
     const fetchedAt = new Date().toISOString();
     return { matches: schedule.dates.flatMap(day => day.games || []).map(game => parseMlbGame(game, league, fetchedAt)).filter(Boolean), fetchedAt };
   });
-  return { ...data, source: 'MLB Stats API' };
+  const [recent, history] = await Promise.all([
+    load(`sports:baseball:v4:${league.id}:${today}`, 60, range(shiftDay(today, -3), shiftDay(today, 7))),
+    load(`sports:baseball-history:v1:${league.id}:${today}`, 10800, range(shiftDay(today, -120), shiftDay(today, -4))).catch(() => ({ matches: [] }))
+  ]);
+  const matches = [...new Map([...history.matches, ...recent.matches].map(match => [match.id, match])).values()];
+  return { matches, fetchedAt: recent.fetchedAt, source: 'MLB Stats API' };
 }
 
 export function parseNpbSchedule(html, league, day, fetchedAt = new Date().toISOString()) {

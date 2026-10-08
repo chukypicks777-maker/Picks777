@@ -1,0 +1,506 @@
+{
+  "checkedAt": "2026-10-08T00:49:06.587Z",
+  "method": "Cada pronóstico usa solo partidos anteriores de la misma competición (temporada anterior incluida, como en producción); se evalúa desde el 15% de la temporada para comparar con la versión anterior (winnerPreviousModel). Casino: DraftKings guardado por ESPN, sin margen. El hándicap se compara en la línea exacta del casino.",
+  "nba": {
+    "games": 1050,
+    "withCasinoOdds": 1046,
+    "winnerModel": {
+      "n": 1046,
+      "hitRate": 69,
+      "brier": 0.2052,
+      "logLoss": 0.5986,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 355,
+          "said": 54.8,
+          "happened": 58.6
+        },
+        {
+          "band": "60-70%",
+          "n": 305,
+          "said": 64.6,
+          "happened": 68.2
+        },
+        {
+          "band": "70-80%",
+          "n": 232,
+          "said": 74.5,
+          "happened": 76.7
+        },
+        {
+          "band": "80-90%",
+          "n": 135,
+          "said": 84.1,
+          "happened": 83
+        },
+        {
+          "band": "90-100%",
+          "n": 19,
+          "said": 91.2,
+          "happened": 84.2
+        }
+      ]
+    },
+    "winnerPreviousModel": {
+      "n": 1046,
+      "hitRate": 67.1,
+      "brier": 0.2162,
+      "logLoss": 0.6226,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 569,
+          "said": 54.7,
+          "happened": 60.3
+        },
+        {
+          "band": "60-70%",
+          "n": 319,
+          "said": 64.5,
+          "happened": 70.8
+        },
+        {
+          "band": "70-80%",
+          "n": 135,
+          "said": 73.5,
+          "happened": 85.2
+        },
+        {
+          "band": "80-90%",
+          "n": 22,
+          "said": 83.7,
+          "happened": 77.3
+        },
+        {
+          "band": "90-100%",
+          "n": 1,
+          "said": 91.7,
+          "happened": 100
+        }
+      ]
+    },
+    "winnerCasino": {
+      "n": 1040,
+      "hitRate": 69.5,
+      "brier": 0.1937,
+      "logLoss": 0.5684,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 301,
+          "said": 55.2,
+          "happened": 52.8
+        },
+        {
+          "band": "60-70%",
+          "n": 262,
+          "said": 65.1,
+          "happened": 67.2
+        },
+        {
+          "band": "70-80%",
+          "n": 238,
+          "said": 74.8,
+          "happened": 76.9
+        },
+        {
+          "band": "80-90%",
+          "n": 194,
+          "said": 84.8,
+          "happened": 82.5
+        },
+        {
+          "band": "90-100%",
+          "n": 45,
+          "said": 92.1,
+          "happened": 100
+        }
+      ]
+    },
+    "winnerVsCasino": {
+      "n": 1040,
+      "sameFavourite": 87.9,
+      "meanDifferencePoints": 7.6,
+      "within5Points": 41.9,
+      "within10Points": 72.1,
+      "modelHitRate": 69.1,
+      "casinoHitRate": 69.5,
+      "modelLogLoss": 0.5968,
+      "casinoLogLoss": 0.5684
+    },
+    "spreadAtCasinoLine": {
+      "n": 1045,
+      "sameFavourite": 51,
+      "meanDifferencePoints": 8.2,
+      "within5Points": 38,
+      "within10Points": 67,
+      "modelHitRate": 46.9,
+      "casinoHitRate": 50.5,
+      "modelLogLoss": 0.7245,
+      "casinoLogLoss": 0.6932
+    },
+    "homePlus55": {
+      "n": 1046,
+      "hitRate": 70.2,
+      "brier": 0.1908,
+      "logLoss": 0.5645,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 246,
+          "said": 54.9,
+          "happened": 49.6
+        },
+        {
+          "band": "60-70%",
+          "n": 267,
+          "said": 65,
+          "happened": 66.7
+        },
+        {
+          "band": "70-80%",
+          "n": 239,
+          "said": 74.8,
+          "happened": 74.9
+        },
+        {
+          "band": "80-90%",
+          "n": 195,
+          "said": 84.6,
+          "happened": 86.2
+        },
+        {
+          "band": "90-100%",
+          "n": 99,
+          "said": 92.8,
+          "happened": 87.9
+        }
+      ]
+    },
+    "homeMinus55": {
+      "n": 1046,
+      "hitRate": 67.1,
+      "brier": 0.2091,
+      "logLoss": 0.6045,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 308,
+          "said": 54.9,
+          "happened": 56.5
+        },
+        {
+          "band": "60-70%",
+          "n": 305,
+          "said": 64.7,
+          "happened": 61.3
+        },
+        {
+          "band": "70-80%",
+          "n": 249,
+          "said": 74.7,
+          "happened": 74.7
+        },
+        {
+          "band": "80-90%",
+          "n": 148,
+          "said": 84.3,
+          "happened": 82.4
+        },
+        {
+          "band": "90-100%",
+          "n": 36,
+          "said": 92.3,
+          "happened": 91.7
+        }
+      ]
+    },
+    "awayPlus55": {
+      "n": 1046,
+      "hitRate": 67,
+      "brier": 0.2091,
+      "logLoss": 0.6045,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 308,
+          "said": 54.9,
+          "happened": 56.2
+        },
+        {
+          "band": "60-70%",
+          "n": 305,
+          "said": 64.7,
+          "happened": 61.3
+        },
+        {
+          "band": "70-80%",
+          "n": 249,
+          "said": 74.7,
+          "happened": 74.7
+        },
+        {
+          "band": "80-90%",
+          "n": 148,
+          "said": 84.3,
+          "happened": 82.4
+        },
+        {
+          "band": "90-100%",
+          "n": 36,
+          "said": 92.3,
+          "happened": 91.7
+        }
+      ]
+    }
+  },
+  "wnba": {
+    "games": 283,
+    "withCasinoOdds": 283,
+    "winnerModel": {
+      "n": 282,
+      "hitRate": 69.1,
+      "brier": 0.1972,
+      "logLoss": 0.5825,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 85,
+          "said": 55,
+          "happened": 51.8
+        },
+        {
+          "band": "60-70%",
+          "n": 93,
+          "said": 65.1,
+          "happened": 65.6
+        },
+        {
+          "band": "70-80%",
+          "n": 72,
+          "said": 74.9,
+          "happened": 88.9
+        },
+        {
+          "band": "80-90%",
+          "n": 29,
+          "said": 83.3,
+          "happened": 86.2
+        },
+        {
+          "band": "90-100%",
+          "n": 3,
+          "said": 91,
+          "happened": 33.3
+        }
+      ]
+    },
+    "winnerPreviousModel": {
+      "n": 282,
+      "hitRate": 69.9,
+      "brier": 0.2061,
+      "logLoss": 0.6021,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 156,
+          "said": 54.9,
+          "happened": 57.7
+        },
+        {
+          "band": "60-70%",
+          "n": 91,
+          "said": 64.9,
+          "happened": 82.4
+        },
+        {
+          "band": "70-80%",
+          "n": 34,
+          "said": 73.2,
+          "happened": 91.2
+        },
+        {
+          "band": "80-90%",
+          "n": 1,
+          "said": 81.8,
+          "happened": 100
+        }
+      ]
+    },
+    "winnerCasino": {
+      "n": 282,
+      "hitRate": 72.3,
+      "brier": 0.1847,
+      "logLoss": 0.5507,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 80,
+          "said": 55.3,
+          "happened": 57.5
+        },
+        {
+          "band": "60-70%",
+          "n": 71,
+          "said": 64.9,
+          "happened": 59.2
+        },
+        {
+          "band": "70-80%",
+          "n": 71,
+          "said": 74.8,
+          "happened": 90.1
+        },
+        {
+          "band": "80-90%",
+          "n": 50,
+          "said": 84.7,
+          "happened": 86
+        },
+        {
+          "band": "90-100%",
+          "n": 10,
+          "said": 91.5,
+          "happened": 90
+        }
+      ]
+    },
+    "winnerVsCasino": {
+      "n": 282,
+      "sameFavourite": 88.3,
+      "meanDifferencePoints": 6.6,
+      "within5Points": 48.2,
+      "within10Points": 78,
+      "modelHitRate": 69.1,
+      "casinoHitRate": 72.3,
+      "modelLogLoss": 0.5825,
+      "casinoLogLoss": 0.5507
+    },
+    "spreadAtCasinoLine": {
+      "n": 282,
+      "sameFavourite": 53.2,
+      "meanDifferencePoints": 7,
+      "within5Points": 44.3,
+      "within10Points": 76.2,
+      "modelHitRate": 47.5,
+      "casinoHitRate": 53.2,
+      "modelLogLoss": 0.7149,
+      "casinoLogLoss": 0.6918
+    },
+    "homePlus55": {
+      "n": 282,
+      "hitRate": 75.5,
+      "brier": 0.1768,
+      "logLoss": 0.5308,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 73,
+          "said": 54.9,
+          "happened": 64.4
+        },
+        {
+          "band": "60-70%",
+          "n": 65,
+          "said": 64.7,
+          "happened": 72.3
+        },
+        {
+          "band": "70-80%",
+          "n": 61,
+          "said": 74.8,
+          "happened": 70.5
+        },
+        {
+          "band": "80-90%",
+          "n": 61,
+          "said": 84.7,
+          "happened": 91.8
+        },
+        {
+          "band": "90-100%",
+          "n": 22,
+          "said": 92.5,
+          "happened": 90.9
+        }
+      ]
+    },
+    "homeMinus55": {
+      "n": 282,
+      "hitRate": 68.8,
+      "brier": 0.2026,
+      "logLoss": 0.5896,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 87,
+          "said": 54.8,
+          "happened": 60.9
+        },
+        {
+          "band": "60-70%",
+          "n": 77,
+          "said": 64.9,
+          "happened": 58.4
+        },
+        {
+          "band": "70-80%",
+          "n": 63,
+          "said": 74.7,
+          "happened": 76.2
+        },
+        {
+          "band": "80-90%",
+          "n": 50,
+          "said": 84.3,
+          "happened": 86
+        },
+        {
+          "band": "90-100%",
+          "n": 5,
+          "said": 91.1,
+          "happened": 100
+        }
+      ]
+    },
+    "awayPlus55": {
+      "n": 282,
+      "hitRate": 68.8,
+      "brier": 0.2026,
+      "logLoss": 0.5896,
+      "calibration": [
+        {
+          "band": "50-60%",
+          "n": 87,
+          "said": 54.8,
+          "happened": 60.9
+        },
+        {
+          "band": "60-70%",
+          "n": 77,
+          "said": 64.9,
+          "happened": 58.4
+        },
+        {
+          "band": "70-80%",
+          "n": 63,
+          "said": 74.7,
+          "happened": 76.2
+        },
+        {
+          "band": "80-90%",
+          "n": 50,
+          "said": 84.3,
+          "happened": 86
+        },
+        {
+          "band": "90-100%",
+          "n": 5,
+          "said": 91.1,
+          "happened": 100
+        }
+      ]
+    }
+  }
+}

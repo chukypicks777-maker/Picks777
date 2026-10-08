@@ -1,0 +1,264 @@
+{
+  "checkedAt": "2026-10-08T00:49:33.087Z",
+  "games": 1962,
+  "withCasinoOdds": 1922,
+  "method": "MLB 2026, mayo a septiembre. Cada pronóstico usa solo partidos anteriores a su hora de inicio (MLB Stats API). Casino: DraftKings guardado por ESPN, sin margen. Totales comparados en la línea exacta publicada por el casino.",
+  "winnerModel": {
+    "n": 1962,
+    "hitRate": 54.2,
+    "brier": 0.2471,
+    "logLoss": 0.6873,
+    "calibration": [
+      {
+        "band": "50-60%",
+        "n": 1842,
+        "said": 53.6,
+        "happened": 53.6
+      },
+      {
+        "band": "60-70%",
+        "n": 120,
+        "said": 61.6,
+        "happened": 62.5
+      }
+    ]
+  },
+  "winnerCasino": {
+    "n": 1922,
+    "hitRate": 57.7,
+    "brier": 0.2414,
+    "logLoss": 0.6755,
+    "calibration": [
+      {
+        "band": "50-60%",
+        "n": 1487,
+        "said": 54.5,
+        "happened": 55.3
+      },
+      {
+        "band": "60-70%",
+        "n": 394,
+        "said": 63.5,
+        "happened": 64.2
+      },
+      {
+        "band": "70-80%",
+        "n": 41,
+        "said": 72.5,
+        "happened": 82.9
+      }
+    ]
+  },
+  "winnerVsCasino": {
+    "n": 1922,
+    "sameFavourite": 72.4,
+    "meanDifferencePoints": 5.1,
+    "within5Points": 56.6,
+    "within10Points": 87.6,
+    "modelHitRate": 54.5,
+    "casinoHitRate": 57.7,
+    "modelLogLoss": 0.687,
+    "casinoLogLoss": 0.6755
+  },
+  "totalAtCasinoLine": {
+    "n": 912,
+    "sameFavourite": 56.4,
+    "meanDifferencePoints": 5.2,
+    "within5Points": 55.2,
+    "within10Points": 88.5,
+    "modelHitRate": 49.8,
+    "casinoHitRate": 52.6,
+    "modelLogLoss": 0.7044,
+    "casinoLogLoss": 0.6917
+  },
+  "total75": {
+    "n": 1962,
+    "hitRate": 56.9,
+    "brier": 0.2448,
+    "logLoss": 0.6827,
+    "calibration": [
+      {
+        "band": "50-60%",
+        "n": 1419,
+        "said": 55.5,
+        "happened": 55.8
+      },
+      {
+        "band": "60-70%",
+        "n": 532,
+        "said": 63,
+        "happened": 59.6
+      },
+      {
+        "band": "70-80%",
+        "n": 11,
+        "said": 71.3,
+        "happened": 63.6
+      }
+    ]
+  },
+  "total85": {
+    "n": 1962,
+    "hitRate": 52.1,
+    "brier": 0.2495,
+    "logLoss": 0.6922,
+    "calibration": [
+      {
+        "band": "50-60%",
+        "n": 1907,
+        "said": 53.8,
+        "happened": 52.1
+      },
+      {
+        "band": "60-70%",
+        "n": 55,
+        "said": 61.4,
+        "happened": 54.5
+      }
+    ]
+  },
+  "total95": {
+    "n": 1962,
+    "hitRate": 59.7,
+    "brier": 0.2395,
+    "logLoss": 0.672,
+    "calibration": [
+      {
+        "band": "50-60%",
+        "n": 890,
+        "said": 56.1,
+        "happened": 56.1
+      },
+      {
+        "band": "60-70%",
+        "n": 1067,
+        "said": 63.4,
+        "happened": 63
+      },
+      {
+        "band": "70-80%",
+        "n": 5,
+        "said": 70.3,
+        "happened": 20
+      }
+    ]
+  },
+  "homeRuns35": {
+    "n": 1962,
+    "hitRate": 55.9,
+    "brier": 0.2449,
+    "logLoss": 0.6829,
+    "calibration": [
+      {
+        "band": "50-60%",
+        "n": 1693,
+        "said": 54.3,
+        "happened": 54.9
+      },
+      {
+        "band": "60-70%",
+        "n": 269,
+        "said": 62.4,
+        "happened": 61.7
+      }
+    ]
+  },
+  "awayRuns35": {
+    "n": 1962,
+    "hitRate": 53.3,
+    "brier": 0.2474,
+    "logLoss": 0.6878,
+    "calibration": [
+      {
+        "band": "50-60%",
+        "n": 1718,
+        "said": 54.2,
+        "happened": 51.6
+      },
+      {
+        "band": "60-70%",
+        "n": 242,
+        "said": 62.1,
+        "happened": 65.3
+      },
+      {
+        "band": "70-80%",
+        "n": 2,
+        "said": 70.4,
+        "happened": 50
+      }
+    ]
+  },
+  "firstInning": {
+    "n": 1962,
+    "hitRate": 52.5,
+    "brier": 0.6107,
+    "logLoss": 1.0197
+  },
+  "firstFive25": {
+    "n": 1962,
+    "hitRate": 75.5,
+    "brier": 0.1846,
+    "logLoss": 0.5558,
+    "calibration": [
+      {
+        "band": "60-70%",
+        "n": 3,
+        "said": 69.9,
+        "happened": 100
+      },
+      {
+        "band": "70-80%",
+        "n": 1864,
+        "said": 75.5,
+        "happened": 75.4
+      },
+      {
+        "band": "80-90%",
+        "n": 95,
+        "said": 80.9,
+        "happened": 77.9
+      }
+    ]
+  },
+  "firstFive45": {
+    "n": 1962,
+    "hitRate": 53.4,
+    "brier": 0.2486,
+    "logLoss": 0.6904,
+    "calibration": [
+      {
+        "band": "50-60%",
+        "n": 1954,
+        "said": 52.9,
+        "happened": 53.4
+      },
+      {
+        "band": "60-70%",
+        "n": 8,
+        "said": 61.2,
+        "happened": 50
+      }
+    ]
+  },
+  "extraInnings": {
+    "n": 1962,
+    "hitRate": 91.6,
+    "brier": 0.0773,
+    "logLoss": 0.2903,
+    "calibration": [
+      {
+        "band": "80-90%",
+        "n": 1221,
+        "said": 89.5,
+        "happened": 91.5
+      },
+      {
+        "band": "90-100%",
+        "n": 741,
+        "said": 90.4,
+        "happened": 91.8
+      }
+    ]
+  }
+}
