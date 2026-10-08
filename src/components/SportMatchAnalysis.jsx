@@ -6,7 +6,7 @@ import { formatFixtureSchedule } from '../utils/matchSchedule.js';
 import TeamForm from './TeamForm';
 import SportIdentity from './SportIdentity';
 import VipLock, { VipBadge } from './VipLock';
-import { isVipHandicap } from '../utils/sportPicks.js';
+import { isVipHandicap, hasPublishedWinnerPrice } from '../utils/sportPicks.js';
 
 export function Probability({ value }) {
   const available = typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
@@ -100,7 +100,10 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
         <details className="text-xs text-slate-400"><summary className="cursor-pointer text-sky-300 min-h-8">Ver los resultados recientes</summary><p className="py-2 text-[10px]">Últimos resultados anteriores al partido en esta competición.</p><div className="mt-2 space-y-4">{[['home', home], ['away', away]].map(([side, name]) => <div key={side}><p className="font-semibold text-slate-200 mb-2">{name}</p>{a.form?.[side]?.length ? [...a.form[side]].reverse().map(game => <div key={game.id} className="flex justify-between gap-2 py-2 border-b border-white/5"><span>{new Date(game.date).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}{game.opponent ? ` · ${game.opponent}` : ''}</span><a href={game.sourceUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 font-mono text-sky-300 underline">{game.own}–{game.against} ({game.result})</a></div>) : <p>N/D</p>}</div>)}</div></details>
       </section>}
       <Outcomes title="Ganador del encuentro" values={a.winner} home={home} away={away} draw={Boolean(match.allowsDraw)} odds={match.odds} oddsFormat={oddsFormat} />
-      <p className="text-xs text-sky-300">{a.probabilitySource === 'published-odds' ? 'Ganador: probabilidad implícita del mercado, sin margen de la casa.' : match.sport === 'tenis' ? `Ganador: porcentaje calculado por nuestro modelo (Elo, ranking y cara a cara), sin usar cuotas.${match.oddsProvider ? ` El momio es el publicado por ${match.oddsProvider}, solo como referencia de precio.` : ''}` : a.ratingSample ? 'Ganador: ratings ajustados por rival y localía, comprobados a ciegas en temporadas anteriores; sin cuotas publicadas para contrastar.' : 'Ganador: estimación histórica; faltan cuotas completas para contrastar el mercado.'}</p>
+      <p className="text-xs text-sky-300">{a.probabilitySource === 'published-odds' ? 'Ganador: probabilidad implícita del mercado, sin margen de la casa.'
+        : `${match.sport === 'tenis' ? 'Ganador: porcentaje calculado por nuestro modelo (Elo, juegos ganados, ranking y cara a cara), sin usar cuotas.'
+          : match.sport === 'beisbol' ? 'Ganador: calculado con las mismas carreras esperadas que el resto de mercados, sin usar cuotas.'
+          : a.ratingSample ? 'Ganador: ratings ajustados por rival y localía, comprobados a ciegas en temporadas anteriores, sin usar cuotas.' : 'Ganador: estimación histórica, sin usar cuotas.'}${a.available && hasPublishedWinnerPrice(match) ? ` El momio es el publicado${match.oddsProvider ? ` por ${match.oddsProvider}` : ''}, solo como referencia de precio.` : ''}`}</p>
       <p className="text-[11px] text-slate-400 leading-relaxed">Publicado: cuota de la fuente{match.oddsProvider ? ` (${match.oddsProvider})` : ''}; confirma su vigencia en la casa. Momio justo: 100 dividido por la probabilidad estimada, sin margen de casa; se muestra cuando la fuente no publica cuota.</p>
       {a.notice && <p role="status" className="text-xs text-slate-400 leading-relaxed">{a.notice}</p>}
 

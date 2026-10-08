@@ -1,6 +1,10 @@
 import { marketQuote } from './oddsFormatter.js';
 import { isUpcomingFixture } from './fixtureEligibility.js';
 
+// A complete winner quote for this market: both sides, plus the draw when the
+// competition has three outcomes. It is shown as the momio, never as a percentage.
+export const hasPublishedWinnerPrice = match => ['homeWin', 'awayWin', ...(match?.allowsDraw ? ['draw'] : [])].every(key => Number(match?.odds?.[key]) > 1);
+
 export function sportWinnerPick(match) {
   const winner = match?.analysis?.winner;
   const sides = ['home', 'away'].filter(side => typeof winner?.[side] === 'number' && Number.isFinite(winner[side]) && winner[side] > 0 && winner[side] <= 100);

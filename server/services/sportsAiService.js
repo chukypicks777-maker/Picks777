@@ -15,7 +15,7 @@ export function sportsReportFacts(match) {
   const facts = [
     { id: 'fixture', text: `${home} vs ${away}. ${match.leagueName}${match.tournamentName ? ` · ${match.tournamentName}` : ''}. Inicio: ${match.kickoff}. Estado: ${match.status}.` },
     { id: 'source', text: `Registros de ${match.source || 'la fuente deportiva'}: ${match.sourceUrl || 'N/D'}. Consulta: ${match.fetchedAt || 'N/D'}.` },
-    { id: 'winner', text: `Ganador previo (${a.probabilitySource === 'published-odds' ? 'mercado sin margen' : 'modelo experimental sin calibración de aciertos'}${match.allowsDraw ? ', tres resultados; no equivale a moneyline de dos resultados' : ''}): ${home} ${pct(a.winner?.home)}, ${away} ${pct(a.winner?.away)}${match.allowsDraw ? `, empate ${pct(a.winner?.draw)}` : ''}.` },
+    { id: 'winner', text: `Ganador previo (${a.probabilitySource === 'published-odds' ? 'mercado sin margen' : a.ratingSample || a.kind === 'tennis' ? 'modelo propio comprobado a ciegas con partidos anteriores, sin cuotas' : 'modelo experimental sin calibración de aciertos'}${match.allowsDraw ? ', tres resultados; no equivale a moneyline de dos resultados' : ''}): ${home} ${pct(a.winner?.home)}, ${away} ${pct(a.winner?.away)}${match.allowsDraw ? `, empate ${pct(a.winner?.draw)}` : ''}.` },
     { id: 'sample', text: `Muestra anterior al encuentro: ${home} ${a.sampleSize?.home ?? 0} partidos; ${away} ${a.sampleSize?.away ?? 0} partidos.` },
     { id: 'method', text: a.method || 'Sin datos suficientes para calcular el modelo.' },
     { id: 'limits', text: 'Probabilidades previas, sin validación prospectiva. No se verificaron alineaciones, lesiones ni noticias. No son garantías ni probabilidades ajustadas al marcador en vivo.' }

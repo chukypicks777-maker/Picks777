@@ -5,18 +5,21 @@ import { baseballAnalysis, marketWinner } from '../server/services/sportProbabil
 import { getSportsFeed, getSportsBankerCandidates, getSportsMatch, oddsFor } from '../server/services/sportsDataService.js';
 import { sportWinnerPick } from '../src/utils/sportPicks.js';
 
-test('the reported -138/+114 prices favour Padres after removing margin even when history favours Brewers', () => {
+test('published -138/+114 prices are only the momio: history favouring Brewers keeps Brewers as the model pick', () => {
   const now = Date.now();
   const match = { id: 'padres-brewers', sport: 'beisbol', leagueId: 'regression', status: 'SCHEDULED', kickoff: new Date(now + 3600000).toISOString(),
     homeTeam: { id: 'padres', name: 'San Diego Padres' }, awayTeam: { id: 'brewers', name: 'Milwaukee Brewers' }, odds: { homeWin: 1 + 100 / 138, awayWin: 2.14 } };
   const games = Array.from({ length: 10 }, (_, i) => ({ ...match, id: `loss-${i}`, status: 'FINISHED', kickoff: new Date(now - (i + 1) * 86400000).toISOString(), finalScore: { home: 1, away: 10 } }));
   const result = baseballAnalysis(match, games, now);
-  assert.deepEqual(result.winner, { home: 55.4, away: 44.6 });
-  assert.equal(result.probabilitySource, 'published-odds');
-  assert.equal(sportWinnerPick({ ...match, analysis: result }).teamId, 'padres');
-  assert.deepEqual(baseballAnalysis(match, [], now).winner, result.winner, 'A published two-sided winner does not require scoring history');
+  assert.ok(result.winner.home < 50);
+  assert.equal(result.probabilitySource, 'experimental-model');
+  assert.deepEqual(result.winner, baseballAnalysis({ ...match, odds: {} }, games, now).winner, 'Prices never change the percentages');
+  const pick = sportWinnerPick({ ...match, analysis: result });
+  assert.equal(pick.teamId, 'brewers');
+  assert.equal(pick.oddsKind, 'published');
+  assert.equal(pick.odds, 2.14, 'The momio of the model pick is the published price of that side');
+  assert.equal(baseballAnalysis(match, [], now).winner.home, null, 'Prices alone never produce a percentage');
   assert.equal(baseballAnalysis(match, [], now).firstFive[0].over, null, 'Winner prices cannot invent innings markets');
-  assert.ok(baseballAnalysis({ ...match, odds: {} }, games, now).winner.home < 50);
 });
 
 test('unrelated quote snapshots and incomplete prices never manufacture a market probability', () => {
@@ -60,7 +63,7 @@ test('duplicated or contradictory inning records are unavailable instead of prod
   }
 });
 
-test('MLB calendar, banker ranking and hydrated details all recalculate from the same exact published prices', async t => {
+test('MLB calendar, banker ranking and hydrated details share the same model winner and exact published prices', async t => {
   const now = Date.now(), kickoff = new Date(now + 3600000).toISOString();
   const game = (id, date, status, home = 1, away = 10) => ({ gamePk: id, gameDate: date, season: '2026', scheduledInnings: 9,
     status: { abstractGameState: status, detailedState: status === 'Final' ? 'Final' : 'Scheduled' },
@@ -79,9 +82,12 @@ test('MLB calendar, banker ranking and hydrated details all recalculate from the
   const feed = await getSportsFeed('beisbol', { leagueId: 'mlb', now });
   const pool = await getSportsBankerCandidates('beisbol', { leagueId: 'mlb' });
   const detail = await getSportsMatch('beisbol', 'mlb-mlb-999001', { leagueId: 'mlb' });
-  for (const match of [feed.matches.find(match => match.id === detail.id), pool.matches.find(match => match.id === detail.id), detail]) {
-    assert.deepEqual(match.analysis.winner, { home: 55.4, away: 44.6 });
-    assert.equal(match.analysis.probabilitySource, 'published-odds');
+  const views = [feed.matches.find(match => match.id === detail.id), pool.matches.find(match => match.id === detail.id), detail];
+  for (const match of views) {
+    assert.deepEqual(match.analysis.winner, views[0].analysis.winner);
+    assert.ok(match.analysis.winner.home < 50, 'Eight 1-10 home defeats make the visitors the model favourite');
+    assert.equal(match.analysis.probabilitySource, 'experimental-model');
     assert.equal(match.oddsProvider, 'Regression house');
+    assert.deepEqual([match.odds.homeWin, match.odds.awayWin], [views[0].odds.homeWin, views[0].odds.awayWin]);
   }
 });

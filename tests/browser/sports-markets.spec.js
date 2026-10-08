@@ -229,7 +229,7 @@ test('todos los deportes muestran fecha, hora y momios en el formato elegido; la
   }
 });
 
-test('las cuotas de la captura mantienen al favorito y la línea F5 queda visible en una tarjeta móvil', async ({ page }) => {
+test('las cuotas de la captura se muestran como momio, el porcentaje es del modelo y la línea F5 queda visible en una tarjeta móvil', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('oddsFormat', 'american'));
   const match = fixture('beisbol', 'mlb', 'San Diego Padres', 'Milwaukee Brewers');
   match.odds = { homeWin: 1 + 100 / 138, awayWin: 2.14 };
@@ -242,18 +242,22 @@ test('las cuotas de la captura mantienen al favorito y la línea F5 queda visibl
   await page.reload();
   await page.setViewportSize({ width: 320, height: 740 });
   const card = page.getByRole('tabpanel').getByRole('article').first();
-  await expect(card).toContainText('55.4%');
-  await expect(card).toContainText('44.6%');
+  const { winner } = match.analysis, favourite = winner.home >= winner.away ? match.homeTeam.name : match.awayTeam.name;
+  // The percentages are the model's own; the published prices are only the momio.
+  expect(match.analysis.probabilitySource).toBe('experimental-model');
+  await expect(card).toContainText(`${winner.home}%`);
+  await expect(card).toContainText(`${winner.away}%`);
   await expect(card).toContainText('Momio -138');
   await expect(card).toContainText('Momio +114');
-  await expect(card).toContainText('Ganador · Mercado sin margen');
-  await expect(card.getByRole('region', { name: 'Pick ganador' })).toContainText('San Diego Padres gana');
+  await expect(card).toContainText('Ganador · % del modelo propio · Momio publicado');
+  await expect(card.getByRole('region', { name: 'Pick ganador' })).toContainText(`${favourite} gana`);
   await expect(card.getByText('Innings 1–5 · Over 2.5', { exact: true })).toBeVisible();
   expect(match.analysis.firstFive.find(row => row.line === 2.5).over).toBeLessThan(94);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await card.screenshot({ path: `artifacts/mobile/probability-fix-${test.info().project.name}.png` });
   await card.getByRole('button', { name: 'Ver análisis y mercados' }).click();
-  await expect(page.getByRole('dialog')).toContainText('Ganador: probabilidad implícita del mercado, sin margen de la casa.');
+  await expect(page.getByRole('dialog')).toContainText('Ganador: calculado con las mismas carreras esperadas que el resto de mercados, sin usar cuotas.');
+  await expect(page.getByRole('dialog')).toContainText('El momio es el publicado, solo como referencia de precio.');
 });
 
 test('las ligas rápidas aparecen durante una consulta lenta y cambiar el formato o la visibilidad no cancela la carga', async ({ page }) => {

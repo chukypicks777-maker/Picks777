@@ -1,6 +1,5 @@
 import { roundDistribution, totalLines, validNumber, poissonProbability } from '../../src/utils/probability.js';
 import { countForecast, countLines, combinedCount, countResult } from './baseballCountModel.js';
-import { noVigMarket } from '../../src/utils/marketProbability.js';
 import { ratedRuns } from './baseballRatings.js';
 import { ratedMargin } from './basketballRatings.js';
 
@@ -153,14 +152,13 @@ function legacyBaseballAnalysis(match, games = [], now = Date.now()) {
   const homeRate = full.home?.mean ?? null, awayRate = full.away?.mean ?? null;
   const regulation = countResult(full.home, full.away);
   const decisive = regulation.home != null ? regulation.home + regulation.away : 0;
-  const threeWay = match.allowsDraw ? noVigMarket(match.odds, ['homeWin', 'draw', 'awayWin']) : null;
-  const oddsWinner = match.allowsDraw ? null : marketWinner(match.odds);
   // A tie in the scoring distribution is not a tie after extra innings.
   const drawGames = [...new Map([...home, ...away].map(game => [game.id, game])).values()];
   const drawCount = drawGames.filter(game => game.own === game.against).length;
   const drawChance = ready && match.allowsDraw ? (drawCount + 0.5) / (drawGames.length + 1) : 0;
-  const winner = threeWay ? roundDistribution({ home: threeWay.probabilities.homeWin, draw: threeWay.probabilities.draw, away: threeWay.probabilities.awayWin }, 1)
-    : oddsWinner !== null ? pair(oddsWinner) : decisive > 0 ? (match.allowsDraw
+  // Owner rule: the winner comes from the same run distributions as every other
+  // baseball market, never from published prices (shown only as the momio).
+  const winner = decisive > 0 ? (match.allowsDraw
     ? roundDistribution({ home: regulation.home / decisive * (1 - drawChance) * 100, draw: drawChance * 100, away: regulation.away / decisive * (1 - drawChance) * 100 }, 1)
     : pair(regulation.home / decisive)) : (match.allowsDraw ? { home: null, draw: null, away: null } : pair(null));
   const periodSample = (sample, count) => sample.flatMap(game => {
@@ -184,7 +182,7 @@ function legacyBaseballAnalysis(match, games = [], now = Date.now()) {
   return {
     kind: 'baseball', available: winner.home !== null, winner, form: { home: recentForm(home), away: recentForm(away) },
     modelVersion: SPORT_MODEL_VERSION,
-    probabilitySource: threeWay || oddsWinner !== null ? 'published-odds' : 'experimental-model',
+    probabilitySource: 'experimental-model',
     winnerMarket: match.allowsDraw ? 'three-way' : 'two-way',
     drawSampleSize: match.allowsDraw ? { uniqueGames: drawGames.length, draws: drawCount } : null,
     expectedRuns: { home: homeRate, away: awayRate },
@@ -200,8 +198,8 @@ function legacyBaseballAnalysis(match, games = [], now = Date.now()) {
     sampleSize: { home: home.length, away: away.length },
     inningSampleSize: { first: first.sampleSize, five: five.sampleSize },
     records: { home: home.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })), away: away.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })) },
-    method: 'Carreras: binomial negativa con medias anotadas y recibidas de los últimos 20 resultados completos, mínimo 5 por equipo. Conserva la variación observada (como mínimo la de Poisson) y añade incertidumbre por estimar medias con muestras finitas. Totales combinados por convolución de ambos equipos bajo independencia; incluye extra innings de los resultados completos. Primer inning y primeros cinco innings usan solo carreras verificadas de esos periodos. Una muestra de ceros indica N/D, no un Under de 100%. Los totales históricos se calculan por separado del ganador de mercado, sin alterar carreras para imitar Elo. ¿Habrá extra innings?: frecuencia de encuentros de la misma duración reglamentaria, mínimo 5 por equipo, sin duplicados, con suavizado de Jeffreys (0.5 añadido al numerador y 1 al denominador). Sin metadata comprobable, N/D. No incorpora lanzadores ni alineaciones.'
-      + (threeWay || oddsWinner !== null ? ' Ganador: mercado completo de la misma casa, normalizado para retirar el margen.' : match.allowsDraw ? ' Ganador histórico de tres resultados: distribución de carreras condicionada a resultado decisivo; empate final por frecuencia de partidos únicos, con suavizado de Jeffreys (0.5 añadido al numerador y 1 al denominador). No equivale a moneyline de dos resultados.' : ' Ganador histórico: distribución de carreras condicionada a resultado decisivo; no simula extra innings.'),
+    method: 'Carreras: binomial negativa con medias anotadas y recibidas de los últimos 20 resultados completos, mínimo 5 por equipo. Conserva la variación observada (como mínimo la de Poisson) y añade incertidumbre por estimar medias con muestras finitas. Totales combinados por convolución de ambos equipos bajo independencia; incluye extra innings de los resultados completos. Primer inning y primeros cinco innings usan solo carreras verificadas de esos periodos. Una muestra de ceros indica N/D, no un Under de 100%. Ganador y carreras salen de las mismas distribuciones, sin cuotas. ¿Habrá extra innings?: frecuencia de encuentros de la misma duración reglamentaria, mínimo 5 por equipo, sin duplicados, con suavizado de Jeffreys (0.5 añadido al numerador y 1 al denominador). Sin metadata comprobable, N/D. No incorpora lanzadores ni alineaciones.'
+      + (match.allowsDraw ? ' Ganador histórico de tres resultados: distribución de carreras condicionada a resultado decisivo; empate final por frecuencia de partidos únicos, con suavizado de Jeffreys (0.5 añadido al numerador y 1 al denominador). No equivale a moneyline de dos resultados.' : ' Ganador histórico: distribución de carreras condicionada a resultado decisivo; no simula extra innings.'),
     notice: ready ? 'Probabilidades estimadas antes del partido; no se recalculan según el marcador en vivo.' : 'Faltan al menos 5 partidos finalizados por equipo con carreras verificadas.'
   };
 }
@@ -210,20 +208,18 @@ function legacyBaseballAnalysis(match, games = [], now = Date.now()) {
 // Opponent- and venue-adjusted run ratings (server/services/baseballRatings.js).
 // MLB 2026 blind test against the last-20-games model: winner 52.3% -> 54.0%,
 // every runs market with lower log loss and calibrated 60-70% bands. Without
-// enough league history the previous method is kept.
+// enough league history the previous method is kept. The winner is the decisive
+// share of the same run distributions, so a team with more expected runs is
+// always the favourite (a market winner mixed with model runs contradicted it).
 export function baseballAnalysis(match, games = [], now = Date.now()) {
   const legacy = legacyBaseballAnalysis(match, games, now);
   const rated = ['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status) ? ratedRuns(match, games, now) : null;
   if (!rated) return legacy;
   const lines = (mass, list) => countLines({ mass }, list);
   const homeShare = rated.full.home / (rated.full.home + rated.full.away);
-  let winner = legacy.winner;
-  if (legacy.probabilitySource !== 'published-odds') {
-    // Three-way leagues keep their observed tie frequency for the draw.
-    if (match.allowsDraw) winner = Number.isFinite(legacy.winner.draw)
-      ? roundDistribution({ home: homeShare * (100 - legacy.winner.draw), draw: legacy.winner.draw, away: (1 - homeShare) * (100 - legacy.winner.draw) }, 1) : legacy.winner;
-    else winner = pair(homeShare);
-  }
+  // Three-way leagues keep their observed tie frequency for the draw.
+  const winner = !match.allowsDraw ? pair(homeShare) : Number.isFinite(legacy.winner.draw)
+    ? roundDistribution({ home: homeShare * (100 - legacy.winner.draw), draw: legacy.winner.draw, away: (1 - homeShare) * (100 - legacy.winner.draw) }, 1) : legacy.winner;
   const firstInning = roundDistribution({ home: rated.firstInning.home * 100, draw: rated.firstInning.draw * 100, away: rated.firstInning.away * 100 }, 1);
   return { ...legacy, available: winner.home !== null, winner,
     expectedRuns: { home: rated.expected.home, away: rated.expected.away }, ratingSample: rated.sample,
@@ -232,7 +228,7 @@ export function baseballAnalysis(match, games = [], now = Date.now()) {
     totalRuns: lines(rated.total, TOTAL_RUN_LINES), firstFive: lines(rated.firstFive, RUN_LINES), firstInning,
     extraInnings: Number.isInteger(match.scheduledInnings) ? yesNo(rated.regulationTie) : legacy.extraInnings,
     method: 'Carreras con ratings de ataque y pitcheo de cada equipo ajustados por rival y localía, con más peso a los resultados recientes (vida media 60 días) y contracción hacia la media de la liga; binomial negativa con la dispersión medida en MLB 2025. Totales por convolución; primeros cinco innings y primer inning con el reparto de carreras observado; extra innings = probabilidad de empate tras nueve entradas. Comprobado a ciegas en MLB 2026. No incorpora lanzadores abridores ni alineaciones.'
-      + (legacy.probabilitySource === 'published-odds' ? ' Ganador: mercado completo de la misma casa, normalizado para retirar el margen.' : match.allowsDraw ? ' Empate final por frecuencia observada de partidos únicos.' : '')
+      + ' Ganador: parte decisiva de esas mismas distribuciones de carreras, sin usar cuotas.' + (match.allowsDraw ? ' Empate final por frecuencia observada de partidos únicos.' : '')
   };
 }
 

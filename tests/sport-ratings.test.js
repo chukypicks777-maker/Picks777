@@ -29,8 +29,31 @@ test('baseball run ratings favour the stronger side, price extra innings and nev
   // A finished copy of the fixture with an absurd score does not change its own forecast.
   const leaked = [...games, { ...match, status: 'FINISHED', finalScore: { home: 30, away: 0 } }];
   assert.deepEqual(baseballAnalysis({ ...match }, leaked, NOW).winner, analysis.winner);
-  // Published moneylines still decide the winner.
-  assert.equal(baseballAnalysis({ ...match, odds: { homeWin: 2.2, awayWin: 1.7 } }, games, NOW).probabilitySource, 'published-odds');
+  // Published moneylines are only the momio, even when they favour the other side:
+  // the winner, team runs and totals come from one distribution and agree.
+  const priced = baseballAnalysis({ ...match, odds: { homeWin: 2.2, awayWin: 1.7 } }, games, NOW);
+  assert.equal(priced.probabilitySource, 'experimental-model');
+  assert.deepEqual(priced.winner, analysis.winner);
+  assert.ok(priced.expectedRuns.home > priced.expectedRuns.away);
+  for (const line of [1.5, 2.5, 3.5]) {
+    const over = side => priced.teamRuns[side].find(row => row.line === line).over;
+    assert.ok(over('home') > over('away'), 'The favourite also scores more often over ' + line);
+  }
+});
+
+test('reported White Sox case: the side with more expected runs is always the baseball favourite', () => {
+  // Any two teams: the winner share and the per-team run lines never contradict each other.
+  const games = schedule(240, (h, a, i) => ({ hv: 4 + (i % 4) - (h === 't2' ? 1 : 0), av: 4 + ((i + 1) % 4) - (a === 't2' ? 1 : 0) })).map(game => ({
+    id: 'mlb-wsx-' + game.i, sport: 'beisbol', leagueId: 'mlb', status: 'FINISHED', kickoff: new Date(NOW - (240 - game.i) * 8 * HOUR).toISOString(),
+    homeTeam: { id: game.home }, awayTeam: { id: game.away }, finalScore: { home: game.hv, away: game.av } }));
+  for (const [home, away] of [['t1', 't2'], ['t2', 't1'], ['t3', 't4'], ['t5', 't6'], ['t6', 't3']]) {
+    const fixture = { id: 'mlb-' + home + '-' + away, sport: 'beisbol', leagueId: 'mlb', status: 'SCHEDULED', kickoff: new Date(NOW + 5 * HOUR).toISOString(),
+      homeTeam: { id: home, name: home }, awayTeam: { id: away, name: away }, odds: { homeWin: 1.95, awayWin: 1.87 }, scheduledInnings: 9 };
+    const a = baseballAnalysis(fixture, games, NOW);
+    const favourite = a.winner.home >= a.winner.away ? 'home' : 'away', other = favourite === 'home' ? 'away' : 'home';
+    assert.ok(a.expectedRuns[favourite] >= a.expectedRuns[other], home + '-' + away + ': favourite expects more runs');
+    assert.ok(a.teamRuns[favourite].find(row => row.line === 2.5).over >= a.teamRuns[other].find(row => row.line === 2.5).over);
+  }
 });
 
 const basketballHistoryRows = schedule(300, (h, a, i) => ({ hv: 118 - 3 * h + (i % 7), av: 112 - 3 * a + ((i + 3) % 7) }))

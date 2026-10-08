@@ -111,15 +111,19 @@ test('KBO ties use unique matches and the same game cannot count twice in both t
   assert.equal(analysis.winnerMarket, 'three-way');
 });
 
-test('KBO two-way sportsbook prices are not attached to three-way model probabilities', () => {
+test('KBO prices never replace three-way model probabilities, and a two-way price is not attached to a three-way pick', () => {
   const odds = { homeWin: 1 + 100 / 110, awayWin: 1 + 100 / 115 };
   const analysis = baseballAnalysis({ ...kbo, odds }, history, Date.parse(kbo.kickoff));
   assert.equal(analysis.probabilitySource, 'experimental-model');
   assert.equal(sportWinnerPick({ ...kbo, odds, analysis }).oddsKind, 'theoretical');
-  const complete = baseballAnalysis({ ...kbo, odds: { ...odds, draw: 15 } }, [], Date.parse(kbo.kickoff));
-  assert.equal(complete.probabilitySource, 'published-odds');
-  assert.ok(complete.winner.away > complete.winner.home);
-  assert.equal(Object.values(complete.winner).reduce((s, p) => s + p, 0), 100);
+  // A complete three-way quote is only the momio: percentages stay the model's.
+  const complete = { ...odds, draw: 15 };
+  const quoted = baseballAnalysis({ ...kbo, odds: complete }, history, Date.parse(kbo.kickoff));
+  assert.equal(quoted.probabilitySource, 'experimental-model');
+  assert.deepEqual(quoted.winner, analysis.winner);
+  assert.ok(Math.abs(Object.values(quoted.winner).reduce((s, p) => s + p, 0) - 100) < 1e-9);
+  assert.equal(sportWinnerPick({ ...kbo, odds: complete, analysis: quoted }).oddsKind, 'published');
+  assert.equal(baseballAnalysis({ ...kbo, odds: complete }, [], Date.parse(kbo.kickoff)).winner.home, null, 'Prices alone never produce a percentage');
 });
 
 test('the screenshot +176 is a correct conversion, while -110/-115 imply a different two-way market', () => {
