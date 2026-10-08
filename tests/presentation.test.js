@@ -8,6 +8,9 @@ const source = await readFile(new URL('../src/components/NumberCounter.jsx', imp
 const { code } = await transformWithOxc(source, 'NumberCounter.jsx', { jsx: { runtime: 'classic' } });
 const moduleCode = code.replace('"react"', JSON.stringify(import.meta.resolve('react')));
 const numberCounterDataUri = 'data:text/javascript;base64,' + Buffer.from(moduleCode).toString('base64');
+const fairOddsCode = (await transformWithOxc(await readFile(new URL('../src/components/FairOdds.jsx', import.meta.url), 'utf8'), 'FairOdds.jsx', { jsx: { runtime: 'classic' } })).code
+  .replace('"react"', JSON.stringify(import.meta.resolve('react'))).replace('"../utils/oddsFormatter.js"', JSON.stringify(import.meta.resolve('../src/utils/oddsFormatter.js')));
+const fairOddsDataUri = 'data:text/javascript;base64,' + Buffer.from(fairOddsCode).toString('base64');
 const { default: NumberCounter } = await import(numberCounterDataUri);
 
 async function loadComponent(relativePath, filename, extraReplaces = {}) {
@@ -18,6 +21,7 @@ async function loadComponent(relativePath, filename, extraReplaces = {}) {
     .replaceAll('"lucide-react"', JSON.stringify(import.meta.resolve('lucide-react')))
     .replaceAll('"../auth/platform.js"', JSON.stringify(import.meta.resolve('../src/auth/platform.js')))
     .replaceAll('"./NumberCounter"', JSON.stringify(numberCounterDataUri))
+    .replaceAll('"./FairOdds"', JSON.stringify(fairOddsDataUri))
     .replaceAll('"../utils/audioEffects"', JSON.stringify(import.meta.resolve('../src/utils/audioEffects.js')))
     .replaceAll('"../utils/probability"', JSON.stringify(import.meta.resolve('../src/utils/probability.js')))
     .replaceAll('"../utils/matchSchedule.js"', JSON.stringify(import.meta.resolve('../src/utils/matchSchedule.js')))
@@ -125,6 +129,10 @@ test('HalfGoalsSection locks 1st half with VIP overlay when isVip=false and unlo
   assert.doesNotMatch(unlockedHtml, /SOLO ACCESO VIP/);
   assert.doesNotMatch(unlockedHtml, /Desbloquear con VIP/);
   assert.doesNotMatch(unlockedHtml, /blur-\[5px\]/);
+  // Every half line shows the fair price of its probability in the chosen format.
+  const american = renderToStaticMarkup(React.createElement(HalfGoalsSection, { match: matchWithHalves, isVip: true, oddsFormat: 'american' }));
+  assert.match(american, /Momio justo -186/, '65% -> 1.54 decimal -> -186 American');
+  assert.match(american, /Momio justo \+1900/, '5% -> 20.00 decimal -> +1900 American');
 });
 
 test('OverUnderGroupedSection locks LADO OVERS with VIP overlay when isVip=false and unlocks when isVip=true', () => {
@@ -171,7 +179,8 @@ test('OverUnderGroupedSection reconstructs goal ladder while preserving missing 
   // Assert that none of the goal lines or cards show N/D
   assert.match(html, /\+0\.5 Goles[\s\S]*?(\d+)%/);
   assert.match(html, /\+1\.5 Goles[\s\S]*?(\d+)%/);
-  assert.match(html, /\+2\.5 Goles[\s\S]*?59%/);
+  assert.match(html, /\+2\.5 Goles[\s\S]*?Momio justo 1\.69[\s\S]*?59%/);
+  assert.match(html, /-2\.5 Goles[\s\S]*?Momio justo 2\.44[\s\S]*?41%/);
   assert.match(html, /\+3\.5 Goles[\s\S]*?(\d+)%/);
   assert.match(html, /Sin muestra verificada suficiente/);
 

@@ -11,10 +11,12 @@ export function Probability({ value }) {
   return <span className={`font-mono font-bold tabular-nums ${available ? 'text-emerald-300' : 'text-slate-500'}`}>{available ? `${Number(value.toFixed(1))}%` : 'N/D'}</span>;
 }
 
-export function MarketValue({ value, publishedOdds, oddsFormat = 'decimal', showTheoretical = false }) {
-  const quote = marketQuote(publishedOdds, showTheoretical ? value : null);
-  // "Sin cuota publicada" may wrap so it never pushes a neighbouring column off screen.
-  return <span className="inline-flex flex-col items-end gap-0.5 min-w-0"><Probability value={value} /><span className={`text-[10px] sm:text-[11px] text-sky-300 font-mono tabular-nums text-right leading-tight ${quote.kind === 'unavailable' ? 'whitespace-normal' : 'whitespace-nowrap'}`}>{quote.kind === 'unavailable' ? 'Sin cuota publicada' : `${quote.kind === 'theoretical' ? 'Precio del modelo' : 'Momio'} ${formatOdds(quote.odds, oddsFormat)}`}</span>{quote.kind !== 'unavailable' && <span className="text-[9px] text-slate-500">{quote.kind === 'theoretical' ? 'No ofrecido por una casa' : quote.label}</span>}</span>;
+// Published price when the source offers one; otherwise the fair price of the
+// estimated probability (100 / probability, without bookmaker margin).
+export function MarketValue({ value, publishedOdds, oddsFormat = 'decimal' }) {
+  const quote = marketQuote(publishedOdds, value);
+  // The label may wrap before the price so it never pushes a neighbouring column off screen.
+  return <span className="inline-flex flex-col items-end gap-0.5 min-w-0"><Probability value={value} /><span className="text-[10px] sm:text-[11px] text-sky-300 font-mono tabular-nums text-right leading-tight">{quote.kind === 'theoretical' ? 'Momio justo' : 'Momio'} <span className="whitespace-nowrap">{quote.kind === 'unavailable' ? 'N/D' : formatOdds(quote.odds, oddsFormat)}</span></span>{quote.kind === 'published' && <span className="text-[9px] text-slate-500 text-right">{quote.label}</span>}{quote.kind === 'theoretical' && <span className="hidden sm:inline text-[9px] text-slate-500 text-right">Calculado, sin margen</span>}</span>;
 }
 
 export function WinnerBar({ values }) {
@@ -27,7 +29,7 @@ function Outcomes({ title, values, home, away, draw = false, odds = {}, oddsForm
   return <section className="rounded-xl border border-white/10 bg-[#111a28] p-4 space-y-3" aria-label={title}>
     <h3 className="text-sm font-bold text-white">{title}</h3>
     {[[home, values?.home, odds.homeWin], ...(draw ? [['Empate', values?.draw, odds.draw]] : []), [away, values?.away, odds.awayWin]].map(([name, value, quote], index) => <div key={index} className="flex items-center justify-between gap-4 text-sm">
-      <span className="min-w-0 break-words text-slate-300">{name}</span><MarketValue value={value} publishedOdds={draw && !(Number(odds.draw) > 1) ? null : quote} oddsFormat={oddsFormat} showTheoretical />
+      <span className="min-w-0 break-words text-slate-300">{name}</span><MarketValue value={value} publishedOdds={draw && !(Number(odds.draw) > 1) ? null : quote} oddsFormat={oddsFormat} />
     </div>)}
     <WinnerBar values={values} />
   </section>;
@@ -97,7 +99,7 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
       </section>}
       <Outcomes title="Ganador del encuentro" values={a.winner} home={home} away={away} draw={Boolean(match.allowsDraw)} odds={match.odds} oddsFormat={oddsFormat} />
       <p className="text-xs text-sky-300">{a.probabilitySource === 'published-odds' ? 'Ganador: probabilidad implícita del mercado, sin margen de la casa.' : a.ratingSample ? 'Ganador: ratings ajustados por rival y localía, comprobados a ciegas en temporadas anteriores; sin cuotas publicadas para contrastar.' : 'Ganador: estimación histórica; faltan cuotas completas para contrastar el mercado.'}</p>
-      <p className="text-[11px] text-slate-400 leading-relaxed">Publicado: cuota de la fuente{match.oddsProvider ? ` (${match.oddsProvider})` : ''}; confirma su vigencia en la casa. Teórico: 100 dividido por la probabilidad estimada, sin margen; no es un momio ofrecido por una casa.</p>
+      <p className="text-[11px] text-slate-400 leading-relaxed">Publicado: cuota de la fuente{match.oddsProvider ? ` (${match.oddsProvider})` : ''}; confirma su vigencia en la casa. Momio justo: 100 dividido por la probabilidad estimada, sin margen de casa; se muestra cuando la fuente no publica cuota.</p>
       {a.notice && <p role="status" className="text-xs text-slate-400 leading-relaxed">{a.notice}</p>}
 
       {match.sport === 'beisbol' && <>

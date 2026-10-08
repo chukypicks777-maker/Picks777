@@ -701,6 +701,7 @@ export default function MatchDetailModal({
                 diff={diff}
                 isVip={effectiveIsVip}
                 onUnlockVip={onUnlockVip}
+                oddsFormat={oddsFormat}
               />
               {/* Narrative Analysis & AI Breakdown */}
               <div className="bg-[#111723] rounded-xl p-5 border border-white/5 space-y-4">
@@ -1066,6 +1067,7 @@ export default function MatchDetailModal({
                 match={combinedMatch}
                 isVip={effectiveIsVip}
                 onUnlockVip={onUnlockVip}
+                oddsFormat={oddsFormat}
               />
 
               {/* 3. AGRUPACIÓN SIMÉTRICA: LADO OVERS (+) VS LADO UNDERS (-) */}
@@ -1076,6 +1078,7 @@ export default function MatchDetailModal({
                 diff={diff}
                 isVip={effectiveIsVip}
                 onUnlockVip={onUnlockVip}
+                oddsFormat={oddsFormat}
               />
 
               {/* 4. HEAD-TO-HEAD COMPARATIVE METRIC BARS */}

@@ -2,9 +2,10 @@ import React from 'react';
 import { isStoreApp } from '../auth/platform.js';
 import { Lock, Crown, Sparkles } from 'lucide-react';
 import NumberCounter from './NumberCounter';
+import FairOdds from './FairOdds';
 import { sounds } from '../utils/audioEffects';
 
-export default function HalfGoalsSection({ match, isVip = false, onUnlockVip = null }) {
+export default function HalfGoalsSection({ match, isVip = false, onUnlockVip = null, oddsFormat = 'decimal' }) {
   const data = match?.halfGoals;
   return (
     <section className="rounded-xl border border-sky-500/25 bg-[#101622] p-4 space-y-4">
@@ -53,9 +54,12 @@ export default function HalfGoalsSection({ match, isVip = false, onUnlockVip = n
                               <span className="text-slate-200 text-[11px] sm:text-xs">
                                 {side === 'over' ? 'Más' : 'Menos'} de {line}
                               </span>
-                              <strong className={`font-mono text-xs sm:text-sm ${side === 'over' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                <NumberCounter value={data[key][`${side}${String(line).replace('.', '')}`]} suffix="%" />
-                              </strong>
+                              <span className="flex flex-col items-end">
+                                <strong className={`font-mono text-xs sm:text-sm ${side === 'over' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                  <NumberCounter value={data[key][`${side}${String(line).replace('.', '')}`]} suffix="%" />
+                                </strong>
+                                <FairOdds probability={data[key][`${side}${String(line).replace('.', '')}`]} oddsFormat={oddsFormat} />
+                              </span>
                             </div>
                           ))}
                         </div>

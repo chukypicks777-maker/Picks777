@@ -195,8 +195,8 @@ test('todos los deportes muestran fecha, hora y momios en el formato elegido; la
     await page.setViewportSize({ width: 320, height: 740 });
     const panel = page.getByRole('tabpanel'), card = panel.getByRole('article').first();
     await expect(card.locator('time')).toContainText(/.*\d+.*·.*\d{2}:\d{2}/);
-    // Published prices keep the Momio label; model prices and unquoted lines say so (since 94687c0).
-    await expect(card).toContainText(sport === 'basquetbol' ? /Momio [+-]\d+/ : /Sin cuota publicada/);
+    // Published prices keep the Momio label; every other line shows its fair price as "Momio justo".
+    await expect(card).toContainText(sport === 'basquetbol' ? /Momio [+-]\d+/ : /Momio justo [+-]\d+/);
     await expect(panel.getByText('Ganador y hándicaps positivos y negativos para ambos equipos.', { exact: true })).toHaveCount(0);
     await expect(panel.getByText('Ganador del partido, primer y segundo set, y al menos un set por jugador.', { exact: true })).toHaveCount(0);
     if (sport !== 'tenis') await expect(card.getByRole('img', { name: /Victoria|Derrota|Empate/ })).toHaveCount(10);
@@ -204,13 +204,13 @@ test('todos los deportes muestran fecha, hora y momios en el formato elegido; la
       await expect(card).toContainText('Momio -125');
       await expect(card).toContainText('Publicado');
       await expect(card).toContainText('Casa de prueba');
-    } else await expect(card).toContainText('Precio del modelo');
+    } else await expect(card).toContainText(/Momio justo [+-]\d+ · Calculado/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await card.screenshot({ path: `artifacts/mobile/${sport}-card-odds-${test.info().project.name}.png` });
     await card.getByRole('button', { name: 'Ver análisis y mercados' }).click();
     const dialog = page.getByRole('dialog', { name: 'Análisis del encuentro' });
     await expect(dialog.locator('time')).toContainText(/.*\d+.*·.*\d{2}:\d{2}/);
-    await expect(dialog.getByRole('region', { name: 'Ganador del encuentro', exact: true })).toContainText(/(Momio|Precio del modelo) [+-]\d+/);
+    await expect(dialog.getByRole('region', { name: 'Ganador del encuentro', exact: true })).toContainText(/Momio( justo)? [+-]\d+/);
     if (sport !== 'tenis') {
       const form = dialog.getByRole('region', { name: 'Cómo llegan los equipos' });
       await expect(form.getByRole('img', { name: /Victoria|Derrota|Empate/ })).toHaveCount(10);
@@ -219,11 +219,11 @@ test('todos los deportes muestran fecha, hora y momios en el formato elegido; la
     }
     expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
     const markets = sport === 'beisbol' ? ['Carreras · LA Dodgers', 'Totales extra innings'] : sport === 'tenis' ? ['Ganador del primer set', 'Ganador del segundo set'] : ['Hándicap · Boston Celtics', 'Hándicap · LA Lakers'];
-    for (const market of markets) await expect(dialog.getByRole('region', { name: market, exact: true })).toContainText(sport === 'tenis' ? /Precio del modelo [+-]\d+/ : /Sin cuota publicada/);
+    for (const market of markets) await expect(dialog.getByRole('region', { name: market, exact: true })).toContainText(/Momio justo [+-]\d+/);
     await page.keyboard.press('Escape');
     await page.getByRole('combobox', { name: 'Formato de Momios', exact: true }).selectOption('decimal');
     await card.getByRole('button', { name: 'Ver análisis y mercados' }).click();
-    await expect(dialog.getByRole('region', { name: 'Ganador del encuentro', exact: true })).toContainText(/(Momio|Precio del modelo) \d+\.\d{2}/);
+    await expect(dialog.getByRole('region', { name: 'Ganador del encuentro', exact: true })).toContainText(/Momio( justo)? \d+\.\d{2}/);
     await page.keyboard.press('Escape');
     await page.getByRole('combobox', { name: 'Formato de Momios', exact: true }).selectOption('american');
   }
@@ -305,7 +305,7 @@ test('básquetbol carga el calendario primero y completa forma y probabilidades 
   await expect(card).toContainText('Publicado');
   await card.getByRole('button', { name: 'Ver análisis y mercados' }).click();
   const market = page.getByRole('dialog').getByRole('region', { name: 'Hándicap · Boston Celtics' });
-  await expect(market.getByRole('row').filter({ has: page.getByRole('rowheader', { name: '+1.5', exact: true }) })).toContainText(/\d+.*%.*Sin cuota publicada/);
+  await expect(market.getByRole('row').filter({ has: page.getByRole('rowheader', { name: '+1.5', exact: true }) })).toContainText(/\d+.*%.*Momio justo \S+/);
 });
 
 test('los filtros de fútbol están entre las ligas y el destacado; /femenil conserva la selección', async ({ page }) => {

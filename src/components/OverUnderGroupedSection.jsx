@@ -2,11 +2,12 @@ import React from 'react';
 import { isStoreApp } from '../auth/platform.js';
 import { TrendingUp, ArrowUpRight, ArrowDownRight, Lock, Crown, Sparkles } from 'lucide-react';
 import NumberCounter from './NumberCounter';
+import FairOdds from './FairOdds';
 import { percent, complement } from '../utils/probability';
 import { fillPoissonGoalLadder } from '../utils/mathProbabilities';
 import { sounds } from '../utils/audioEffects';
 
-export default function OverUnderGroupedSection({ match, homeStats, awayStats, diff, isVip = false, onUnlockVip = null }) {
+export default function OverUnderGroupedSection({ match, homeStats, awayStats, diff, isVip = false, onUnlockVip = null, oddsFormat = 'decimal' }) {
   if (!match || !diff) return null;
 
   const probs = fillPoissonGoalLadder(match.model?.probabilities || match.probabilities || match.aiReport?.probabilities || {}, match.odds);
@@ -145,12 +146,15 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
             <div className={`space-y-2 transition duration-300 ${!isVip ? 'filter blur-[5px] select-none pointer-events-none opacity-25' : ''}`}>
               {lines.map((line, idx) => (
                 <div key={idx} className="bg-[#121a28] p-2 rounded-lg border border-emerald-500/15 hover:border-emerald-500/40 transition">
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 mb-1">
                     <span className="text-[11px] font-bold text-white">
                       {line.overLabel}
                     </span>
-                    <span className="text-xs font-bold text-emerald-300 font-mono">
-                      <NumberCounter value={line.overProb} suffix="%" />
+                    <span className="flex items-baseline gap-2">
+                      <FairOdds probability={line.overProb} oddsFormat={oddsFormat} />
+                      <span className="text-xs font-bold text-emerald-300 font-mono">
+                        <NumberCounter value={line.overProb} suffix="%" />
+                      </span>
                     </span>
                   </div>
                   <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -215,12 +219,15 @@ export default function OverUnderGroupedSection({ match, homeStats, awayStats, d
           <div className="space-y-2">
             {lines.map((line, idx) => (
               <div key={idx} className="bg-[#121a28] p-2 rounded-lg border border-amber-500/15 hover:border-amber-500/40 transition">
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex flex-wrap items-center justify-between gap-x-2 mb-1">
                   <span className="text-[11px] font-bold text-white">
                     {line.underLabel}
                   </span>
-                  <span className="text-xs font-bold text-amber-300">
-                    <NumberCounter value={line.underProb} suffix="%" />
+                  <span className="flex items-baseline gap-2">
+                    <FairOdds probability={line.underProb} oddsFormat={oddsFormat} />
+                    <span className="text-xs font-bold text-amber-300">
+                      <NumberCounter value={line.underProb} suffix="%" />
+                    </span>
                   </span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
