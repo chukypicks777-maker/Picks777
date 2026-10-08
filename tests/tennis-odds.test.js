@@ -64,3 +64,24 @@ test('real bookmaker quotes attach only to an unambiguous match and drive the wi
   assert.equal(attachTennisQuotes([{ ...upcoming, kickoff: new Date(NOW + 72 * HOUR).toISOString() }], snapshot)[0].odds.homeWin, undefined);
   assert.equal(attachTennisQuotes([upcoming], { ...snapshot, events: [...snapshot.events, ...snapshot.events] })[0].odds.homeWin, undefined);
 });
+
+test('ATP combines Elo, official ranking points and the head-to-head record; WTA keeps calibrated Elo', () => {
+  const base = buildTennisRatings('atp', history, NOW);
+  const met = base.h2h['p1|p2'];
+  assert.ok(met && met[0] + met[1] > 0, 'Head-to-head wins are kept per pair');
+  const even = tennisAnalysis(upcoming, [], NOW, { ...base, rankings: { points: { p1: 1000, p6: 1000 }, floor: 300 } }).winner.home;
+  const ranking = { points: { p1: 2000, p6: 500 }, floor: 300 };
+  const ranked = tennisAnalysis(upcoming, [], NOW, { ...base, rankings: ranking });
+  assert.ok(ranked.winner.home > even, 'A much better ranked player gains probability');
+  assert.deepEqual(ranked.rankingPoints, { home: 2000, away: 500 });
+  const swapped = tennisAnalysis(upcoming, [], NOW, { ...base, rankings: { points: { p1: 500, p6: 2000 }, floor: 300 } });
+  assert.ok(swapped.winner.home < even);
+  assert.deepEqual(ranked.headToHead, { home: 0, away: 0 }, 'p1 and p6 never met');
+  const rival = tennisAnalysis({ ...upcoming, awayTeam: { id: 'p2', name: 'Rival' } }, [], NOW, { ...base, rankings: ranking });
+  assert.deepEqual(rival.headToHead, { home: met[0], away: met[1] });
+  // An unlisted player uses the published floor; WTA ignores ATP-only signals.
+  assert.equal(tennisAnalysis(upcoming, [], NOW, { ...base, rankings: { points: { p1: 2000 }, floor: 300 } }).rankingPoints.away, 300);
+  const wta = buildTennisRatings('wta', history.map(game => ({ ...game, tour: 'wta' })), NOW);
+  assert.equal(wta.h2h, undefined);
+  assert.equal(tennisAnalysis({ ...upcoming, tour: 'wta' }, [], NOW, { ...wta, rankings: ranking }).rankingPoints, null);
+});

@@ -140,3 +140,16 @@ Mejora del modelo con resultados reales de ESPN (`scripts/backtest/experiment-te
 Cambios: Elo de dos años con actualización dinámica y calibración que modera favoritos extremos. Se guarda un rating compacto por jugador (pocos KB), renovado cada 6 horas en segundo plano; la app ya no descarga 20-25 MB de historial al abrir partidos de tenis.
 
 **Cuotas reales opcionales (The Odds API).** Para mostrar el momio y la probabilidad sin margen de una casa real en tenis, crear una clave gratuita en https://the-odds-api.com y añadirla en Vercel como variable `ODDS_API_KEY` (Production), luego volver a desplegar. Sin clave no se hace ninguna consulta. Se prefiere Pinnacle; si no cotiza, otra casa con ambos jugadores. Solo se asigna una cuota cuando ambos nombres y la fecha identifican un único evento. El plan gratuito tiene 500 créditos al mes: la app refresca cada 6 horas (`ODDS_API_REFRESH_MINUTES` permite otro intervalo, entre 30 y 1440) y deja de consultar si quedan menos de 5 créditos.
+
+### Cara a cara y ranking oficial (`scripts/backtest/experiment-tennis-features.mjs`)
+
+ESPN conserva los rankings ATP semanales (top 150 con puntos); en cada partido se usó la última lista publicada antes del encuentro. Pesos ajustados antes de octubre de 2025 y medidos después:
+
+| Variante | ATP acierto | ATP log-loss | WTA log-loss |
+|---|---:|---:|---:|
+| Elo calibrado | 63,9 % | 0,6324 | 0,6282 |
+| Elo + cara a cara | 63,5 % | 0,6317 | 0,6287 |
+| Elo + ranking | 65,2 % | 0,6248 | — |
+| **Elo + ranking + cara a cara (publicado en ATP)** | 65,0 % | **0,6240** | — |
+
+Cuando este modelo dio al favorito 65 % o más (73,7 % de media), ganó el 76,3 % de 1 257 partidos ATP. El ranking aporta los resultados de Challenger que ESPN no publica. En WTA el cara a cara no mejoró y ESPN no ofrece rankings WTA históricos fiables (su API devuelve la lista ATP), así que WTA mantiene el Elo calibrado. Los porcentajes los calcula este modelo matemático; la IA (DeepSeek) solo prioriza hechos verificados y no puede escribir ni cambiar números.
