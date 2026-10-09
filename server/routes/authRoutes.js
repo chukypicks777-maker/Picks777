@@ -6,6 +6,7 @@ import { CONFIG, isProduction, secureConfiguration, ownerGoogleEmail } from '../
 import { storage } from '../storage.js';
 import { currentSession, readSession, setSession, ownerVersion, sessionIdentifier } from '../session.js';
 import { rateLimit } from '../rateLimit.js';
+import { FIREBASE_WEB_CONFIG } from '../../src/constants/firebase.js';
 
 const router = express.Router();
 router.use((req, res, next) => {
@@ -249,7 +250,7 @@ router.post('/delete-account', async (req, res) => {
     return res.status(403).json({ success: false, message: 'Confirma la misma cuenta para eliminarla.' });
   }
   // Delete only this application's Firebase identity, never the Google account itself.
-  const key = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8';
+  const key = FIREBASE_WEB_CONFIG.apiKey;
   const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:delete?key=' + encodeURIComponent(key), {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ idToken: req.body.credential }), signal: AbortSignal.timeout(8000)

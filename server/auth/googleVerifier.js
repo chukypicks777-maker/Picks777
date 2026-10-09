@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { FIREBASE_WEB_CONFIG } from '../../src/constants/firebase.js';
 
 export async function verifyGoogleToken(credential) {
   if (typeof credential !== 'string' || credential.length > 12000 || !credential) return null;
@@ -10,7 +11,7 @@ export async function verifyGoogleToken(credential) {
     }
   } catch {}
   try {
-    const key = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8';
+    const key = FIREBASE_WEB_CONFIG.apiKey;
     const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(key), {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: credential }), signal: AbortSignal.timeout(8000)
     });
@@ -26,7 +27,7 @@ export async function verifyGoogleToken(credential) {
 export async function verifyAppleToken(credential) {
   if (typeof credential !== 'string' || !credential || credential.length > 12000) return null;
   try {
-    const key = process.env.FIREBASE_WEB_API_KEY || 'AIzaSyBgSdnJJMaR2yIJqk3mRUIbUSimn7e7Lj8';
+    const key = FIREBASE_WEB_CONFIG.apiKey;
     const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(key), {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken: credential }), signal: AbortSignal.timeout(8000)
     });
