@@ -7,7 +7,7 @@ const finite = value => typeof value === 'number' && Number.isFinite(value);
 // Parameters were selected only on 2021-22 to 2023-24 (five European leagues)
 // and checked on 2024-25 to 2026-27; see scripts/backtest-football.mjs.
 export const FOOTBALL_MODEL = Object.freeze({
-  version: 'football-ratings-2026-10-07',
+  version: 'football-ratings-2026-10-08',
   goals: {
     // Supremacy reacts faster than the scoring level, which needs more shrinkage.
     supremacy: { halfLifeDays: 240, priorGames: 6 },
@@ -20,7 +20,16 @@ export const FOOTBALL_MODEL = Object.freeze({
   corners: { halfLifeDays: 365, priorGames: 32, size: { total: 76, home: 10.8, away: 10.9 } },
   cards: { halfLifeDays: 120, priorGames: 16, size: { total: 106 } },
   minTeamGames: 4,
-  maxGoals: 12
+  maxGoals: 12,
+  // Without team history or a goals price the draw price alone sets the total;
+  // it overstates lopsided fixtures (a 90% favourite's draw implied 6.3 goals
+  // and Over 1.5 at 99%) and understates balanced ones. T = scale * draw^power,
+  // within the totals bookmakers price; fitted on 2021-24 outcomes, checked on
+  // 2024-27 (scripts/backtest/experiment-draw-total.mjs): Over 2.5 log loss
+  // 0.6725 -> 0.6709, Over 1.5 0.5249 -> 0.5236, gap to the market 3.1 -> 2.5
+  // points. With team ratings the validated blend with the raw draw total is
+  // kept: calibrating it there scored worse (Over 2.5 0.6727 -> 0.6732).
+  drawTotal: { scale: 1.18, power: 0.86, min: 1.8, max: 4.6 }
 });
 
 export const decayWeight = (ageMs, halfLifeDays) => halfLifeDays > 0 ? 0.5 ** (Math.max(0, ageMs) / (halfLifeDays * DAY)) : 1;
@@ -257,6 +266,13 @@ export function drawImpliedTotal(market, rho = FOOTBALL_MODEL.goals.rho) {
   return (low + high) / 2;
 }
 
+const calibrateDrawTotal = raw => {
+  if (!finite(raw)) return null;
+  const { scale, power, min, max } = FOOTBALL_MODEL.drawTotal;
+  return Math.min(max, Math.max(min, scale * raw ** power));
+};
+export const calibratedDrawTotal = (market, rho = FOOTBALL_MODEL.goals.rho) => calibrateDrawTotal(drawImpliedTotal(market, rho));
+
 const geometric = (x, y, w) => ({ home: x.home ** (1 - w) * y.home ** w, away: x.away ** (1 - w) * y.away ** w });
 
 // games: [{ time, home, away, hg, ag, hst?, ast?, hc?, ac?, hy?, ay?, hthg?, htag? }]
@@ -317,7 +333,7 @@ export function forecastFootball(fits, homeId, awayId, odds = {}) {
   let rates = stat, totalSource = stat ? 'statistical-model' : null;
   if (market) {
     const drawTotal = goalsMarket ? null : drawImpliedTotal(market.probabilities, rho);
-    const total = goalsMarket ? undefined : stat && drawTotal ? Math.sqrt(stat.total * drawTotal) : drawTotal ?? stat?.total;
+    const total = goalsMarket ? undefined : stat && drawTotal ? Math.sqrt(stat.total * drawTotal) : calibrateDrawTotal(drawTotal) ?? stat?.total;
     rates = solveGoalRates({ ...market.probabilities, over25: goalsMarket?.probabilities.over25 }, { total });
     totalSource = goalsMarket ? 'published-odds' : stat ? 'draw-price-and-model' : 'draw-price';
   }

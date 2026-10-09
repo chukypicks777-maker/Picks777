@@ -64,7 +64,7 @@ test('a compact league model drives forecasts, recorded averages and lean calend
   t.after(forgetLeagueModels);
   const match = applyFootballForecast({ id: 'espn-1', espnCode: 'test.1', status: 'SCHEDULED', kickoff: new Date(NOW + DAY).toISOString(),
     homeTeamId: '1', awayTeamId: '6', homeTeam: { id: '1', name: 'Uno' }, awayTeam: { id: '6', name: 'Seis' }, odds: {} });
-  assert.equal(match.model.engine, 'football-ratings-2026-10-07');
+  assert.match(match.model.engine, /^football-ratings-\d{4}-\d{2}-\d{2}$/);
   assert.ok(match.model.corners && match.model.cards && match.halfGoals);
   const lean = listView(match);
   for (const field of ['corners', 'cards', 'halves', 'scoreDistribution', 'statisticalProbabilities']) assert.equal(lean.model[field], undefined, field);

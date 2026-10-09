@@ -99,3 +99,21 @@ test('forecasts keep quoted prices, derive coherent lines and add corners, cards
   assert.ok(quoted.expectedGoals.away > quoted.expectedGoals.home, 'Expected goals agree with the quoted favourite');
   assert.equal(fm.forecastFootball(null, 'A', 'E', {}), null, 'No ratings and no prices: no invented forecast');
 });
+
+test('the draw-implied goal total stays within priced totals for lopsided fixtures (Viking vs Bayern)', () => {
+  // Reported case: 1X2 17 / 12 / 1.09, no goals price and no team history.
+  const lopsided = fm.devigPower({ homeWin: 17, draw: 12, awayWin: 1.0909 }, ['homeWin', 'draw', 'awayWin']).probabilities;
+  assert.ok(fm.drawImpliedTotal(lopsided) > 6, 'The raw draw price implies more than six goals');
+  const total = fm.calibratedDrawTotal(lopsided);
+  assert.ok(total <= fm.FOOTBALL_MODEL.drawTotal.max && total >= 4);
+  const forecast = fm.forecastFootball(null, 'viking', 'bayern', { homeWin: 17, draw: 12, awayWin: 1.0909 });
+  assert.ok(forecast.probabilities.over15 < 96 && forecast.probabilities.over25 < 88, `Over 1.5 ${forecast.probabilities.over15}, Over 2.5 ${forecast.probabilities.over25}`);
+  assert.ok(forecast.probabilities.bttsYes < 65, `BTTS ${forecast.probabilities.bttsYes}`);
+  assert.ok(forecast.probabilities.awayWin > 85, 'The 1X2 split is untouched');
+  // Balanced fixtures keep a normal total and the mapping is monotonic.
+  const balanced = fm.devigPower({ homeWin: 2.6, draw: 3.3, awayWin: 2.8 }, ['homeWin', 'draw', 'awayWin']).probabilities;
+  const normal = fm.calibratedDrawTotal(balanced);
+  assert.ok(normal > 2.2 && normal < 3.2);
+  const raws = [2, 2.5, 3, 4, 5, 6, 7].map(raw => Math.min(4.6, Math.max(1.8, 1.18 * raw ** 0.86)));
+  assert.ok(raws.every((value, i) => i === 0 || value >= raws[i - 1]));
+});

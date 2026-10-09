@@ -219,3 +219,49 @@ test('football also analyzes automatically for a member and sends no Owner-only 
   await expect(page.getByText('Análisis Autónomo con IA', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /Analizar Partidos con IA|Re-analizar Todos|Detener Análisis/ })).toHaveCount(0);
 });
+
+test('a member opening the football analysis gets the shared report and edited storage never unlocks Owner or VIP', async ({ page }) => {
+  for (const role of ['vip_user', 'trial_user']) {
+    await page.addInitScript(() => {
+      localStorage.setItem('picks777_auto_ai_pref', 'false');
+      // Values a member could type by hand; they must not grant anything.
+      localStorage.setItem('picks_is_owner', 'true'); localStorage.setItem('picks_user_role', 'owner'); localStorage.setItem('picks_owner_active', 'true');
+    });
+    await page.route(/^https:\/\//, route => route.abort());
+    const calls = [];
+    const source = [{ id: `football-modal-${role}`, sport: 'futbol', leagueId: 'mls', leagueName: 'MLS', leagueFlag: '🇺🇸', status: 'SCHEDULED', kickoff: new Date(now + 3600000).toISOString(),
+      homeTeam: { id: 'a', name: 'Equipo A', shortName: 'A' }, awayTeam: { id: 'b', name: 'Equipo B', shortName: 'B' }, odds: {},
+      probabilities: { homeWin: 60, draw: 20, awayWin: 20, over05: 92, under05: 8, over15: 70, under15: 30, over25: 55, under25: 45, over35: 30, under35: 70, over45: 12, under45: 88 } }];
+    await page.route('**/api/**', async route => {
+      const request = route.request(), path = new URL(request.url()).pathname;
+      let data = { success: true };
+      if (path.startsWith('/api/auth/')) data = role === 'vip_user'
+        ? { success: true, valid: true, role: 'vip_user', user: { id: 'football-modal-vip', plan: 'VIP', name: 'Cliente VIP' } }
+        : { success: true, valid: true, role: 'trial_user', isTrial: true, trialExpired: false, daysRemaining: 3, user: { id: 'football-modal-trial', plan: 'Prueba 3 Días', name: 'Cliente prueba' } };
+      if (path === '/api/settings/active-model') data = { success: true, isConfigured: true, selectedModel: 'modelo-de-prueba' };
+      if (path.startsWith('/api/matches')) {
+        data = { success: true, matches: source, match: source[0] };
+        if (path.endsWith('/ai-analysis')) {
+          const body = request.postDataJSON() || {};
+          calls.push(body);
+          // The server answers 403 to model or provider overrides from members.
+          if (body.model || body.aiConfig || body.forceRefresh) { await route.fulfill({ status: 403, json: { success: false, message: 'Acceso exclusivo del administrador.' } }); return; }
+          const report = { aiAvailable: true, dataGrounded: true, modelUsed: 'modelo-de-prueba', tacticalKeypoints: ['Hecho compartido verificado.'] };
+          data = { success: true, match: { ...source[0], aiReport: report, isAiAnalyzed: true }, report };
+        }
+      }
+      await route.fulfill({ json: data });
+    });
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.locator('.terminal-card[role="button"]').first().click();
+    const modal = page.locator('.mobile-dialog-overlay').first();
+    await expect(modal).toBeVisible();
+    await expect.poll(() => calls.length, { timeout: 20000 }).toBeGreaterThan(0);
+    expect(calls.every(body => Object.keys(body).length === 0)).toBe(true);
+    await expect(modal.getByRole('button', { name: /Reintentar con IA|Regenerar con IA/ })).toHaveCount(0);
+    await expect(modal.getByText('Owner', { exact: true })).toHaveCount(0);
+    if (role === 'trial_user') await expect(modal.getByText('SOLO ACCESO VIP').first()).toBeVisible();
+    else await expect(modal.getByText('SOLO ACCESO VIP')).toHaveCount(0);
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
+  }
+});

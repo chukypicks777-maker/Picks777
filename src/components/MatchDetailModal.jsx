@@ -45,14 +45,9 @@ export default function MatchDetailModal({
   onUnlockVip = null,
   onToast = null
 }) {
-  const effectiveIsOwner = Boolean(
-    isOwner ||
-    (typeof window !== 'undefined' && (
-      localStorage.getItem('picks_user_role') === 'owner' ||
-      localStorage.getItem('picks_is_owner') === 'true' ||
-      localStorage.getItem('picks_owner_active') === 'true'
-    ))
-  );
+  // Owner status comes only from the verified session; browser storage could be
+  // edited by anyone and must never unlock Owner tools or VIP markets.
+  const effectiveIsOwner = Boolean(isOwner);
   const effectiveIsVip = Boolean(effectiveIsOwner || isVip);
   const initialCached = getCachedAnalysis(match?.id, match);
   const initialFingerprint = computeMatchFingerprint(match);
@@ -103,6 +98,8 @@ export default function MatchDetailModal({
   const enrichedMatchRef = useRef(enrichedMatch);
   enrichedMatchRef.current = enrichedMatch;
   const activeModelInfoRef = useRef(activeModelInfo);
+  const ownerRef = useRef(effectiveIsOwner);
+  ownerRef.current = effectiveIsOwner;
   activeModelInfoRef.current = activeModelInfo;
   const onToastRef = useRef(onToast);
   onToastRef.current = onToast;
@@ -153,11 +150,13 @@ export default function MatchDetailModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ 
+        // Model and provider overrides are Owner-only on the server; members ask
+        // for the shared report with an empty body, as the automatic analysis does.
+        body: JSON.stringify(ownerRef.current ? {
           forceRefresh,
           model: modelToUse,
           aiConfig: aiConfigPayload
-        })
+        } : {})
       });
       const data = await res.json().catch(() => null);
       if (requestId !== aiRequestId.current || computeMatchFingerprint(matchRef.current) !== requestedFingerprint) return;

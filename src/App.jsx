@@ -21,7 +21,7 @@ const StatsCenterModal = lazy(() => import('./components/StatsCenterModal'));
 import FooterCommunityShowcase from './components/FooterCommunityShowcase';
 import { sounds } from './utils/audioEffects';
 import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
-import { getMatchSafetyScore, getBestBankerPick, getContextualPick } from './utils/mathProbabilities';
+import { getMatchSafetyScore, getBestBankerPick, getContextualPick, getEffectiveOdds } from './utils/mathProbabilities';
 import { EMPTY_PARLAY, parlayTicketReducer } from './utils/parlayTicket.js';
 
 import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnalyzedModelName, mergeFreshMatch, mergeAnalyzedMatch } from './utils/analysisCache';
@@ -574,12 +574,11 @@ export default function App() {
   // When 'safe' (Picks Banqueros / Boost) is active, apply sub-filter sorting and ranking
   if (marketFilter === 'safe' || marketFilter === 'boost') {
     if (bankerSubFilter === 'all_profit') {
-      // Mayor ganancia: ordenar por cuota (odds) del pick banquero descendente sin importar la fecha
+      // Mayor ganancia: ordenar por el momio del propio pick banquero (el mismo que
+      // muestra la tarjeta), nunca por el momio de otro mercado como el del local.
       filteredMatches = [...filteredMatches].sort((a, b) => {
-        const pickA = getBestBankerPick(a);
-        const pickB = getBestBankerPick(b);
-        const oddsA = Number(pickA?.odds || a.odds?.homeWin || 1.25);
-        const oddsB = Number(pickB?.odds || b.odds?.homeWin || 1.25);
+        const oddsA = getEffectiveOdds(getBestBankerPick(a)) ?? 1;
+        const oddsB = getEffectiveOdds(getBestBankerPick(b)) ?? 1;
         if (oddsB !== oddsA) return oddsB - oddsA;
         return getMatchSafetyScore(b) - getMatchSafetyScore(a);
       });
