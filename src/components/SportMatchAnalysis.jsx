@@ -1,11 +1,11 @@
 import React from 'react';
 import Modal from './Modal';
-import { Clock, Sparkles, RotateCw, CheckCircle2 } from 'lucide-react';
+import { Clock, Sparkles, RotateCw, CheckCircle2, Lock, Crown } from 'lucide-react';
 import { formatOdds, marketQuote } from '../utils/oddsFormatter.js';
 import { formatFixtureSchedule } from '../utils/matchSchedule.js';
 import TeamForm from './TeamForm';
 import SportIdentity from './SportIdentity';
-import VipLock, { VipBadge } from './VipLock';
+import VipLock, { VipBadge, VipUnlockButton } from './VipLock';
 import { isVipHandicap, hasPublishedWinnerPrice } from '../utils/sportPicks.js';
 
 export function Probability({ value }) {
@@ -37,7 +37,27 @@ function Outcomes({ title, values, home, away, draw = false, odds = {}, oddsForm
   </section>;
 }
 
-function RunTable({ title, lines = [], oddsFormat }) {
+// A VIP cell keeps the table layout but never renders the real value: a blurred
+// placeholder with the lock, as the football Over side.
+function LockedValue({ label, onUnlockVip }) {
+  return <button type="button" onClick={onUnlockVip} aria-label={`${label} reservado para VIP`} className="relative inline-flex items-center justify-center min-h-9 min-w-[4.5rem] px-2 rounded-lg border border-amber-500/30 bg-amber-500/10 cursor-pointer">
+    <span aria-hidden="true" className="filter blur-[4px] select-none font-mono font-bold text-emerald-300">00.0%</span>
+    <span className="absolute inset-0 flex items-center justify-center text-[11px]"><VipBadge /></span>
+  </button>;
+}
+
+function VipMarketsNotice({ title, description, onUnlockVip }) {
+  return <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/35 bg-gradient-to-r from-amber-500/10 to-transparent p-3">
+    <div className="flex items-start gap-2.5 min-w-0">
+      <span className="w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br from-amber-500/25 to-amber-600/10 border border-amber-500/40 flex items-center justify-center"><Lock className="w-4 h-4 text-amber-400" /></span>
+      <div className="min-w-0"><p className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-mono font-bold mb-1"><Crown className="w-3 h-3 text-amber-400" />SOLO ACCESO VIP</p>
+        <p className="text-xs font-bold text-white">{title}</p><p className="text-[11px] text-slate-300 leading-tight">{description}</p></div>
+    </div>
+    <VipUnlockButton onUnlockVip={onUnlockVip} />
+  </div>;
+}
+
+function RunTable({ title, lines = [], oddsFormat, lockOver = false, onUnlockVip }) {
   return <section className="rounded-xl border border-white/10 overflow-hidden bg-[#111a28]" aria-label={title}>
     <h3 className="p-4 text-sm font-bold border-b border-white/10">{title}</h3>
     {/* Fits the screen; on very narrow screens the table can also be swiped sideways. */}
@@ -45,7 +65,7 @@ function RunTable({ title, lines = [], oddsFormat }) {
       <table className="w-full table-fixed text-xs sm:text-sm">
         <colgroup><col className="w-[4.25rem]" /><col /><col /></colgroup>
         <thead className="text-slate-400 bg-white/[0.03]"><tr><th scope="col" className="px-2 py-2.5 sm:p-3 text-left">Carreras</th><th scope="col" className="px-2 py-2.5 sm:p-3 text-right">Over</th><th scope="col" className="px-2 py-2.5 sm:p-3 text-right">Under</th></tr></thead>
-        <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="px-2 py-2.5 sm:p-3 text-left font-mono font-semibold text-slate-300">{row.line}</th><td className="px-2 py-2.5 sm:p-3 text-right"><MarketValue value={row.over} oddsFormat={oddsFormat} /></td><td className="px-2 py-2.5 sm:p-3 text-right"><MarketValue value={row.under} oddsFormat={oddsFormat} /></td></tr>)}</tbody>
+        <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="px-2 py-2.5 sm:p-3 text-left font-mono font-semibold text-slate-300">{row.line}</th><td className="px-2 py-2.5 sm:p-3 text-right">{lockOver ? <LockedValue label={`Over ${row.line} carreras`} onUnlockVip={onUnlockVip} /> : <MarketValue value={row.over} oddsFormat={oddsFormat} />}</td><td className="px-2 py-2.5 sm:p-3 text-right"><MarketValue value={row.under} oddsFormat={oddsFormat} /></td></tr>)}</tbody>
       </table>
     </div>
   </section>;
@@ -63,7 +83,7 @@ function HandicapTable({ title, lines = [], oddsFormat, isVip = false, onUnlockV
     <h3 className="p-4 text-sm font-bold border-b border-white/10 break-words">{title}</h3>
     <div className="overflow-x-auto overscroll-x-contain">
       <table className="w-full text-xs sm:text-sm"><thead className="text-slate-400 bg-white/[0.03]"><tr><th scope="col" className="px-2 py-2.5 sm:p-3 text-left">Hándicap</th><th scope="col" className="px-2 py-2.5 sm:p-3 text-right">Probabilidad / Momio</th></tr></thead>
-        <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="px-2 py-2.5 sm:p-3 text-left font-mono font-semibold text-slate-300">{row.line > 0 ? '+' : ''}{row.line}</th><td className="px-2 py-2.5 sm:p-3 text-right">{isVipHandicap(row.line) && !isVip ? <button type="button" onClick={onUnlockVip} className="min-h-9 px-2 rounded-lg border border-amber-500/30 bg-amber-500/10 cursor-pointer" aria-label={`Hándicap ${row.line} reservado para VIP`}><VipBadge /></button> : <MarketValue value={row.probability} oddsFormat={oddsFormat} />}</td></tr>)}</tbody>
+        <tbody className="divide-y divide-white/5">{lines.map(row => <tr key={row.line}><th scope="row" className="px-2 py-2.5 sm:p-3 text-left font-mono font-semibold text-slate-300">{row.line > 0 ? '+' : ''}{row.line}</th><td className="px-2 py-2.5 sm:p-3 text-right">{isVipHandicap(row.line) && !isVip ? <LockedValue label={`Hándicap ${row.line}`} onUnlockVip={onUnlockVip} /> : <MarketValue value={row.probability} oddsFormat={oddsFormat} />}</td></tr>)}</tbody>
       </table>
     </div>
   </section>;
@@ -109,8 +129,9 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
 
       {match.sport === 'beisbol' && <>
         <p className="text-xs text-slate-400">Carreras por equipo · Partido completo, incluidos extra innings</p>
-        <div className="grid sm:grid-cols-2 gap-3"><RunTable title={`Carreras · ${home}`} lines={a.teamRuns?.home} oddsFormat={oddsFormat} /><RunTable title={`Carreras · ${away}`} lines={a.teamRuns?.away} oddsFormat={oddsFormat} /></div>
-        <RunTable title="Totales extra innings" lines={a.totalRuns} oddsFormat={oddsFormat} />
+        <div className="grid sm:grid-cols-2 gap-3"><RunTable title={`Carreras · ${home}`} lines={a.teamRuns?.home} oddsFormat={oddsFormat} lockOver={!isVip} onUnlockVip={onUnlockVip} /><RunTable title={`Carreras · ${away}`} lines={a.teamRuns?.away} oddsFormat={oddsFormat} lockOver={!isVip} onUnlockVip={onUnlockVip} /></div>
+        <RunTable title="Totales extra innings" lines={a.totalRuns} oddsFormat={oddsFormat} lockOver={!isVip} onUnlockVip={onUnlockVip} />
+        {!isVip && <VipMarketsNotice title="Lado OVERS (Más de) exclusivo" description="El Under queda libre; desbloquea las probabilidades y momios de Over de carreras con tu Pase VIP." onUnlockVip={onUnlockVip} />}
         <p className="text-xs text-slate-400">Carreras de ambos equipos durante el partido completo, incluidos extra innings; no son únicamente las carreras de las entradas extra.</p>
         <VipLock locked={!isVip} title="Primer inning e Innings 1 a 5" onUnlockVip={onUnlockVip}><div className="space-y-3">
           <Outcomes title="Primer inning · 1X2" values={a.firstInning} home={home} away={away} draw oddsFormat={oddsFormat} />
@@ -128,7 +149,7 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
       {match.sport === 'basquetbol' && <>
         <div className="rounded-xl bg-sky-500/5 border border-sky-500/20 p-3 text-xs text-sky-200 leading-relaxed">El hándicap positivo suma puntos al equipo; el negativo los resta. La probabilidad indica que el equipo gana después de aplicar ese ajuste.</div>
         <div className="grid sm:grid-cols-2 gap-3"><HandicapTable title={`Hándicap · ${home}`} lines={a.handicaps?.home} oddsFormat={oddsFormat} isVip={isVip} onUnlockVip={onUnlockVip} /><HandicapTable title={`Hándicap · ${away}`} lines={a.handicaps?.away} oddsFormat={oddsFormat} isVip={isVip} onUnlockVip={onUnlockVip} /></div>
-        {!isVip && <p className="text-[11px] text-amber-300">Los hándicaps negativos (el equipo gana por más de esa diferencia) son exclusivos VIP.</p>}
+        {!isVip && <VipMarketsNotice title="Hándicaps negativos exclusivos" description="Los hándicaps negativos (el equipo gana por más de esa diferencia) se desbloquean con tu Pase VIP." onUnlockVip={onUnlockVip} />}
       </>}
 
       <details className="rounded-xl bg-[#0b121e] border border-white/10 p-4 text-xs text-slate-400 space-y-3">

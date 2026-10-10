@@ -3,8 +3,8 @@ import { rankSportWinners } from '../../src/utils/sportPicks.js';
 import { SPORT_LEAGUES } from '../../src/constants/leagues.js';
 
 // Same access rule as football: trial members see the top 3 Banqueros and the
-// free markets; Banqueros #4-#10, sets, early innings, extra innings and
-// negative handicaps are VIP.
+// free markets; Banqueros #4-#10, sets, early innings, extra innings, the
+// Over side of runs and negative handicaps are VIP.
 const now = Date.now();
 const fixtures = Object.fromEntries(['beisbol', 'tenis', 'basquetbol'].map(sport => [sport, Array.from({ length: 12 }, (_, index) => {
   const probability = 52 + index * 3, league = SPORT_LEAGUES[sport].find(item => item.id === (sport === 'tenis' ? 'atp' : sport === 'beisbol' ? 'mlb' : 'nba'));
@@ -74,11 +74,14 @@ test('trial members see set markets locked on the card and in the analysis; the 
   await expect(page.getByRole('dialog', { name: 'Acceso a 777 Picks' })).toBeVisible();
 });
 
-test('trial members see early innings, extra innings and negative handicaps locked', async ({ page }) => {
+test('trial members see early innings, extra innings, run Overs and negative handicaps locked', async ({ page }) => {
   await setup(page, { sport: 'beisbol' });
   let dialog = await openFirstAnalysis(page);
   await expect(dialog.getByRole('heading', { name: 'Primer inning e Innings 1 a 5' })).toBeVisible();
-  await expect(dialog.getByRole('region', { name: 'Totales extra innings' })).toBeVisible();
+  const totals = dialog.getByRole('region', { name: 'Totales extra innings' });
+  await expect(totals.getByRole('button', { name: 'Over 8.5 carreras reservado para VIP' })).toBeVisible();
+  await expect(totals.getByText('50%')).toHaveCount(1);
+  await expect(dialog.getByText('Lado OVERS (Más de) exclusivo')).toBeVisible();
   await dialog.getByText('¿Habrá extra innings?').click();
   await expect(dialog.getByRole('heading', { name: 'Probabilidad de extra innings' })).toBeVisible();
   await page.keyboard.press('Escape');
@@ -88,6 +91,7 @@ test('trial members see early innings, extra innings and negative handicaps lock
   const table = dialog.getByRole('region', { name: 'Hándicap · Equipo A 0' });
   await expect(table.getByRole('button', { name: /reservado para VIP/ })).toHaveCount(2);
   await expect(table.getByText('55%')).toHaveCount(2);
+  await expect(dialog.getByText('Hándicaps negativos exclusivos')).toBeVisible();
 });
 
 test('VIP members see every Banquero and market unlocked', async ({ page }) => {
@@ -101,4 +105,9 @@ test('VIP members see every Banquero and market unlocked', async ({ page }) => {
   await expect(panel.getByRole('article')).toHaveCount(10);
   await expect(panel.getByText('SOLO ACCESO VIP')).toHaveCount(0);
   await expect(panel.getByText(/reservados para miembros VIP/)).toHaveCount(0);
+
+  await setup(page, { sport: 'beisbol', vip: true });
+  const dialogRuns = await openFirstAnalysis(page);
+  await expect(dialogRuns.getByRole('region', { name: 'Totales extra innings' }).getByText('50%')).toHaveCount(2);
+  await expect(dialogRuns.getByText('SOLO ACCESO VIP')).toHaveCount(0);
 });

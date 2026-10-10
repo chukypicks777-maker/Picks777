@@ -35,7 +35,7 @@ export function rankSportWinners(matches, now = Date.now(), limit = 10) {
 }
 
 // vip: market reserved for VIP members, as the football Over and first-half
-// markets (sets, early innings, extra innings and negative handicaps).
+// markets (sets, early innings, extra innings, run Overs and negative handicaps).
 export const isVipHandicap = line => line < 0;
 export function sportCardMarkets(match) {
   const a = match.analysis || {}, pick = sportWinnerPick(match), side = pick?.side || 'home';
