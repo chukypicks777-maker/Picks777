@@ -2,9 +2,8 @@ import { test, expect } from '@playwright/test';
 import { rankSportWinners } from '../../src/utils/sportPicks.js';
 import { SPORT_LEAGUES } from '../../src/constants/leagues.js';
 
-// Same access rule as football: trial members see the top 3 Banqueros and the
-// free markets; Banqueros #4-#10, sets, early innings, extra innings, the
-// Over side of runs and negative handicaps are VIP.
+// Baseball, tennis and basketball are VIP-only: trial members only see the
+// lock and never reach the sports API. Football keeps its own trial access.
 const now = Date.now();
 const fixtures = Object.fromEntries(['beisbol', 'tenis', 'basquetbol'].map(sport => [sport, Array.from({ length: 12 }, (_, index) => {
   const probability = 52 + index * 3, league = SPORT_LEAGUES[sport].find(item => item.id === (sport === 'tenis' ? 'atp' : sport === 'beisbol' ? 'mlb' : 'nba'));
@@ -18,6 +17,7 @@ const fixtures = Object.fromEntries(['beisbol', 'tenis', 'basquetbol'].map(sport
 })]));
 
 async function setup(page, { sport = 'tenis', vip = false } = {}) {
+  const sportRequests = [];
   await page.setViewportSize({ width: 360, height: 800 });
   await page.route(/^https:\/\//, route => route.abort());
   await page.route('**/api/**', async route => {
@@ -27,6 +27,7 @@ async function setup(page, { sport = 'tenis', vip = false } = {}) {
       ? { success: true, valid: true, role: 'vip_user', user: { id: 'vip-client', name: 'Cliente VIP', plan: 'VIP', hasCode: true } }
       : { success: true, valid: true, role: 'trial_user', isTrial: true, trialExpired: false, daysRemaining: 3, user: { id: 'trial-client', name: 'Cliente prueba', plan: 'Prueba 3 Días' } };
     if (path.startsWith('/api/sports/')) {
+      sportRequests.push(path);
       const sportId = path.split('/')[3], source = fixtures[sportId] || [], id = path.split('/')[4];
       if (id === 'details') data = { success: true, matches: source.filter(match => request.postDataJSON().ids.includes(match.id)) };
       else if (id) data = { success: true, match: source.find(match => match.id === id) };
@@ -36,7 +37,8 @@ async function setup(page, { sport = 'tenis', vip = false } = {}) {
     await route.fulfill({ json: data });
   });
   await page.goto(`/${sport}`, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('article').first()).toBeVisible({ timeout: 30000 });
+  await expect(vip ? page.getByRole('article').first() : page.getByRole('tabpanel').getByText('SOLO ACCESO VIP')).toBeVisible({ timeout: 30000 });
+  return sportRequests;
 }
 
 const openFirstAnalysis = async page => {
@@ -44,60 +46,25 @@ const openFirstAnalysis = async page => {
   return page.getByRole('dialog', { name: 'Análisis del encuentro' });
 };
 
-test('trial members see the top 3 Banqueros in every sport; #4 to #10 ask for VIP', async ({ page }) => {
+test('trial members only see the lock in baseball, tennis and basketball; the unlock opens the VIP window', async ({ page }) => {
   for (const sport of ['tenis', 'beisbol', 'basquetbol']) {
-    await setup(page, { sport });
+    const sportRequests = await setup(page, { sport });
     const panel = page.getByRole('tabpanel');
-    await panel.getByRole('button', { name: 'Banqueros', exact: true }).click();
-    const cards = panel.getByRole('article');
-    await expect(cards).toHaveCount(10);
-    await expect(panel.getByText(/Los picks #4 al #10 están reservados para miembros VIP/)).toBeVisible();
-    for (let i = 0; i < 3; i++) await expect(cards.nth(i)).not.toContainText('SOLO ACCESO VIP');
-    for (let i = 3; i < 10; i++) await expect(cards.nth(i)).toContainText(`SOLO ACCESO VIP • PICK #${i + 1}`);
-    await expect(cards.nth(3).getByRole('button', { name: 'Ver análisis y mercados' })).toHaveCount(0);
+    await expect(panel.getByRole('heading', { name: /es exclusivo VIP/ })).toBeVisible();
+    await expect(panel.getByRole('article')).toHaveCount(0);
+    for (const name of ['Béisbol', 'Tenis', 'Básquetbol']) await expect(page.getByRole('tab', { name: new RegExp(name) }).locator('svg')).toHaveCount(1);
+    await expect(page.getByRole('tab', { name: /Fútbol/ }).locator('svg')).toHaveCount(0);
+    expect(sportRequests).toEqual([]);
   }
-  await page.getByRole('tabpanel').getByRole('article').nth(5).getByRole('button', { name: 'Desbloquear con VIP' }).click();
+  await page.getByRole('tabpanel').getByRole('button', { name: 'Desbloquear con VIP' }).click();
   await expect(page.getByRole('dialog', { name: 'Acceso a 777 Picks' })).toBeVisible();
-});
-
-test('trial members see set markets locked on the card and in the analysis; the unlock opens the VIP window', async ({ page }) => {
-  await setup(page, { sport: 'tenis' });
-  const card = page.getByRole('tabpanel').getByRole('article').first();
-  await expect(card.getByText('VIP', { exact: true })).toHaveCount(2);
-  await expect(card).toContainText('84%');
-  const dialog = await openFirstAnalysis(page);
-  await expect(dialog.getByRole('heading', { name: 'Ganador del 1er y 2º set' })).toBeVisible();
-  await expect(dialog.getByRole('region', { name: 'Ganador del primer set' })).toHaveCount(0);
-  await expect(dialog.getByRole('region', { name: 'Equipo A 0 gana al menos un set' })).toBeVisible();
-  await dialog.getByRole('button', { name: 'Desbloquear con VIP' }).click();
-  await expect(dialog).not.toBeVisible();
-  await expect(page.getByRole('dialog', { name: 'Acceso a 777 Picks' })).toBeVisible();
-});
-
-test('trial members see early innings, extra innings, run Overs and negative handicaps locked', async ({ page }) => {
-  await setup(page, { sport: 'beisbol' });
-  let dialog = await openFirstAnalysis(page);
-  await expect(dialog.getByRole('heading', { name: 'Primer inning e Innings 1 a 5' })).toBeVisible();
-  const totals = dialog.getByRole('region', { name: 'Totales extra innings' });
-  await expect(totals.getByRole('button', { name: 'Over 8.5 carreras reservado para VIP' })).toBeVisible();
-  await expect(totals.getByText('50%')).toHaveCount(1);
-  await expect(dialog.getByText('Lado OVERS (Más de) exclusivo')).toBeVisible();
-  await dialog.getByText('¿Habrá extra innings?').click();
-  await expect(dialog.getByRole('heading', { name: 'Probabilidad de extra innings' })).toBeVisible();
-  await page.keyboard.press('Escape');
-
-  await setup(page, { sport: 'basquetbol' });
-  dialog = await openFirstAnalysis(page);
-  const table = dialog.getByRole('region', { name: 'Hándicap · Equipo A 0' });
-  await expect(table.getByRole('button', { name: /reservado para VIP/ })).toHaveCount(2);
-  await expect(table.getByText('55%')).toHaveCount(2);
-  await expect(dialog.getByText('Hándicaps negativos exclusivos')).toBeVisible();
 });
 
 test('VIP members see every Banquero and market unlocked', async ({ page }) => {
   await setup(page, { sport: 'tenis', vip: true });
   const panel = page.getByRole('tabpanel');
   await expect(panel.getByRole('article').first().getByText('VIP', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: /Tenis/ }).locator('svg')).toHaveCount(0);
   const dialog = await openFirstAnalysis(page);
   await expect(dialog.getByRole('region', { name: 'Ganador del primer set' })).toBeVisible();
   await page.keyboard.press('Escape');

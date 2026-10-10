@@ -63,6 +63,11 @@ export async function requireSession(req, res, next) {
     next();
   } catch { res.status(503).json({ success: false, message: 'No se puede validar la sesión; comprueba la configuración del almacenamiento.' }); }
 }
+// Baseball, tennis and basketball are VIP-only; football stays open to the trial.
+export function requireVip(req, res, next) {
+  if (req.session?.role === 'owner' || req.session?.isVip) return next();
+  return res.status(403).json({ success: false, vipRequired: true, message: 'Béisbol, tenis y básquetbol son exclusivos para miembros VIP.' });
+}
 export function requireAdmin(req, res, next) {
   if (req.session?.role === 'owner') return next();
   return res.status(403).json({ success: false, message: 'Acceso exclusivo del administrador.' });

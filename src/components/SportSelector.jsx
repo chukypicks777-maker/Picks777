@@ -1,7 +1,8 @@
 import React from 'react';
+import { Lock } from 'lucide-react';
 import { SPORTS } from '../constants/sports.js';
 
-export default function SportSelector({ selectedSport, onSelect }) {
+export default function SportSelector({ selectedSport, onSelect, lockedSports = [] }) {
   const select = (index, focus = false) => {
     const sport = SPORTS[(index + SPORTS.length) % SPORTS.length];
     onSelect(sport.id);
@@ -29,7 +30,7 @@ export default function SportSelector({ selectedSport, onSelect }) {
               : 'bg-[#161b22] border-white/10 text-slate-400 hover:bg-white/5 hover:text-white'}`}
           >
             <span aria-hidden="true" className="text-xl sm:text-2xl leading-none">{sport.icon}</span>
-            <span>{sport.name}</span>
+            <span className="inline-flex items-center gap-1">{sport.name}{lockedSports.includes(sport.id) && <Lock size={11} className="text-amber-400" aria-hidden="true" />}</span>
           </button>
         ))}
       </nav>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer, l
 import Navbar from './components/Navbar';
 import LiveTicker from './components/LiveTicker';
 import SportSelector from './components/SportSelector';
+import SportVipGate from './components/SportVipGate';
 // Loaded on demand: the first paint needs only the calendar and cards.
 const SportsPage = lazy(() => import('./components/SportsPage'));
 import useActiveAiModel from './hooks/useActiveAiModel.js';
@@ -704,13 +705,13 @@ export default function App() {
         sportAvailable={isFootball}
       />
 
-      <SportSelector selectedSport={selectedSport} onSelect={handleSelectSport} />
+      <SportSelector selectedSport={selectedSport} onSelect={handleSelectSport} lockedSports={isVipUser ? [] : SPORTS.filter(sport => sport.id !== 'futbol').map(sport => sport.id)} />
       {isFootball && <LiveTicker matches={matches} loading={loadingMatches} error={matchError} />}
 
       {/* Main Container */}
       <main className={`flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 transition-all duration-200 ${parlayLegs.length > 0 ? 'pb-36 sm:pb-32 lg:pb-16' : 'pb-20 sm:pb-16'}`}>
 
-        {!isFootball ? (
+        {!isFootball && !isVipUser ? <SportVipGate sport={selectedSport} onUnlockVip={openUpgradeModal} /> : !isFootball ? (
           <Suspense fallback={<p role="status" className="text-xs text-sky-300">Cargando deporte…</p>}><SportsPage key={selectedSport} sport={selectedSport} enabled={Boolean(auth?.valid && !auth?.trialExpired)} sessionKey={auth?.user?.id || auth?.user?.uid || ''} oddsFormat={oddsFormat} currency={currency} isOwner={isOwner} isVip={isVipUser} onUnlockVip={openUpgradeModal} activeModelInfo={activeAiModel} onToast={showToast} onSessionExpired={handleSportsSessionExpired} onToggleParlay={handleToggleParlay} parlayLegs={parlayLegs} /></Suspense>
         ) : (
         <div role="tabpanel" id={`sport-panel-${selectedSport}`} aria-labelledby={`sport-${selectedSport}`}>

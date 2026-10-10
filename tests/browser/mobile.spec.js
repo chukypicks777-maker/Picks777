@@ -123,7 +123,7 @@ test('prueba vencida no ofrece continuar sin código', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Continuar con mi Prueba/ })).toHaveCount(0);
 });
 
-test('los apartados de deportes muestran sus filtros y permiten volver a fútbol', async ({ page }) => {
+test('los apartados de deportes muestran el candado VIP a la prueba y permiten volver a fútbol', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 680 });
   await setup(page, { initial: trial });
   await page.goto('/');
@@ -135,7 +135,7 @@ test('los apartados de deportes muestran sus filtros y permiten volver a fútbol
     await tab.click();
     await expect(tab).toHaveAttribute('aria-selected', 'true');
     await expect(page).toHaveURL(new RegExp(path + '$'));
-    await expect(page.getByRole('tabpanel').getByText('Sin encuentros disponibles para este filtro', { exact: true })).toBeVisible();
+    await expect(page.getByRole('tabpanel').getByRole('heading', { name: /es exclusivo VIP/ })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Ver Informe', exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Stats', exact: true })).toBeDisabled();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

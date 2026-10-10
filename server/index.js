@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CONFIG, secureConfiguration } from './config.js';
 import { readiness } from './health.js';
-import { requireSession } from './session.js';
+import { requireSession, requireVip } from './session.js';
 import authRoutes from './routes/authRoutes.js';
 import mobileAuthRoutes from './routes/mobileAuthRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
@@ -56,7 +56,7 @@ app.get('/api/settings/active-model', async (req, res) => {
 app.use('/api', requireSession);
 app.use('/api/admin', adminRoutes);
 app.use('/api/matches', matchRoutes);
-app.use('/api/sports', sportsRoutes);
+app.use('/api/sports', requireVip, sportsRoutes);
 app.use('/api/boost', (req, res, next) => {
   const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
   req.url = '/boost' + query;

@@ -118,6 +118,16 @@ test('sports APIs require a session, keep the women feed separate, filter league
     const regular = await storage.upsertGoogleUser({ googleId: 'sports-regular-fixture', email: 'regular@example.invalid', name: 'Cliente de prueba', deviceId: 'sports-device' });
     let regularCookie;
     setSession({ cookie: (name, value) => { regularCookie = `${name}=${value}`; } }, { role: 'trial_user', userId: regular.id, expires: Date.now() + 3600000 });
+    for (const endpoint of ['/api/sports/tenis', `/api/sports/tenis/${tennisMatch.id}?league=atp`, '/api/sports/beisbol', '/api/sports/basquetbol?category=bankers']) {
+      const blocked = await request(endpoint, regularCookie);
+      assert.equal(blocked.status, 403, 'Trial members cannot enter the other sports');
+      assert.equal((await blocked.json()).vipRequired, true);
+    }
+    assert.equal((await request('/api/sports/tenis/details', regularCookie, { ids: [tennisMatch.id] })).status, 403);
+    assert.equal((await request('/api/matches', regularCookie)).status, 200, 'Football stays open to the trial');
+    await storage.createCode({ code: 'SPORTS-VIP-FIXTURE', durationDays: 30 });
+    await storage.redeemUserCode({ userId: regular.id, code: 'SPORTS-VIP-FIXTURE', deviceId: 'sports-device' });
+    assert.equal((await request('/api/sports/tenis', regularCookie)).status, 200, 'VIP members enter every sport');
     const aiPath = `/api/sports/tenis/${tennisMatch.id}/ai-analysis?league=atp`;
     assert.equal((await request(aiPath, regularCookie, { forceRefresh: true })).status, 403, 'A hidden owner button must also be protected by the server');
     for (const body of [{ forceRefresh: true }, { model: 'client-override' }, { aiConfig: { apiKey: 'client-key' } }]) {
