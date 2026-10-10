@@ -126,7 +126,7 @@ await sports('basquetbol', 'Básquetbol');
 const errors = flags.filter(f => f.severity === 'error'), review = flags.filter(f => f.severity === 'revisar'), info = flags.filter(f => f.severity === 'info');
 const list = items => items.length ? items.map(f => `- **${f.sport}** · ${f.match} (${f.league}): ${f.kind} — ${f.detail}`).join('\n') : '- Ninguno.';
 const md = `# Revisión detallada de partidos — ${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC\n\n`
-  + `## Errores (${errors.length})\n${list(errors)}\n\n## Valores a revisar (${review.length})\n${list(review)}\n\n## Diferencias grandes con el momio publicado (${info.length})\nNo son errores: el porcentaje es del modelo propio y el momio es de la casa.\n${list(info)}\n\n`
+  + `## Errores (${errors.length})\n${list(errors)}\n\n## Valores a revisar (${review.length})\n${list(review)}\n\n## Avisos informativos (${info.length})\nNo son errores: promedios de muy pocos partidos (la app muestra el aviso) y diferencias grandes entre el porcentaje del modelo propio y el momio de la casa.\n${list(info)}\n\n`
   + sections.map(s => `## ${s.title}\n${s.rows.length ? `${s.header}\n${s.rows.join('\n')}` : 'Sin partidos programados en la ventana de la app.'}`).join('\n\n') + '\n';
 const out = process.argv[2];
 if (out) await fs.writeFile(out, md);
