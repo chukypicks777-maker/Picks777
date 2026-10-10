@@ -62,7 +62,7 @@ const history = { version: BASKETBALL_RATINGS.version, leagueId: 'nba', builtAt:
 const nbaMatch = { id: 'espn-nba-next', sport: 'basquetbol', leagueId: 'nba', status: 'SCHEDULED', kickoff: new Date(NOW + 6 * HOUR).toISOString(),
   homeTeam: { id: 't1', name: 'Uno' }, awayTeam: { id: 't6', name: 'Seis' }, odds: {} };
 
-test('NBA points ratings drive winner and handicaps, published prices keep the winner, and late results are excluded', () => {
+test('NBA points ratings drive winner and handicaps, published prices are only the momio, and late results are excluded', () => {
   const rated = ratedMargin(nbaMatch, [], history, NOW);
   assert.ok(rated.margin > 5 && rated.deviation === 14.1);
   const analysis = basketballAnalysis(nbaMatch, [], NOW, history);
@@ -70,9 +70,11 @@ test('NBA points ratings drive winner and handicaps, published prices keep the w
   const covers = analysis.handicaps.home.filter(row => row.line > 0).map(row => row.probability);
   assert.deepEqual(covers, [...covers].sort((a, b) => a - b), 'More points received never lowers the cover probability');
   assert.equal(analyzeSportMatch(nbaMatch, [], NOW, { basketballHistory: { nba: history } }).winner.home, analysis.winner.home);
-  const priced = basketballAnalysis({ ...nbaMatch, odds: { homeWin: 1.5, awayWin: 2.75 } }, [], NOW, history);
-  assert.equal(priced.probabilitySource, 'published-odds');
-  assert.equal(priced.winner.home, 64.7);
+  // The same teams and venue give the same percentage with or without a price.
+  const priced = basketballAnalysis({ ...nbaMatch, odds: { homeWin: 2.75, awayWin: 1.5 } }, [], NOW, history);
+  assert.equal(priced.probabilitySource, 'experimental-model');
+  assert.deepEqual(priced.winner, analysis.winner);
+  assert.deepEqual(priced.handicaps, analysis.handicaps);
   // Results of games that began less than three hours before (or after) this one are ignored.
   const late = [{ ...nbaMatch, id: 'espn-nba-late', kickoff: new Date(NOW + 4 * HOUR).toISOString(), status: 'FINISHED', homeTeam: { id: 't6' }, awayTeam: { id: 't1' }, finalScore: { home: 160, away: 60 } }];
   assert.equal(ratedMargin(nbaMatch, late, history, NOW + 7 * HOUR).margin, ratedMargin(nbaMatch, [], history, NOW + 7 * HOUR).margin);
@@ -81,6 +83,21 @@ test('NBA points ratings drive winner and handicaps, published prices keep the w
   // Other competitions keep the last-20-games method.
   assert.equal(basketballAnalysis({ ...nbaMatch, leagueId: 'ncaaw' }, [], NOW, history).ratingSample, undefined);
   assert.equal(basketballAnalysis(nbaMatch, [], NOW, null).ratingSample, undefined);
+});
+
+test('NBA preseason uses last season\'s ratings with a moderated margin, never extreme percentages', () => {
+  const preseason = { ...nbaMatch, id: 'espn-nba_preseason-next', leagueId: 'nba_preseason' };
+  const regular = ratedMargin(nbaMatch, [], history, NOW), moderated = ratedMargin(preseason, [], history, NOW);
+  assert.ok(Math.abs(moderated.margin - regular.margin * 0.3) < 1e-9);
+  assert.ok(moderated.preseason && !regular.preseason);
+  // Shown points stay on the same moderated expectation.
+  assert.ok(Math.abs(moderated.points.home - moderated.points.away - moderated.margin) < 1e-9);
+  const analysis = analyzeSportMatch(preseason, [], NOW, { basketballHistory: { nba: history } });
+  assert.ok(analysis.winner.home > 50 && analysis.winner.home < 75, `preseason winner ${analysis.winner.home}`);
+  assert.ok(analysis.winner.home < basketballAnalysis(nbaMatch, [], NOW, history).winner.home);
+  assert.match(analysis.method, /Pretemporada/);
+  // Without NBA history it falls back to the previous method, not to a price.
+  assert.equal(analyzeSportMatch({ ...preseason, odds: { homeWin: 1.2, awayWin: 5 } }, [], NOW, {}).probabilitySource, 'experimental-model');
 });
 
 test('basketball history keeps only finished regular-season and playoff results and is built without blocking members', async t => {

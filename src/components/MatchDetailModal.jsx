@@ -1093,6 +1093,10 @@ export default function MatchDetailModal({
                   </div>
                 </div>
 
+                {[homeDetailed, awayDetailed].some(s => Number.isFinite(s.gamesPlayed) && s.gamesPlayed < 3) && (
+                  <p className="text-[11px] text-amber-300 font-sans">Muestra pequeña: {[homeDetailed, awayDetailed].map(s => `${s.shortName || s.name} ${s.gamesPlayed ?? 'N/D'} ${s.gamesPlayed === 1 ? 'partido' : 'partidos'}`).join(' · ')} en esta competición. Estos promedios son solo referencia; los porcentajes salen del modelo.</p>
+                )}
+
                 {/* Metric 1: Goles por partido */}
                 <div>
                   <div className="flex justify-between text-slate-300 mb-1">

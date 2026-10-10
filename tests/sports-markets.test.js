@@ -126,8 +126,10 @@ test('basketball handicaps apply the correct team sign and agree with opposite-t
     if (other) assert.ok(Math.abs(row.probability + other.probability - 100) < 0.001);
   }
   assert.equal(basketballAnalysis(match, [], NOW).handicaps.home[0].probability, null);
-  assert.deepEqual(basketballAnalysis({ ...match, odds: { homeWin: 2, awayWin: 2 } }, [], NOW).winner, { home: 50, away: 50 });
+  // Prices never produce percentages: without results the winner stays N/D.
+  assert.equal(basketballAnalysis({ ...match, odds: { homeWin: 2, awayWin: 2 } }, [], NOW).winner.home, null);
   const calibrated = basketballAnalysis({ ...match, odds: { homeWin: 1.5, awayWin: 3 } }, history(match, [110, 90, 108, 114, 96, 106], [97, 106, 103, 101, 94, 112]), NOW);
+  assert.deepEqual(calibrated.winner, result.winner, 'A published price does not change the percentage');
   assert.ok(calibrated.handicaps.home.find(row => row.line === 1.5).probability > calibrated.winner.home);
   assert.ok(calibrated.handicaps.home.find(row => row.line === -1.5).probability < calibrated.winner.home);
   assert.equal(analyzeSportMatch({ ...match, status: 'POSTPONED', odds: { homeWin: 2, awayWin: 2 } }, [], NOW).winner.home, null);

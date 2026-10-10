@@ -1,7 +1,7 @@
 import { SPORT_LEAGUES } from '../../src/constants/leagues.js';
 import { fetchJson, redisConfigured, redisCommand } from './dataCache.js';
 import { encodeCache, decodeCache } from './cacheCodec.js';
-import { BASKETBALL_RATINGS } from './basketballRatings.js';
+import { BASKETBALL_RATINGS, ratingLeagueOf } from './basketballRatings.js';
 
 // Finished NBA/WNBA regular-season and playoff results of the last 13 months as
 // compact rows (a few kilobytes gzipped). A monthly scoreboard is several
@@ -97,7 +97,7 @@ export async function loadBasketballHistory(leagueId) {
 }
 
 export async function loadAllBasketballHistory(leagueId = null) {
-  const leagues = RATED_BASKETBALL_LEAGUES.filter(id => !leagueId || id === leagueId);
+  const leagues = RATED_BASKETBALL_LEAGUES.filter(id => !leagueId || id === ratingLeagueOf(leagueId));
   const loaded = await Promise.all(leagues.map(id => loadBasketballHistory(id).catch(() => null)));
   return Object.fromEntries(leagues.map((id, i) => [id, loaded[i]]));
 }

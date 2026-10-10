@@ -54,7 +54,7 @@ function dates(m) {
     else if (scheduleDay(m) !== m.scheduleDate || matchDayKey(m, 'America/Mexico_City') !== m.scheduleDate) fail(m, 'día de Hoy/Mañana distinto a la fecha del proveedor', `${m.scheduleDate} vs ${matchDayKey(m, 'America/Mexico_City')}`);
   }
   if (m.status === 'SCHEDULED' && Date.parse(m.kickoff) < Date.now() - 6 * 3600000 && !m.timeTBD) count('scheduled more than 6 h after kickoff (provider delay)');
-  if (m.status === 'FINISHED' && !(num(m.finalScore?.home) && num(m.finalScore?.away)) && !num(m.liveScore?.home)) fail(m, 'finalizado sin marcador', JSON.stringify(m.finalScore));
+  if (m.status === 'FINISHED' && !m.retired && !(num(m.finalScore?.home) && num(m.finalScore?.away)) && !num(m.liveScore?.home)) fail(m, 'finalizado sin marcador', JSON.stringify(m.finalScore));
 }
 function quoteOf(m, side, probability) {
   const quote = marketQuote(m.odds?.[`${side}Win`], probability);

@@ -6,6 +6,7 @@ import { analyzeSportMatch, SPORT_MODEL_VERSION } from './sportProbabilityModel.
 import { readSportsAiReport } from './sportsAiService.js';
 import { loadAllTennisRatings, loadTennisRatings } from './tennisRatings.js';
 import { loadAllBasketballHistory, loadBasketballHistory } from './basketballHistory.js';
+import { ratingLeagueOf } from './basketballRatings.js';
 import { oddsApiConfigured, loadTennisQuotes, attachTennisQuotes } from './oddsApi.js';
 import { loadKalshiTennis, KALSHI_WINDOW_HOURS } from './kalshiOdds.js';
 import { rankSportWinners } from '../../src/utils/sportPicks.js';
@@ -226,8 +227,8 @@ async function loadSportsMatch(sport, id, match, sharedHistory = null) {
   const today = new Date().toISOString().slice(0, 10);
   const history = await Promise.all([match.homeTeam, match.awayTeam].map(team => basketballTeamHistory({ teamId: team.id, season: match.season, league }, today)));
   const games = [...new Map(history.flat().map(game => [game.id, game])).values()];
-  const stored = await loadBasketballHistory(match.leagueId).catch(() => null);
-  return { ...match, analysis: analyzeSportMatch(match, games, Date.now(), { basketballHistory: { [match.leagueId]: stored } }) };
+  const stored = await loadBasketballHistory(ratingLeagueOf(match.leagueId)).catch(() => null);
+  return { ...match, analysis: analyzeSportMatch(match, games, Date.now(), { basketballHistory: { [ratingLeagueOf(match.leagueId)]: stored } }) };
 }
 
 export function publishedMlbOdds(match, data, fetchedAt) {

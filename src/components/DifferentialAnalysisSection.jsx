@@ -7,7 +7,8 @@ export default function DifferentialAnalysisSection({ homeStats, awayStats, diff
     <h4 className="text-white font-bold text-sm">Comparativa de promedios registrados</h4>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{[homeStats, awayStats].map((s, i) => <div key={i} className="rounded-lg bg-[#151d2d] p-3 space-y-2">
       <h5 className="font-bold text-sky-300">{s.name}</h5>
-      <p>Goles a favor: {s.avgGF != null ? `${displayNumber(s.avgGF)} / p` : 'N/D'} · En contra: {s.avgGC != null ? `${displayNumber(s.avgGC)} / p` : 'N/D'}</p>
+      <p>Goles a favor: {s.avgGF != null ? `${displayNumber(s.avgGF)} / p` : 'N/D'} · En contra: {s.avgGC != null ? `${displayNumber(s.avgGC)} / p` : 'N/D'}{Number.isFinite(s.gamesPlayed) ? ` · ${s.gamesPlayed} ${s.gamesPlayed === 1 ? 'partido' : 'partidos'}` : ''}</p>
+      {Number.isFinite(s.gamesPlayed) && s.gamesPlayed < 3 && <p className="text-amber-300 text-[11px]">Muestra pequeña: promedio de solo {s.gamesPlayed} {s.gamesPlayed === 1 ? 'partido' : 'partidos'} en esta competición; no se usa para los porcentajes.</p>}
       <p>Córners: {s.avgCorners != null ? `${displayNumber(s.avgCorners)} / p` : 'N/D'}</p>
       <p>+5.5 Córners: <NumberCounter value={s.cornerOver55} suffix="%"/> · −5.5: <NumberCounter value={s.cornerUnder55} suffix="%"/></p>
     </div>)}</div>

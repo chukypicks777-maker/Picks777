@@ -1,7 +1,7 @@
 import { roundDistribution, totalLines, validNumber, poissonProbability } from '../../src/utils/probability.js';
 import { countForecast, countLines, combinedCount, countResult } from './baseballCountModel.js';
 import { ratedRuns } from './baseballRatings.js';
-import { ratedMargin } from './basketballRatings.js';
+import { ratedMargin, ratingLeagueOf } from './basketballRatings.js';
 
 import { SPORT_MODEL_VERSION } from '../../src/utils/sportModelVersion.js';
 export { SPORT_MODEL_VERSION };
@@ -252,13 +252,6 @@ export function homeCourtEdge(match, games = [], now = Date.now()) {
   return prior.reduce((sum, game) => sum + game.finalScore.home - game.finalScore.away, 0) / (prior.length + 30);
 }
 
-// Margin whose normal probability matches the published winner, so every
-// handicap stays on the same distribution as that price.
-function marketMargin(probability, deviation) {
-  let low = -10, high = 10;
-  for (let i = 0; i < 60; i++) { const mid = (low + high) / 2; if (normalCdf(mid) < probability) low = mid; else high = mid; }
-  return (low + high) / 2 * deviation;
-}
 
 // NBA/WNBA: opponent- and venue-adjusted points ratings (basketballRatings.js)
 // built from the league's stored results. Blind test against the last-20-games
@@ -269,18 +262,21 @@ export function basketballAnalysis(match, games = [], now = Date.now(), history 
   const legacy = legacyBasketballAnalysis(match, games, now);
   const rated = ['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status) ? ratedMargin(match, games, history, now) : null;
   if (!rated) return legacy;
-  const { deviation } = rated, oddsWinner = marketWinner(match.odds);
-  const winner = pair(oddsWinner ?? normalCdf(rated.margin / deviation));
-  const margin = oddsWinner !== null ? marketMargin(oddsWinner, deviation) : rated.margin;
+  // Owner rule: winner and handicaps come from the same rated margin; a published
+  // price is shown only as the momio (a market winner made two games of the same
+  // series show 63% and 51% for the same teams and venue).
+  const { deviation } = rated, margin = rated.margin;
+  const winner = pair(normalCdf(margin / deviation));
   const handicaps = Object.fromEntries(['home', 'away'].map(side => [side, HANDICAP_LINES.map(line => ({
     line, probability: pair(normalCdf(((side === 'home' ? margin : -margin) + line) / deviation)).home
   }))]));
   return { ...legacy, available: true, winner, handicaps,
-    probabilitySource: oddsWinner !== null ? 'published-odds' : 'experimental-model',
+    probabilitySource: 'experimental-model',
     expectedPoints: { home: Number(rated.points.home.toFixed(1)), away: Number(rated.points.away.toFixed(1)) },
     ratingSample: rated.sample, homeCourtEdge: Number(rated.homeEdge.toFixed(2)),
     method: `Hándicaps con una distribución normal del margen final (desviación ${deviation} puntos, medida en la temporada anterior). Margen esperado = puntos esperados de cada equipo según ratings de ataque y defensa ajustados por rival y localía, con más peso a los resultados recientes (vida media 60 días) y contracción hacia la media de la liga; usa temporada regular y playoffs de los últimos 13 meses. Comprobado a ciegas en NBA 2025-26 y WNBA 2026. No incorpora lesiones ni alineaciones. Incluye prórroga cuando está incluida en el resultado oficial.`
-      + (oddsWinner !== null ? ' Ganador: probabilidad implícita en las dos cuotas publicadas, sin margen de la casa. La distribución de hándicaps se centra en ese ganador.' : ' Ganador: probabilidad de margen positivo según los ratings.'),
+      + (rated.preseason ? ' Pretemporada: ratings de la última temporada con el margen reducido al 30%, porque se reparten minutos entre suplentes; elegido con la pretemporada 2024 y comprobado a ciegas en la de 2025.' : '')
+      + ' Ganador: probabilidad de margen positivo según los mismos ratings, sin usar cuotas.',
     notice: 'El hándicap suma o resta puntos al equipo elegido. Proyección previa al partido.'
   };
 }
@@ -294,10 +290,9 @@ function legacyBasketballAnalysis(match, games = [], now = Date.now()) {
   const variance = values => mean(values.map(v => (v - mean(values)) ** 2)) * values.length / (values.length - 1);
   const deviation = ready ? Math.sqrt((variance(hm) + variance(am)) / 2) : null;
   const hasDistribution = ready && deviation > 0;
-  const oddsWinner = marketWinner(match.odds);
-  const winner = pair(oddsWinner ?? (hasDistribution ? normalCdf(margin / deviation) : null));
-  let distributionMargin = margin;
-  if (hasDistribution && oddsWinner !== null) distributionMargin = marketMargin(oddsWinner, deviation);
+  const oddsWinner = null; // Owner rule: percentages never come from published prices.
+  const winner = pair(hasDistribution ? normalCdf(margin / deviation) : null);
+  const distributionMargin = margin;
   const handicaps = Object.fromEntries(['home', 'away'].map(side => [side, HANDICAP_LINES.map(line => ({
     line, probability: hasDistribution ? pair(normalCdf(((side === 'home' ? distributionMargin : -distributionMargin) + line) / deviation)).home : null
   }))]));
@@ -429,7 +424,7 @@ export function tennisAnalysis(match, games = [], now = Date.now(), ratings = nu
 
 export function analyzeSportMatch(match, games = [], now = Date.now(), { tennisRatings = null, basketballHistory = null } = {}) {
   const model = match.sport === 'beisbol' ? baseballAnalysis : match.sport === 'tenis' ? tennisAnalysis : basketballAnalysis;
-  const analysis = model(match, games, now, match.sport === 'tenis' ? tennisRatings?.[match.tour] : match.sport === 'basquetbol' ? basketballHistory?.[match.leagueId] : undefined);
+  const analysis = model(match, games, now, match.sport === 'tenis' ? tennisRatings?.[match.tour] : match.sport === 'basquetbol' ? basketballHistory?.[ratingLeagueOf(match.leagueId)] : undefined);
   if (!['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status)) return model({ ...match, odds: {}, kickoff: 'invalid' }, [], now);
   return analysis;
 }

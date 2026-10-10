@@ -329,11 +329,14 @@ test('los filtros de fútbol están entre las ligas y el destacado; /femenil con
   await expect(page.getByRole('tab', { name: 'Fútbol', exact: true })).toHaveAttribute('aria-selected', 'true');
 });
 
-test('la sincronización superior actualiza el deporte abierto y respeta el ganador implícito en sus momios', async ({ page }) => {
+test('la sincronización superior actualiza el deporte abierto; el porcentaje es del modelo y el momio publicado se muestra aparte', async ({ page }) => {
   await setup(page, '/basquetbol');
   const card = page.getByRole('article', { name: 'Boston Celtics vs LA Lakers' });
   await expect(card).toBeVisible();
-  await expect(card).toContainText('54.4%');
+  const own = feeds.basquetbol[0].analysis.winner;
+  expect(feeds.basquetbol[0].analysis.probabilitySource).toBe('experimental-model');
+  await expect(card).toContainText(`${own.home}%`);
+  await expect(card).toContainText('Ganador · % del modelo propio · Momio publicado');
   await expect(page.getByRole('button', { name: 'Actualizar encuentros' })).toBeEnabled();
   let currentCalls = 0, footballCalls = 0;
   page.on('request', request => {
