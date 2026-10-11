@@ -60,6 +60,20 @@ test('market fitting reproduces quoted supremacy, totals and the draw-implied to
   assert.equal(fm.devigPower({ homeWin: 1.5, draw: null, awayWin: 4 }, ['homeWin', 'draw', 'awayWin']), null);
 });
 
+test('draw total reuse preserves exact results and responds to changed quotes and correlation', () => {
+  // Golden outputs from the preceding model, before adding result reuse.
+  const cases = [
+    [{ homeWin: 50, draw: 25, awayWin: 25 }, -0.07, 2.9481954329529803],
+    [{ homeWin: 50, draw: 25, awayWin: 25 }, 0, 2.6457409533632923],
+    [{ homeWin: 45, draw: 25, awayWin: 30 }, -0.07, 3.093713947336891],
+    [{ homeWin: 50, draw: 30, awayWin: 20 }, -0.07, 2.091673219746281]
+  ];
+  for (let pass = 0; pass < 2; pass++) for (const [market, rho, total] of cases) {
+    assert.equal(fm.drawImpliedTotal({ ...market }, rho), total);
+  }
+  assert.equal(fm.drawImpliedTotal({ homeWin: 50, draw: null, awayWin: 50 }), null);
+});
+
 test('negative binomial counts keep their mean, overdispersion and complementary ladders', () => {
   const mean = 10, size = 40, pmf = fm.countDistribution(mean, size);
   const m1 = pmf.reduce((s, p, k) => s + p * k, 0), m2 = pmf.reduce((s, p, k) => s + p * k * k, 0);

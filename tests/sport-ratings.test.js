@@ -85,6 +85,28 @@ test('NBA points ratings drive winner and handicaps, published prices are only t
   assert.equal(basketballAnalysis(nbaMatch, [], NOW, null).ratingSample, undefined);
 });
 
+test('cloned basketball histories reuse predictions without hiding corrected scores or earlier results', () => {
+  const original = ratedMargin(nbaMatch, [], history, NOW);
+  assert.deepEqual(ratedMargin({ ...nbaMatch }, [], structuredClone(history), NOW), original);
+
+  // A provider correction can retain builtAt. Its changed score must still count
+  // when the feed cache hands the model a fresh array/history object.
+  const corrected = structuredClone(history);
+  const row = corrected.rows.findLast(row => row[2] === 't1');
+  row[4] += 30;
+  assert.notEqual(ratedMargin(nbaMatch, [], corrected, NOW).margin, original.margin);
+  assert.deepEqual(ratedMargin(nbaMatch, [], structuredClone(history), NOW), original);
+
+  const result = { ...nbaMatch, id: 'nba-new-result', status: 'FINISHED', kickoff: new Date(NOW - DAY).toISOString(), finalScore: { home: 70, away: 140 } };
+  const updated = ratedMargin(nbaMatch, [result], structuredClone(history), NOW);
+  assert.notEqual(updated.margin, original.margin);
+  assert.deepEqual(ratedMargin(nbaMatch, structuredClone([result]), structuredClone(history), NOW), updated);
+  const future = { ...result, id: 'nba-future-result', kickoff: new Date(NOW + HOUR).toISOString() };
+  assert.deepEqual(ratedMargin(nbaMatch, [future], structuredClone(history), NOW), original);
+  assert.notEqual(ratedMargin(nbaMatch, [future], structuredClone(history), NOW + 7 * HOUR).margin,
+    ratedMargin(nbaMatch, [], structuredClone(history), NOW + 7 * HOUR).margin, 'A result enters only after the cutoff advances');
+});
+
 test('NBA preseason uses last season\'s ratings with a moderated margin, never extreme percentages', () => {
   const preseason = { ...nbaMatch, id: 'espn-nba_preseason-next', leagueId: 'nba_preseason' };
   const regular = ratedMargin(nbaMatch, [], history, NOW), moderated = ratedMargin(preseason, [], history, NOW);

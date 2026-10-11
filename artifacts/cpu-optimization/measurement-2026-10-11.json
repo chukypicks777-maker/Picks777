@@ -1,0 +1,35 @@
+{
+  "baselineCommit": "6279af9b5f9ce392bb6005773c342bdd436d9bb5",
+  "checkedAt": "2026-10-11T15:33:40.389Z",
+  "cpuMeasurement": "process.cpuUsage user + system, median of five runs",
+  "data": {
+    "footballMatches": 380,
+    "distinctPriceSnapshots": 80,
+    "basketballMatches": 1235
+  },
+  "identicalComparisons": 97,
+  "workloads": [
+    {
+      "name": "football-repeat-calendar",
+      "iterationsPerRun": 10,
+      "beforeCpuMs": 1640,
+      "afterCpuMs": 391,
+      "reductionPercent": 76.2
+    },
+    {
+      "name": "strength-fit",
+      "iterationsPerRun": 1000,
+      "beforeCpuMs": 1235,
+      "afterCpuMs": 1031,
+      "reductionPercent": 16.5
+    },
+    {
+      "name": "basketball-cloned-history",
+      "iterationsPerRun": 50,
+      "beforeCpuMs": 172,
+      "afterCpuMs": 140,
+      "reductionPercent": 18.6
+    }
+  ],
+  "limitation": "Local repeated-work workloads, not a measurement of total Vercel usage or a promised bill reduction."
+}

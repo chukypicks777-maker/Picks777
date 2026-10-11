@@ -1,4 +1,5 @@
 import { fitStrengths, expectedPair } from '../../src/utils/footballModel.js';
+import { createHash } from 'node:crypto';
 
 // Opponent- and venue-adjusted points ratings for NBA and WNBA. Shared
 // parameters chosen on NBA 2024-25 and WNBA 2025 (previous season as history)
@@ -22,6 +23,8 @@ export const ratingLeagueOf = leagueId => BASKETBALL_RATINGS.preseason[leagueId]
 
 const HOUR = 3600000;
 const fits = new WeakMap();
+const sharedFits = new Map();
+const MAX_SHARED_FITS = 48;
 
 // History rows are [id, kickoffSeconds, homeId, awayId, homePoints, awayPoints];
 // finished games of the current calendar complete the most recent days.
@@ -36,7 +39,21 @@ function leagueFit(history, games, leagueId, asOf) {
       rows.set(game.id, { time: Date.parse(game.kickoff), home: String(game.homeTeam?.id), away: String(game.awayTeam?.id), hv: game.finalScore.home, av: game.finalScore.away });
     }
     if (byKey.size > 24) byKey.delete(byKey.keys().next().value);
-    byKey.set(key, fitStrengths([...rows.values()], { asOf, halfLifeDays: BASKETBALL_RATINGS.halfLifeDays, priorGames: BASKETBALL_RATINGS.priorGames }));
+    const earlier = [...rows.values()].filter(row => row.time < asOf);
+    // Feed/detail caches clone their arrays. Object identity alone caused the
+    // same season to be fitted again on each request. Include every earlier
+    // timestamp, team and score so changed results never reuse an obsolete fit.
+    const signature = createHash('sha256').update(JSON.stringify([leagueId, asOf, earlier])).digest('hex');
+    let fit;
+    if (sharedFits.has(signature)) {
+      fit = sharedFits.get(signature);
+      sharedFits.delete(signature);
+    } else {
+      fit = fitStrengths(earlier, { asOf, halfLifeDays: BASKETBALL_RATINGS.halfLifeDays, priorGames: BASKETBALL_RATINGS.priorGames });
+      if (sharedFits.size >= MAX_SHARED_FITS) sharedFits.delete(sharedFits.keys().next().value);
+    }
+    sharedFits.set(signature, fit);
+    byKey.set(key, fit);
   }
   return byKey.get(key);
 }

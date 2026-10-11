@@ -68,19 +68,29 @@ export function fitStrengths(games, { asOf, halfLifeDays = 180, priorGames = 6, 
   const gamesPlayed = new Int32Array(size), teamWeight = new Float64Array(size);
   for (let i = 0; i < rows; i++) { gamesPlayed[H[i]]++; gamesPlayed[A[i]]++; teamWeight[H[i]] += W[i]; teamWeight[A[i]] += W[i]; }
   const strength = priorGames * (baseHome + baseAway) / 2;
-  const numerator = new Float64Array(size), denominator = new Float64Array(size);
+  // Observed weighted scores do not change during fitting. Keep their original
+  // summation order, and reuse them rather than recomputing them each iteration.
+  const attackScores = new Float64Array(size), defenseScores = new Float64Array(size);
+  const homeWeights = new Float64Array(rows), awayWeights = new Float64Array(rows);
+  for (let i = 0; i < rows; i++) {
+    attackScores[H[i]] += W[i] * HV[i]; attackScores[A[i]] += W[i] * AV[i];
+    defenseScores[A[i]] += W[i] * HV[i]; defenseScores[H[i]] += W[i] * AV[i];
+    homeWeights[i] = W[i] * baseHome; awayWeights[i] = W[i] * baseAway;
+  }
+  const denominator = new Float64Array(size);
   for (let iteration = 0; iteration < iterations; iteration++) {
     let change = 0;
     for (const side of [attack, defense]) {
-      numerator.fill(0); denominator.fill(0);
+      const numerator = side === attack ? attackScores : defenseScores;
+      denominator.fill(0);
       for (let i = 0; i < rows; i++) {
-        const h = H[i], a = A[i], w = W[i];
+        const h = H[i], a = A[i];
         if (side === attack) {
-          numerator[h] += w * HV[i]; denominator[h] += w * baseHome * defense[a];
-          numerator[a] += w * AV[i]; denominator[a] += w * baseAway * defense[h];
+          denominator[h] += homeWeights[i] * defense[a];
+          denominator[a] += awayWeights[i] * defense[h];
         } else {
-          numerator[a] += w * HV[i]; denominator[a] += w * baseHome * attack[h];
-          numerator[h] += w * AV[i]; denominator[h] += w * baseAway * attack[a];
+          denominator[a] += homeWeights[i] * attack[h];
+          denominator[h] += awayWeights[i] * attack[a];
         }
       }
       for (let t = 0; t < size; t++) {
@@ -253,17 +263,33 @@ function drawProbability(lambda, mu, rho) {
   return (draw - 2 * lambda * mu * rho * Math.exp(-lambda - mu)) * 100;
 }
 
+// This inverse depends only on the quote probabilities and rho, not teams,
+// fixtures or time. Reuse exact results across cloned/refreshed calendars.
+const drawTotals = new Map();
+const MAX_DRAW_TOTALS = 512;
+
 // The goals total implied by a 1X2 quote: with the supremacy fixed, the draw
 // price falls as the expected total rises.
 export function drawImpliedTotal(market, rho = FOOTBALL_MODEL.goals.rho) {
   const { homeWin, draw, awayWin } = market || {};
   if (![homeWin, draw, awayWin].every(v => finite(v) && v > 0 && v < 100)) return null;
+  const key = finite(rho) ? JSON.stringify([homeWin, draw, awayWin, rho]) : null;
+  if (key !== null && drawTotals.has(key)) {
+    const total = drawTotals.get(key);
+    drawTotals.delete(key); drawTotals.set(key, total);
+    return total;
+  }
   let low = 0.4, high = 7;
   for (let i = 0; i < 40; i++) {
     const total = (low + high) / 2, rates = solveGoalRates({ homeWin, awayWin }, { total });
     if (drawProbability(rates.home, rates.away, rho) > draw) low = total; else high = total;
   }
-  return (low + high) / 2;
+  const total = (low + high) / 2;
+  if (key !== null) {
+    if (drawTotals.size >= MAX_DRAW_TOTALS) drawTotals.delete(drawTotals.keys().next().value);
+    drawTotals.set(key, total);
+  }
+  return total;
 }
 
 const calibrateDrawTotal = raw => {
