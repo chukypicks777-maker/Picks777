@@ -1,5 +1,6 @@
 import { fitStrengths, expectedPair } from '../../src/utils/footballModel.js';
 import { createHash } from 'node:crypto';
+import { AVAILABILITY, teamAvailability, lineupAdjustment, availabilityValue } from './basketballAvailability.js';
 
 // Opponent- and venue-adjusted points ratings for NBA and WNBA. Shared
 // parameters chosen on NBA 2024-25 and WNBA 2025 (previous season as history)
@@ -28,18 +29,21 @@ const MAX_SHARED_FITS = 48;
 
 // History rows are [id, kickoffSeconds, homeId, awayId, homePoints, awayPoints];
 // finished games of the current calendar complete the most recent days.
+function ratingRows(history, games, leagueId, asOf) {
+  const rows = new Map(history.rows.map(([id, time, home, away, hv, av]) => [id, { time: time * 1000, home, away, hv, av }]));
+  for (const game of games) {
+    if (game.leagueId !== leagueId || game.status !== 'FINISHED' || !Number.isInteger(game.finalScore?.home) || !Number.isInteger(game.finalScore?.away)) continue;
+    rows.set(game.id, { time: Date.parse(game.kickoff), home: String(game.homeTeam?.id), away: String(game.awayTeam?.id), hv: game.finalScore.home, av: game.finalScore.away });
+  }
+  return [...rows.values()].filter(row => row.time < asOf);
+}
 function leagueFit(history, games, leagueId, asOf) {
   let byKey = fits.get(games);
   if (!byKey) { byKey = new Map(); fits.set(games, byKey); }
   const key = `${leagueId}:${history.builtAt}:${asOf}`;
   if (!byKey.has(key)) {
-    const rows = new Map(history.rows.map(([id, time, home, away, hv, av]) => [id, { time: time * 1000, home, away, hv, av }]));
-    for (const game of games) {
-      if (game.leagueId !== leagueId || game.status !== 'FINISHED' || !Number.isInteger(game.finalScore?.home) || !Number.isInteger(game.finalScore?.away)) continue;
-      rows.set(game.id, { time: Date.parse(game.kickoff), home: String(game.homeTeam?.id), away: String(game.awayTeam?.id), hv: game.finalScore.home, av: game.finalScore.away });
-    }
     if (byKey.size > 24) byKey.delete(byKey.keys().next().value);
-    const earlier = [...rows.values()].filter(row => row.time < asOf);
+    const earlier = ratingRows(history, games, leagueId, asOf);
     // Feed/detail caches clone their arrays. Object identity alone caused the
     // same season to be fitted again on each request. Include every earlier
     // timestamp, team and score so changed results never reuse an obsolete fit.
@@ -59,8 +63,9 @@ function leagueFit(history, games, leagueId, asOf) {
 }
 
 // Expected points and margin for a fixture, or null outside NBA/WNBA or without
-// five earlier games per team.
-export function ratedMargin(match, games = [], history = null, now = Date.now()) {
+// five earlier games per team. With the NBA injury report and rosters, the
+// margin also counts who plays against who earned each rating.
+export function ratedMargin(match, games = [], history = null, now = Date.now(), availability = null) {
   const base = ratingLeagueOf(match.leagueId), scale = BASKETBALL_RATINGS.preseason[match.leagueId]?.scale ?? 1;
   const deviation = BASKETBALL_RATINGS.deviation[base];
   if (!deviation || history?.leagueId !== base || !Array.isArray(history.rows)) return null;
@@ -71,7 +76,24 @@ export function ratedMargin(match, games = [], history = null, now = Date.now())
   const fit = leagueFit(history, games, base, asOf);
   const pair = expectedPair(fit, String(match.homeTeam?.id), String(match.awayTeam?.id), { minGames: BASKETBALL_RATINGS.minGames });
   if (!pair) return null;
+  const lineups = base === 'nba' && availability && ['SCHEDULED', 'LIVE'].includes(match.status) ? lineupEffect(match, history, games, asOf, availability, scale !== 1) : null;
+  const used = lineups ? (scale !== 1 ? AVAILABILITY.preseason.scale : 1) : scale;
   // A moderated margin keeps the shown points on the same expectation.
-  const margin = (pair.home - pair.away) * scale, mid = (pair.home + pair.away) / 2;
-  return { margin, points: { home: mid + margin / 2, away: mid - margin / 2 }, deviation, sample: pair.sample, homeEdge: (fit.baseHome - fit.baseAway) * scale, preseason: scale !== 1 };
+  const margin = (pair.home - pair.away) * used + (lineups ? lineups.home.adjustment - lineups.away.adjustment : 0), mid = (pair.home + pair.away) / 2;
+  return { margin, points: { home: mid + margin / 2, away: mid - margin / 2 }, deviation, sample: pair.sample, homeEdge: (fit.baseHome - fit.baseAway) * used, preseason: scale !== 1, lineups };
+}
+
+// Both sides' availability adjustment, or null when either team lacks data.
+function lineupEffect(match, history, games, asOf, availability, preseason) {
+  const rows = ratingRows(history, games, 'nba', asOf), params = preseason ? AVAILABILITY.preseason : AVAILABILITY.regular, out = {};
+  for (const side of ['home', 'away']) {
+    const players = teamAvailability(match[`${side}Team`]?.id, match.kickoff, rows, availability, { preseason, asOf });
+    if (!players) return null;
+    const adjustment = lineupAdjustment(players, params);
+    // Listed players who matter, for the card and the analysis.
+    const missing = players.filter(p => p.listed && p.plays < 1).map(p => ({ name: p.name, status: p.status, type: p.type, plays: p.plays,
+      points: Number((params.alpha * availabilityValue(p.stats, params) * (1 - p.plays)).toFixed(1)) })).filter(p => p.points >= 0.1).sort((a, b) => b.points - a.points);
+    out[side] = { adjustment: Number(adjustment.toFixed(2)), missing };
+  }
+  return { ...out, fetchedAt: availability.fetchedAt || null };
 }

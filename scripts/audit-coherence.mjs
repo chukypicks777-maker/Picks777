@@ -11,6 +11,8 @@ import { rankSportWinners, sportWinnerPick, sportCardMarkets, hasPublishedWinner
 import { getTop3Opportunities, getBestBankerPick, getContextualPick, calculateTeamDetailedStats, calculateDifferential, fillPoissonGoalLadder } from '../src/utils/mathProbabilities.js';
 import { scheduleDay, matchDayKey } from '../src/utils/matchDay.js';
 import { marketQuote } from '../src/utils/oddsFormatter.js';
+// The live NBA injury report is part of the forecast the app shows.
+process.env.NBA_AVAILABILITY = 'on';
 
 const issues = [], counts = {};
 const EPS = 0.6; // presentation rounding (one decimal per value)

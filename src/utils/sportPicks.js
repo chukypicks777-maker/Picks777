@@ -5,6 +5,28 @@ import { isUpcomingFixture } from './fixtureEligibility.js';
 // competition has three outcomes. It is shown as the momio, never as a percentage.
 export const hasPublishedWinnerPrice = match => ['homeWin', 'awayWin', ...(match?.allowsDraw ? ['draw'] : [])].every(key => Number(match?.odds?.[key]) > 1);
 
+// NBA injury report entry, in words.
+export function availabilityStatus(player) {
+  if (/rest/i.test(player?.type || '')) return 'descanso';
+  if (/coach/i.test(player?.type || '')) return 'decisión técnica';
+  if (/^out$/i.test(player?.status || '')) return 'fuera';
+  if (/doubtful/i.test(player?.status || '')) return 'muy dudoso';
+  return 'en duda';
+}
+const lastName = name => String(name || '').split(' ').filter(part => !/^(jr\.?|sr\.?|ii|iii|iv)$/i.test(part)).at(-1) || name;
+// Short card line: the most important absences of each side.
+export function availabilitySummary(match, perSide = 3) {
+  const lineups = match?.analysis?.availability;
+  if (!lineups) return null;
+  const parts = ['home', 'away'].map(side => {
+    const list = lineups[side]?.missing || [];
+    if (!list.length) return null;
+    const team = match[`${side}Team`]?.shortName || match[`${side}Team`]?.abbreviation || match[`${side}Team`]?.name;
+    return `${team}: ${list.slice(0, perSide).map(p => lastName(p.name)).join(', ')}${list.length > perSide ? ` +${list.length - perSide}` : ''}`;
+  }).filter(Boolean);
+  return parts.length ? parts.join(' · ') : null;
+}
+
 export function sportWinnerPick(match) {
   const winner = match?.analysis?.winner;
   const sides = ['home', 'away'].filter(side => typeof winner?.[side] === 'number' && Number.isFinite(winner[side]) && winner[side] > 0 && winner[side] <= 100);

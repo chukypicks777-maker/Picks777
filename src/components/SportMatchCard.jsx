@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, Eye, Sparkles, RotateCw, CheckCircle2, Zap, Trophy, Plus, Lock, Crown } from 'lucide-react';
 import { formatFixtureSchedule } from '../utils/matchSchedule.js';
-import { sportWinnerPick, sportCardMarkets, sportParlayLeg, hasPublishedWinnerPrice } from '../utils/sportPicks.js';
+import { sportWinnerPick, sportCardMarkets, sportParlayLeg, hasPublishedWinnerPrice, availabilitySummary } from '../utils/sportPicks.js';
 import { formatOdds } from '../utils/oddsFormatter.js';
 import { MarketValue, Probability, WinnerBar } from './SportMatchAnalysis';
 import SportIdentity from './SportIdentity';
@@ -43,6 +43,7 @@ function SportMatchCard({ match, oddsFormat, onOpen, onToggleParlay, isInParlay 
     <div className="mb-3"><WinnerBar values={a.winner} /></div>
     <p className="text-[9px] text-slate-400 mb-1">{a.probabilitySource === 'published-odds' ? 'Ganador · Mercado sin margen' : a.available && hasPublishedWinnerPrice(match) ? 'Ganador · % del modelo propio · Momio publicado' : a.ratingSample ? 'Ganador · Ratings por rival, prueba ciega' : match.sport === 'tenis' && a.available ? 'Ganador · Modelo propio, sin momio de casa' : 'Ganador · Modelo sin calibración de aciertos'}</p>
     {match.allowsDraw && <p className="text-[9px] text-amber-300 mb-2">Tres resultados: local, empate y visita. No equivale a un moneyline de dos resultados.</p>}
+    {availabilitySummary(match) && <p className="text-[9px] text-amber-200/90 mb-2 line-clamp-2" title="Reporte de lesiones y descansos de ESPN, incluido en el porcentaje">Bajas incluidas · {availabilitySummary(match)}</p>}
     {['LIVE', 'FINISHED'].includes(match.status) && (match.status === 'FINISHED' && match.retired && match.liveScore?.home == null
       ? <p className="text-center text-xs font-mono text-amber-300 mb-3">{/walkover/i.test(match.statusDetail || '') ? 'Walkover · no se jugó' : 'Retiro · partido no completado'}</p>
       : <p className="text-center text-xs font-mono text-slate-300 mb-3">{match.liveScore?.home ?? 'N/D'} – {match.liveScore?.away ?? 'N/D'}{match.sport === 'tenis' ? ' sets' : match.sport === 'beisbol' ? ' carreras' : ' puntos'}{match.retired ? ' · retiro' : ''}</p>)}

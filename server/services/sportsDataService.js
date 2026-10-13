@@ -7,6 +7,10 @@ import { readSportsAiReport } from './sportsAiService.js';
 import { loadAllTennisRatings, loadTennisRatings } from './tennisRatings.js';
 import { loadAllBasketballHistory, loadBasketballHistory } from './basketballHistory.js';
 import { ratingLeagueOf } from './basketballRatings.js';
+import { loadNbaAvailability } from './basketballAvailability.js';
+
+// NBA injury report, rosters and season averages, only when NBA games are in scope.
+const nbaAvailability = leagueId => !leagueId || ratingLeagueOf(leagueId) === 'nba' ? loadNbaAvailability().catch(() => null) : null;
 import { oddsApiConfigured, loadTennisQuotes, attachTennisQuotes } from './oddsApi.js';
 import { loadKalshiTennis, KALSHI_WINDOW_HOURS } from './kalshiOdds.js';
 import { rankSportWinners } from '../../src/utils/sportPicks.js';
@@ -227,8 +231,8 @@ async function loadSportsMatch(sport, id, match, sharedHistory = null) {
   const today = new Date().toISOString().slice(0, 10);
   const history = await Promise.all([match.homeTeam, match.awayTeam].map(team => basketballTeamHistory({ teamId: team.id, season: match.season, league }, today)));
   const games = [...new Map(history.flat().map(game => [game.id, game])).values()];
-  const stored = await loadBasketballHistory(ratingLeagueOf(match.leagueId)).catch(() => null);
-  return { ...match, analysis: analyzeSportMatch(match, games, Date.now(), { basketballHistory: { [ratingLeagueOf(match.leagueId)]: stored } }) };
+  const [stored, basketballAvailability] = await Promise.all([loadBasketballHistory(ratingLeagueOf(match.leagueId)).catch(() => null), nbaAvailability(match.leagueId)]);
+  return { ...match, analysis: analyzeSportMatch(match, games, Date.now(), { basketballHistory: { [ratingLeagueOf(match.leagueId)]: stored }, basketballAvailability }) };
 }
 
 export function publishedMlbOdds(match, data, fetchedAt) {
@@ -348,12 +352,12 @@ export async function getSportsBankerCandidates(sport, options = {}) {
   if (!Object.hasOwn(SPORT_LEAGUES, sport)) throw new Error('Deporte no válido.');
   const now = Date.now(), today = new Date(now).toISOString().slice(0, 10);
   return cachedData(`sports:banker-pool:v2:${SPORT_MODEL_VERSION}:${sport}:${options.leagueId || 'all'}:${today}`, 60, async () => {
-    const [{ games, coverage }, tennisRatings, basketballHistory] = await Promise.all([getSportsHistory(sport, now, { ...options, calendarOnly: true }),
-      sport === 'tenis' ? loadAllTennisRatings() : null, sport === 'basquetbol' ? loadAllBasketballHistory(options.leagueId) : null]);
+    const [{ games, coverage }, tennisRatings, basketballHistory, basketballAvailability] = await Promise.all([getSportsHistory(sport, now, { ...options, calendarOnly: true }),
+      sport === 'tenis' ? loadAllTennisRatings() : null, sport === 'basquetbol' ? loadAllBasketballHistory(options.leagueId) : null, sport === 'basquetbol' ? nbaAvailability(options.leagueId) : null]);
     if (coverage.every(league => league.status === 'unavailable')) throw new Error('Calendarios no disponibles para calcular Banqueros.');
     const candidates = games.filter(match => match.status === 'SCHEDULED' && Date.parse(match.kickoff) > now && Date.parse(match.kickoff) <= now + 8 * 86400000
       && (!options.leagueId || match.leagueId === options.leagueId));
-    const matches = candidates.map(match => ({ ...match, analysis: analyzeSportMatch(match, games, now, { tennisRatings, basketballHistory }) }));
+    const matches = candidates.map(match => ({ ...match, analysis: analyzeSportMatch(match, games, now, { tennisRatings, basketballHistory, basketballAvailability }) }));
     if (sport === 'basquetbol') {
       const missing = matches.filter(match => !Number.isFinite(match.analysis.winner.home));
       let cursor = 0;
@@ -377,13 +381,13 @@ export async function getSportsFeed(sport, options = {}) {
   const now = options.now ?? Date.now();
   const today = new Date(now).toISOString().slice(0, 10);
   return cachedData(`sports:feed:v5:${SPORT_MODEL_VERSION}:${sport}:${today}:${options.leagueId || 'all'}:${options.calendarOnly ? 'calendar' : 'full'}`, 15, async () => {
-    const [{ games, coverage: sourceCoverage }, tennisRatings, basketballHistory] = await Promise.all([getSportsHistory(sport, now, options),
-      sport === 'tenis' ? loadAllTennisRatings() : null, sport === 'basquetbol' ? loadAllBasketballHistory(options.leagueId) : null]);
+    const [{ games, coverage: sourceCoverage }, tennisRatings, basketballHistory, basketballAvailability] = await Promise.all([getSportsHistory(sport, now, options),
+      sport === 'tenis' ? loadAllTennisRatings() : null, sport === 'basquetbol' ? loadAllBasketballHistory(options.leagueId) : null, sport === 'basquetbol' ? nbaAvailability(options.leagueId) : null]);
     const order = { LIVE: 0, SCHEDULED: 1, FINISHED: 2 };
     const matches = games.filter(match => {
       const date = Date.parse(match.kickoff);
       return (!options.leagueId || match.leagueId === options.leagueId) && date >= now - 72 * 3600000 && date <= now + 8 * 86400000;
-    }).map(match => ({ ...match, analysis: analyzeSportMatch(match, options.calendarOnly && sport === 'tenis' ? [] : games, now, { tennisRatings, basketballHistory }) }))
+    }).map(match => ({ ...match, analysis: analyzeSportMatch(match, options.calendarOnly && sport === 'tenis' ? [] : games, now, { tennisRatings, basketballHistory, basketballAvailability }) }))
       .sort((a, b) => ((order[a.status] ?? 3) - (order[b.status] ?? 3)) || Date.parse(a.kickoff) - Date.parse(b.kickoff));
     const coverage = sourceCoverage.map(league => ({ ...league, count: matches.filter(match => match.leagueId === league.leagueId).length }));
     return { sport, matches, coverage, source: sport === 'beisbol' ? 'MLB / NPB / KBO' : 'ESPN', refreshIntervalSeconds: 60,

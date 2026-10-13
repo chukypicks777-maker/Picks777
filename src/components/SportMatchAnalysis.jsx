@@ -6,7 +6,7 @@ import { formatFixtureSchedule } from '../utils/matchSchedule.js';
 import TeamForm from './TeamForm';
 import SportIdentity from './SportIdentity';
 import VipLock, { VipBadge, VipUnlockButton } from './VipLock';
-import { isVipHandicap, hasPublishedWinnerPrice } from '../utils/sportPicks.js';
+import { isVipHandicap, hasPublishedWinnerPrice, availabilityStatus } from '../utils/sportPicks.js';
 
 export function Probability({ value }) {
   const available = typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100;
@@ -145,6 +145,16 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
         <div className="grid sm:grid-cols-2 gap-3"><BinaryMarket title={`${home} gana al menos un set`} values={a.winsSet?.home} oddsFormat={oddsFormat} /><BinaryMarket title={`${away} gana al menos un set`} values={a.winsSet?.away} oddsFormat={oddsFormat} /></div>
         <p className="text-xs text-slate-400">Al mejor de {a.maxSets || match.maxSets || 3} sets · Primer y segundo set comparten estimación bajo el modelo.</p>
       </>}
+
+      {match.sport === 'basquetbol' && a.availability && <section aria-label="Bajas y descansos" className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-4 space-y-3">
+        <h3 className="text-sm font-bold">Bajas y descansos incluidos</h3>
+        <div className="grid sm:grid-cols-2 gap-3">{[['home', home], ['away', away]].map(([side, name]) => <div key={side} className="min-w-0">
+          <p className="text-xs font-semibold mb-1 break-words">{name}</p>
+          {a.availability[side]?.missing?.length ? <ul className="space-y-1 text-[11px] text-slate-300">{a.availability[side].missing.map(p => <li key={p.name} className="flex justify-between gap-2"><span className="min-w-0 break-words">{p.name} · {availabilityStatus(p)}</span><span className="shrink-0 font-mono text-amber-300">−{p.points.toFixed(1)} pts</span></li>)}</ul>
+            : <p className="text-[11px] text-slate-400">Sin bajas relevantes en el reporte.</p>}
+        </div>)}</div>
+        <p className="text-[10px] text-slate-400 leading-relaxed">Reporte de lesiones y descansos de ESPN{a.availability.fetchedAt ? ` (${new Date(a.availability.fetchedAt).toLocaleString('es')})` : ''} y plantilla actual. Puntos: lo que vale cada jugador en el margen esperado según sus promedios; "en duda" cuenta la mitad. El cálculo también suma a quien llegó al equipo y resta a quien ya no está.</p>
+      </section>}
 
       {match.sport === 'basquetbol' && <>
         <div className="rounded-xl bg-sky-500/5 border border-sky-500/20 p-3 text-xs text-sky-200 leading-relaxed">El hándicap positivo suma puntos al equipo; el negativo los resta. La probabilidad indica que el equipo gana después de aplicar ese ajuste.</div>

@@ -104,10 +104,11 @@ Contra Caliente (35 partidos ATP/WTA del 8-10 de octubre, sin su comisión): mis
 
 1. **Béisbol MLB**: ratings por rival y localía para ganador, carreras, totales, 5 entradas, 1er inning y extra innings (`server/services/baseballRatings.js`). El historial de 120 días se consulta aparte con caché larga.
 2. **Básquetbol NBA y WNBA**: ratings de puntos por rival y localía (`server/services/basketballRatings.js`). El historial de 13 meses se guarda compacto (23 KB NBA, 6 KB WNBA) y se reconstruye en segundo plano: nadie espera la descarga y Redis apenas se usa. Pretemporada NBA y NCAA femenina mantienen el método anterior.
+   - Actualizado el 12 de octubre de 2026: la NBA (temporada y pretemporada) incluye bajas, descansos y cambios de plantilla del reporte de ESPN (`server/services/basketballAvailability.js`). A ciegas en 2025-26: acierto 68.6% → 70.4%, log loss 0.5947 → 0.5777, diferencia con DraftKings 7.8 → 5.1 puntos. Detalle en `COMPARACION-CASAS-2026-10-12.md`.
 3. Las tarjetas muestran "Ratings por rival, prueba ciega" cuando el ganador sale de estos modelos.
 
 ## Límites
 
 - Las cifras son del pasado; no garantizan resultados futuros. Ningún modelo gana siempre.
-- Los modelos no conocen lesiones, alineaciones ni lanzadores abridores.
+- Los modelos no conocen alineaciones ni lanzadores abridores. Solo la NBA usa el reporte de lesiones y descansos (desde el 12 de octubre de 2026).
 - Todo sale de resultados reales (ESPN, MLB Stats API, football-data.co.uk); no hay datos inventados ni precalculados. DeepSeek no escribe probabilidades: solo resume hechos verificados.

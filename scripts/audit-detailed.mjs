@@ -6,6 +6,7 @@
 //   node --import ./tests/setup.js scripts/audit-detailed.mjs [report.md]
 import fs from 'node:fs/promises';
 process.env.KALSHI_TENNIS_ODDS = 'on';
+process.env.NBA_AVAILABILITY = 'on';
 const { getFootballFeed, enrichMatchWithRealData } = await import('../server/services/footballDataService.js');
 const { getSportsFeed, getSportsDetails } = await import('../server/services/sportsDataService.js');
 const { getBestBankerPick, calculateTeamDetailedStats } = await import('../src/utils/mathProbabilities.js');

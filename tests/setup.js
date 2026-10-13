@@ -6,6 +6,8 @@ for (const key of ['AI_DEFAULT_CONFIG', 'VYCEAI_API_KEY', 'AI_API_KEY', 'THIRD_P
 process.env.UPSTASH_REDIS_REST_URL = '';
 // Deterministic tests never reach live exchange prices; Kalshi tests enable it.
 process.env.KALSHI_TENNIS_ODDS = 'off';
+// Nor the live NBA injury report; availability tests pass their own data.
+process.env.NBA_AVAILABILITY = 'off';
 process.env.UPSTASH_REDIS_REST_TOKEN = '';
 process.env.KV_REST_API_URL = '';
 process.env.KV_REST_API_TOKEN = '';

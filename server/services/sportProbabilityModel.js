@@ -258,9 +258,9 @@ export function homeCourtEdge(match, games = [], now = Date.now()) {
 // model: NBA 2025-26 winner log loss 0.623 -> 0.595 (accuracy 67.3% -> 68.6%),
 // WNBA 2026 0.614 -> 0.595; mean gap to DraftKings 11.3 -> 7.8 and 10.4 -> 7.6
 // points. Other competitions, or a missing history, keep the previous method.
-export function basketballAnalysis(match, games = [], now = Date.now(), history = null) {
+export function basketballAnalysis(match, games = [], now = Date.now(), history = null, availability = null) {
   const legacy = legacyBasketballAnalysis(match, games, now);
-  const rated = ['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status) ? ratedMargin(match, games, history, now) : null;
+  const rated = ['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status) ? ratedMargin(match, games, history, now, availability) : null;
   if (!rated) return legacy;
   // Owner rule: winner and handicaps come from the same rated margin; a published
   // price is shown only as the momio (a market winner made two games of the same
@@ -274,8 +274,11 @@ export function basketballAnalysis(match, games = [], now = Date.now(), history 
     probabilitySource: 'experimental-model',
     expectedPoints: { home: Number(rated.points.home.toFixed(1)), away: Number(rated.points.away.toFixed(1)) },
     ratingSample: rated.sample, homeCourtEdge: Number(rated.homeEdge.toFixed(2)),
-    method: `Hándicaps con una distribución normal del margen final (desviación ${deviation} puntos, medida en la temporada anterior). Margen esperado = puntos esperados de cada equipo según ratings de ataque y defensa ajustados por rival y localía, con más peso a los resultados recientes (vida media 60 días) y contracción hacia la media de la liga; usa temporada regular y playoffs de los últimos 13 meses. Comprobado a ciegas en NBA 2025-26 y WNBA 2026. No incorpora lesiones ni alineaciones. Incluye prórroga cuando está incluida en el resultado oficial.`
-      + (rated.preseason ? ' Pretemporada: ratings de la última temporada con el margen reducido al 30%, porque se reparten minutos entre suplentes; elegido con la pretemporada 2024 y comprobado a ciegas en la de 2025.' : '')
+    ...(rated.lineups ? { availability: rated.lineups } : {}),
+    method: `Hándicaps con una distribución normal del margen final (desviación ${deviation} puntos, medida en la temporada anterior). Margen esperado = puntos esperados de cada equipo según ratings de ataque y defensa ajustados por rival y localía, con más peso a los resultados recientes (vida media 60 días) y contracción hacia la media de la liga; usa temporada regular y playoffs de los últimos 13 meses. Comprobado a ciegas en NBA 2025-26 y WNBA 2026.${rated.lineups
+      ? ' Bajas y plantillas: reporte de lesiones y descansos de ESPN y plantilla actual; cada jugador vale su producción por partido (game score de sus promedios ESPN, sobre un suplente de reemplazo) por la parte del rating que el equipo ganó con él. Ajustado con los box scores de 2023-24 y 2024-25 y comprobado a ciegas en 2025-26: acierto 68.6% → 70.4% y diferencia media con el cierre de DraftKings 7.8 → 5.1 puntos.'
+      : ' No incorpora lesiones ni alineaciones.'} Incluye prórroga cuando está incluida en el resultado oficial.`
+      + (rated.preseason ? (rated.lineups ? ' Pretemporada: ratings de la última temporada con el margen reducido al 60% más las bajas anunciadas; elegido con las pretemporadas 2023 y 2024 y comprobado a ciegas en la de 2025.' : ' Pretemporada: ratings de la última temporada con el margen reducido al 30%, porque se reparten minutos entre suplentes; elegido con la pretemporada 2024 y comprobado a ciegas en la de 2025.') : '')
       + ' Ganador: probabilidad de margen positivo según los mismos ratings, sin usar cuotas.',
     notice: 'El hándicap suma o resta puntos al equipo elegido. Proyección previa al partido.'
   };
@@ -422,9 +425,9 @@ export function tennisAnalysis(match, games = [], now = Date.now(), ratings = nu
   };
 }
 
-export function analyzeSportMatch(match, games = [], now = Date.now(), { tennisRatings = null, basketballHistory = null } = {}) {
+export function analyzeSportMatch(match, games = [], now = Date.now(), { tennisRatings = null, basketballHistory = null, basketballAvailability = null } = {}) {
   const model = match.sport === 'beisbol' ? baseballAnalysis : match.sport === 'tenis' ? tennisAnalysis : basketballAnalysis;
-  const analysis = model(match, games, now, match.sport === 'tenis' ? tennisRatings?.[match.tour] : match.sport === 'basquetbol' ? basketballHistory?.[ratingLeagueOf(match.leagueId)] : undefined);
+  const analysis = model(match, games, now, match.sport === 'tenis' ? tennisRatings?.[match.tour] : match.sport === 'basquetbol' ? basketballHistory?.[ratingLeagueOf(match.leagueId)] : undefined, match.sport === 'basquetbol' ? basketballAvailability : undefined);
   if (!['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status)) return model({ ...match, odds: {}, kickoff: 'invalid' }, [], now);
   return analysis;
 }
