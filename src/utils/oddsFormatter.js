@@ -80,6 +80,15 @@ export function oddsToProbability(decimalOdds) {
   if (isNaN(num) || num <= 1.0) return 0;
   return Math.round((1 / num) * 100);
 }
+// What a fair price looks like once a bookmaker adds its margin to a two-way
+// market (the two implied probabilities add up to 100% + margin, split between
+// both sides). Typical Mexican books charge 5-9%: a fair -158 (61.2%) shows as
+// about -175 to -192.
+export function priceWithMargin(probability, margin) {
+  if (!(probability > 0 && probability < 100) || !(margin >= 0)) return null;
+  return 1 / Math.min(0.99, probability / 100 + margin / 2);
+}
+
 // A fair price derived from a forecast is never a published bookmaker offer.
 export function marketQuote(publishedOdds, probability) {
   const published = parseDecimalOdds(publishedOdds);

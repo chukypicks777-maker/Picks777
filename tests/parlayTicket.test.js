@@ -145,3 +145,11 @@ test('an AI football pick with the match identity attached enters the ticket, an
   assert.equal(formatCurrency(12345.67, 'USD'), '$ 12,345.67');
   assert.equal(formatCurrency(1234.5, 'EUR'), '€ 1234,50');
 });
+
+test('a saved ticket is restored after a reload without started, invalid or duplicated legs', () => {
+  const now = Date.now(), future = new Date(now + 3600000).toISOString();
+  const restored = parlayTicketReducer(EMPTY_PARLAY, { type: 'restore', legs: [
+    { ...pick('a'), kickoff: future }, { ...pick('a', 3, 'Otro') }, { ...pick('b'), kickoff: new Date(now - 1000).toISOString() }, { matchId: 'c', selection: 'X', odds: 0.5 }, { ...pick('d') }] });
+  assert.deepEqual(restored.legs.map(leg => leg.matchId), ['a', 'd']);
+  assert.equal(restored.notice, '');
+});

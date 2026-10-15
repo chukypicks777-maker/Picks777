@@ -47,7 +47,7 @@ export function parseMlbGame(game, league, fetchedAt = new Date().toISOString())
     ...(Number(game.gamesInSeries) > 1 && ['F', 'D', 'L', 'W'].includes(game.gameType) ? { seriesGame: Number(game.seriesGameNumber) || null, seriesLength: Number(game.gamesInSeries) } : {}),
     // Spring training and exhibitions never rate a team.
     ...(['S', 'E', 'A'].includes(game.gameType) ? { exhibition: true } : {}),
-    source: 'MLB Stats API', sourceUrl: league.id === 'lmb' ? `https://www.milb.com/gameday/${game.gamePk}` : `https://www.mlb.com/gameday/${game.gamePk}`,
+    source: 'MLB Stats API', sourceUrl: league.sportId === 1 ? `https://www.mlb.com/gameday/${game.gamePk}` : `https://www.milb.com/gameday/${game.gamePk}`,
     scheduledInnings: number(game.scheduledInnings ?? game.linescore?.scheduledInnings),
     lastInning: number(game.linescore?.currentInning),
     inningScores: (game.linescore?.innings || []).map(inning => ({ num: number(inning.num), home: number(inning.home?.runs), away: number(inning.away?.runs) })),
@@ -70,7 +70,7 @@ export async function getMlbLeague(league, today) {
   });
   const [recent, history] = await Promise.all([
     load(`sports:baseball:v5:${league.id}:${today}`, 60, `${range(shiftDay(today, -3), shiftDay(today, 7))},probablePitcher`),
-    load(`sports:baseball-history:v2:${league.id}:${today}`, 10800, range(shiftDay(today, Number(today.slice(5, 7)) <= 5 ? -240 : -120), shiftDay(today, -4))).catch(() => ({ matches: [] }))
+    load(`sports:baseball-history:v2:${league.id}:${today}`, 10800, range(shiftDay(today, -(league.historyDays || (Number(today.slice(5, 7)) <= 5 ? 240 : 120))), shiftDay(today, -4))).catch(() => ({ matches: [] }))
   ]);
   const matches = [...new Map([...history.matches.filter(match => !match.exhibition), ...recent.matches].map(match => [match.id, match])).values()];
   return { matches, fetchedAt: recent.fetchedAt, source: 'MLB Stats API' };

@@ -22,7 +22,7 @@ test('women share the football league selector, legacy deep links remain valid, 
   assert.equal(footballLeagueFromLocation('/femenil/'), 'mexico_femenil');
   assert.equal(footballLeagueFromLocation('/', '?league=mexico_femenil'), 'mexico_femenil');
   assert.equal(LEAGUES_DATA[LEAGUES_DATA.findIndex(league => league.id === 'mexico') + 1].id, 'mexico_femenil');
-  assert.deepEqual(SPORT_LEAGUES.beisbol.map(league => league.id), ['mlb', 'npb', 'kbo', 'lmb']);
+  assert.deepEqual(SPORT_LEAGUES.beisbol.map(league => league.id), ['mlb', 'npb', 'kbo', 'lmb', 'lmp', 'lvbp', 'lidom', 'lbprc', 'abl', 'serie_caribe']);
   assert.equal(SPORT_LEAGUES.tenis.length, 6);
   assert.deepEqual(SPORT_LEAGUES.basquetbol.map(league => league.id), ['nba', 'nba_preseason', 'ncaaw', 'wnba']);
   const women = LEAGUES.find(league => league.id === 'mexico_femenil');

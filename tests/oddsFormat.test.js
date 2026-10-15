@@ -9,7 +9,8 @@ import {
   decimalToAmerican,
   decimalToFraction,
   gcd,
-  oddsToProbability
+  oddsToProbability,
+  priceWithMargin
 } from '../src/utils/oddsFormatter.js';
 
 test('GCD calculates the greatest common divisor correctly', () => {
@@ -212,4 +213,11 @@ test('bettor-facing edge cases: 10/11, 33/20 and 1/16 fractions, 1.995 is +100, 
   assert.equal(decimalToFraction(1.0625), '1/16');
   assert.equal(formatOdds(1.995, 'decimal'), '2.00'); assert.equal(formatOdds(1.995, 'american'), '+100');
   assert.equal(formatOdds(1.004, 'decimal'), '1.01'); assert.equal(formatOdds(1.004, 'american'), '-10000'); assert.equal(formatOdds(1.004, 'fractional'), '1/100');
+});
+
+test('a fair price is shown next to what a bookmaker margin turns it into', () => {
+  // SoftBank 61.2%: fair -158; a casa with 5-9% margin shows about -175 to -190 (the screenshot casa: -210).
+  assert.equal(formatOdds(priceWithMargin(61.2, 0.05), 'american'), '-175');
+  assert.equal(formatOdds(priceWithMargin(61.2, 0.09), 'american'), '-192');
+  assert.equal(priceWithMargin(0, 0.05), null); assert.equal(priceWithMargin(50, -1), null);
 });

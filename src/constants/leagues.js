@@ -21,7 +21,15 @@ export const SPORT_LEAGUES = {
     { id: 'mlb', name: 'MLB', flag: '🇺🇸', provider: 'mlb', sportId: 1 },
     { id: 'npb', name: 'NPB', flag: '🇯🇵', provider: 'npb', allowsDraw: true },
     { id: 'kbo', name: 'KBO', flag: '🇰🇷', provider: 'kbo', allowsDraw: true },
-    { id: 'lmb', name: 'LMB', flag: '🇲🇽', provider: 'mlb', sportId: 23, leagueId: 125 }
+    { id: 'lmb', name: 'LMB', flag: '🇲🇽', provider: 'mlb', sportId: 23, leagueId: 125, season: 'abril a septiembre' },
+    // Winter leagues (MLB Stats API, sportId 17). Their history reaches the
+    // previous winter so opening week already has ratings.
+    { id: 'lmp', name: 'LMP Pacífico', flag: '🇲🇽', provider: 'mlb', sportId: 17, leagueId: 132, historyDays: 420, season: 'octubre a enero' },
+    { id: 'lvbp', name: 'LVBP Venezuela', flag: '🇻🇪', provider: 'mlb', sportId: 17, leagueId: 135, historyDays: 420, season: 'octubre a enero' },
+    { id: 'lidom', name: 'LIDOM Dominicana', flag: '🇩🇴', provider: 'mlb', sportId: 17, leagueId: 131, historyDays: 420, season: 'octubre a enero' },
+    { id: 'lbprc', name: 'LBPRC Puerto Rico', flag: '🇵🇷', provider: 'mlb', sportId: 17, leagueId: 133, historyDays: 420, season: 'noviembre a enero' },
+    { id: 'abl', name: 'ABL Australia', flag: '🇦🇺', provider: 'mlb', sportId: 17, leagueId: 595, historyDays: 420, season: 'noviembre a enero' },
+    { id: 'serie_caribe', name: 'Serie del Caribe', flag: '🌎', provider: 'mlb', sportId: 17, leagueId: 162, historyDays: 420, season: 'febrero' }
   ],
   tenis: [
     { id: 'wimbledon', name: 'Wimbledon', flag: '🎾' },

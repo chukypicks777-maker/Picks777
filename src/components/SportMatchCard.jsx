@@ -2,7 +2,7 @@ import React from 'react';
 import { Clock, Eye, Sparkles, RotateCw, CheckCircle2, Zap, Trophy, Plus, Lock, Crown } from 'lucide-react';
 import { formatFixtureSchedule } from '../utils/matchSchedule.js';
 import { sportWinnerPick, sportCardMarkets, sportParlayLeg, hasPublishedWinnerPrice, availabilitySummary, marketGap, MARKET_GAP_WARNING } from '../utils/sportPicks.js';
-import { formatOdds } from '../utils/oddsFormatter.js';
+import { formatOdds, priceWithMargin } from '../utils/oddsFormatter.js';
 import { MarketValue, Probability, WinnerBar } from './SportMatchAnalysis';
 import SportIdentity from './SportIdentity';
 import TeamForm from './TeamForm';
@@ -53,7 +53,8 @@ function SportMatchCard({ match, oddsFormat, onOpen, onToggleParlay, isInParlay 
     <section aria-label="Pick ganador" className={`rounded-lg p-2.5 mb-3 border ${aiVerified ? 'bg-[#0f1924] border-emerald-500/35' : 'bg-[#121824] border-sky-500/20'}`}>
       <div className="flex items-center justify-between gap-2 text-[9px] font-mono mb-1"><span className="flex items-center gap-1 text-sky-400 font-bold"><Zap size={11} />{bankerRank ? 'PICK BANQUERO' : 'PRONÓSTICO GANADOR'}</span><span className="text-slate-400">{pick ? `${pick.probability}% estimado` : 'N/D'}</span></div>
       <p className="text-xs font-semibold break-words leading-snug">{pick?.selection || 'Sin datos suficientes para un ganador'}</p>
-      {pick && <p className="font-mono text-[10px] text-emerald-400 mt-1">{pick.oddsKind === 'published' ? `Momio ${formatOdds(pick.odds, oddsFormat)} · Publicado` : `Momio justo ${formatOdds(pick.odds, oddsFormat)} · Calculado`}</p>}
+      {pick && <p className="font-mono text-[10px] text-emerald-400 mt-1">{pick.oddsKind === 'published' ? `Momio ${formatOdds(pick.odds, oddsFormat)} · Publicado`
+        : <>Momio justo {formatOdds(pick.odds, oddsFormat)} · Calculado <span className="text-slate-400" title="El momio justo no lleva margen. Una casa con margen de 5–9% mostraría este pick más corto.">· en casa ≈ {formatOdds(priceWithMargin(pick.probability, 0.05), oddsFormat)} a {formatOdds(priceWithMargin(pick.probability, 0.09), oddsFormat)}</span></>}</p>}
       {Math.abs(gap ?? 0) > MARKET_GAP_WARNING && <p role="note" className="text-[10px] text-amber-300 mt-1 leading-snug">El modelo y la casa difieren {Math.abs(gap).toFixed(0)} puntos. La casa puede tener información que el modelo no ve (lesiones, alineaciones, abridores, fichajes): tómalo con cautela.</p>}
       <div className="pt-2 mt-2 border-t border-white/10 flex items-start gap-1.5 text-[10px] text-slate-400"><Sparkles size={11} className="shrink-0 mt-0.5 text-sky-400" /><p className="line-clamp-2">{aiVerified ? report.tacticalKeypoints?.[0] || report.analysisSections?.verdict : pick ? `Base estadística: ${a.probabilitySource === 'published-odds' ? 'ganador implícito en cuotas publicadas, sin margen.' : `${(a.ratingSample || a.sampleSize)?.home ?? 0} / ${(a.ratingSample || a.sampleSize)?.away ?? 0} partidos previos. Probabilidad estimada del ganador.`}` : a.notice || 'Faltan registros o cuotas suficientes.'}</p></div>
     </section>

@@ -31,6 +31,15 @@ export const EMPTY_PARLAY = { legs: [], notice: '' };
 // One match contributes one selection and one decimal odd to the product.
 export function parlayTicketReducer(state, action) {
   if (action.type === 'clear') return { ...EMPTY_PARLAY };
+  // Saved ticket after a reload: valid, not started, one leg per match.
+  if (action.type === 'restore') {
+    const legs = [];
+    for (const raw of Array.isArray(action.legs) ? action.legs : []) {
+      const leg = normalizeParlayLeg(raw);
+      if (leg && !legStarted(leg) && legs.length < 20 && !legs.some(existing => isSameMatch(existing.matchId, leg.matchId))) legs.push(leg);
+    }
+    return { legs, notice: '' };
+  }
   if (action.type === 'remove') {
     return { legs: state.legs.filter(leg => !isSameMatch(leg.matchId, action.leg?.matchId)), notice: '' };
   }

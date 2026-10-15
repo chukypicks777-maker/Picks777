@@ -24,6 +24,7 @@ import { sounds } from './utils/audioEffects';
 import { Layers, Radio, Zap, AlertCircle, Crown } from 'lucide-react';
 import { getMatchSafetyScore, getBestBankerPick, getContextualPick, getEffectiveOdds } from './utils/mathProbabilities';
 import { EMPTY_PARLAY, parlayTicketReducer } from './utils/parlayTicket.js';
+const PARLAY_STORAGE_KEY = 'picks777_parlay_v1';
 
 import { clearAllAnalysisCache, getBatchAnalyzedStatus, isMatchAnalyzed, getAnalyzedModelName, mergeFreshMatch, mergeAnalyzedMatch } from './utils/analysisCache';
 import { useSession } from './auth/useSession';
@@ -91,6 +92,22 @@ export default function App() {
   const [showParlayDrawer, setShowParlayDrawer] = useState(false);
   const [parlayTicket, dispatchParlay] = useReducer(parlayTicketReducer, EMPTY_PARLAY);
   const parlayLegs = parlayTicket.legs;
+  // The ticket survives a reload (for example the automatic update) within the
+  // same browser session and account; it is removed when the session ends.
+  const parlayUserId = auth?.valid && !auth?.trialExpired ? String(auth?.user?.id || auth?.user?.uid || '') : '';
+  const restoredParlayFor = useRef('');
+  useEffect(() => {
+    if (!parlayUserId || restoredParlayFor.current === parlayUserId) return;
+    restoredParlayFor.current = parlayUserId;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(PARLAY_STORAGE_KEY) || 'null');
+      if (saved?.userId === parlayUserId && Array.isArray(saved.legs) && saved.legs.length) dispatchParlay({ type: 'restore', legs: saved.legs });
+    } catch { /* Storage blocked: the ticket simply starts empty. */ }
+  }, [parlayUserId]);
+  useEffect(() => {
+    if (!parlayUserId || restoredParlayFor.current !== parlayUserId) return;
+    try { sessionStorage.setItem(PARLAY_STORAGE_KEY, JSON.stringify({ userId: parlayUserId, legs: parlayLegs })); } catch { /* Storage blocked. */ }
+  }, [parlayLegs, parlayUserId]);
   const dailyParlayRequest = useRef(null);
   const [loadingDailyParlay, setLoadingDailyParlay] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -267,6 +284,8 @@ export default function App() {
     if ((checking && !auth) || (auth?.valid && !auth?.trialExpired)) return;
     feedRequest.current?.abort();
     clearAllAnalysisCache();
+    restoredParlayFor.current = '';
+    try { sessionStorage.removeItem(PARLAY_STORAGE_KEY); } catch { /* Storage blocked. */ }
     let active = true;
     void Promise.resolve().then(() => {
       if (!active) return;

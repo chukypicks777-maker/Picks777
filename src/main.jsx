@@ -8,11 +8,12 @@ import InstallPage from './components/InstallPage.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import MobileAuthPage from './components/MobileAuthPage.jsx'
 import ContactPage from './components/ContactPage.jsx'
+import UpdateBanner from './components/UpdateBanner.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      {window.location.pathname === '/contacto' ? <ContactPage /> : window.location.pathname === '/mobile-auth' ? <MobileAuthPage /> : window.location.pathname === '/instalar' ? <InstallPage /> : window.location.pathname === '/eliminar-cuenta' ? <AccountPage /> : <App />}
+      {window.location.pathname === '/contacto' ? <ContactPage /> : window.location.pathname === '/mobile-auth' ? <MobileAuthPage /> : window.location.pathname === '/instalar' ? <InstallPage /> : window.location.pathname === '/eliminar-cuenta' ? <AccountPage /> : <><UpdateBanner /><App /></>}
     </ErrorBoundary>
   </StrictMode>,
 )

@@ -403,7 +403,7 @@ export async function getSportsFeed(sport, options = {}) {
     }).map(match => ({ ...match, analysis: analyzeSportMatch(match, options.calendarOnly && sport === 'tenis' ? [] : games, now, { tennisRatings, basketballHistory, basketballAvailability }) }))
       .sort((a, b) => ((order[a.status] ?? 3) - (order[b.status] ?? 3)) || Date.parse(a.kickoff) - Date.parse(b.kickoff));
     const coverage = sourceCoverage.map(league => ({ ...league, count: matches.filter(match => match.leagueId === league.leagueId).length }));
-    return { sport, matches, coverage, source: sport === 'beisbol' ? 'MLB / NPB / KBO' : 'ESPN', refreshIntervalSeconds: 60,
+    return { sport, matches, coverage, source: sport === 'beisbol' ? 'MLB Stats API / NPB / KBO' : 'ESPN', refreshIntervalSeconds: 60,
       notice: 'Calendarios del proveedor y estimaciones estadísticas previas al partido. N/D indica falta de datos suficientes.' };
   }, { forceRefresh: Boolean(options.forceRefresh) });
 }
