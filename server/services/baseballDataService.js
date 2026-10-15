@@ -27,8 +27,11 @@ function fixture(league, data, fetchedAt) {
 export function parseMlbGame(game, league, fetchedAt = new Date().toISOString()) {
   if (!game.gamePk || !game.teams?.home?.team?.id || !game.teams?.away?.team?.id || !Number.isFinite(Date.parse(game.gameDate))) return null;
   const detail = game.status?.detailedState || '';
+  // Postponed/cancelled/suspended first (MLB marks them 'Final'); then the game
+  // state decides. A rain delay keeps a live game live and a pending one pending
+  // (the delay stays in statusDetail); it used to blank the card as 'DELAYED'.
   const status = /postponed/i.test(detail) ? 'POSTPONED' : /cancel/i.test(detail) ? 'CANCELLED'
-    : /suspend/i.test(detail) ? 'SUSPENDED' : /delay/i.test(detail) ? 'DELAYED'
+    : /suspend/i.test(detail) ? 'SUSPENDED'
     : game.status?.abstractGameState === 'Final' ? 'FINISHED' : game.status?.abstractGameState === 'Live' ? 'LIVE' : 'SCHEDULED';
   const team = side => ({ id: String(game.teams[side].team.id), name: game.teams[side].team.name,
     shortName: game.teams[side].team.abbreviation || game.teams[side].team.name,
@@ -39,6 +42,9 @@ export function parseMlbGame(game, league, fetchedAt = new Date().toISOString())
     homeTeam: team('home'), awayTeam: team('away'),
     liveScore: { home: status === 'SCHEDULED' ? null : number(game.teams.home.score), away: status === 'SCHEDULED' ? null : number(game.teams.away.score) },
     venue: game.venue?.name || null, season: game.season, gameType: game.gameType || null,
+    // Playoff series: games 5-7 may never be played.
+    ...(game.ifNecessary === 'Y' ? { ifNecessary: true } : {}),
+    ...(Number(game.gamesInSeries) > 1 && ['F', 'D', 'L', 'W'].includes(game.gameType) ? { seriesGame: Number(game.seriesGameNumber) || null, seriesLength: Number(game.gamesInSeries) } : {}),
     // Spring training and exhibitions never rate a team.
     ...(['S', 'E', 'A'].includes(game.gameType) ? { exhibition: true } : {}),
     source: 'MLB Stats API', sourceUrl: league.id === 'lmb' ? `https://www.milb.com/gameday/${game.gamePk}` : `https://www.mlb.com/gameday/${game.gamePk}`,
@@ -213,13 +219,16 @@ export function parseKboSchedule(html, league, fetchedAt = new Date().toISOStrin
   const table = html.match(/<table\b[^>]*summary="schdule"[^>]*>([\s\S]*?)<\/table>/i)?.[1];
   if (!month || !table) throw new Error('Formato KBO no reconocido.');
   let day = null;
-  return [...table.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].flatMap((row, index) => {
+  const seen = new Map();
+  return [...table.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].flatMap(row => {
     const dateCell = row[1].match(/<td\b[^>]*title="DATE"[^>]*>([\s\S]*?)<\/td>/i)?.[1];
     if (dateCell) { const date = text(dateCell).match(/(\d{2})\.(\d{2})/); day = date ? `${month[1]}-${date[1]}-${date[2]}` : null; }
     const away = text(row[1].match(/<td\b[^>]*class="loop_r"[^>]*>([\s\S]*?)<\/td>/i)?.[1] || '');
     const home = text(row[1].match(/<td\b[^>]*class="loop_l"[^>]*>([\s\S]*?)<\/td>/i)?.[1] || '');
     // The All-Star game (Dream vs Nanum) is not a league fixture.
     if (!day || !home || !away || [home, away].some(name => /^(dream|nanum)$/i.test(name))) return [];
+    const order = (seen.get(`${day}|${home}|${away}`) || 0) + 1;
+    seen.set(`${day}|${home}|${away}`, order);
     const score = text(row[1].match(/class="score_schedule"[^>]*>([\s\S]*?)<\/span>/i)?.[1] || '');
     const values = score.match(/^(\d+)\s*:\s*(\d+)$/);
     const time = text(row[1].match(/class="TIME"[^>]*>([\s\S]*?)<\/td>/i)?.[1] || '').match(/(\d{1,2}):(\d{2})/);
@@ -228,7 +237,8 @@ export function parseKboSchedule(html, league, fetchedAt = new Date().toISOStrin
     const status = /cancel|postpon|취소/i.test(text(row[1])) ? 'CANCELLED' : values && day < providerDay ? 'FINISHED' : Date.parse(kickoff) < Date.parse(fetchedAt) && time ? 'UNKNOWN' : 'SCHEDULED';
     const team = name => ({ id: `kbo-${name.toLowerCase().replaceAll(' ', '-')}`, name, shortName: name });
     return [fixture(league, {
-      id: `kbo-${day}-${home}-${away}-${index}`, kickoff, timeTBD: !time, ...(time ? {} : { scheduleDate: day }), liveSupported: false,
+      // Stable id: day and teams (a doubleheader's later game adds its order).
+      id: `kbo-${day}-${home}-${away}${order > 1 ? `-${order}` : ''}`, kickoff, timeTBD: !time, ...(time ? {} : { scheduleDate: day }), liveSupported: false,
       homeTeam: team(home), awayTeam: team(away), liveScore: { home: values ? number(values[2]) : null, away: values ? number(values[1]) : null },
       status, statusDetail: status === 'FINISHED' ? 'Finalizado' : status === 'CANCELLED' ? 'Cancelado' : status === 'UNKNOWN' ? 'Estado pendiente del proveedor' : 'Programado',
       venue: text(row[1].match(/class="LOCATION"[^>]*>([\s\S]*?)<\/td>/i)?.[1] || '') || null,

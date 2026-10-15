@@ -9,7 +9,8 @@ export function getAiDailyParlay(matches = []) {
     .sort((a, b) => (b.aiPick?.probability || 0) - (a.aiPick?.probability || 0))
     .slice(0, 3).map(m => {
       const odds = m.aiPick?.odds ?? m.aiPick?.estimatedOdds;
-      return { matchId: m.id, matchTitle: `${m.homeTeam.name} vs ${m.awayTeam.name}`, league: m.leagueName, ...m.aiPick, odds, oddsFetchedAt: m.oddsFetchedAt };
+      return { ...m.aiPick, matchId: m.id, matchTitle: `${m.homeTeam.name} vs ${m.awayTeam.name}`, league: m.leagueName, kickoff: m.kickoff, odds,
+        oddsKind: m.aiPick?.odds != null ? 'published' : 'theoretical', oddsFetchedAt: m.oddsFetchedAt };
     });
   return { bankerParlay: legs.length >= 2 ? { title: 'Combinada experimental', ...calculateParlay(legs) } : null, message: legs.length < 2 ? 'No hay suficientes selecciones con datos y cuotas disponibles.' : 'No constituye una apuesta segura.' };
 }

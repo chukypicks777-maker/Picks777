@@ -1,4 +1,5 @@
 import { enrichHistoricalStats } from './verifiedStats.js';
+import { recentGoalsAgainst } from '../../src/utils/mathProbabilities.js';
 import { cachedData, fetchJson } from './dataCache.js';
 import { applyFootballForecast } from './probabilityModel.js';
 import { hasReportedStatistics } from './espnParsing.js';
@@ -31,7 +32,8 @@ export const numberOrNull = value => {
   return Number.isFinite(number) ? number : null;
 };
 const stat = (team, name) => numberOrNull((team.stats || team.statistics || []).find(s => s.name === name)?.value);
-const form = value => typeof value === 'string' ? [...value].filter(v => ['W', 'D', 'L'].includes(v)).slice(0, 5) : [];
+// ESPN's form string is newest-first; the app shows oldest -> newest everywhere.
+const form = value => typeof value === 'string' ? [...value].filter(v => ['W', 'D', 'L'].includes(v)).slice(0, 5).reverse() : [];
 export function americanToDecimal(value) {
   const n = numberOrNull(value);
   return n && Math.abs(n) >= 100 ? (n > 0 ? 1 + n / 100 : 1 + 100 / Math.abs(n)) : null;
@@ -68,7 +70,9 @@ async function standingsFor(league, options = {}) {
     const url = `https://site.api.espn.com/apis/v2/sports/soccer/${league.espnCode}/standings`;
     const data = await fetchJson(url);
     if (!Array.isArray(data.children) && !data.standings) throw new Error('Clasificación no disponible.');
-    return { rows: flattenStandings(data), sourceUrl: url, fetchedAt: new Date().toISOString(), seasonYear: data.season?.year ?? null, season: data.season?.displayName || data.season?.year || null };
+    // MLS, Liga MX Femenil and Leagues Cup entries come unsorted.
+    const rows = flattenStandings(data).sort((a, b) => (a.group || '').localeCompare(b.group || '') || (a.rank ?? 999) - (b.rank ?? 999));
+    return { rows, sourceUrl: url, fetchedAt: new Date().toISOString(), seasonYear: data.season?.year ?? null, season: data.season?.displayName || data.season?.year || null };
   }, { forceRefresh });
 }
 
@@ -92,7 +96,9 @@ export function parseEspnEvent(event, league, standings = [], fetchedAt = new Da
       position: row.rank ?? null, points: row.points ?? null,
       // Current standings can include this game's result. They cannot recreate a pregame forecast.
       goalsFor: !['LIVE', 'FINISHED'].includes(status) ? row.goalsFor ?? null : null, goalsAgainst: !['LIVE', 'FINISHED'].includes(status) ? row.goalsAgainst ?? null : null,
-      gamesPlayed: !['LIVE', 'FINISHED'].includes(status) ? row.gamesPlayed ?? null : null, form: form(c.form),
+      gamesPlayed: !['LIVE', 'FINISHED'].includes(status) ? row.gamesPlayed ?? null : null,
+      // Real league results when the league history is loaded (ESPN's string can be wrong).
+      form: leagueModelFor(league.espnCode)?.teams?.[String(c.team.id)]?.form?.length ? leagueModelFor(league.espnCode).teams[String(c.team.id)].form : form(c.form),
       avgCorners: null, avgCornersConceded: null,
       avgFouls: null, avgYellowCards: null,
       bttsRate: null, over25Rate: null, cleanSheetRate: null,
@@ -261,12 +267,16 @@ export function parseSummaryDetails(data, match) {
   const recentMatches = (data.lastFiveGames || []).map(group => ({
     team: group.team?.displayName || group.team?.name,
     teamId: String(group.team?.id),
-    events: (group.events || []).filter(e => Date.parse(e.gameDate || e.date) < Math.min(Date.parse(match.kickoff), Date.now())).map(e => ({
+    // Friendlies are not official results.
+    events: (group.events || []).filter(e => Date.parse(e.gameDate || e.date) < Math.min(Date.parse(match.kickoff), Date.now()) && !/friendl|amistos/i.test(`${e.competitionName || ''} ${e.leagueName || ''}`)).map(e => ({
       id: e.id,
       date: e.gameDate || e.date,
       opponent: e.opponent?.displayName || e.opponent?.name,
       opponentLogo: e.opponentLogo || e.opponent?.logo || e.opponent?.logos?.[0]?.href,
       score: e.score ?? (e.homeTeamScore != null && e.awayTeamScore != null ? `${e.homeTeamScore} - ${e.awayTeamScore}` : null),
+      // ESPN's score string sometimes puts the winner first; the ids decide the sides.
+      ...(e.homeTeamId != null && Number.isFinite(Number(e.homeTeamScore)) && Number.isFinite(Number(e.awayTeamScore))
+        ? (String(e.homeTeamId) === String(group.team?.id) ? { own: Number(e.homeTeamScore), against: Number(e.awayTeamScore) } : { own: Number(e.awayTeamScore), against: Number(e.homeTeamScore) }) : {}),
       result: e.gameResult ?? null,
       atVs: e.atVs || (e.homeAway === 'home' ? 'vs' : '@'),
       competition: e.competitionName || e.leagueName || 'Oficial'
@@ -330,13 +340,10 @@ export async function enrichMatchWithRealData(match, options = {}) {
       if (!Array.isArray(events) || events.length === 0) return null;
       let clean = 0, count = 0;
       for (const e of events) {
-        if (!e.score) continue;
-        const parts = e.score.split('-').map(s => Number(s.trim()));
-        if (parts.length === 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) {
-          count++;
-          const rivalScore = e.atVs === '@' ? parts[0] : parts[1];
-          if (rivalScore === 0) clean++;
-        }
+        const against = recentGoalsAgainst(e);
+        if (against === null) continue;
+        count++;
+        if (against === 0) clean++;
       }
       return count >= 5 ? Number(((clean / count) * 100).toFixed(1)) : null;
     };

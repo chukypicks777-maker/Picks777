@@ -9,6 +9,8 @@ import { sounds } from '../utils/audioEffects';
 
 export default function OverUnderGroupedSection({ match, homeStats, awayStats, diff, isVip = false, onUnlockVip = null, oddsFormat = 'decimal' }) {
   if (!match || !diff) return null;
+  // Goal, corner and card lines are pre-match estimates; they ignore the score once the match starts.
+  if (match.status && match.status !== 'SCHEDULED') return <section className="rounded-xl border border-white/10 bg-[#111723] p-4 text-xs text-slate-400">Las probabilidades de goles, córners y tarjetas son previas al partido; no se muestran una vez iniciado porque no tienen en cuenta el marcador.</section>;
 
   const probs = fillPoissonGoalLadder(match.model?.probabilities || match.probabilities || match.aiReport?.probabilities || {}, match.odds);
   const over05 = percent(probs.over05), under05 = complement(over05);

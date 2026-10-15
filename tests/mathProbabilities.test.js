@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { poissonProbability, poissonCumulative, calculateCornerProbabilities, calculateTeamDetailedStats, calculateDifferential, getTop3Opportunities, getBestBankerPick, getCoherentPredictedScore, getEffectiveOdds } from '../src/utils/mathProbabilities.js';
+import { poissonProbability, poissonCumulative, calculateCornerProbabilities, calculateTeamDetailedStats, calculateDifferential, getTop3Opportunities, getBestBankerPick, getCoherentPredictedScore, getEffectiveOdds, recentGoalsAgainst } from '../src/utils/mathProbabilities.js';
 import { totalLines, scoreSimulation } from '../src/utils/probability.js';
 import { poissonModel } from '../server/services/probabilityModel.js';
 import { aggregateHistory, readHistoricalSummary, halfGoalModel } from '../server/services/verifiedStats.js';
@@ -183,4 +183,14 @@ test('getTop3Opportunities falls back to highest-probability candidate or aiPick
   assert.equal(oppsAi.length, 1);
   assert.equal(oppsAi[0].selection, 'Más de 1.5 Goles');
   assert.equal(getEffectiveOdds(oppsAi[0]), 1.38);
+});
+
+test('a home 0-3 loss is never a clean sheet, whatever order ESPN writes the score in', () => {
+  const team = { id: 'slovan', name: 'Slovan', gamesPlayed: 2, goalsFor: 1, goalsAgainst: 6 };
+  const events = [
+    { score: '3-0', atVs: 'vs', result: 'L' }, { score: '1-0', atVs: '@', result: 'W' }, { score: '2-2', atVs: 'vs', result: 'D' },
+    { score: '2-0', atVs: 'vs', result: 'W' }, { score: '4-1', atVs: '@', result: 'L' }];
+  const stats = calculateTeamDetailedStats(team, true, { homeTeamId: 'slovan', recentMatches: [{ teamId: 'slovan', events }] });
+  assert.equal(stats.cleanSheetRate, 40, 'Only the away 1-0 win and the home 2-0 win kept a clean sheet');
+  assert.equal(recentGoalsAgainst({ own: 0, against: 3, score: '3-0', atVs: 'vs' }), 3);
 });

@@ -143,7 +143,8 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
           <Outcomes title="Primer inning · 1X2" values={a.firstInning} home={home} away={away} draw oddsFormat={oddsFormat} />
           <RunTable title="Innings 1 a 5 · Total de carreras de ambos equipos" lines={a.firstFive} oddsFormat={oddsFormat} />
         </div></VipLock>
-        {a.inningSampleSize && <p className="text-xs text-slate-400">Registros por equipo · Primer inning: {a.inningSampleSize.first.home} / {a.inningSampleSize.first.away} · Innings 1 a 5: {a.inningSampleSize.five.home} / {a.inningSampleSize.five.away}. Sin 5 registros por equipo, el mercado indica N/D.</p>}
+        {a.ratingSample ? <p className="text-xs text-slate-400">Primer inning e innings 1 a 5 salen de las mismas carreras esperadas que el resto de mercados, con el reparto por entrada medido en MLB.</p>
+          : a.inningSampleSize && <p className="text-xs text-slate-400">Registros por equipo · Primer inning: {a.inningSampleSize.first.home} / {a.inningSampleSize.first.away} · Innings 1 a 5: {a.inningSampleSize.five.home} / {a.inningSampleSize.five.away}. Sin 5 registros por equipo, el mercado indica N/D.</p>}
       </>}
 
       {match.sport === 'tenis' && <>
@@ -181,7 +182,8 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
         <summary className="cursor-pointer text-sky-300 font-semibold p-4 min-h-11">¿Habrá extra innings?</summary>
         <div className="p-3 pt-0 space-y-3">
           <VipLock locked={!isVip} title="Probabilidad de extra innings" onUnlockVip={onUnlockVip}><BinaryMarket title="Probabilidad de extra innings" values={a.extraInnings} oddsFormat={oddsFormat} /></VipLock>
-          <p className="leading-relaxed">Muestra verificada: {a.extraInningsSampleSize?.home ?? 0} partidos de {home} y {a.extraInningsSampleSize?.away ?? 0} de {away}; {a.extraInningsSampleSize?.uniqueGames ?? 0} encuentros distintos, {a.extraInningsSampleSize?.extraGames ?? 0} con extra innings. Sin al menos 5 registros por equipo y duración reglamentaria publicada, N/D.</p>
+          <p className="leading-relaxed">{a.ratingSample ? `Probabilidad de que el marcador quede empatado al terminar las 9 entradas, con las carreras esperadas de ambos equipos (${a.ratingSample.home} y ${a.ratingSample.away} partidos de la liga).`
+            : `Muestra verificada: ${a.extraInningsSampleSize?.home ?? 0} partidos de ${home} y ${a.extraInningsSampleSize?.away ?? 0} de ${away}; ${a.extraInningsSampleSize?.uniqueGames ?? 0} encuentros distintos, ${a.extraInningsSampleSize?.extraGames ?? 0} con extra innings. Sin al menos 5 registros por equipo y duración reglamentaria publicada, N/D.`}</p>
         </div>
       </details>}
     </div>

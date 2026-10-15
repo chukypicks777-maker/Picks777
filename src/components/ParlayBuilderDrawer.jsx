@@ -15,6 +15,8 @@ import { formatOdds } from '../utils/oddsFormatter';
 import { formatCurrency } from '../utils/currencyFormatter';
 import { sounds } from '../utils/audioEffects';
 import { calculateParlay } from '../utils/parlayCalculation.js';
+import { legStarted } from '../utils/parlayTicket.js';
+import { useClock } from '../utils/clock';
 
 export default function ParlayBuilderDrawer({ 
   isOpen, 
@@ -32,12 +34,18 @@ export default function ParlayBuilderDrawer({
   const [copyError, setCopyError] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
 
+  const now = useClock();
+  // Matches that already started stay visible but never count in the total.
+  const started = legs.filter(leg => legStarted(leg, now));
+  const active = legs.filter(leg => !legStarted(leg, now));
   let calculation = null;
   let calculationError = '';
-  try { calculation = calculateParlay(legs, stake); }
+  try { calculation = calculateParlay(active, stake); }
   catch (error) { calculationError = error.message; }
   const { totalDecimalOdds, potentialPayout, netProfit } = calculation || {};
-  const theoretical = legs.some(leg => leg.oddsKind === 'theoretical');
+  const theoretical = active.some(leg => leg.oddsKind === 'theoretical');
+  const tieVoid = active.some(leg => leg.tieVoid);
+  const priceLabel = leg => leg.oddsLabel || (leg.oddsKind === 'theoretical' ? 'Momio justo' : 'Publicado');
 
   const startNewTicket = () => {
     onClearAll();
@@ -48,11 +56,11 @@ export default function ParlayBuilderDrawer({
   };
 
   const handleCopyTicket = async () => {
-    if (!calculation || !legs.length) return;
+    if (!calculation || !active.length) return;
     sounds.playClick();
-    const summary = `🏆 DEPORTEPICKS PRO — TICKET DE PARLAY 🏆\n\n` +
-      legs.map((l, i) => `${i + 1}. [${l.league}] ${l.matchTitle}\n   👉 Selección: ${l.selection} @ ${formatOdds(l.odds, oddsFormat)}${l.oddsLabel ? ` · ${l.oddsLabel}` : ''}${l.probability != null ? ` (${Math.round(l.probability)}% prob)` : ''}`).join('\n\n') +
-      `\n\n📊 Cuota Total: ${formatOdds(totalDecimalOdds, oddsFormat)}\n💰 Monto: ${formatCurrency(stake, currency)}\n💵 Retorno hipotético: ${formatCurrency(potentialPayout, currency)}\n${theoretical ? 'Incluye precios teóricos del modelo; no son ofertas de una casa.\n' : ''}⚠️ Todos los eventos deben cumplirse. Es una simulación, no una apuesta colocada.`;
+    const summary = `🏆 777 PICKS — TICKET DE PARLAY 🏆\n\n` +
+      active.map((l, i) => `${i + 1}. [${l.league}] ${l.matchTitle}\n   👉 Selección: ${l.selection} @ ${formatOdds(l.odds, oddsFormat)} · ${priceLabel(l)}${l.probability != null ? ` (${Math.round(l.probability)}% prob)` : ''}`).join('\n\n') +
+      `\n\n📊 Cuota Total: ${formatOdds(totalDecimalOdds, oddsFormat)}\n💰 Monto: ${formatCurrency(stake, currency)}\n💵 Retorno hipotético: ${formatCurrency(potentialPayout, currency)}\n${theoretical ? 'Incluye precios teóricos del modelo; no son ofertas de una casa.\n' : ''}${tieVoid ? 'En NPB/KBO un empate anula esa selección (cuenta como 1.00).\n' : ''}⚠️ Todos los eventos deben cumplirse. Es una simulación, no una apuesta colocada.`;
 
     setCopyError('');
     try {
@@ -128,7 +136,11 @@ export default function ParlayBuilderDrawer({
             </div>
 
             {/* Legs List */}
-            {theoretical && <p className="text-[11px] text-amber-300 mb-3">Incluye precios teóricos del modelo. El retorno es una simulación; estas cuotas no son ofertas de una casa de apuestas.</p>}
+            {theoretical && <p className="text-[11px] text-amber-300 mb-3">Incluye precios teóricos del modelo (marcados «Momio justo»). El retorno es una simulación; estas cuotas no son ofertas de una casa de apuestas.</p>}
+            {started.length > 0 && <div role="alert" className="flex items-center justify-between gap-2 p-2 rounded-lg border border-rose-500/30 bg-rose-500/10 text-[11px] text-rose-200 font-sans">
+              <span>{started.length === 1 ? '1 partido ya empezó' : `${started.length} partidos ya empezaron`}: no cuentan en la cuota total.</span>
+              <button type="button" onClick={() => { sounds.playClick(); started.forEach(leg => onRemoveLeg(leg)); }} className="shrink-0 min-h-9 px-2 rounded border border-rose-400/40 text-rose-100 cursor-pointer">Quitar</button>
+            </div>}
             {legs.length === 0 ? (
               <div className="text-center py-6 border border-dashed border-white/10 rounded-xl bg-[#0b0f17]">
                 <Layers className="w-6 h-6 text-slate-600 mx-auto mb-1.5" />
@@ -141,7 +153,7 @@ export default function ParlayBuilderDrawer({
                 {legs.map((leg) => (
                   <div
                     key={leg.matchId}
-                    className="p-2.5 bg-[#121824] rounded-lg border border-white/5 flex items-center justify-between transition hover:border-sky-500/30"
+                    className={`p-2.5 bg-[#121824] rounded-lg border flex items-center justify-between transition hover:border-sky-500/30 ${legStarted(leg, now) ? 'border-rose-500/40 opacity-60' : 'border-white/5'}`}
                   >
                     <div className="min-w-0 flex-1 pr-2">
                       <span className="text-[10px] text-sky-400 block truncate">
@@ -150,6 +162,7 @@ export default function ParlayBuilderDrawer({
                       <p className="font-semibold text-xs text-white truncate font-sans">
                         {leg.selection}
                       </p>
+                      {legStarted(leg, now) && <p className="text-[10px] text-rose-300 font-sans">Ya empezó · fuera del cálculo</p>}
                       {leg.probability != null && (
                         <div className="flex items-center space-x-1.5 mt-0.5">
                           <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 rounded font-bold">
@@ -167,7 +180,7 @@ export default function ParlayBuilderDrawer({
                     <div className="flex items-center space-x-2 shrink-0">
                       <div className="flex flex-col items-end gap-0.5"><span aria-label={`Momio de ${leg.matchTitle}`} className="px-1.5 py-0.5 bg-[#182030] rounded text-[11px] font-bold text-emerald-400 border border-emerald-500/20">
                         {formatOdds(leg.odds, oddsFormat)}
-                      </span>{leg.oddsLabel && <span className="text-[9px] text-slate-500">{leg.oddsLabel}</span>}</div>
+                      </span><span className="text-[9px] text-slate-500">{priceLabel(leg)}</span></div>
                       <button
                         type="button" aria-label={`Quitar ${leg.selection} de ${leg.matchTitle}`}
                         onClick={() => { sounds.playClick(); onRemoveLeg(leg); }}
@@ -185,13 +198,13 @@ export default function ParlayBuilderDrawer({
             <div className="flex items-start space-x-2 p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[10.5px] text-amber-300 font-sans">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400 mt-0.5" />
               <span>
-                Regla Parlay: Si 1 sola selección falla, se pierde el ticket completo.
+                Regla Parlay: Si 1 sola selección falla, se pierde el ticket completo.{tieVoid ? ' En NPB/KBO un empate anula esa selección (cuenta como 1.00), no el ticket.' : ''}
               </span>
             </div>
 
             {/* Calculation details */}
             {calculationError && <p role="alert" className="text-rose-300">{calculationError}</p>}
-            {legs.length > 0 && calculation && (
+            {active.length > 0 && calculation && (
               <div className="bg-[#121824] p-3.5 rounded-xl border border-sky-500/20 space-y-2.5 shadow-inner">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400">Multiplicador Cuota:</span>
@@ -201,7 +214,7 @@ export default function ParlayBuilderDrawer({
                 </div>
 
                 <p className="text-[10px] text-slate-400 break-words font-sans">
-                  Cuotas decimales: {legs.map(leg => formatOdds(leg.odds, 'decimal')).join(' × ')} = {formatOdds(totalDecimalOdds, 'decimal')}. Solo se redondea al mostrar el resultado.
+                  Cuotas decimales: {active.map(leg => formatOdds(leg.odds, 'decimal')).join(' × ')} = {formatOdds(totalDecimalOdds, 'decimal')}. Solo se redondea al mostrar el resultado.
                 </p>
 
                 <div className="flex items-center justify-between pt-2 border-t border-white/5">
@@ -239,7 +252,7 @@ export default function ParlayBuilderDrawer({
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   onClick={handleCopyTicket}
-                  type="button" disabled={!calculation}
+                  type="button" disabled={!calculation || !active.length}
                   className="py-2.5 px-3 bg-sky-500/20 hover:bg-sky-500/30 active:scale-95 text-sky-300 border border-sky-500/40 rounded-xl text-xs font-semibold transition flex items-center justify-center space-x-1 shadow-[0_0_15px_rgba(56,189,248,0.2)] cursor-pointer"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> : <Copy className="w-3.5 h-3.5 shrink-0" />}

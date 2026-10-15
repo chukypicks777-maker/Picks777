@@ -22,6 +22,9 @@ export function normalizeParlayLeg(raw) {
   return { ...raw, matchId, selection, odds, probability, oddsKind };
 }
 
+// A leg can only be added before its match starts.
+export const legStarted = (leg, now = Date.now()) => Number.isFinite(Date.parse(leg?.kickoff)) && Date.parse(leg.kickoff) <= now;
+
 export const EMPTY_PARLAY = { legs: [], notice: '' };
 
 // A reducer processes every action against the latest ticket, including batched taps.
@@ -47,6 +50,8 @@ export function parlayTicketReducer(state, action) {
   for (const raw of items) {
     const leg = normalizeParlayLeg(raw);
     if (!leg) continue;
+    // Removing a started leg is allowed; adding or refreshing one is not.
+    if (legStarted(leg) && !(action.type === 'toggle' && legs.some(existing => isSameMatch(existing.matchId, leg.matchId) && existing.selection === leg.selection))) continue;
     const index = legs.findIndex(existing => isSameMatch(existing.matchId, leg.matchId));
     if (index >= 0) {
       if (action.type === 'toggle' && legs[index].selection === leg.selection) {
@@ -65,6 +70,6 @@ export function parlayTicketReducer(state, action) {
   const notice = removed ? 'Selección eliminada del parlay.'
     : added ? `Añadidas ${added} ${added === 1 ? 'selección' : 'selecciones'} al parlay.`
     : replaced ? 'Selección y cuota actualizadas en el parlay.'
-    : 'No se añadieron selecciones. Revisa las cuotas o el límite de 20 partidos.';
+    : 'No se añadieron selecciones. Revisa las cuotas, el límite de 20 partidos o si el partido ya empezó.';
   return { legs, notice };
 }

@@ -9,7 +9,7 @@ import TeamForm from './TeamForm';
 import { useClock } from '../utils/clock';
 import { VipBadge, VipUnlockButton } from './VipLock';
 
-const statuses = { LIVE: 'EN VIVO', FINISHED: 'FINALIZADO', SCHEDULED: 'PROGRAMADO', POSTPONED: 'POSPUESTO', CANCELLED: 'CANCELADO', SUSPENDED: 'SUSPENDIDO', UNKNOWN: 'SIN CONFIRMAR' };
+const statuses = { LIVE: 'EN VIVO', FINISHED: 'FINALIZADO', SCHEDULED: 'PROGRAMADO', POSTPONED: 'POSPUESTO', CANCELLED: 'CANCELADO', SUSPENDED: 'SUSPENDIDO', DELAYED: 'RETRASADO', ABANDONED: 'ABANDONADO', UNKNOWN: 'SIN CONFIRMAR' };
 
 function SportMatchCard({ match, oddsFormat, onOpen, onToggleParlay, isInParlay = false, analyzing = false, bankerRank = null, isVip = false, locked = false, onUnlockVip = null }) {
   const now = useClock();
@@ -29,6 +29,7 @@ function SportMatchCard({ match, oddsFormat, onOpen, onToggleParlay, isInParlay 
     {bankerRank && <div className="flex items-center justify-between mb-2 font-mono text-[10px] text-amber-300"><span className="inline-flex items-center gap-1 rounded border border-amber-400/25 bg-amber-400/10 px-2 py-1"><Trophy size={11} />#{bankerRank} BANQUERO</span><span>Ganador · Previa</span></div>}
     <p className="flex items-center justify-center gap-1.5 text-[11px] text-sky-300 mb-3"><Clock size={12} /><time dateTime={match.kickoff} title={`Hora local · ${Intl.DateTimeFormat().resolvedOptions().timeZone}`}>{formatFixtureSchedule(match)}</time></p>
     {match.tournamentName && <p className="text-[10px] text-slate-500 mb-2 truncate" title={match.tournamentName}>{match.tournamentName}{match.round ? ` · ${match.round}` : ''}</p>}
+    {match.seriesGame && <p className={`text-[10px] mb-2 ${match.ifNecessary ? 'text-amber-300' : 'text-slate-400'}`}>Juego {match.seriesGame} de {match.seriesLength}{match.ifNecessary ? ' · solo si es necesario (no entra en Banqueros ni en el parlay)' : ''}</p>}
     {analyzing ? <p role="status" className="flex items-center gap-1.5 text-[10px] font-mono text-sky-300 bg-sky-500/10 border border-sky-500/25 rounded-lg px-2 py-1 mb-2"><RotateCw size={12} className="animate-spin" />CONSULTANDO IA…</p>
       : aiVerified ? <p className="flex items-center justify-between gap-2 text-[9px] font-mono text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-2 py-1 mb-2"><span className="inline-flex gap-1 items-center"><CheckCircle2 size={11} />HECHOS PRIORIZADOS POR IA</span><span className="truncate" title={report.modelUsed}>{report.modelUsed}</span></p>
       : <p className="text-[9px] font-mono text-slate-500 mb-2">CÁLCULO ESTADÍSTICO{report ? ' · IA SIN RESULTADO VERIFICADO' : ' · INFORME IA PENDIENTE'}</p>}

@@ -6,6 +6,8 @@ import FairOdds from './FairOdds';
 import { sounds } from '../utils/audioEffects';
 
 export default function HalfGoalsSection({ match, isVip = false, onUnlockVip = null, oddsFormat = 'decimal' }) {
+  // Pre-match estimate only: hidden once the match starts.
+  if (match?.status && match.status !== 'SCHEDULED') return null;
   const data = match?.halfGoals;
   return (
     <section className="rounded-xl border border-sky-500/25 bg-[#101622] p-4 space-y-4">

@@ -533,7 +533,7 @@ export default function MatchDetailModal({
             <div className="px-1 sm:px-4 text-center shrink-0">
               <div className="bg-[#141b29] border border-white/10 px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl shadow-inner">
                 <span className="text-[8.5px] sm:text-[10px] font-mono text-slate-400 uppercase tracking-wider block whitespace-nowrap">
-                  {m.status === 'LIVE' ? (m.liveMinute ? `En Vivo · ${m.liveMinute}'` : 'En Vivo') : m.status === 'FINISHED' ? 'Final' : 'Más probable'}
+                  {m.status === 'LIVE' ? (m.liveMinute ? `En Vivo · ${String(m.liveMinute).replace(/'+$/, '')}'` : 'En Vivo') : m.status === 'FINISHED' ? 'Final' : 'Más probable'}
                 </span>
                 <span className="text-base sm:text-2xl font-black font-mono text-white tracking-wider">
                   {m.status === 'LIVE' 
@@ -982,7 +982,7 @@ export default function MatchDetailModal({
                       <span>Partidos Recientes de Cada Equipo (Contra Quién Jugaron)</span>
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      Forma y resultados oficiales
+                      Resultados oficiales · marcador propio–rival
                     </span>
                   </div>
 
@@ -1014,7 +1014,7 @@ export default function MatchDetailModal({
                                 </div>
                                 <div className="flex items-center space-x-2 shrink-0">
                                   <span className="font-bold text-white font-mono bg-black/40 px-1.5 py-0.2 rounded border border-white/5">
-                                    {ev.score || '-'}
+                                    {Number.isFinite(ev.own) && Number.isFinite(ev.against) ? `${ev.own}-${ev.against}` : ev.score || '-'}
                                   </span>
                                   <span className="text-[9.5px] text-slate-500">
                                     {dateFormatted}
@@ -1149,7 +1149,7 @@ export default function MatchDetailModal({
                 <div>
                   <div className="flex justify-between text-slate-300 mb-1">
                     <span>{homeDetailed.cleanSheetRate != null ? `${Math.round(homeDetailed.cleanSheetRate)}%` : 'N/D'}</span>
-                    <span className="text-slate-400 text-[11px]">Tasa Valla Invicta (Clean Sheet) Temporada</span>
+                    <span className="text-slate-400 text-[11px]">Tasa Valla Invicta (Clean Sheet) · últimos partidos de liga</span>
                     <span>{awayDetailed.cleanSheetRate != null ? `${Math.round(awayDetailed.cleanSheetRate)}%` : 'N/D'}</span>
                   </div>
                   <div className="h-2 w-full bg-[#182030] rounded-full overflow-hidden flex gap-0.5">

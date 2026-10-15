@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { rankSportWinners, sportWinnerPick, marketGap, MARKET_GAP_BANKER } from '../src/utils/sportPicks.js';
+import { rankSportWinners, sportWinnerPick, sportParlayLeg, marketGap, MARKET_GAP_BANKER } from '../src/utils/sportPicks.js';
 import { generateAiSportsReport, readSportsAiReport } from '../server/services/sportsAiService.js';
 import { computeMatchFingerprint } from '../src/utils/analysisCache.js';
 import { parseTennisEvents } from '../server/services/sportsDataService.js';
@@ -14,7 +14,7 @@ import { generateGroundedAiReport } from '../server/services/aiService.js';
 const now = Date.now();
 function match(id, probability = 70) {
   return { id, sport: 'tenis', tour: 'atp', leagueId: 'atp', leagueName: 'ATP', status: 'SCHEDULED', kickoff: new Date(now + 3600000).toISOString(),
-    homeTeam: { id: 'a', name: 'Jugador A' }, awayTeam: { id: 'b', name: 'Jugador B' }, source: 'ESPN', sourceUrl: 'https://www.espn.com/tennis/', fetchedAt: new Date(now).toISOString(), odds: {},
+    homeTeam: { id: `a-${id}`, name: 'Jugador A' }, awayTeam: { id: `b-${id}`, name: 'Jugador B' }, source: 'ESPN', sourceUrl: 'https://www.espn.com/tennis/', fetchedAt: new Date(now).toISOString(), odds: {},
     analysis: { kind: 'tennis', winner: { home: probability, away: 100 - probability }, firstSet: { home: 62, away: 38 }, secondSet: { home: 62, away: 38 }, sampleSize: { home: 8, away: 10 }, method: 'Modelo experimental con registros previos verificados.' } };
 }
 
@@ -133,4 +133,11 @@ test('tennis identity preserves published portraits and uses the real country fl
   assert.equal(parsed.homeTeam.imageKind, 'portrait'); assert.equal(parsed.homeTeam.logo, competitors[0].athlete.headshot.href);
   assert.equal(parsed.awayTeam.imageKind, 'country'); assert.equal(parsed.awayTeam.logo, competitors[1].athlete.flag.href);
   assert.equal(parsed.awayTeam.country, 'Canadá');
+});
+
+test('Banqueros keep one pick per series and never a playoff game that may not be played', () => {
+  const series = (id, days, extra = {}) => ({ ...match(id, 61), homeTeam: { id: 'h', name: 'SoftBank' }, awayTeam: { id: 'f', name: 'Nippon-Ham' }, kickoff: new Date(now + days * 86400000).toISOString(), ...extra });
+  const ranked = rankSportWinners([series('g3', 3), series('g1', 1), series('g2', 2), { ...match('other', 58), ifNecessary: true }, match('free', 55)], now);
+  assert.deepEqual(ranked.map(game => game.id), ['g1', 'free']);
+  assert.equal(sportParlayLeg({ ...match('maybe', 70), ifNecessary: true }), null);
 });

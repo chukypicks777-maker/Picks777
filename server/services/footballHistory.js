@@ -67,6 +67,8 @@ export function teamRecords(rows, teamId, asOf, minimum = 5) {
     avgYellowCards: average(r => side(r) ? r.hy : r.ay), avgFouls: average(r => side(r) ? r.hf : r.af),
     avgShotsOnTarget: average(r => side(r) ? r.hst : r.ast),
     cleanSheetRate: rate(r => (side(r) ? r.ag : r.hg) === 0), bttsRate: rate(r => r.hg > 0 && r.ag > 0),
+    // Last five league results, oldest to newest, from the scores themselves.
+    form: own.slice(0, 5).reverse().map(r => { const g = side(r) ? r.hg - r.ag : r.ag - r.hg; return g > 0 ? 'W' : g < 0 ? 'L' : 'D'; }),
     sampleSizes: { goals: own.length, corners: values(r => side(r) ? r.hc : r.ac).length, cards: values(r => side(r) ? r.hy : r.ay).length,
       fouls: values(r => side(r) ? r.hf : r.af).length, cleanSheets: own.length, btts: own.length }
   };

@@ -1,10 +1,21 @@
-import { validNumber, parseNumeric, percent, complement, totalLines, poissonProbability, poissonCumulative } from './probability.js';
+import { validNumber, parseNumeric, percent, complement, totalLines, poissonProbability, poissonCumulative, roundDistribution } from './probability.js';
 import { parseDecimalOdds } from './oddsFormatter.js';
 import { footballProbabilityLabel, footballProbabilitySource } from './marketProbability.js';
 import { FOOTBALL_MODEL, countDistribution, countLines } from './footballModel.js';
 export { poissonProbability, poissonCumulative };
 const probabilityValue = value => { const n = parseNumeric(value); return n !== null && n >= 0 && n <= 100 ? n : null; };
 const CORNER_LINES = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5];
+// Goals a team conceded in one recent game: from the team ids when present; otherwise
+// from the result (ESPN's score string can put the winner first), then the venue.
+export function recentGoalsAgainst(e) {
+  if (Number.isFinite(e?.against)) return e.against;
+  const parts = String(e?.score || '').split('-').map(s => Number(s.trim()));
+  if (parts.length !== 2 || !parts.every(Number.isFinite)) return null;
+  if (e.result === 'W') return Math.min(...parts);
+  if (e.result === 'L') return Math.max(...parts);
+  return e.atVs === '@' ? parts[0] : parts[1];
+}
+
 export function calculateCornerProbabilities(avgCorners) {
   const lines = totalLines(avgCorners, CORNER_LINES);
   return { lambda: validNumber(avgCorners) ? avgCorners : null, ...lines, over5: lines.over55, under5: lines.under55 };
@@ -48,14 +59,12 @@ export function calculateTeamDetailedStats(team = {}, isHome = true, match = {})
     });
     if (group && Array.isArray(group.events)) {
       let clean = 0, count = 0;
+      // Goals against come from the team ids (ESPN's score string can put the winner first).
       for (const e of group.events) {
-        if (!e.score) continue;
-        const parts = e.score.split('-').map(s => Number(s.trim()));
-        if (parts.length === 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) {
-          count++;
-          const rivalScore = e.atVs === '@' ? parts[0] : parts[1];
-          if (rivalScore === 0) clean++;
-        }
+        const against = recentGoalsAgainst(e);
+        if (against === null) continue;
+        count++;
+        if (against === 0) clean++;
       }
       if (count >= 5) cleanSheetRate = Math.round((clean / count) * 100);
     }
@@ -146,14 +155,16 @@ export function getTop3Opportunities(match) {
       probabilitySource: footballProbabilitySource(match, key.startsWith('dc') ? 'homeWin' : key),
       oddsKind: odds != null ? 'published' : 'theoretical',
       rationale: `Probabilidad estimada de ${rounded}% para ${selection.toLowerCase()}. ${footballProbabilityLabel(match, key.startsWith('dc') ? 'homeWin' : key)}.`,
-      matchId: match.id, matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visitante'}`, league: match.leagueName });
+      matchId: match.id, matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visitante'}`, league: match.leagueName, kickoff: match.kickoff });
   };
   const home = match.homeTeam?.shortName || match.homeTeam?.name || 'Local', away = match.awayTeam?.shortName || match.awayTeam?.name || 'Visitante';
-  add('homeWin', `Gana ${home}`, '1X2', p.homeWin, 'result');
-  add('awayWin', `Gana ${away}`, '1X2', p.awayWin, 'result');
+  // Same whole-number 1X2 as the card, so 1X = 1 + X exactly as displayed.
+  const shown = [p.homeWin, p.draw, p.awayWin].every(v => percent(v) !== null) ? roundDistribution({ homeWin: p.homeWin, draw: p.draw, awayWin: p.awayWin }) : p;
+  add('homeWin', `Gana ${home}`, '1X2', shown.homeWin, 'result');
+  add('awayWin', `Gana ${away}`, '1X2', shown.awayWin, 'result');
   if ([p.homeWin, p.draw, p.awayWin].every(v => percent(v) !== null) && Math.abs(p.homeWin + p.draw + p.awayWin - 100) <= 2.5) {
-    add('dc1X', `${home} o Empate (1X)`, 'Doble Oportunidad (1X)', p.homeWin + p.draw, 'result');
-    add('dcX2', `${away} o Empate (X2)`, 'Doble Oportunidad (X2)', p.awayWin + p.draw, 'result');
+    add('dc1X', `${home} o Empate (1X)`, 'Doble Oportunidad (1X)', shown.homeWin + shown.draw, 'result');
+    add('dcX2', `${away} o Empate (X2)`, 'Doble Oportunidad (X2)', shown.awayWin + shown.draw, 'result');
   }
   for (const [key, line] of [['15', 1.5], ['25', 2.5], ['35', 3.5]]) {
     add(`over${key}`, `Más de ${line} Goles`, `Total Goles Over ${line}`, p[`over${key}`], 'goals');

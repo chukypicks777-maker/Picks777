@@ -29,10 +29,13 @@ function MatchCard({
 }) {
   const analyzed = isAiAnalyzed ?? isMatchAnalyzed(match?.id, match);
   const modelName = aiModelUsed ?? (analyzed ? getAnalyzedModelName(match?.id, match) : null);
-  const base = match.model?.probabilities || match.probabilities || match.aiReport?.probabilities || {};
+  // Forecasts are pre-match: once a match starts, no percentage is rebuilt from
+  // closing prices or season averages (they ignore the score).
+  const pregame = match.status === 'SCHEDULED';
+  const base = pregame ? match.model?.probabilities || match.probabilities || match.aiReport?.probabilities || {} : {};
   const p = { ...base, ...roundDistribution({ homeWin: base.homeWin, draw: base.draw, awayWin: base.awayWin }) };
   let homeProb = percent(p.homeWin), drawProb = percent(p.draw), awayProb = percent(p.awayWin);
-  if ((homeProb === null || drawProb === null || awayProb === null) && match.odds?.homeWin && match.odds?.draw && match.odds?.awayWin) {
+  if (pregame && (homeProb === null || drawProb === null || awayProb === null) && match.odds?.homeWin && match.odds?.draw && match.odds?.awayWin) {
     const oH = Number(match.odds.homeWin), oD = Number(match.odds.draw), oA = Number(match.odds.awayWin);
     if (oH > 1 && oD > 1 && oA > 1) {
       const invH = 1 / oH, invD = 1 / oD, invA = 1 / oA;
@@ -60,7 +63,7 @@ function MatchCard({
 
   // Derivación matemática Poisson cuando existen estadísticas de temporada (mínimo 5 partidos)
   const seasonPoisson = (() => {
-    if (match.goalMarketsConflict) return null;
+    if (match.goalMarketsConflict || !pregame) return null;
     if (Number.isFinite(homeGP) && homeGP >= 5 && Number.isFinite(awayGP) && awayGP >= 5 &&
         Number.isFinite(home.goalsFor) && home.goalsFor >= 0 && Number.isFinite(home.goalsAgainst) && home.goalsAgainst >= 0 &&
         Number.isFinite(away.goalsFor) && away.goalsFor >= 0 && Number.isFinite(away.goalsAgainst) && away.goalsAgainst >= 0) {
@@ -83,7 +86,7 @@ function MatchCard({
     return null;
   })();
 
-  const ladder = fillPoissonGoalLadder(base, match.odds);
+  const ladder = pregame ? fillPoissonGoalLadder(base, match.odds) : null;
   const over15Prob = percent(p.over15) ?? percent(match.model?.probabilities?.over15) ?? percent(match.probabilities?.over15) ?? percent(ladder?.over15) ?? seasonPoisson?.over15 ?? null;
   const over25Prob = percent(p.over25) ?? percent(match.model?.probabilities?.over25) ?? percent(match.probabilities?.over25) ?? percent(ladder?.over25) ?? seasonPoisson?.over25 ?? null;
   const bttsProb = percent(p.bttsYes) ?? percent(match.model?.probabilities?.bttsYes) ?? percent(match.probabilities?.bttsYes) ?? percent(ladder?.bttsYes) ?? seasonPoisson?.bttsYes ?? null;
@@ -108,7 +111,10 @@ function MatchCard({
   const isLegInParlay = Boolean(parlayLegs?.some(
     l => isSameMatch(l.matchId, match.id) && l.selection === activePick?.selection
   ));
-  const winnerQuotes = { home: marketQuote(match.odds?.homeWin, null), draw: marketQuote(match.odds?.draw, null), away: marketQuote(match.odds?.awayWin, null) };
+  // After kickoff a remaining price is the pre-match close, never a current offer.
+  const quoteOf = value => { const quote = marketQuote(value, null); return !pregame && quote.kind === 'published' ? { ...quote, label: 'Cierre' } : quote; };
+  const winnerQuotes = { home: quoteOf(match.odds?.homeWin), draw: quoteOf(match.odds?.draw), away: quoteOf(match.odds?.awayWin) };
+  const liveMinute = match.liveMinute ?? match.minute;
 
   return (
     <TiltCard
@@ -161,7 +167,7 @@ function MatchCard({
               {match.status === 'LIVE' ? (
                 <span className="flex items-center space-x-1 text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
-                  <span>{match.minute ? `${match.minute}'` : 'EN VIVO'}</span>
+                  <span>{liveMinute ? `${String(liveMinute).replace(/'+$/, '')}'` : 'EN VIVO'}</span>
                 </span>
               ) : match.status === 'FINISHED' ? (
                 <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
@@ -305,25 +311,25 @@ function MatchCard({
 
           {/* Win Probabilities Bar (1 X 2) con Cuotas de Mercado */}
           <div className="mb-3">
-            <p className="text-[9px] text-sky-300 mb-1">1X2 · {footballProbabilityLabel(match)}</p>
+            <p className="text-[9px] text-sky-300 mb-1">1X2 · {pregame ? footballProbabilityLabel(match) : 'Pronóstico previo cerrado al iniciar el partido'}</p>
             <div className="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
               <span>
                 1: <strong><NumberCounter value={homeProb} suffix="%" /></strong>
-                <span className="block text-sky-300">{formatOdds(winnerQuotes.home.odds, oddsFormat)} <span className="text-slate-500">{winnerQuotes.home.label}</span></span>
+                <span className="block text-sky-300">{formatOdds(winnerQuotes.home.odds, oddsFormat)}{winnerQuotes.home.kind !== 'unavailable' && <> <span className="text-slate-500">{winnerQuotes.home.label}</span></>}</span>
               </span>
               <span>
                 X: <strong><NumberCounter value={drawProb} suffix="%" /></strong>
-                <span className="block text-sky-300">{formatOdds(winnerQuotes.draw.odds, oddsFormat)} <span className="text-slate-500">{winnerQuotes.draw.label}</span></span>
+                <span className="block text-sky-300">{formatOdds(winnerQuotes.draw.odds, oddsFormat)}{winnerQuotes.draw.kind !== 'unavailable' && <> <span className="text-slate-500">{winnerQuotes.draw.label}</span></>}</span>
               </span>
               <span>
                 2: <strong><NumberCounter value={awayProb} suffix="%" /></strong>
-                <span className="block text-sky-300">{formatOdds(winnerQuotes.away.odds, oddsFormat)} <span className="text-slate-500">{winnerQuotes.away.label}</span></span>
+                <span className="block text-sky-300">{formatOdds(winnerQuotes.away.odds, oddsFormat)}{winnerQuotes.away.kind !== 'unavailable' && <> <span className="text-slate-500">{winnerQuotes.away.label}</span></>}</span>
               </span>
             </div>
             <div className="h-1.5 w-full bg-[#161c28] rounded-full overflow-hidden flex gap-0.5">
-              <div style={{ width: `${homeProb}%` }} className="bg-sky-500 h-full rounded-l-full transition-all duration-500 shadow-[0_0_6px_rgba(56,189,248,0.4)]" />
-              <div style={{ width: `${drawProb}%` }} className="bg-slate-500 h-full transition-all duration-500" />
-              <div style={{ width: `${awayProb}%` }} className="bg-indigo-500 h-full rounded-r-full transition-all duration-500 shadow-[0_0_6px_rgba(129,140,248,0.4)]" />
+              <div style={{ width: `${homeProb ?? 0}%` }} className="bg-sky-500 h-full rounded-l-full transition-all duration-500 shadow-[0_0_6px_rgba(56,189,248,0.4)]" />
+              <div style={{ width: `${drawProb ?? 0}%` }} className="bg-slate-500 h-full transition-all duration-500" />
+              <div style={{ width: `${awayProb ?? 0}%` }} className="bg-indigo-500 h-full rounded-r-full transition-all duration-500 shadow-[0_0_6px_rgba(129,140,248,0.4)]" />
             </div>
           </div>
 
@@ -334,7 +340,7 @@ function MatchCard({
                 <span>💎 TOP #{bankerRank} BANQUERO</span>
               </span>
               <span className="text-sky-300 font-bold">
-                {displayProb}% Prob.
+                {displayProb == null ? 'N/D' : `${displayProb}% Prob.`}
               </span>
             </div>
           )}
@@ -469,8 +475,11 @@ function MatchCard({
               onClick={(e) => {
                 e.stopPropagation();
                 if (!activePick) return;
+                // Every pick (model, banker or AI selection) carries this match's identity and start.
                 const candidateToAdd = {
                   ...activePick,
+                  matchId: match.id, matchTitle: `${match.homeTeam?.name || 'Local'} vs ${match.awayTeam?.name || 'Visitante'}`,
+                  league: match.leagueName, kickoff: match.kickoff,
                   odds: activePick.odds || getEffectiveOdds(activePick)
                 };
                 if (onToggleParlay) {

@@ -153,11 +153,21 @@ export async function enrichHistoricalStats(match, options = {}) {
   const fromLeague = leagueRecords(match);
   if (fromLeague || options.localOnly) return fromLeague || match;
   const histories = await Promise.all([match.homeTeamId, match.awayTeamId].map(id => history(match, id, options).catch(() => null)));
+  // Goal averages are only comparable within one league: a cup tie between a
+  // Premier League side and a Norwegian side must not compare 11 conceded in
+  // England with 8 in Norway (it gave Viking 66% at Aston Villa). Each team's
+  // goals come from this competition's table or from its own league's history;
+  // both must come from the same league, otherwise they stay N/D.
+  const sufficient = original => Number.isFinite(original.gamesPlayed) && original.gamesPlayed >= MIN_SAMPLE && Number.isFinite(original.goalsFor) && Number.isFinite(original.goalsAgainst);
+  const goalLeague = (original, stats) => sufficient(original) ? match.espnCode : (stats?.sampleSizes?.goals ?? 0) >= MIN_SAMPLE ? stats.records?.[0]?.leagueCode ?? null : null;
+  const leagues = [goalLeague(match.homeTeam, histories[0]), goalLeague(match.awayTeam, histories[1])];
+  const comparable = leagues[0] && leagues[0] === leagues[1];
   const team = (original, stats) => {
     if (!stats) return original;
-    const hasSufficientOriginal = Number.isFinite(original.gamesPlayed) && original.gamesPlayed >= MIN_SAMPLE && Number.isFinite(original.goalsFor) && Number.isFinite(original.goalsAgainst);
+    // Not comparable: keep this competition's own (short) table; the model needs 5 games per team.
+    const hasSufficientOriginal = sufficient(original);
     const validSamples = stats.sampleSizes?.goals ?? 0;
-    const useHistory = !hasSufficientOriginal && validSamples >= MIN_SAMPLE;
+    const useHistory = comparable && !hasSufficientOriginal && validSamples >= MIN_SAMPLE;
     const fallbackGF = useHistory ? stats.goalsFor : original.goalsFor;
     const fallbackGA = useHistory ? stats.goalsAgainst : original.goalsAgainst;
     const fallbackGP = useHistory ? validSamples : original.gamesPlayed;
@@ -180,5 +190,5 @@ export async function enrichHistoricalStats(match, options = {}) {
   };
   const homeTeam = team(match.homeTeam, histories[0]), awayTeam = team(match.awayTeam, histories[1]);
   return { ...match, homeTeam, awayTeam,
-    halfGoals: ['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status) ? halfGoalModel(match.model || poissonModel(homeTeam, awayTeam), ...histories) : null };
+    halfGoals: match.status === 'SCHEDULED' ? halfGoalModel(match.model || poissonModel(homeTeam, awayTeam), ...histories) : null };
 }

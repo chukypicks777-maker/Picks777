@@ -53,18 +53,28 @@ export function marketGap(match) {
 }
 
 export function sportParlayLeg(match, now = Date.now()) {
-  if (!match?.id || !isUpcomingFixture(match, now) || match.retired) return null;
+  // A playoff game 'if necessary' may never be played.
+  if (!match?.id || !isUpcomingFixture(match, now) || match.retired || match.ifNecessary) return null;
   const pick = sportWinnerPick(match);
   if (!pick || !Number.isFinite(pick.odds) || pick.odds <= 1 || pick.odds > 1000) return null;
-  return { ...pick, matchId: match.id, sport: match.sport, league: match.leagueName,
+  return { ...pick, ...(match.allowsDraw ? { market: 'Ganador · empate devuelve', tieVoid: true } : {}), matchId: match.id, sport: match.sport, league: match.leagueName,
     matchTitle: `${match.homeTeam.name} vs ${match.awayTeam.name}`, kickoff: match.kickoff };
 }
 
 export function rankSportWinners(matches, now = Date.now(), limit = 10) {
-  return [...new Map(matches.map(match => [match.id, match])).values()]
-    .filter(match => match.status === 'SCHEDULED' && Date.parse(match.kickoff) > now && !match.retired)
-    // A Banquero is a pick the casa does not strongly contradict.
-    .map(match => ({ ...match, bankerPick: sportWinnerPick(match) })).filter(match => match.bankerPick && !(Math.abs(marketGap(match) ?? 0) > MARKET_GAP_BANKER))
+  // One pick per pairing: the next rankable game of a series (the same two teams
+  // play on consecutive days with the same forecast), never a game 'if necessary'.
+  // A Banquero is also a pick the casa does not strongly contradict.
+  const pairing = match => `${match.sport}|${match.leagueId}|${[String(match.homeTeam?.id), String(match.awayTeam?.id)].sort().join('|')}`;
+  const next = new Map();
+  for (const match of new Map(matches.map(match => [match.id, match])).values()) {
+    if (match.status !== 'SCHEDULED' || !(Date.parse(match.kickoff) > now) || match.retired || match.ifNecessary) continue;
+    const bankerPick = sportWinnerPick(match);
+    if (!bankerPick || Math.abs(marketGap(match) ?? 0) > MARKET_GAP_BANKER) continue;
+    const key = pairing(match), current = next.get(key);
+    if (!current || Date.parse(match.kickoff) < Date.parse(current.kickoff) || (match.kickoff === current.kickoff && match.id < current.id)) next.set(key, { ...match, bankerPick });
+  }
+  return [...next.values()]
     .sort((a, b) => b.bankerPick.probability - a.bankerPick.probability || Date.parse(a.kickoff) - Date.parse(b.kickoff) || a.id.localeCompare(b.id))
     .slice(0, limit).map((match, index) => ({ ...match, bankerRank: index + 1 }));
 }

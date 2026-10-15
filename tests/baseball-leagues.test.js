@@ -93,3 +93,13 @@ test('the league tie chance stays near the observed rate, never driven by one re
   assert.equal(leagueTieChance([...season, { ...base, id: 'kbo', leagueId: 'kbo', kickoff: season[10].kickoff, finalScore: { home: 1, away: 1 } }], { leagueId: 'npb' }), leagueTieChance(season));
   assert.equal(leagueTieChance(season, { before: Date.parse(season[400].kickoff) }) > 0, true);
 });
+
+test('KBO ids stay the same when another game is inserted earlier in the month; doubleheaders stay distinct', () => {
+  const row = (day, time, away, home) => `<tr><td title="DATE">${day}</td><td class="TIME">${time}</td><td class="loop_r">${away}</td><td><span class="score_schedule"></span></td><td class="loop_l">${home}</td></tr>`;
+  const page = rows => `<span id="lblGameMonth">2026.08</span><table summary="schdule">${rows.join('')}</table>`;
+  const league = { id: 'kbo', name: 'KBO', provider: 'kbo', allowsDraw: true };
+  const before = parseKboSchedule(page([row('08.20', '18:30', 'LG', 'KIA'), row('08.21', '14:00', 'NC', 'KT'), row('08.21', '18:30', 'NC', 'KT')]), league, '2026-08-01T00:00:00Z');
+  const after = parseKboSchedule(page([row('08.02', '18:30', 'SSG', 'LOTTE'), row('08.20', '18:30', 'LG', 'KIA'), row('08.21', '14:00', 'NC', 'KT'), row('08.21', '18:30', 'NC', 'KT')]), league, '2026-08-01T00:00:00Z');
+  assert.deepEqual(before.map(game => game.id), ['kbo-2026-08-20-KIA-LG', 'kbo-2026-08-21-KT-NC', 'kbo-2026-08-21-KT-NC-2']);
+  assert.deepEqual(after.slice(1).map(game => game.id), before.map(game => game.id));
+});

@@ -36,7 +36,9 @@ export default function HeroFeaturedMatch({
   const homeProb = percent(outcomes.homeWin);
   const drawProb = percent(outcomes.draw);
   const awayProb = percent(outcomes.awayWin);
-  const winnerQuotes = { home: marketQuote(match.odds?.homeWin, null), draw: marketQuote(match.odds?.draw, null), away: marketQuote(match.odds?.awayWin, null) };
+  // After kickoff a remaining price is the pre-match close, never a current offer.
+  const quoteOf = value => { const quote = marketQuote(value, null); return match.status !== 'SCHEDULED' && quote.kind === 'published' ? { ...quote, label: 'Cierre' } : quote; };
+  const winnerQuotes = { home: quoteOf(match.odds?.homeWin), draw: quoteOf(match.odds?.draw), away: quoteOf(match.odds?.awayWin) };
 
   return (
     <div className="mb-8">
@@ -219,9 +221,9 @@ export default function HeroFeaturedMatch({
                     </span>
                   </div>
                   <div className="h-2 sm:h-2.5 w-full bg-[#161c28] rounded-full overflow-hidden flex gap-0.5 p-0.5 border border-white/5">
-                    <div style={{ width: `${homeProb}%` }} className="bg-sky-500 h-full rounded-l-full transition-all duration-700 shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
-                    <div style={{ width: `${drawProb}%` }} className="bg-slate-500 h-full transition-all duration-700" />
-                    <div style={{ width: `${awayProb}%` }} className="bg-indigo-500 h-full rounded-r-full transition-all duration-700 shadow-[0_0_8px_rgba(129,140,248,0.5)]" />
+                    <div style={{ width: `${homeProb ?? 0}%` }} className="bg-sky-500 h-full rounded-l-full transition-all duration-700 shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
+                    <div style={{ width: `${drawProb ?? 0}%` }} className="bg-slate-500 h-full transition-all duration-700" />
+                    <div style={{ width: `${awayProb ?? 0}%` }} className="bg-indigo-500 h-full rounded-r-full transition-all duration-700 shadow-[0_0_8px_rgba(129,140,248,0.5)]" />
                   </div>
                 </div>
 

@@ -88,7 +88,9 @@ test('football cards and spotlight retain published 1X2 prices, avoid unquoted w
       const html = renderToStaticMarkup(React.createElement(Component, { match: { ...match, status }, oddsFormat: 'american' }));
       assert.match(html, /dateTime="2026-10-05T21:00:00Z"/);
       for (const price of ['-125', '+250', '+350']) assert.ok(html.includes(price));
-      assert.match(html, /Publicado/);
+      // After kickoff the remaining price is the pre-match close and no percentage is shown.
+      assert.match(html, status === 'SCHEDULED' ? /Publicado/ : /Cierre/);
+      if (status !== 'SCHEDULED') { assert.doesNotMatch(html, /Publicado/); assert.doesNotMatch(html, /width:null%/); }
     }
     const theoretical = renderToStaticMarkup(React.createElement(Component, { match: { ...match, status: 'SCHEDULED', odds: {} }, oddsFormat: 'american' }));
     assert.match(theoretical, /N\/D/); assert.doesNotMatch(theoretical, /\+400/);

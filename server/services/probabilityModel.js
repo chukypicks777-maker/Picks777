@@ -44,7 +44,7 @@ export function applyFootballForecast(match) {
   if (match.status !== 'SCHEDULED') {
     // A detail refresh can cross kickoff. Current/live odds and standings cannot
     // reconstruct an archived pregame prediction or reuse its stale AI selection.
-    return Object.assign(match, { model: null, probabilities: {}, probabilitySources: {},
+    return Object.assign(match, { model: null, probabilities: {}, probabilitySources: {}, halfGoals: null,
       probabilitySource: 'unavailable', aiPick: null, marketOverround: null, modelVersion: SPORT_MODEL_VERSION });
   }
   // League ratings and/or a complete 1X2 quote. Without either, the season

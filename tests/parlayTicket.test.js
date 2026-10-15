@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { EMPTY_PARLAY, normalizeParlayLeg, parlayTicketReducer } from '../src/utils/parlayTicket.js';
+import { EMPTY_PARLAY, normalizeParlayLeg, parlayTicketReducer, legStarted } from '../src/utils/parlayTicket.js';
+import { formatCurrency } from '../src/utils/currencyFormatter.js';
 import { calculateParlay } from '../src/utils/parlayCalculation.js';
 import { calculateParlay as serverCalculateParlay } from '../server/services/parlayEngine.js';
 import { getEffectiveOdds } from '../src/utils/mathProbabilities.js';
@@ -115,4 +116,32 @@ test('sports never create parlay selections from missing forecasts, unknown riva
   for (const changes of [{ analysis: {} }, { analysis: { winner: { home: null, away: 40 } } }, { status: 'LIVE' }, { status: 'FINISHED' },
     { kickoff: new Date(now - 1).toISOString() }, { kickoff: 'invalid' }, { retired: true }, { awayTeam: { id: '0', name: 'TBD' } },
     { analysis: { winner: { home: 100, away: 0 } } }]) assert.equal(sportParlayLeg({ ...match, ...changes }, now), null);
+});
+
+test('a started match is never added, but can still be removed; NPB/KBO legs say a tie refunds', () => {
+  const now = Date.now();
+  const future = { ...pick('f'), kickoff: new Date(now + 3600000).toISOString() };
+  const past = { ...pick('p'), kickoff: new Date(now - 60000).toISOString() };
+  let state = add(EMPTY_PARLAY, future, past);
+  assert.deepEqual(state.legs.map(leg => leg.matchId), ['f']);
+  assert.ok(legStarted(past) && !legStarted(future) && !legStarted(pick('none')));
+  // A leg already in the ticket whose match started can still be toggled off.
+  state = { legs: [...state.legs, normalizeParlayLeg(past)], notice: '' };
+  state = parlayTicketReducer(state, { type: 'toggle', leg: past });
+  assert.deepEqual(state.legs.map(leg => leg.matchId), ['f']);
+  const npb = { id: 'npb-1', sport: 'beisbol', leagueId: 'npb', leagueName: 'NPB', allowsDraw: true, status: 'SCHEDULED', kickoff: new Date(now + 3600000).toISOString(),
+    homeTeam: { id: 'npb-t', name: 'Hanshin' }, awayTeam: { id: 'npb-db', name: 'DeNA' }, odds: {}, analysis: { winner: { home: 49.9, away: 50.1 } } };
+  const leg = sportParlayLeg(npb, now);
+  assert.equal(leg.market, 'Ganador · empate devuelve'); assert.equal(leg.tieVoid, true);
+  assert.equal(sportParlayLeg({ ...npb, allowsDraw: false }, now).tieVoid, undefined);
+});
+
+test('an AI football pick with the match identity attached enters the ticket, and money uses each country format', () => {
+  const aiPick = { selection: 'América o Empate (1X)', market: 'Doble Oportunidad', probability: 74, odds: 1.3 };
+  assert.equal(parlayTicketReducer(EMPTY_PARLAY, { type: 'toggle', leg: aiPick }).legs.length, 0, 'Without identity it cannot be added');
+  const withIdentity = { ...aiPick, matchId: 'mx-1', matchTitle: 'América vs Pachuca', league: 'Liga MX', kickoff: new Date(Date.now() + 3600000).toISOString() };
+  assert.equal(parlayTicketReducer(EMPTY_PARLAY, { type: 'toggle', leg: withIdentity }).legs.length, 1);
+  assert.equal(formatCurrency(1234.5, 'MXN'), '$ 1,234.50');
+  assert.equal(formatCurrency(12345.67, 'USD'), '$ 12,345.67');
+  assert.equal(formatCurrency(1234.5, 'EUR'), '€ 1234,50');
 });

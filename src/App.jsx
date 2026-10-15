@@ -78,7 +78,7 @@ export default function App() {
     }
     return 'all';
   });
-  const [bankerSubFilter, setBankerSubFilter] = useState('highest_safety'); // 'highest_safety' | 'recent' | 'live' | 'all_profit'
+  const [bankerSubFilter, setBankerSubFilter] = useState('highest_safety'); // 'highest_safety' | 'recent' | 'all_profit'
 
   // Match Data & Modals
   const [matches, setMatches] = useState([]);
@@ -559,11 +559,9 @@ export default function App() {
         }
       }
     }
-    if (marketFilter === 'safe') {
-      if (bankerSubFilter === 'live') {
-        return m.status === 'LIVE';
-      }
-      return true;
+    if (marketFilter === 'safe' || marketFilter === 'boost') {
+      // A Banquero is a pre-match pick: live matches have none.
+      return m.status === 'SCHEDULED' && Boolean(getBestBankerPick(m));
     }
     if (marketFilter === 'btts' || marketFilter === 'over' || marketFilter === 'under') {
       const pick = getContextualPick(m, marketFilter);
@@ -599,7 +597,7 @@ export default function App() {
         return getMatchSafetyScore(b) - getMatchSafetyScore(a);
       });
     } else {
-      // 'highest_safety' (default) o 'live': ordenados de mayor a menor seguridad
+      // 'highest_safety' (default): ordenados de mayor a menor seguridad
       filteredMatches = [...filteredMatches].sort((a, b) => getMatchSafetyScore(b) - getMatchSafetyScore(a));
     }
     // Máximo de 10 mejores picks banqueros oficiales
@@ -647,7 +645,12 @@ export default function App() {
   );
 
   const liveMatchesCount = matches.filter(m => m && m.status === 'LIVE').length;
-  const featuredMatch = matches.find(m => m && m.isFeatured && m.status !== 'FINISHED') || matches.find(m => m && m.status !== 'FINISHED') || matches[0] || null;
+  // An explicitly featured match first; otherwise the safest upcoming pick, not
+  // whichever live match comes first.
+  const featuredMatch = matches.find(m => m && m.isFeatured && m.status !== 'FINISHED')
+    || matches.filter(m => m?.status === 'SCHEDULED' && Date.parse(m.kickoff) > currentEpoch && getBestBankerPick(m))
+    .sort((a, b) => getMatchSafetyScore(b) - getMatchSafetyScore(a))[0]
+    || matches.find(m => m && m.status !== 'FINISHED') || matches[0] || null;
 
   const leagueMatchCounts = Object.fromEntries(footballLeagues.map(league => [league.id === 'all' ? 'total' : league.id,
     league.id === 'all' ? matches.length : matches.filter(match => match?.leagueId === league.id).length]));
@@ -763,13 +766,12 @@ export default function App() {
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <h4 className="font-black text-sm md:text-base text-white uppercase tracking-wider font-sans">
-                      Picks Banqueros Oficiales — {bankerSubFilter === 'highest_safety' ? 'Más Asegurados (Máxima Probabilidad)' : bankerSubFilter === 'recent' ? 'Recientes / Próximos' : bankerSubFilter === 'live' ? 'En Vivo' : 'Mayor Ganancia (Sin Filtro de Fecha)'}
+                      Picks Banqueros Oficiales — {bankerSubFilter === 'highest_safety' ? 'Más Asegurados (Máxima Probabilidad)' : bankerSubFilter === 'recent' ? 'Recientes / Próximos' : 'Mayor Ganancia (Sin Filtro de Fecha)'}
                     </h4>
                   </div>
                   <p className="text-xs text-emerald-300/90 font-mono">
                     {bankerSubFilter === 'highest_safety' && `Selección cuantitativa de máxima confianza y menor varianza. Priorizados de mayor a menor probabilidad (${filteredMatches.length} pronósticos clasificados).`}
                     {bankerSubFilter === 'recent' && `Partidos programados por fecha y horario de inicio más próximos (${filteredMatches.length} pronósticos listos para jugar).`}
-                    {bankerSubFilter === 'live' && `Partidos en disputa activa en tiempo real con líneas banqueras en juego (${filteredMatches.length} encuentros en vivo).`}
                     {bankerSubFilter === 'all_profit' && `Maximizador de rendimiento: picks banqueros ordenados por mayor cuota y retorno sin importar la fecha (${filteredMatches.length} pronósticos clasificados).`}
                   </p>
                 </div>
@@ -806,26 +808,6 @@ export default function App() {
                   }`}
                 >
                   <span>⏱️ Recientes / Próximos</span>
-                </button>
-                <button
-                  onClick={() => {
-                    sounds.playClick();
-                    setBankerSubFilter('live');
-                    if (matchStatusFilter === 'FINISHED') setMatchStatusFilter('all');
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
-                    bankerSubFilter === 'live'
-                      ? 'bg-rose-500 text-white font-bold shadow-[0_0_12px_rgba(244,63,94,0.4)]'
-                      : 'bg-[#121824] text-slate-300 hover:bg-rose-500/20 border border-white/10'
-                  }`}
-                >
-                  <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse inline-block mr-0.5" />
-                  <span>🔴 En Vivo</span>
-                  {liveMatchesCount > 0 && (
-                    <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-rose-600 text-white rounded-full">
-                      {liveMatchesCount}
-                    </span>
-                  )}
                 </button>
                 <button
                   onClick={() => {

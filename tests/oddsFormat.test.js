@@ -205,3 +205,11 @@ test('Navbar renders odds format selector visibly with Americano, Decimal and Fr
   }));
   assert.match(htmlAmerican, /aria-label="Formato de Momios"/);
 });
+
+test('bettor-facing edge cases: 10/11, 33/20 and 1/16 fractions, 1.995 is +100, nothing below 1.01', () => {
+  assert.equal(decimalToFraction(1.909), '10/11');
+  assert.equal(decimalToFraction(2.65), '33/20');
+  assert.equal(decimalToFraction(1.0625), '1/16');
+  assert.equal(formatOdds(1.995, 'decimal'), '2.00'); assert.equal(formatOdds(1.995, 'american'), '+100');
+  assert.equal(formatOdds(1.004, 'decimal'), '1.01'); assert.equal(formatOdds(1.004, 'american'), '-10000'); assert.equal(formatOdds(1.004, 'fractional'), '1/100');
+});

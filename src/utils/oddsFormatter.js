@@ -22,8 +22,9 @@ export function decimalToAmerican(decimalOdds) {
   const num = parseDecimalOdds(decimalOdds);
   if (!Number.isFinite(num) || num <= 1.0) return 'N/D';
 
-  if (num >= 2.0) {
-    const am = Math.round((num - 1) * 100);
+  // 1.995 is shown as 2.00 in decimal: keep it +100 in American, never -101.
+  if (num >= 1.995) {
+    const am = Math.max(100, Math.round((num - 1) * 100));
     return `+${am}`;
   } else {
     const am = Math.round(-100 / (num - 1));
@@ -37,16 +38,17 @@ export function decimalToFraction(decimalOdds) {
 
   const target = num - 1;
 
-  // Recurring betting fractions (thirds and sixths) with small tolerance (0.005)
-  // for standard 2-decimal rounded feeds (e.g. 1.33 -> 1/3, 1.67 -> 2/3, 1.83 -> 5/6, 1.17 -> 1/6)
+  const fraction = (n, d) => { const g = gcd(n, d); return `${n / g}/${d / g}`; };
+  // 1) An exact simple fraction (denominator up to 20): 2.65 -> 33/20, 1.0625 -> 1/16.
+  for (let d = 1; d <= 20; d++) {
+    const n = Math.round(target * d);
+    if (n > 0 && Math.abs(target - n / d) < 0.0005) return fraction(n, d);
+  }
+  // 2) Recurring thirds and sixths within the rounding of a 2-decimal feed:
+  // 1.33 -> 1/3, 1.67 -> 2/3, 1.83 -> 5/6.
   for (const d of [3, 6]) {
     const n = Math.round(target * d);
-    if (n <= 0) continue;
-    const diff = Math.abs(target - n / d);
-    if (diff < 0.005) {
-      const g = gcd(n, d);
-      return `${n / g}/${d / g}`;
-    }
+    if (n > 0 && Math.abs(target - n / d) < 0.005) return fraction(n, d);
   }
 
   // Exact sports betting MCD / GCD reduction on base 100 cents (e.g. 2.50 -> 3/2, 1.50 -> 1/2, 5.00 -> 4/1)
@@ -57,8 +59,10 @@ export function decimalToFraction(decimalOdds) {
 }
 
 export function formatOdds(decimalOdds, format = 'decimal') {
-  const num = parseDecimalOdds(decimalOdds);
-  if (!Number.isFinite(num) || num <= 1.0) return 'N/D';
+  const raw = parseDecimalOdds(decimalOdds);
+  if (!Number.isFinite(raw) || raw <= 1.0) return 'N/D';
+  // No price below 1.01 exists (a 99.6%+ estimate would show 1.00, 0/1 or -24900).
+  const num = Math.max(1.01, raw);
 
   const fmt = (format || 'decimal').toLowerCase();
 

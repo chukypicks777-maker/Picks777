@@ -188,7 +188,8 @@ export default function SportsPage({ sport, enabled, sessionKey = '', oddsFormat
   const coverage = feed.coverage.filter(item => league === 'all' || item.leagueId === league);
   const missing = coverage.filter(item => item.status === 'unavailable' || item.status === 'degraded');
   const error = !loading && feed.coverage.length > 0 && feed.coverage.every(item => item.status === 'unavailable') ? feed.coverage.find(item => item.error)?.error || 'No se pudo consultar el calendario. Revisa la conexión y reintenta.' : '';
-  const selectedMatch = bankerFeed?.matches.find(match => match.id === selected) || feed.matches.find(match => match.id === selected);
+  // The calendar copy is refreshed every minute; the Banqueros copy only while that view is open.
+  const selectedMatch = (category === 'bankers' ? bankerFeed?.matches.find(match => match.id === selected) : null) || feed.matches.find(match => match.id === selected) || bankerFeed?.matches.find(match => match.id === selected);
   // The analysis is a native modal dialog on the top layer: close it so the VIP access window is visible.
   const unlockFromAnalysis = useCallback(() => { setSelected(null); onUnlockVip?.(); }, [onUnlockVip]);
   const parlaySelections = useMemo(() => new Map(parlayLegs.map(leg => [String(leg.matchId), leg.selection])), [parlayLegs]);

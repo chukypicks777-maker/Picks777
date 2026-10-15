@@ -94,7 +94,7 @@ function teamSample(match, games, side, now) {
     if (!ownSide) return [];
     const own = game.finalScore?.[ownSide], against = game.finalScore?.[ownSide === 'home' ? 'away' : 'home'];
     return Number.isInteger(own) && own >= 0 && Number.isInteger(against) && against >= 0
-      ? [{ own, against, date: game.kickoff, id: game.id, opponent: game[`${ownSide === 'home' ? 'away' : 'home'}Team`]?.name || null, sourceUrl: game.sourceUrl, inningScores: game.inningScores, scheduledInnings: game.scheduledInnings, lastInning: game.lastInning, finalScore: game.finalScore, status: game.status, ownSide }] : [];
+      ? [{ own, against, date: game.kickoff, id: game.id, season: game.season, opponent: game[`${ownSide === 'home' ? 'away' : 'home'}Team`]?.name || null, sourceUrl: game.sourceUrl, inningScores: game.inningScores, scheduledInnings: game.scheduledInnings, lastInning: game.lastInning, finalScore: game.finalScore, status: game.status, ownSide }] : [];
   }).sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 20);
 }
 
@@ -310,6 +310,7 @@ export function basketballAnalysis(match, games = [], now = Date.now(), history 
 }
 
 function legacyBasketballAnalysis(match, games = [], now = Date.now()) {
+  const thisSeason = sample => Number.isFinite(Number(match.season)) ? sample.filter(game => Number(game.season) === Number(match.season)) : sample;
   const home = teamSample(match, games, 'home', now), away = teamSample(match, games, 'away', now);
   const hm = home.map(g => g.own - g.against), am = away.map(g => g.own - g.against);
   const ready = hm.length >= 5 && am.length >= 5;
@@ -325,7 +326,8 @@ function legacyBasketballAnalysis(match, games = [], now = Date.now()) {
     line, probability: hasDistribution ? pair(normalCdf(((side === 'home' ? distributionMargin : -distributionMargin) + line) / deviation)).home : null
   }))]));
   return {
-    kind: 'basketball', available: winner.home !== null, winner, handicaps, form: { home: recentForm(home), away: recentForm(away) },
+    // Recent form only from this season (team schedules span earlier seasons too).
+    kind: 'basketball', available: winner.home !== null, winner, handicaps, form: { home: recentForm(thisSeason(home)), away: recentForm(thisSeason(away)) },
     modelVersion: SPORT_MODEL_VERSION,
     probabilitySource: oddsWinner !== null ? 'published-odds' : 'experimental-model',
     sampleSize: { home: home.length, away: away.length },

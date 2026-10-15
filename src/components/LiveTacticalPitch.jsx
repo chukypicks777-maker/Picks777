@@ -19,7 +19,7 @@ export default function LiveTacticalPitch({ match }) {
         <div className="flex items-center justify-between border-b border-white/5 pb-2">
           <h4 className="font-bold text-white flex items-center space-x-2">
             <Activity className="w-4 h-4 text-emerald-400" />
-            <span>Estadísticas Observadas del Partido ({match.status === 'LIVE' ? (match.liveMinute ? `En Vivo · ${match.liveMinute}'` : 'En Vivo') : 'Finalizado'})</span>
+            <span>Estadísticas Observadas del Partido ({match.status === 'LIVE' ? (match.liveMinute ? `En Vivo · ${String(match.liveMinute).replace(/'+$/, '')}'` : 'En Vivo') : 'Finalizado'})</span>
           </h4>
           <span className="text-[10px] font-mono text-slate-400">Datos oficiales en directo (ESPN)</span>
         </div>

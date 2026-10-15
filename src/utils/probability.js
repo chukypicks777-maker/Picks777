@@ -50,9 +50,11 @@ export function scoreSimulation(match) {
 // Largest remainders preserve 100% after presentation rounding.
 export function roundDistribution(values, digits = 0) {
   const entries = Object.entries(values);
-  if (!entries.length || entries.some(([, n]) => !validNumber(n)) || Math.abs(entries.reduce((s, [, n]) => s + n, 0) - 100) > 0.01) return values;
+  const sum = entries.reduce((s, [, n]) => s + n, 0);
+  // A distribution off by rounding (99.99 or 100.01) is normalised first; a real gap is left alone.
+  if (!entries.length || entries.some(([, n]) => !validNumber(n)) || Math.abs(sum - 100) > 0.5) return values;
   const factor = 10 ** digits;
-  const parts = entries.map(([key, n]) => ({ key, floor: Math.floor(n * factor), remainder: n * factor - Math.floor(n * factor) }));
+  const parts = entries.map(([key, raw]) => { const n = raw * 100 / sum; return { key, floor: Math.floor(n * factor + 1e-9), remainder: n * factor - Math.floor(n * factor + 1e-9) }; });
   const remaining = 100 * factor - parts.reduce((s, p) => s + p.floor, 0);
   const order = [...parts].sort((a, b) => b.remainder - a.remainder);
   for (let i = 0; i < remaining; i++) order[i % order.length].floor++;

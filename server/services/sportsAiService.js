@@ -16,10 +16,15 @@ export function sportsReportFacts(match) {
     { id: 'fixture', text: `${home} vs ${away}. ${match.leagueName}${match.tournamentName ? ` · ${match.tournamentName}` : ''}. Inicio: ${match.kickoff}. Estado: ${match.status}.` },
     { id: 'source', text: `Registros de ${match.source || 'la fuente deportiva'}: ${match.sourceUrl || 'N/D'}. Consulta: ${match.fetchedAt || 'N/D'}.` },
     { id: 'winner', text: `Ganador previo (${a.probabilitySource === 'published-odds' ? 'mercado sin margen' : a.ratingSample || a.kind === 'tennis' ? 'modelo propio comprobado a ciegas con partidos anteriores, sin cuotas' : 'modelo experimental sin calibración de aciertos'}${match.allowsDraw ? ', moneyline sin empate: si empatan se devuelve la apuesta' : ''}): ${home} ${pct(a.winner?.home)}, ${away} ${pct(a.winner?.away)}${match.allowsDraw ? `; probabilidad de empate ${pct(a.tie?.yes)}` : ''}.` },
-    { id: 'sample', text: `Muestra anterior al encuentro: ${home} ${a.sampleSize?.home ?? 0} partidos; ${away} ${a.sampleSize?.away ?? 0} partidos.` },
+    { id: 'sample', text: `Muestra anterior al encuentro: ${home} ${(a.ratingSample || a.sampleSize)?.home ?? 0} partidos; ${away} ${(a.ratingSample || a.sampleSize)?.away ?? 0} partidos.` },
     { id: 'method', text: a.method || 'Sin datos suficientes para calcular el modelo.' },
-    { id: 'limits', text: 'Probabilidades previas, sin validación prospectiva. No se verificaron alineaciones, lesiones ni noticias. No son garantías ni probabilidades ajustadas al marcador en vivo.' }
+    { id: 'limits', text: `Probabilidades previas. ${a.availability ? 'Incluyen el reporte de lesiones y descansos publicado; no verifican alineaciones ni noticias posteriores.' : a.starters ? 'Incluyen a los abridores anunciados; no verifican alineaciones, lesiones ni noticias.' : 'No se verificaron alineaciones, lesiones ni noticias.'} No son garantías ni probabilidades ajustadas al marcador en vivo.` }
   ];
+  if (a.availability) for (const side of ['home', 'away']) {
+    const list = a.availability[side]?.missing || [];
+    facts.push({ id: `absences_${side}`, text: `Bajas incluidas de ${side === 'home' ? home : away}: ${list.length ? list.map(p => `${p.name} (${p.status || 'reporte'}${p.type ? `, ${p.type}` : ''}, −${p.points} pts)`).join('; ') : 'ninguna relevante en el reporte'}.` });
+  }
+  if (a.starters) facts.push({ id: 'starters', text: `Abridores anunciados: ${home} ${a.starters.home?.name || 'N/D'} (FIP ${a.starters.home?.fip ?? 'N/D'}, ${a.starters.home?.innings ?? 0} entradas); ${away} ${a.starters.away?.name || 'N/D'} (FIP ${a.starters.away?.fip ?? 'N/D'}, ${a.starters.away?.innings ?? 0} entradas).` });
   if (match.liveSupported === false) facts.push({ id: 'coverage', text: 'Calendario y resultados oficiales; no hay marcador en vivo verificado ni probabilidades actualizadas al estado en vivo.' });
   if (!match.oddsProvider) facts.push({ id: 'quoteCoverage', text: 'Sin cuota publicada de una casa en esta ficha. Los precios teóricos derivados de probabilidades no son ofertas de apuestas.' });
   for (const side of ['home', 'away']) {
@@ -33,7 +38,7 @@ export function sportsReportFacts(match) {
   }
   if (a.firstInning) facts.push({ id: 'first_inning', text: `Primer inning: ${home} ${pct(a.firstInning.home)}, empate ${pct(a.firstInning.draw)}, ${away} ${pct(a.firstInning.away)}.` });
   if (a.firstFive) facts.push({ id: 'first_five', text: `Totales innings 1 a 5: ${a.firstFive.map(row => `${row.line}: Over ${pct(row.over)}, Under ${pct(row.under)}`).join('; ')}.` });
-  if (a.extraInnings) facts.push({ id: 'extra', text: `Extra innings: Sí ${pct(a.extraInnings.yes)}, No ${pct(a.extraInnings.no)}. Muestra verificada: ${a.extraInningsSampleSize?.uniqueGames ?? 0} encuentros.` });
+  if (a.extraInnings) facts.push({ id: 'extra', text: `Extra innings: Sí ${pct(a.extraInnings.yes)}, No ${pct(a.extraInnings.no)}. ${a.ratingSample ? 'Probabilidad de empate tras 9 entradas según las carreras esperadas.' : `Muestra verificada: ${a.extraInningsSampleSize?.uniqueGames ?? 0} encuentros.`}` });
   return facts;
 }
 
