@@ -1,7 +1,7 @@
 import { roundDistribution, totalLines, validNumber, poissonProbability } from '../../src/utils/probability.js';
 import { countForecast, countLines, combinedCount, countResult } from './baseballCountModel.js';
 import { ratedRuns } from './baseballRatings.js';
-import { ratedMargin, ratingLeagueOf } from './basketballRatings.js';
+import { ratedMargin, ratingLeagueOf, BASKETBALL_RATINGS } from './basketballRatings.js';
 
 import { SPORT_MODEL_VERSION } from '../../src/utils/sportModelVersion.js';
 export { SPORT_MODEL_VERSION };
@@ -152,15 +152,14 @@ function legacyBaseballAnalysis(match, games = [], now = Date.now()) {
   const homeRate = full.home?.mean ?? null, awayRate = full.away?.mean ?? null;
   const regulation = countResult(full.home, full.away);
   const decisive = regulation.home != null ? regulation.home + regulation.away : 0;
-  // A tie in the scoring distribution is not a tie after extra innings.
-  const drawGames = [...new Map([...home, ...away].map(game => [game.id, game])).values()];
-  const drawCount = drawGames.filter(game => game.own === game.against).length;
-  const drawChance = ready && match.allowsDraw ? (drawCount + 0.5) / (drawGames.length + 1) : 0;
   // Owner rule: the winner comes from the same run distributions as every other
   // baseball market, never from published prices (shown only as the momio).
-  const winner = decisive > 0 ? (match.allowsDraw
-    ? roundDistribution({ home: regulation.home / decisive * (1 - drawChance) * 100, draw: drawChance * 100, away: regulation.away / decisive * (1 - drawChance) * 100 }, 1)
-    : pair(regulation.home / decisive)) : (match.allowsDraw ? { home: null, draw: null, away: null } : pair(null));
+  // NPB/KBO games can end tied; the winner is the moneyline the casas offer
+  // there (a tie refunds the bet), and the tie chance is shown apart.
+  const winner = pair(decisive > 0 ? regulation.home / decisive : null);
+  const tieChance = match.allowsDraw ? leagueTieChance(games, { leagueId: match.leagueId, before: Math.min(Date.parse(match.kickoff), now) }) : null;
+  const leagueGames = match.allowsDraw ? games.filter(game => game.leagueId === match.leagueId && game.status === 'FINISHED' && Date.parse(game.kickoff) < Math.min(Date.parse(match.kickoff), now)
+    && Number.isInteger(game.finalScore?.home) && Number.isInteger(game.finalScore?.away)) : [];
   const periodSample = (sample, count) => sample.flatMap(game => {
     // Corrupt or duplicated period scores must not produce confident picks.
     if (!Array.isArray(game.inningScores) || new Set(game.inningScores.map(inning => inning.num)).size !== game.inningScores.length) return [];
@@ -183,8 +182,9 @@ function legacyBaseballAnalysis(match, games = [], now = Date.now()) {
     kind: 'baseball', available: winner.home !== null, winner, form: { home: recentForm(home), away: recentForm(away) },
     modelVersion: SPORT_MODEL_VERSION,
     probabilitySource: 'experimental-model',
-    winnerMarket: match.allowsDraw ? 'three-way' : 'two-way',
-    drawSampleSize: match.allowsDraw ? { uniqueGames: drawGames.length, draws: drawCount } : null,
+    winnerMarket: match.allowsDraw ? 'two-way-tie-void' : 'two-way',
+    tie: match.allowsDraw ? yesNo(winner.home === null ? null : tieChance) : null,
+    tieSampleSize: match.allowsDraw ? { games: leagueGames.length, ties: leagueGames.filter(game => game.finalScore.home === game.finalScore.away).length } : null,
     expectedRuns: { home: homeRate, away: awayRate },
     scoresRun: { home: yesNo(full.home ? 1 - full.home.mass[0] : null), away: yesNo(full.away ? 1 - full.away.mass[0] : null) },
     teamRuns: { home: countLines(full.home, RUN_LINES), away: countLines(full.away, RUN_LINES) },
@@ -199,11 +199,27 @@ function legacyBaseballAnalysis(match, games = [], now = Date.now()) {
     inningSampleSize: { first: first.sampleSize, five: five.sampleSize },
     records: { home: home.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })), away: away.map(({ id, date, sourceUrl }) => ({ id, date, sourceUrl })) },
     method: 'Carreras: binomial negativa con medias anotadas y recibidas de los últimos 20 resultados completos, mínimo 5 por equipo. Conserva la variación observada (como mínimo la de Poisson) y añade incertidumbre por estimar medias con muestras finitas. Totales combinados por convolución de ambos equipos bajo independencia; incluye extra innings de los resultados completos. Primer inning y primeros cinco innings usan solo carreras verificadas de esos periodos. Una muestra de ceros indica N/D, no un Under de 100%. Ganador y carreras salen de las mismas distribuciones, sin cuotas. ¿Habrá extra innings?: frecuencia de encuentros de la misma duración reglamentaria, mínimo 5 por equipo, sin duplicados, con suavizado de Jeffreys (0.5 añadido al numerador y 1 al denominador). Sin metadata comprobable, N/D. No incorpora lanzadores ni alineaciones.'
-      + (match.allowsDraw ? ' Ganador histórico de tres resultados: distribución de carreras condicionada a resultado decisivo; empate final por frecuencia de partidos únicos, con suavizado de Jeffreys (0.5 añadido al numerador y 1 al denominador). No equivale a moneyline de dos resultados.' : ' Ganador histórico: distribución de carreras condicionada a resultado decisivo; no simula extra innings.'),
+      + ' Ganador histórico: distribución de carreras condicionada a resultado decisivo; no simula extra innings.' + (match.allowsDraw ? TIE_METHOD : ''),
     notice: ready ? 'Probabilidades estimadas antes del partido; no se recalculan según el marcador en vivo.' : 'Faltan al menos 5 partidos finalizados por equipo con carreras verificadas.'
   };
 }
 
+
+// NPB and KBO can end tied (12 and 11 innings at most). A tie is a league rule,
+// not a team trait: its chance is the league's tie frequency over the year
+// before the game, shrunk toward 2.5% with 50 virtual games. NPB 2024-26 ties:
+// 1.9-3.4% of games; KBO 2025-26: 2.5-3.2%. The two teams' last games (previous
+// method) gave up to 11% from a single tie.
+export function leagueTieChance(games, { leagueId = null, before = Infinity } = {}) {
+  const finished = games.filter(game => (!leagueId || game.leagueId === leagueId) && game.status === 'FINISHED' && Date.parse(game.kickoff) < before
+    && Number.isInteger(game.finalScore?.home) && Number.isInteger(game.finalScore?.away));
+  const latest = Math.max(...finished.map(game => Date.parse(game.kickoff)));
+  const year = finished.filter(game => Date.parse(game.kickoff) >= latest - 365 * 86400000);
+  return (year.filter(game => game.finalScore.home === game.finalScore.away).length + 50 * 0.025) / (year.length + 50);
+}
+
+const STARTER_METHOD = ' Abridores anunciados: las carreras que permite cada equipo se ajustan por el FIP de su abridor (jonrones, bases por bolas, golpeados y ponches por entrada de esta temporada, contraído hacia la media de la liga), elegido con MLB 2025 y comprobado a ciegas en MLB 2026.';
+const TIE_METHOD = ' En esta liga el partido puede terminar empatado (NPB: máximo 12 entradas; KBO: 11). El ganador se muestra como el moneyline de las casas: si empatan, la apuesta se devuelve. La probabilidad de empate es la frecuencia de empates de toda la liga en el último año (NPB 2024-26: 1.9-3.4%; KBO 2025-26: 2.5-3.2%), no la de los últimos partidos de los dos equipos.';
 
 // Opponent- and venue-adjusted run ratings (server/services/baseballRatings.js).
 // MLB 2026 blind test against the last-20-games model: winner 52.3% -> 54.0%,
@@ -217,18 +233,20 @@ export function baseballAnalysis(match, games = [], now = Date.now()) {
   if (!rated) return legacy;
   const lines = (mass, list) => countLines({ mass }, list);
   const homeShare = rated.full.home / (rated.full.home + rated.full.away);
-  // Three-way leagues keep their observed tie frequency for the draw.
-  const winner = !match.allowsDraw ? pair(homeShare) : Number.isFinite(legacy.winner.draw)
-    ? roundDistribution({ home: homeShare * (100 - legacy.winner.draw), draw: legacy.winner.draw, away: (1 - homeShare) * (100 - legacy.winner.draw) }, 1) : legacy.winner;
+  // NPB/KBO: moneyline without the tie (refunded); the tie chance stays apart.
+  const winner = pair(homeShare);
   const firstInning = roundDistribution({ home: rated.firstInning.home * 100, draw: rated.firstInning.draw * 100, away: rated.firstInning.away * 100 }, 1);
   return { ...legacy, available: winner.home !== null, winner,
+    ...(match.allowsDraw ? { tie: yesNo(leagueTieChance(games, { leagueId: match.leagueId, before: Math.min(Date.parse(match.kickoff), now) })) } : {}),
+    ...(rated.starters ? { starters: rated.starters } : {}),
     expectedRuns: { home: rated.expected.home, away: rated.expected.away }, ratingSample: rated.sample,
     scoresRun: { home: yesNo(1 - rated.home[0]), away: yesNo(1 - rated.away[0]) },
     teamRuns: { home: lines(rated.home, RUN_LINES), away: lines(rated.away, RUN_LINES) },
     totalRuns: lines(rated.total, TOTAL_RUN_LINES), firstFive: lines(rated.firstFive, RUN_LINES), firstInning,
     extraInnings: Number.isInteger(match.scheduledInnings) ? yesNo(rated.regulationTie) : legacy.extraInnings,
     method: 'Carreras con ratings de ataque y pitcheo de cada equipo ajustados por rival y localía, con más peso a los resultados recientes (vida media 60 días) y contracción hacia la media de la liga; binomial negativa con la dispersión medida en MLB 2025. Totales por convolución; primeros cinco innings y primer inning con el reparto de carreras observado; extra innings = probabilidad de empate tras nueve entradas. Comprobado a ciegas en MLB 2026. No incorpora lanzadores abridores ni alineaciones.'
-      + ' Ganador: parte decisiva de esas mismas distribuciones de carreras, sin usar cuotas.' + (match.allowsDraw ? ' Empate final por frecuencia observada de partidos únicos.' : '')
+      + (rated.starters ? STARTER_METHOD : '')
+      + ' Ganador: parte decisiva de esas mismas distribuciones de carreras, sin usar cuotas.' + (match.allowsDraw ? TIE_METHOD : '')
   };
 }
 
@@ -261,6 +279,13 @@ export function homeCourtEdge(match, games = [], now = Date.now()) {
 export function basketballAnalysis(match, games = [], now = Date.now(), history = null, availability = null) {
   const legacy = legacyBasketballAnalysis(match, games, now);
   const rated = ['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status) ? ratedMargin(match, games, history, now, availability) : null;
+  // NBA, WNBA and NBA preseason are only forecast with the league ratings: while
+  // their stored results are not loaded yet, say so instead of showing the
+  // last-20-games method (it gave LA Clippers 69% where the ratings give 27%).
+  if (!rated && !history && BASKETBALL_RATINGS.deviation[ratingLeagueOf(match.leagueId)] && ['SCHEDULED', 'LIVE'].includes(match.status)) {
+    return { ...legacy, available: false, pending: true, winner: pair(null), handicaps: Object.fromEntries(['home', 'away'].map(side => [side, HANDICAP_LINES.map(line => ({ line, probability: null }))])),
+      notice: 'Calculando los ratings de la liga con todos sus resultados; los porcentajes aparecen en unos segundos.' };
+  }
   if (!rated) return legacy;
   // Owner rule: winner and handicaps come from the same rated margin; a published
   // price is shown only as the momio (a market winner made two games of the same

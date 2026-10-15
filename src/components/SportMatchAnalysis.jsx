@@ -119,7 +119,8 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
         <p className="text-[10px] text-slate-500">W: victoria · L: derrota · D: empate. Orden: más antiguo a más reciente.</p>
         <details className="text-xs text-slate-400"><summary className="cursor-pointer text-sky-300 min-h-8">Ver los resultados recientes</summary><p className="py-2 text-[10px]">Últimos resultados anteriores al partido en esta competición.</p><div className="mt-2 space-y-4">{[['home', home], ['away', away]].map(([side, name]) => <div key={side}><p className="font-semibold text-slate-200 mb-2">{name}</p>{a.form?.[side]?.length ? [...a.form[side]].reverse().map(game => <div key={game.id} className="flex justify-between gap-2 py-2 border-b border-white/5"><span>{new Date(game.date).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })}{game.opponent ? ` · ${game.opponent}` : ''}</span><a href={game.sourceUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 font-mono text-sky-300 underline">{game.own}–{game.against} ({game.result})</a></div>) : <p>N/D</p>}</div>)}</div></details>
       </section>}
-      <Outcomes title="Ganador del encuentro" values={a.winner} home={home} away={away} draw={Boolean(match.allowsDraw)} odds={match.odds} oddsFormat={oddsFormat} />
+      <Outcomes title={match.allowsDraw ? 'Ganador del encuentro · empate devuelve' : 'Ganador del encuentro'} values={a.winner} home={home} away={away} odds={match.odds} oddsFormat={oddsFormat} />
+      {match.allowsDraw && <p className="text-xs text-amber-200 leading-relaxed">Empate: {Number.isFinite(a.tie?.yes) ? `${a.tie.yes}%` : 'N/D'}{a.tieSampleSize?.games ? ` (${a.tieSampleSize.ties} empates en ${a.tieSampleSize.games} partidos de la liga)` : ''}. En esta liga el partido puede terminar empatado tras las entradas extra; las casas devuelven la apuesta de Ganador y por eso los porcentajes de arriba suman 100 sin el empate.</p>}
       <p className="text-xs text-sky-300">{a.probabilitySource === 'published-odds' ? 'Ganador: probabilidad implícita del mercado, sin margen de la casa.'
         : `${match.sport === 'tenis' ? 'Ganador: porcentaje calculado por nuestro modelo (Elo, juegos ganados, ranking y cara a cara), sin usar cuotas.'
           : match.sport === 'beisbol' ? 'Ganador: calculado con las mismas carreras esperadas que el resto de mercados, sin usar cuotas.'
@@ -127,6 +128,11 @@ export default function SportMatchAnalysis({ match, onClose, loading = false, er
       <p className="text-[11px] text-slate-400 leading-relaxed">Publicado: cuota de la fuente{match.oddsProvider ? ` (${match.oddsProvider})` : ''}; confirma su vigencia en la casa. Momio justo: 100 dividido por la probabilidad estimada, sin margen de casa; se muestra cuando la fuente no publica cuota.</p>
       {a.notice && <p role="status" className="text-xs text-slate-400 leading-relaxed">{a.notice}</p>}
 
+      {match.sport === 'beisbol' && a.starters && <section aria-label="Abridores" className="rounded-xl border border-sky-500/20 bg-[#111a28] p-4 space-y-2">
+        <h3 className="text-sm font-bold">Abridores anunciados · incluidos en el cálculo</h3>
+        <div className="grid grid-cols-2 gap-3 text-xs">{[['home', home], ['away', away]].map(([side, name]) => <div key={side} className="min-w-0"><p className="text-slate-400 break-words">{name}</p><p className="font-semibold text-slate-100 break-words">{a.starters[side]?.name || 'N/D'}</p><p className="font-mono text-[11px] text-sky-300">FIP {a.starters[side]?.fip ?? 'N/D'} · {a.starters[side]?.innings ?? 0} entradas</p></div>)}</div>
+        <p className="text-[10px] text-slate-400 leading-relaxed">FIP: carreras que un abridor permitiría según sus jonrones, bases por bolas y ponches (menos es mejor; la media de MLB ronda 4.1). Con pocas entradas se acerca a la media.</p>
+      </section>}
       {match.sport === 'beisbol' && <>
         <p className="text-xs text-slate-400">Carreras por equipo · Partido completo, incluidos extra innings</p>
         <div className="grid sm:grid-cols-2 gap-3"><RunTable title={`Carreras · ${home}`} lines={a.teamRuns?.home} oddsFormat={oddsFormat} lockOver={!isVip} onUnlockVip={onUnlockVip} /><RunTable title={`Carreras · ${away}`} lines={a.teamRuns?.away} oddsFormat={oddsFormat} lockOver={!isVip} onUnlockVip={onUnlockVip} /></div>

@@ -96,6 +96,15 @@ export async function loadBasketballHistory(leagueId) {
   try { return await task; } finally { loading.delete(leagueId); }
 }
 
+// Detail requests: when no history exists yet (cold instance without Redis),
+// wait a bounded time for the build instead of answering with another method.
+export async function waitForBasketballHistory(leagueId, ms = 20000) {
+  const history = await loadBasketballHistory(leagueId).catch(() => null);
+  if (history || !refreshing.has(leagueId)) return history;
+  await Promise.race([refreshing.get(leagueId), new Promise(resolve => setTimeout(resolve, ms).unref?.())]);
+  return memory.get(leagueId)?.history || null;
+}
+
 export async function loadAllBasketballHistory(leagueId = null) {
   const leagues = RATED_BASKETBALL_LEAGUES.filter(id => !leagueId || id === ratingLeagueOf(leagueId));
   const loaded = await Promise.all(leagues.map(id => loadBasketballHistory(id).catch(() => null)));

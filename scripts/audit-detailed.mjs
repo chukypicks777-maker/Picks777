@@ -78,10 +78,11 @@ async function sports(sport, label) {
       if (num(e.home) && (Math.max(e.home, e.away) > 7.5 || Math.min(e.home, e.away) < 2)) flag(label, m, 'carreras esperadas fuera de rango', `${r1(e.home)} / ${r1(e.away)}`);
       if (fav > 75) flag(label, m, 'ganador de más de 75% en béisbol', `${r1(fav)}%`);
       if (num(a.extraInnings?.yes) && (a.extraInnings.yes > 18 || a.extraInnings.yes < 3)) flag(label, m, 'extra innings fuera de rango', `${r1(a.extraInnings.yes)}%`);
+      if (m.allowsDraw && !(num(a.tie?.yes) && a.tie.yes < 6)) flag(label, m, 'empate de liga raro', `${r1(a.tie?.yes)}%`, 'error');
       if (num(a.firstInning?.draw) && (a.firstInning.draw < 35 || a.firstInning.draw > 80)) flag(label, m, 'primer inning raro', `empate ${r1(a.firstInning.draw)}%`);
       if (gap > 12) flag(label, m, 'muy distinto al momio publicado (opinión del modelo)', `modelo ${r1(w.home)}% vs mercado ${r1(market * 100)}%`, 'info');
       const total = a.totalRuns?.find(row => row.line === 8.5)?.over, f5 = a.firstFive?.find(row => row.line === 4.5)?.over;
-      rows.push(`| ${name(m)} | ${m.leagueName} | ${r1(w.home)}${m.allowsDraw ? ` / X ${r1(w.draw)}` : ''} / ${r1(w.away)} | ${am(m.odds?.homeWin)} / ${am(m.odds?.awayWin)} | carreras ${r1(e.home)}–${r1(e.away)} | O8.5 ${r1(total)} · F5 O4.5 ${r1(f5)} · extra ${r1(a.extraInnings?.yes)} | ${pick ? `${pick.selection} ${pick.probability}%` : 'N/D'} |`);
+      rows.push(`| ${name(m)} | ${m.leagueName} | ${r1(w.home)} / ${r1(w.away)}${m.allowsDraw ? ` (empate ${r1(a.tie?.yes)}%, devuelve)` : ''}${a.starters ? ` · abridores ${a.starters.home.name} ${a.starters.home.fip} / ${a.starters.away.name} ${a.starters.away.fip}` : ''} | ${am(m.odds?.homeWin)} / ${am(m.odds?.awayWin)} | carreras ${r1(e.home)}–${r1(e.away)} | O8.5 ${r1(total)} · F5 O4.5 ${r1(f5)} · extra ${r1(a.extraInnings?.yes)} | ${pick ? `${pick.selection} ${pick.probability}%` : 'N/D'} |`);
     }
     if (sport === 'basquetbol') {
       const pts = a.expectedPoints || {}, margin = num(pts.home) ? pts.home - pts.away : null;

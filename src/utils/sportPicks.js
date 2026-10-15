@@ -1,9 +1,9 @@
 import { marketQuote } from './oddsFormatter.js';
 import { isUpcomingFixture } from './fixtureEligibility.js';
 
-// A complete winner quote for this market: both sides, plus the draw when the
-// competition has three outcomes. It is shown as the momio, never as a percentage.
-export const hasPublishedWinnerPrice = match => ['homeWin', 'awayWin', ...(match?.allowsDraw ? ['draw'] : [])].every(key => Number(match?.odds?.[key]) > 1);
+// A complete winner quote: both sides (in NPB/KBO a tie refunds the moneyline,
+// so it is still a two-way price). Shown as the momio, never as a percentage.
+export const hasPublishedWinnerPrice = match => ['homeWin', 'awayWin'].every(key => Number(match?.odds?.[key]) > 1);
 
 // NBA injury report entry, in words.
 export function availabilityStatus(player) {
@@ -34,10 +34,22 @@ export function sportWinnerPick(match) {
   const side = winner.home >= winner.away ? 'home' : 'away';
   const team = match[`${side}Team`];
   if (!team?.id || !team.name) return null;
-  // A two-way price cannot be attached to an unconditional three-way forecast.
-  const compatible = !match.allowsDraw || Number(match.odds?.draw) > 1;
-  const quote = marketQuote(compatible ? match.odds?.[`${side}Win`] : null, winner[side]);
+  // Two-way forecast and two-way price (NPB/KBO: a tie refunds the bet).
+  const quote = marketQuote(match.odds?.[`${side}Win`], winner[side]);
   return { side, teamId: team.id, teamName: team.name, selection: `${team.name} gana`, market: 'Ganador', probability: winner[side], odds: quote.odds, oddsKind: quote.kind, oddsLabel: quote.label };
+}
+
+// Points between the model's pick and the published price for the same side
+// (no-vig), or null without a two-way price. It never changes a percentage: a
+// large gap only warns that the casa may know something the model cannot see
+// (injuries, line-ups, starting pitchers, signings).
+export const MARKET_GAP_WARNING = 12, MARKET_GAP_BANKER = 15;
+export function marketGap(match) {
+  const pick = sportWinnerPick(match);
+  const h = Number(match?.odds?.homeWin), a = Number(match?.odds?.awayWin);
+  if (!pick || !(h > 1) || !(a > 1)) return null;
+  const home = (1 / h) / (1 / h + 1 / a) * 100;
+  return Math.round((pick.probability - (pick.side === 'home' ? home : 100 - home)) * 10) / 10;
 }
 
 export function sportParlayLeg(match, now = Date.now()) {
@@ -51,7 +63,8 @@ export function sportParlayLeg(match, now = Date.now()) {
 export function rankSportWinners(matches, now = Date.now(), limit = 10) {
   return [...new Map(matches.map(match => [match.id, match])).values()]
     .filter(match => match.status === 'SCHEDULED' && Date.parse(match.kickoff) > now && !match.retired)
-    .map(match => ({ ...match, bankerPick: sportWinnerPick(match) })).filter(match => match.bankerPick)
+    // A Banquero is a pick the casa does not strongly contradict.
+    .map(match => ({ ...match, bankerPick: sportWinnerPick(match) })).filter(match => match.bankerPick && !(Math.abs(marketGap(match) ?? 0) > MARKET_GAP_BANKER))
     .sort((a, b) => b.bankerPick.probability - a.bankerPick.probability || Date.parse(a.kickoff) - Date.parse(b.kickoff) || a.id.localeCompare(b.id))
     .slice(0, limit).map((match, index) => ({ ...match, bankerRank: index + 1 }));
 }

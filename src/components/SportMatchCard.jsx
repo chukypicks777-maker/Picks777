@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, Eye, Sparkles, RotateCw, CheckCircle2, Zap, Trophy, Plus, Lock, Crown } from 'lucide-react';
 import { formatFixtureSchedule } from '../utils/matchSchedule.js';
-import { sportWinnerPick, sportCardMarkets, sportParlayLeg, hasPublishedWinnerPrice, availabilitySummary } from '../utils/sportPicks.js';
+import { sportWinnerPick, sportCardMarkets, sportParlayLeg, hasPublishedWinnerPrice, availabilitySummary, marketGap, MARKET_GAP_WARNING } from '../utils/sportPicks.js';
 import { formatOdds } from '../utils/oddsFormatter.js';
 import { MarketValue, Probability, WinnerBar } from './SportMatchAnalysis';
 import SportIdentity from './SportIdentity';
@@ -15,7 +15,7 @@ function SportMatchCard({ match, oddsFormat, onOpen, onToggleParlay, isInParlay 
   const now = useClock();
   const displayStatus = match.liveSupported === false && match.status === 'SCHEDULED' && Date.parse(match.kickoff) <= now ? 'UNKNOWN' : match.status;
   const a = match.analysis || {}, pick = sportWinnerPick(match), report = match.aiReport;
-  const leg = sportParlayLeg(match);
+  const leg = sportParlayLeg(match), gap = match.status === 'SCHEDULED' ? marketGap(match) : null;
   const aiVerified = report?.aiAvailable === true && report?.dataGrounded === true;
   return <article data-match-id={match.id} aria-label={`${match.homeTeam.name} vs ${match.awayTeam.name}`}
     style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 450px', ...(bankerRank === 1 ? { borderColor: 'rgba(251, 191, 36, 0.4)' } : {}) }}
@@ -36,13 +36,14 @@ function SportMatchCard({ match, oddsFormat, onOpen, onToggleParlay, isInParlay 
       {['home', 'away'].map(side => { const team = match[`${side}Team`]; return <div key={side} className="flex items-center justify-between gap-2">
         <div className="flex gap-2 items-center min-w-0"><SportIdentity key={`${team.id}:${team.logo}`} team={team} /><div className="min-w-0"><p className="font-semibold text-xs text-white break-words leading-snug">{team.name}</p>
           {match.sport !== 'tenis' && <TeamForm team={team.name} records={a.form?.[side]} compact loading={match.sport === 'basquetbol' && !match.detailLoadedAt} />}</div></div>
-        <MarketValue value={a.winner?.[side]} publishedOdds={match.allowsDraw && !(Number(match.odds?.draw) > 1) ? null : match.odds?.[`${side}Win`]} oddsFormat={oddsFormat} />
+        <MarketValue value={a.winner?.[side]} publishedOdds={match.odds?.[`${side}Win`]} oddsFormat={oddsFormat} />
       </div>; })}
     </div>
-    {match.allowsDraw && <div className="flex justify-between items-center mb-3 text-[11px] text-slate-400"><span>Empate</span><MarketValue value={a.winner?.draw} publishedOdds={match.odds?.draw} oddsFormat={oddsFormat} /></div>}
+
     <div className="mb-3"><WinnerBar values={a.winner} /></div>
     <p className="text-[9px] text-slate-400 mb-1">{a.probabilitySource === 'published-odds' ? 'Ganador · Mercado sin margen' : a.available && hasPublishedWinnerPrice(match) ? 'Ganador · % del modelo propio · Momio publicado' : a.ratingSample ? 'Ganador · Ratings por rival, prueba ciega' : match.sport === 'tenis' && a.available ? 'Ganador · Modelo propio, sin momio de casa' : 'Ganador · Modelo sin calibración de aciertos'}</p>
-    {match.allowsDraw && <p className="text-[9px] text-amber-300 mb-2">Tres resultados: local, empate y visita. No equivale a un moneyline de dos resultados.</p>}
+    {match.allowsDraw && <p className="text-[9px] text-amber-300 mb-2">Ganador sin empate: si terminan empatados{Number.isFinite(a.tie?.yes) ? ` (${a.tie.yes}% en esta liga)` : ''}, la apuesta se devuelve, como en las casas.</p>}
+    {a.starters && <p className="text-[9px] text-sky-200/90 mb-2 truncate" title="Abridores anunciados, incluidos en el porcentaje">Abridores · {a.starters.home?.name || 'N/D'} vs {a.starters.away?.name || 'N/D'}</p>}
     {availabilitySummary(match) && <p className="text-[9px] text-amber-200/90 mb-2 line-clamp-2" title="Reporte de lesiones y descansos de ESPN, incluido en el porcentaje">Bajas incluidas · {availabilitySummary(match)}</p>}
     {['LIVE', 'FINISHED'].includes(match.status) && (match.status === 'FINISHED' && match.retired && match.liveScore?.home == null
       ? <p className="text-center text-xs font-mono text-amber-300 mb-3">{/walkover/i.test(match.statusDetail || '') ? 'Walkover · no se jugó' : 'Retiro · partido no completado'}</p>
@@ -52,6 +53,7 @@ function SportMatchCard({ match, oddsFormat, onOpen, onToggleParlay, isInParlay 
       <div className="flex items-center justify-between gap-2 text-[9px] font-mono mb-1"><span className="flex items-center gap-1 text-sky-400 font-bold"><Zap size={11} />{bankerRank ? 'PICK BANQUERO' : 'PRONÓSTICO GANADOR'}</span><span className="text-slate-400">{pick ? `${pick.probability}% estimado` : 'N/D'}</span></div>
       <p className="text-xs font-semibold break-words leading-snug">{pick?.selection || 'Sin datos suficientes para un ganador'}</p>
       {pick && <p className="font-mono text-[10px] text-emerald-400 mt-1">{pick.oddsKind === 'published' ? `Momio ${formatOdds(pick.odds, oddsFormat)} · Publicado` : `Momio justo ${formatOdds(pick.odds, oddsFormat)} · Calculado`}</p>}
+      {Math.abs(gap ?? 0) > MARKET_GAP_WARNING && <p role="note" className="text-[10px] text-amber-300 mt-1 leading-snug">El modelo y la casa difieren {Math.abs(gap).toFixed(0)} puntos. La casa puede tener información que el modelo no ve (lesiones, alineaciones, abridores, fichajes): tómalo con cautela.</p>}
       <div className="pt-2 mt-2 border-t border-white/10 flex items-start gap-1.5 text-[10px] text-slate-400"><Sparkles size={11} className="shrink-0 mt-0.5 text-sky-400" /><p className="line-clamp-2">{aiVerified ? report.tacticalKeypoints?.[0] || report.analysisSections?.verdict : pick ? `Base estadística: ${a.probabilitySource === 'published-odds' ? 'ganador implícito en cuotas publicadas, sin margen.' : `${(a.ratingSample || a.sampleSize)?.home ?? 0} / ${(a.ratingSample || a.sampleSize)?.away ?? 0} partidos previos. Probabilidad estimada del ganador.`}` : a.notice || 'Faltan registros o cuotas suficientes.'}</p></div>
     </section>
     {match.venue && <p className="text-[10px] text-slate-500 truncate mb-2" title={match.venue}>{match.venue}</p>}

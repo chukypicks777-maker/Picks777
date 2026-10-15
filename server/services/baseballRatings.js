@@ -1,4 +1,5 @@
 import { fitStrengths, expectedPair, countDistribution } from '../../src/utils/footballModel.js';
+import { starterFactor, pitcherFip, STARTERS } from './baseballStarters.js';
 
 // Opponent- and venue-adjusted run ratings for baseball. Parameters were tuned
 // on MLB 2025 and measured blind on MLB 2026 (scripts/backtest/experiment-baseball-markets.mjs).
@@ -20,7 +21,7 @@ function leagueFit(games, match, cutoff) {
   if (!byKey) { byKey = new Map(); fits.set(games, byKey); }
   const key = `${match.leagueId}:${Math.floor(cutoff / 3600000)}`;
   if (!byKey.has(key)) {
-    const rows = games.filter(game => game.leagueId === match.leagueId && game.status === 'FINISHED' && game.id !== match.id
+    const rows = games.filter(game => game.leagueId === match.leagueId && game.status === 'FINISHED' && game.id !== match.id && !game.exhibition
       && Number.isInteger(game.finalScore?.home) && Number.isInteger(game.finalScore?.away))
       .map(game => ({ time: Date.parse(game.kickoff), home: String(game.homeTeam?.id), away: String(game.awayTeam?.id), hv: game.finalScore.home, av: game.finalScore.away }));
     if (byKey.size > 24) byKey.delete(byKey.keys().next().value);
@@ -47,13 +48,19 @@ export function ratedRuns(match, games, now = Date.now()) {
   const cutoff = Math.min(Date.parse(match.kickoff), now);
   if (!Number.isFinite(cutoff)) return null;
   const fit = leagueFit(games, match, cutoff);
-  const pair = expectedPair(fit, String(match.homeTeam?.id), String(match.awayTeam?.id), { minGames: BASEBALL_RATINGS.minGames });
-  if (!pair) return null;
+  const rated = expectedPair(fit, String(match.homeTeam?.id), String(match.awayTeam?.id), { minGames: BASEBALL_RATINGS.minGames });
+  if (!rated) return null;
+  // MLB announced starters: the runs each team allows follow its starter's FIP.
+  const starters = match.leagueId === 'mlb' && ['SCHEDULED', 'LIVE'].includes(match.status) && STARTERS.weight > 0 && match.starters?.home && match.starters?.away ? match.starters : null;
+  const factor = side => starters ? starterFactor(starters[side]) : 1;
+  const pair = { ...rated, home: rated.home * factor('away'), away: rated.away * factor('home') };
   const c = BASEBALL_RATINGS, dist = (mean, size) => countDistribution(mean, size, 40);
   const home = dist(pair.home, c.size), away = dist(pair.away, c.size);
   const regular = resultOf(dist(pair.home * c.regulationShare, c.size), dist(pair.away * c.regulationShare, c.size));
   return {
     expected: pair, sample: pair.sample, home, away, total: convolve(home, away),
+    starters: starters ? Object.fromEntries(['home', 'away'].map(side => [side, { name: starters[side].name || null, fip: Number(pitcherFip(starters[side]).toFixed(2)),
+      innings: Math.round((starters[side].current?.outs || 0) / 3), factor: Number(factor(side).toFixed(3)) }])) : null,
     // A tie after nine innings means extra innings; decisive share gives the winner.
     full: resultOf(home, away), regulationTie: regular.draw,
     firstFive: convolve(dist(pair.home * c.firstFiveShare, c.firstFiveSize), dist(pair.away * c.firstFiveShare, c.firstFiveSize)),

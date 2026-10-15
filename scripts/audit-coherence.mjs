@@ -79,7 +79,9 @@ async function sports(sport) {
     count(`${sport} with percentages`);
     const w = a.winner;
     ['home', 'draw', 'away'].forEach(side => percentRange(m, `ganador ${side}`, w[side]));
-    sums(m, 'ganador', m.allowsDraw ? [w.home, w.draw, w.away] : [w.home, w.away]);
+    // NPB/KBO: the winner is the tie-void moneyline; the tie is a separate, small chance.
+    sums(m, 'ganador', [w.home, w.away]);
+    if (m.allowsDraw && !(num(a.tie?.yes) && a.tie.yes > 0 && a.tie.yes < 8)) fail(m, 'empate de liga fuera de rango', JSON.stringify(a.tie));
     if (a.probabilitySource === 'published-odds') count(`${sport} winner taken from the published price`);
     for (const side of ['home', 'away']) if (num(w[side])) quoteOf(m, side, w[side]);
     const pick = sportWinnerPick(m);

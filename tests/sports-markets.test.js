@@ -45,8 +45,12 @@ test('baseball totals are monotone and complementary, first inning includes the 
     rows.forEach((row, i) => { assert.equal(row.over + row.under, 100); if (i) assert.ok(row.over <= rows[i - 1].over); });
   }
   for (const values of Object.values(result.scoresRun)) assert.equal(values.yes + values.no, 100);
+  // NPB/KBO: the winner is the moneyline the casas offer (a tie refunds it); the tie is shown apart.
   const japan = baseballAnalysis({ ...match, allowsDraw: true }, history(match), NOW);
-  assert.equal(sum(japan.winner), 100); assert.ok(japan.winner.draw > 0);
+  assert.equal(sum(japan.winner), 100); assert.equal(japan.winner.draw, undefined);
+  assert.deepEqual(japan.winner, result.winner);
+  assert.equal(japan.tie.yes + japan.tie.no, 100); assert.ok(japan.tie.yes > 0 && japan.tie.yes < 8);
+  assert.equal(japan.winnerMarket, 'two-way-tie-void');
 });
 
 test('no future results, current game results or other leagues leak into forecasts; absent samples stay unavailable', () => {

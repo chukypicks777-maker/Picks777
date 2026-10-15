@@ -114,6 +114,7 @@ function buildRows(prevLabel, label, preseason, olderLabel = null) {
   const previous = new Map(); for (const g of results[prevLabel]) if (box[prevLabel][g.id]) addTotals(previous, box[prevLabel][g.id]);
   const older = new Map(); if (olderLabel) for (const g of results[olderLabel]) if (box[olderLabel][g.id]) addTotals(older, box[olderLabel][g.id]);
   const logs = teamLogs(preseason ? [prevLabel] : [prevLabel, label]), current = new Map(), rows = [];
+  const seasonGames = new Map();
   let margins;
   if (preseason) {
     const asOf = Date.parse(results[label][0].kickoff) - DAY;
@@ -140,9 +141,10 @@ function buildRows(prevLabel, label, preseason, olderLabel = null) {
           return { stats, plays: tonight.has(id) ? 1 : 0, exact: exact.get(id) || 0, approx: share };
         }).filter(Boolean);
       }
-      rows.push({ g, margin: margins.get(g.id), sides });
+      rows.push({ g, margin: margins.get(g.id), sides, played: Math.min(seasonGames.get(g.home) || 0, seasonGames.get(g.away) || 0) });
     }
     if (gameRows && !preseason) addTotals(current, gameRows);
+    for (const team of [g.home, g.away]) seasonGames.set(team, (seasonGames.get(team) || 0) + 1);
   }
   return rows;
 }
@@ -189,3 +191,17 @@ console.log(JSON.stringify({
     blind2025: { previous: score(preTest, r => predict(r, none, 'approx', shippedPre), oddsPre), exactShares: score(preTest, r => predict(r, preExact.params, 'exact', preExact.scale), oddsPre),
       appShares: score(preTest, r => predict(r, preApprox.params, 'approx', preApprox.scale), oddsPre), shipped: score(preTest, r => predict(r, AVAILABILITY.preseason, 'approx', AVAILABILITY.preseason.scale), oddsPre), market: marketScore(preTest, oddsPre) } }
 }, null, 1));
+
+// Season start: last season's ratings regress toward the league mean until each
+// team has played enough games of the new season (k = c + (1 - c) * min(1, g / G)).
+const carry = (row, c, G) => c + (1 - c) * Math.min(1, row.played / G);
+const predictCarry = (row, c, G) => predict(row, AVAILABILITY.regular, 'approx', carry(row, c, G));
+let bestCarry = null;
+for (const c of [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]) for (const G of [5, 10, 15, 20, 30, 40]) {
+  const loss = train.reduce((s, r) => s + ll(predictCarry(r, c, G), r.g.hs > r.g.as), 0) / train.length;
+  if (!bestCarry || loss < bestCarry.loss) bestCarry = { c, G, loss: +loss.toFixed(4) };
+}
+const firstWeeks = rows => rows.filter(r => r.played < 15);
+console.log('CARRY', JSON.stringify({ chosen: bestCarry,
+  test: { all: { before: score(test, r => predict(r, AVAILABILITY.regular, 'approx'), oddsRegular), after: score(test, r => predictCarry(r, bestCarry.c, bestCarry.G), oddsRegular) },
+    first15games: { before: score(firstWeeks(test), r => predict(r, AVAILABILITY.regular, 'approx'), oddsRegular), after: score(firstWeeks(test), r => predictCarry(r, bestCarry.c, bestCarry.G), oddsRegular), market: marketScore(firstWeeks(test), oddsRegular) } } }));

@@ -100,3 +100,13 @@ test('long absences are already inside the rating: only the games before the inj
   assert.ok(recent.share > old.share * 2, `${recent.share} vs ${old.share}`);
   assert.equal(recent.plays, 0);
 });
+
+test('NBA games wait for the league ratings instead of showing the last-20-games method', () => {
+  const pending = basketballAnalysis(match, [], NOW, null);
+  assert.equal(pending.pending, true); assert.equal(pending.available, false);
+  assert.equal(pending.winner.home, null);
+  assert.ok(pending.handicaps.home.every(row => row.probability === null));
+  assert.match(pending.notice, /Calculando/);
+  // Competitions without league ratings keep their own method.
+  assert.equal(basketballAnalysis({ ...match, leagueId: 'ncaaw' }, [], NOW, null).pending, undefined);
+});

@@ -15,7 +15,7 @@
 import { fetchJson } from './dataCache.js';
 
 export const AVAILABILITY = Object.freeze({
-  minMinutes: 8, priorGames: 10, seasonGames: 82, fullSeasonGames: 20,
+  minMinutes: 8, priorGames: 10, seasonGames: 82, fullSeasonGames: 20, preseasonPlays: 0.82,
   // Stars weigh more than the sum of role players (value squared, 10 = 10).
   regular: Object.freeze({ alpha: 0.1, replacement: 0, power: 2, shrinkGames: 10, minMinutes: 8 }),
   // Fitted together with the preseason scale of last season's ratings.
@@ -117,7 +117,9 @@ export function teamAvailability(teamId, kickoff, rows, availability, { preseaso
     const stats = blendedStats(preseason ? null : statsFor(id, season), statsFor(id, season - 1), statsFor(id, season - 2));
     if (!stats) continue;
     const entry = injuries.get(id), onRoster = report.roster.includes(id);
-    const plays = onRoster ? playChance(entry, kickoff) : 0;
+    // Preseason: teams rest healthy players without listing them; 82% of the
+    // rotation players (8+ minutes) took part in the 2023-25 preseason games.
+    const plays = onRoster ? playChance(entry, kickoff) * (preseason && !entry ? AVAILABILITY.preseasonPlays : 1) : 0;
     let earned = share(id);
     // Out since a date: the rating games after it were already played without him.
     if (entry && plays < 1 && Number.isFinite(Date.parse(entry.date))) earned *= weightBefore(Date.parse(entry.date));

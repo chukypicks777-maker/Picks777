@@ -30,7 +30,11 @@ function fixture(sport, leagueId, homeName, awayName) {
     });
   }
   if (sport === 'tenis') { match.tour = 'atp'; games.forEach(game => { game.tour = 'atp'; }); match.maxSets = 3; }
-  match.analysis = sport === 'beisbol' ? baseballAnalysis(match, games, now) : sport === 'tenis' ? tennisAnalysis(match, games, now) : basketballAnalysis(match, games, now);
+  // NBA/WNBA are forecast with the league's stored results (never the last-20-games method).
+  const teams = ['a', 'b', 'c', 'd'];
+  const history = { leagueId, builtAt: now, rows: Array.from({ length: 48 }, (_, i) => [`h-${i}`, Math.round((now - (48 - i) * 86400000) / 1000),
+    teams[i % 4], teams[(i + 1 + (i % 3)) % 4], 104 + (i % 7), 100 + ((i + 3) % 7)]).filter(row => row[2] !== row[3]) };
+  match.analysis = sport === 'beisbol' ? baseballAnalysis(match, games, now) : sport === 'tenis' ? tennisAnalysis(match, games, now) : basketballAnalysis(match, games, now, history);
   return match;
 }
 const feeds = {

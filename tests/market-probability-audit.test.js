@@ -6,7 +6,7 @@ import { noVigMarket, footballProbabilityLabel } from '../src/utils/marketProbab
 import { decimalToAmerican } from '../src/utils/oddsFormatter.js';
 import { getTop3Opportunities } from '../src/utils/mathProbabilities.js';
 import { devigPower } from '../src/utils/footballModel.js';
-import { baseballAnalysis } from '../server/services/sportProbabilityModel.js';
+import { baseballAnalysis, leagueTieChance } from '../server/services/sportProbabilityModel.js';
 import { sportWinnerPick } from '../src/utils/sportPicks.js';
 
 const lens = () => ({ id: 'lens-lyon', status: 'SCHEDULED', kickoff: '2026-10-09T18:45:00Z',
@@ -104,26 +104,26 @@ const kbo = { id: 'kt-samsung', sport: 'beisbol', leagueId: 'kbo', allowsDraw: t
 const history = Array.from({ length: 6 }, (_, i) => ({ ...kbo, id: `past-${i}`, status: 'FINISHED',
   kickoff: `2026-09-${20 + i}T09:30:00Z`, finalScore: { home: 5, away: i === 0 ? 5 : 3 } }));
 
-test('KBO ties use unique matches and the same game cannot count twice in both team histories', () => {
+test('KBO ties come from the whole league, never from one tie in the last games of the two teams', () => {
+  // One tie in six games used to give a 21.4% draw and a +176 momio for a coin flip.
   const analysis = baseballAnalysis(kbo, history, Date.parse(kbo.kickoff));
-  assert.deepEqual(analysis.drawSampleSize, { uniqueGames: 6, draws: 1 });
-  assert.ok(Math.abs(analysis.winner.draw - 21.4) < 0.11);
-  assert.equal(analysis.winnerMarket, 'three-way');
+  assert.deepEqual(analysis.tieSampleSize, { games: 6, ties: 1 });
+  assert.ok(analysis.tie.yes > 2.5 && analysis.tie.yes < 5, `tie ${analysis.tie.yes}`);
+  assert.equal(analysis.winnerMarket, 'two-way-tie-void');
+  assert.equal(analysis.winner.home + analysis.winner.away, 100);
+  // A full league year: 16 ties in 700 games is about 2.4%.
+  const year = Array.from({ length: 700 }, (_, i) => ({ ...kbo, id: `year-${i}`, status: 'FINISHED', homeTeam: { id: `h${i % 10}` }, awayTeam: { id: `a${i % 9}` },
+    kickoff: new Date(Date.parse('2026-04-01T09:30:00Z') + i * 6 * 3600000).toISOString(), finalScore: { home: i % 44 === 0 ? 4 : 5, away: 4 } }));
+  assert.ok(Math.abs(leagueTieChance(year) * 100 - 2.4) < 0.3);
 });
 
-test('KBO prices never replace three-way model probabilities, and a two-way price is not attached to a three-way pick', () => {
+test('KBO prices never replace the model probabilities, and the two-way moneyline is the momio of the two-way pick', () => {
   const odds = { homeWin: 1 + 100 / 110, awayWin: 1 + 100 / 115 };
   const analysis = baseballAnalysis({ ...kbo, odds }, history, Date.parse(kbo.kickoff));
   assert.equal(analysis.probabilitySource, 'experimental-model');
-  assert.equal(sportWinnerPick({ ...kbo, odds, analysis }).oddsKind, 'theoretical');
-  // A complete three-way quote is only the momio: percentages stay the model's.
-  const complete = { ...odds, draw: 15 };
-  const quoted = baseballAnalysis({ ...kbo, odds: complete }, history, Date.parse(kbo.kickoff));
-  assert.equal(quoted.probabilitySource, 'experimental-model');
-  assert.deepEqual(quoted.winner, analysis.winner);
-  assert.ok(Math.abs(Object.values(quoted.winner).reduce((s, p) => s + p, 0) - 100) < 1e-9);
-  assert.equal(sportWinnerPick({ ...kbo, odds: complete, analysis: quoted }).oddsKind, 'published');
-  assert.equal(baseballAnalysis({ ...kbo, odds: complete }, [], Date.parse(kbo.kickoff)).winner.home, null, 'Prices alone never produce a percentage');
+  assert.deepEqual(analysis.winner, baseballAnalysis(kbo, history, Date.parse(kbo.kickoff)).winner);
+  assert.equal(sportWinnerPick({ ...kbo, odds, analysis }).oddsKind, 'published');
+  assert.equal(baseballAnalysis({ ...kbo, odds }, [], Date.parse(kbo.kickoff)).winner.home, null, 'Prices alone never produce a percentage');
 });
 
 test('the screenshot +176 is a correct conversion, while -110/-115 imply a different two-way market', () => {

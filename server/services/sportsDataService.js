@@ -5,9 +5,10 @@ import { getMlbLeague, getNpbLeague, getKboLeague, enrichNpbInnings } from './ba
 import { analyzeSportMatch, SPORT_MODEL_VERSION } from './sportProbabilityModel.js';
 import { readSportsAiReport } from './sportsAiService.js';
 import { loadAllTennisRatings, loadTennisRatings } from './tennisRatings.js';
-import { loadAllBasketballHistory, loadBasketballHistory } from './basketballHistory.js';
+import { loadAllBasketballHistory, waitForBasketballHistory } from './basketballHistory.js';
 import { ratingLeagueOf } from './basketballRatings.js';
 import { loadNbaAvailability } from './basketballAvailability.js';
+import { loadStarterTotals } from './baseballStarters.js';
 
 // NBA injury report, rosters and season averages, only when NBA games are in scope.
 const nbaAvailability = leagueId => !leagueId || ratingLeagueOf(leagueId) === 'nba' ? loadNbaAvailability().catch(() => null) : null;
@@ -231,7 +232,7 @@ async function loadSportsMatch(sport, id, match, sharedHistory = null) {
   const today = new Date().toISOString().slice(0, 10);
   const history = await Promise.all([match.homeTeam, match.awayTeam].map(team => basketballTeamHistory({ teamId: team.id, season: match.season, league }, today)));
   const games = [...new Map(history.flat().map(game => [game.id, game])).values()];
-  const [stored, basketballAvailability] = await Promise.all([loadBasketballHistory(ratingLeagueOf(match.leagueId)).catch(() => null), nbaAvailability(match.leagueId)]);
+  const [stored, basketballAvailability] = await Promise.all([waitForBasketballHistory(ratingLeagueOf(match.leagueId)).catch(() => null), nbaAvailability(match.leagueId)]);
   return { ...match, analysis: analyzeSportMatch(match, games, Date.now(), { basketballHistory: { [ratingLeagueOf(match.leagueId)]: stored }, basketballAvailability }) };
 }
 
@@ -319,6 +320,18 @@ async function getBaseball(today, now, options = {}) {
         result.matches = result.matches.map(match => {
           const snapshot = ids.has(match.id) ? snapshots.get(dateFor(match)) : null;
           return snapshot ? { ...match, ...publishedMlbOdds(match, snapshot.data, snapshot.fetchedAt) } : match;
+        });
+        // Announced starters with their season and previous-season totals.
+        const announced = result.matches.filter(match => ids.has(match.id) && match.probablePitchers?.home && match.probablePitchers?.away);
+        const seasons = [...new Set(announced.map(match => Number(match.season) || new Date(match.kickoff).getUTCFullYear()))];
+        const totals = Object.assign({}, ...await Promise.all(seasons.map(async season => Object.fromEntries(Object.entries(await loadStarterTotals(
+          announced.filter(match => (Number(match.season) || new Date(match.kickoff).getUTCFullYear()) === season).flatMap(match => [match.probablePitchers.home.id, match.probablePitchers.away.id]), season).catch(() => ({})))
+          .map(([id, value]) => [`${id}:${season}`, value])))));
+        result.matches = result.matches.map(match => {
+          if (!announced.includes(match)) return match;
+          const season = Number(match.season) || new Date(match.kickoff).getUTCFullYear();
+          const starter = side => { const value = totals[`${match.probablePitchers[side].id}:${season}`]; return value ? { ...value, id: match.probablePitchers[side].id, name: match.probablePitchers[side].name || value.name } : null; };
+          return starter('home') && starter('away') ? { ...match, starters: { home: starter('home'), away: starter('away') } } : match;
         });
       }
       return { matches: result.matches, coverage: [{ leagueId: league.id, name: league.name, source: result.source, status: result.degraded ? 'degraded' : 'available', fetchedAt: result.fetchedAt }] };

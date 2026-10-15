@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { rankSportWinners, sportWinnerPick } from '../src/utils/sportPicks.js';
+import { rankSportWinners, sportWinnerPick, marketGap, MARKET_GAP_BANKER } from '../src/utils/sportPicks.js';
 import { generateAiSportsReport, readSportsAiReport } from '../server/services/sportsAiService.js';
 import { computeMatchFingerprint } from '../src/utils/analysisCache.js';
 import { parseTennisEvents } from '../server/services/sportsDataService.js';
@@ -34,6 +34,17 @@ test('Banqueros ranks at most ten future winners, with away favourites, stable t
   assert.deepEqual(rankSportWinners([match('z'), match('a')], now).map(game => game.id), ['a', 'z']);
   assert.equal(sportWinnerPick({ ...match('quote'), odds: { homeWin: 1.8 } }).oddsKind, 'published');
   assert.equal(sportWinnerPick(match('fair')).oddsKind, 'theoretical');
+});
+
+test('a pick the published price strongly contradicts is flagged and left out of Banqueros, without changing its percentage', () => {
+  // Model 76% for the away side; the casa's two-way price gives it about 54%.
+  const contradicted = { ...match('charlotte', 24), odds: { homeWin: 2.1, awayWin: 1.77 } };
+  assert.ok(Math.abs(marketGap(contradicted) - 21.8) < 0.2);
+  assert.equal(sportWinnerPick(contradicted).probability, 76);
+  const close = { ...match('close', 60), odds: { homeWin: 1.6, awayWin: 2.4 } };
+  assert.ok(Math.abs(marketGap(close)) < MARKET_GAP_BANKER);
+  assert.deepEqual(rankSportWinners([contradicted, close, match('unpriced', 58)], now).map(game => game.id), ['close', 'unpriced']);
+  assert.equal(marketGap(match('no-price')), null);
 });
 
 test('sports AI uses the configured provider, rejects fabricated numbers and shares only matching factual reports', async t => {
