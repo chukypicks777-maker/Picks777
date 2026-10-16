@@ -52,7 +52,9 @@ export function applyFootballForecast(match) {
   // prices; if a source ever does, the coherence guard below handles them.
   const bttsQuoted = Boolean(noVigMarket(match.odds, ['bttsYes', 'bttsNo']));
   const league = bttsQuoted ? null : leagueFits(match);
-  const forecast = bttsQuoted ? null : forecastFootball(league?.fits || null, match.homeTeamId ?? match.homeTeam?.id, match.awayTeamId ?? match.awayTeam?.id, match.odds);
+  const cup = ['champions', 'europa', 'leagues_cup'].includes(match.leagueId);
+  const forecast = bttsQuoted ? null : forecastFootball(league?.fits || null, match.homeTeamId ?? match.homeTeam?.id, match.awayTeamId ?? match.awayTeam?.id, match.odds,
+    { minGames: cup ? FOOTBALL_MODEL.cupMinTeamGames : FOOTBALL_MODEL.minTeamGames });
   if (forecast) return applyRatingsForecast(match, forecast);
   return applyLegacyFootballForecast(match);
 }

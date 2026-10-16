@@ -4,6 +4,11 @@ import { ratedRuns } from './baseballRatings.js';
 import { ratedMargin, ratingLeagueOf, BASKETBALL_RATINGS } from './basketballRatings.js';
 
 import { SPORT_MODEL_VERSION } from '../../src/utils/sportModelVersion.js';
+import { SPORT_LEAGUES } from '../../src/constants/leagues.js';
+
+// Competitions where the blind test found no forecasting skill: calendar and
+// results only (see src/constants/leagues.js).
+const NO_FORECAST = new Set(Object.values(SPORT_LEAGUES).flat().filter(league => league.forecast === false).map(league => league.id));
 export { SPORT_MODEL_VERSION };
 
 export const RUN_LINES = [1.5, 2.5, 3.5, 4.5, 5.5];
@@ -454,6 +459,12 @@ export function tennisAnalysis(match, games = [], now = Date.now(), ratings = nu
 
 export function analyzeSportMatch(match, games = [], now = Date.now(), { tennisRatings = null, basketballHistory = null, basketballAvailability = null } = {}) {
   const model = match.sport === 'beisbol' ? baseballAnalysis : match.sport === 'tenis' ? tennisAnalysis : basketballAnalysis;
+  if (NO_FORECAST.has(match.leagueId)) {
+    // Recent form stays (real results); every percentage stays N/D.
+    const empty = model({ ...match, odds: {} }, [], now), form = model(match, games, now).form;
+    return { ...empty, form, available: false, noForecast: true,
+      notice: 'Calendario y resultados oficiales. En esta liga el modelo no mostró precisión en la prueba a ciegas de la temporada pasada, así que no publica porcentajes ni picks.' };
+  }
   const analysis = model(match, games, now, match.sport === 'tenis' ? tennisRatings?.[match.tour] : match.sport === 'basquetbol' ? basketballHistory?.[ratingLeagueOf(match.leagueId)] : undefined, match.sport === 'basquetbol' ? basketballAvailability : undefined);
   if (!['SCHEDULED', 'LIVE', 'FINISHED'].includes(match.status)) return model({ ...match, odds: {}, kickoff: 'invalid' }, [], now);
   return analysis;

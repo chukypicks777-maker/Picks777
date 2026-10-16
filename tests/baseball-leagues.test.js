@@ -103,3 +103,13 @@ test('KBO ids stay the same when another game is inserted earlier in the month; 
   assert.deepEqual(before.map(game => game.id), ['kbo-2026-08-20-KIA-LG', 'kbo-2026-08-21-KT-NC', 'kbo-2026-08-21-KT-NC-2']);
   assert.deepEqual(after.slice(1).map(game => game.id), before.map(game => game.id));
 });
+
+test('only the LMP of the winter leagues is offered: the ones without forecasting skill were removed', async () => {
+  const { SPORT_LEAGUES } = await import('../src/constants/leagues.js');
+  const ids = SPORT_LEAGUES.beisbol.map(league => league.id);
+  assert.ok(ids.includes('lmp'));
+  for (const removed of ['lvbp', 'lidom', 'lbprc', 'abl', 'serie_caribe']) assert.ok(!ids.includes(removed), removed);
+  const { analyzeSportMatch } = await import('../server/services/sportProbabilityModel.js');
+  const match = { id: 'lmp-next', sport: 'beisbol', leagueId: 'lmp', status: 'SCHEDULED', kickoff: new Date(NOW + 5 * HOUR).toISOString(), homeTeam: { id: 'a', name: 'A' }, awayTeam: { id: 'b', name: 'B' }, odds: {}, scheduledInnings: 9 };
+  assert.ok(analyzeSportMatch(match, games.map(game => ({ ...game, leagueId: 'lmp' })), NOW).winner.home > 0);
+});

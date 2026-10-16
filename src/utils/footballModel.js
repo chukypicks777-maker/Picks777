@@ -20,6 +20,9 @@ export const FOOTBALL_MODEL = Object.freeze({
   corners: { halfLifeDays: 365, priorGames: 32, size: { total: 76, home: 10.8, away: 10.9 } },
   cards: { halfLifeDays: 120, priorGames: 16, size: { total: 106 } },
   minTeamGames: 4,
+  // Cup ratings mix clubs from many leagues that rarely meet: with few cup games a
+  // team's rating is mostly the prior (Shakhtar after 4 games rated like Inter).
+  cupMinTeamGames: 10,
   maxGoals: 12,
   // Without team history or a goals price the draw price alone sets the total;
   // it overstates lopsided fixtures (a 90% favourite's draw implied 6.3 goals
@@ -328,8 +331,8 @@ export function fitFootballLeague(games, { asOf = Date.now(), seasonStart = null
   };
 }
 
-export function expectedGoals(fits, homeId, awayId) {
-  const sup = expectedPair(fits?.supremacy, homeId, awayId), level = expectedPair(fits?.total, homeId, awayId);
+export function expectedGoals(fits, homeId, awayId, minGames = FOOTBALL_MODEL.minTeamGames) {
+  const sup = expectedPair(fits?.supremacy, homeId, awayId, { minGames }), level = expectedPair(fits?.total, homeId, awayId, { minGames });
   if (!sup || !level) return null;
   let share = sup, total = level, usedShots = false;
   const shots = expectedPair(fits.shots, homeId, awayId);
@@ -351,9 +354,9 @@ const HALF_LINES = [0.5, 1.5, 2.5, 3.5];
 const round2 = value => finite(value) ? Math.round(value * 100) / 100 : null;
 const roundAll = object => Object.fromEntries(Object.entries(object).map(([k, v]) => [k, round2(v)]));
 
-export function forecastFootball(fits, homeId, awayId, odds = {}) {
+export function forecastFootball(fits, homeId, awayId, odds = {}, { minGames = FOOTBALL_MODEL.minTeamGames } = {}) {
   const { rho } = FOOTBALL_MODEL.goals;
-  const stat = fits ? expectedGoals(fits, homeId, awayId) : null;
+  const stat = fits ? expectedGoals(fits, homeId, awayId, minGames) : null;
   const market = devigPower(odds, ['homeWin', 'draw', 'awayWin']);
   const goalsMarket = devigPower(odds, ['over25', 'under25']);
   let rates = stat, totalSource = stat ? 'statistical-model' : null;

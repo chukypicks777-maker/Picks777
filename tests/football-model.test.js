@@ -131,3 +131,19 @@ test('the draw-implied goal total stays within priced totals for lopsided fixtur
   const raws = [2, 2.5, 3, 4, 5, 6, 7].map(raw => Math.min(4.6, Math.max(1.8, 1.18 * raw ** 0.86)));
   assert.ok(raws.every((value, i) => i === 0 || value >= raws[i - 1]));
 });
+
+test('a cup tie needs ten cup games per club before its own ratings give a forecast', () => {
+  const now = Date.parse('2026-10-15T12:00:00Z');
+  const clubs = ['a', 'b', 'c', 'd', 'e', 'f'];
+  // 'f' only played four games in the competition.
+  const rows = Array.from({ length: 80 }, (_, i) => ({ time: now - (80 - i) * 3 * 86400000, home: clubs[i % 5], away: clubs[(i + 1 + (i % 3)) % 5], hv: 1 + (i % 3), av: i % 2 }))
+    .filter(r => r.home !== r.away)
+    .concat([0, 1, 2, 3].map(i => ({ time: now - (10 - i) * 86400000, home: 'f', away: clubs[i], hv: 1, av: 1 })));
+  const fit = fm.fitStrengths(rows, { asOf: now, halfLifeDays: 365, priorGames: 3 });
+  const fits = { supremacy: fit, total: fit };
+  assert.ok(fm.forecastFootball(fits, 'a', 'f', {}), 'League minimum (4 games) rates the tie');
+  assert.equal(fm.forecastFootball(fits, 'a', 'f', {}, { minGames: fm.FOOTBALL_MODEL.cupMinTeamGames }), null, 'Cup minimum leaves it N/D');
+  assert.ok(fm.forecastFootball(fits, 'a', 'b', {}, { minGames: fm.FOOTBALL_MODEL.cupMinTeamGames }));
+  // A published 1X2 still gives the market-coherent forecast.
+  assert.ok(fm.forecastFootball(fits, 'a', 'f', { homeWin: 1.5, draw: 4, awayWin: 6 }, { minGames: fm.FOOTBALL_MODEL.cupMinTeamGames }));
+});

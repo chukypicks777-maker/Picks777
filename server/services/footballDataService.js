@@ -14,6 +14,7 @@ export const LEAGUES = [
   ['italia', 'Serie A', '🇮🇹', 'ita.1'],
   ['francia', 'Ligue 1', '🇫🇷', 'fra.1'],
   ['champions', 'UEFA Champions League', '🏆', 'uefa.champions'],
+  ['europa', 'UEFA Europa League', '🇪🇺', 'uefa.europa'],
   ['leagues_cup', 'Leagues Cup', '🌎', 'concacaf.leagues.cup'],
   ['mexico_femenil', 'Liga MX Femenil', '🇲🇽', 'mex.w.1']
 ].map(([id, name, flag, espnCode]) => ({ id, name, flag, espnCode, sport: id === 'mexico_femenil' ? 'femenil' : 'futbol' }));

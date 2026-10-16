@@ -5,6 +5,7 @@ export const LEAGUES_DATA = [
   { id: 'mexico', name: 'Liga MX', flag: '🇲🇽' },
   { id: 'mexico_femenil', name: 'Liga MX Femenil', flag: '🇲🇽' },
   { id: 'champions', name: 'Champions League', flag: '🏆' },
+  { id: 'europa', name: 'Europa League', flag: '🇪🇺' },
   { id: 'italia', name: 'Serie A', flag: '🇮🇹' },
   { id: 'francia', name: 'Ligue 1', flag: '🇫🇷' },
   { id: 'mls', name: 'MLS', flag: '🇺🇸' },
@@ -22,14 +23,14 @@ export const SPORT_LEAGUES = {
     { id: 'npb', name: 'NPB', flag: '🇯🇵', provider: 'npb', allowsDraw: true },
     { id: 'kbo', name: 'KBO', flag: '🇰🇷', provider: 'kbo', allowsDraw: true },
     { id: 'lmb', name: 'LMB', flag: '🇲🇽', provider: 'mlb', sportId: 23, leagueId: 125, season: 'abril a septiembre' },
-    // Winter leagues (MLB Stats API, sportId 17). Their history reaches the
-    // previous winter so opening week already has ratings.
-    { id: 'lmp', name: 'LMP Pacífico', flag: '🇲🇽', provider: 'mlb', sportId: 17, leagueId: 132, historyDays: 420, season: 'octubre a enero' },
-    { id: 'lvbp', name: 'LVBP Venezuela', flag: '🇻🇪', provider: 'mlb', sportId: 17, leagueId: 135, historyDays: 420, season: 'octubre a enero' },
-    { id: 'lidom', name: 'LIDOM Dominicana', flag: '🇩🇴', provider: 'mlb', sportId: 17, leagueId: 131, historyDays: 420, season: 'octubre a enero' },
-    { id: 'lbprc', name: 'LBPRC Puerto Rico', flag: '🇵🇷', provider: 'mlb', sportId: 17, leagueId: 133, historyDays: 420, season: 'noviembre a enero' },
-    { id: 'abl', name: 'ABL Australia', flag: '🇦🇺', provider: 'mlb', sportId: 17, leagueId: 595, historyDays: 420, season: 'noviembre a enero' },
-    { id: 'serie_caribe', name: 'Serie del Caribe', flag: '🌎', provider: 'mlb', sportId: 17, leagueId: 162, historyDays: 420, season: 'febrero' }
+    // Winter league (MLB Stats API, sportId 17). Its history reaches the previous
+    // winter so opening week already has ratings. Blind test on the 2025-26
+    // winter (scripts/backtest/experiment-winter-start.mjs): the run ratings beat
+    // a coin flip and the home edge in the LMP (accuracy 54-55%, log loss 0.684).
+    // Venezuela, Dominicana, Puerto Rico, Australia and the Caribbean Series were
+    // removed: no forecasting skill in that test (or no data to test it). A league
+    // added later can set forecast: false to show only calendar and results.
+    { id: 'lmp', name: 'LMP Pacífico', flag: '🇲🇽', provider: 'mlb', sportId: 17, leagueId: 132, historyDays: 420, season: 'octubre a enero' }
   ],
   tenis: [
     { id: 'wimbledon', name: 'Wimbledon', flag: '🎾' },
